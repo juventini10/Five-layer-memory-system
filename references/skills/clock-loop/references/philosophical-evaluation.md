@@ -1,13 +1,13 @@
 ---
 version: "3.2.5"
 source_skill: meta-aletheia
-source_path: ~/个人AI档案/技能配置/meta-aletheia/SKILL.md
+source_path: [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 ---
 
 # 迁理之外哲学评估固化引用
 
 > **来源**：meta-aletheia v3.2.5
-> **源头路径**：`~/个人AI档案/技能配置/meta-aletheia/SKILL.md`
+> **源头路径**：`[记忆共享中心]/技能配置/meta-aletheia/SKILL.md`
 > **引用模式**：固化引用（reference）——clock-loop直接读本文件执行，不调用meta-aletheia Skill
 > **版本检查**：阶段1.5知识网络构建时，对比本文件头部版本号与meta-aletheia SKILL.md YAML version字段，不一致则⚠️告警
 
@@ -109,4 +109,4 @@ source_path: ~/个人AI档案/技能配置/meta-aletheia/SKILL.md
 
 ---
 
-> 固化版本：v3.2.5 | 固化日期：2026-07-13 | 源头：~/个人AI档案/技能配置/meta-aletheia/SKILL.md
+> 固化版本：v3.2.5 | 固化日期：2026-07-13 | 源头：[记忆共享中心]/技能配置/meta-aletheia/SKILL.md

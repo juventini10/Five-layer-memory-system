@@ -9,7 +9,7 @@ allowed-tools: [Read, Write, Bash, Grep]
 dependencies: []
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/growth-box/
+upstream: [记忆共享中心]/技能配置/growth-box/
 modifiable: true
 version: "1.8.0"
 license: MIT
@@ -35,7 +35,7 @@ license: MIT
 
 **✅DO — 技能引用≠自动执行。** 一旦被激活，✅DO走完当前流程的全部步骤。⛔DO NOT中途跳步——原因是蒸馏和晋升的产出物依赖前置步骤。
 
-**指令质量要求详见 `~/个人AI档案/记忆蓝图/03_开发规范/指令编写规范.md`。**
+**指令质量要求详见 `[记忆共享中心]/记忆蓝图/03_开发规范/指令编写规范.md`。**
 
 ---
 
@@ -261,7 +261,7 @@ license: MIT
 | 仅影响特定系统 → | 写入 `{tool}_errors.md`（如 `trae_errors.md`） |
 | 技能相关错误 → | 写入 `skill_errors.md` |
 
-详见：`~/个人AI档案/记忆琥珀/2026-06-24-记忆规则清理归档/错误分类标准.md`
+详见：`[记忆共享中心]/记忆琥珀/2026-06-24-记忆规则清理归档/错误分类标准.md`
 
 #### 步骤 A2：按格式写入
 
@@ -280,7 +280,7 @@ license: MIT
 
 #### 步骤 A3：更新INDEX.md（脚本重算·派生数据不手工维护）
 
-运行 `python3 scripts/stats.py --learnings-dir ~/个人AI档案/成长箱/learnings/ --index ~/个人AI档案/成长箱/learnings/INDEX.md`，将输出的模式目录表替换 INDEX.md 中对应区块（从 `## 模式目录` 的表头到最后一个 PAT 行）。
+运行 `python3 scripts/stats.py --learnings-dir [记忆共享中心]/成长箱/learnings/ --index [记忆共享中心]/成长箱/learnings/INDEX.md`，将输出的模式目录表替换 INDEX.md 中对应区块（从 `## 模式目录` 的表头到最后一个 PAT 行）。
 
 > ✅DO 保留 INDEX.md 中「状态」「关联铁律」等人工元数据——脚本只重算累计次数和最新发生日期，不动元数据列。
 > ⛔DO NOT 手工修改 PAT 计数——原因是 INDEX.md 的模式目录表是从错误源文件派生的数据，手工维护=双本账迟早漂移。依据：指令§6.1 单一来源原则（派生数据不独立存储）。
@@ -295,9 +295,9 @@ license: MIT
 
 #### 步骤 B1：读取数据源
 
-**数据源1**：读取 `~/个人AI档案/成长箱/learnings/INDEX.md` 模式目录表格。
+**数据源1**：读取 `[记忆共享中心]/成长箱/learnings/INDEX.md` 模式目录表格。
 
-**数据源2**（v1.4.0新增）：读取 `~/个人AI档案/评估知识库/test_results/skill_tests/` 目录下的所有评估报告。
+**数据源2**（v1.4.0新增）：读取 `[记忆共享中心]/评估知识库/test_results/skill_tests/` 目录下的所有评估报告。
 - 扫描每份评估报告的"问题清单"
 - 提取"优先级=高"的问题条目
 - 按被评估Skill名+问题维度聚合统计出现次数
@@ -360,11 +360,11 @@ license: MIT
 #### 步骤 C1：扫描（读取全部成长箱文件+评估知识库）
 
 读取以下文件：
-- `~/个人AI档案/成长箱/learnings/LEARNINGS.md`
-- `~/个人AI档案/成长箱/learnings/ERRORS.md`
-- `~/个人AI档案/成长箱/learnings/{tool}_errors.md`（所有工具专属文件）
-- `~/个人AI档案/成长箱/learnings/skill_errors.md`
-- `~/个人AI档案/评估知识库/test_results/skill_tests/`（v1.4.0新增——clock-loop评估报告目录）
+- `[记忆共享中心]/成长箱/learnings/LEARNINGS.md`
+- `[记忆共享中心]/成长箱/learnings/ERRORS.md`
+- `[记忆共享中心]/成长箱/learnings/{tool}_errors.md`（所有工具专属文件）
+- `[记忆共享中心]/成长箱/learnings/skill_errors.md`
+- `[记忆共享中心]/评估知识库/test_results/skill_tests/`（v1.4.0新增——clock-loop评估报告目录）
 
 产出：全月错误清单+评估反复问题清单（按日期排序）
 
@@ -430,7 +430,7 @@ license: MIT
 
 #### 步骤 C6：写入蒸馏中心
 
-追加一行到 `~/个人AI档案/记忆蒸馏/蒸馏中心.md` 对应月份表格，格式：
+追加一行到 `[记忆共享中心]/记忆蒸馏/蒸馏中心.md` 对应月份表格，格式：
 
 ```
 | 执行日期 | 🧠 成长箱蒸馏 | ✅ | [一句话摘要：晋升N条，合并N条，保持N条] | [次月1日] |
@@ -461,9 +461,9 @@ license: MIT
 - 新任务启动时☑SHOULD自动扫描（轻量模式，只扫描当天日志）
 
 **扫描数据源**：
-1. 近7天系统日志：`~/个人AI档案/工作日志/系统日志/` 下近7天的 `系统日志_YYYY-MM-DD.md`
-2. 近7天错误记录：`~/个人AI档案/成长箱/learnings/` 下所有文件中近7天的新增条目
-3. 近7天反哺日志：`~/个人AI档案/成长箱/experience/规范反哺日志.md`（避免重复反哺）
+1. 近7天系统日志：`[记忆共享中心]/工作日志/系统日志/` 下近7天的 `系统日志_YYYY-MM-DD.md`
+2. 近7天错误记录：`[记忆共享中心]/成长箱/learnings/` 下所有文件中近7天的新增条目
+3. 近7天反哺日志：`[记忆共享中心]/成长箱/experience/规范反哺日志.md`（避免重复反哺）
 
 **筛选条件**（满足任一即为候选）：
 - 错误条目状态=resolved 且 根因可复用（如"设计前提未验证"可复用到多个场景）
@@ -499,7 +499,7 @@ date "+%Y-%m-%d %H:%M"
 
 #### 步骤 E2：定位反哺日志文件
 
-目标：`~/个人AI档案/成长箱/experience/规范反哺日志.md`
+目标：`[记忆共享中心]/成长箱/experience/规范反哺日志.md`
 
 🔌 熔断器
 ├─ 成功条件：文件存在

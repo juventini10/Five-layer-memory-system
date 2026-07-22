@@ -5,7 +5,7 @@ status: active
 version: v1.5
 date: 2026-07-13
 summary: Skill联动设计哲学：信息不孤岛衰减，联动是哲学
-source: ~/个人AI档案/记忆蓝图/02_设计理念/皮叔Skill联动哲学.md
+source: 记忆蓝图/02_设计理念/皮叔Skill联动哲学.md
 author: 皮叔
 ---
 

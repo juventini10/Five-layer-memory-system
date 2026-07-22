@@ -10,7 +10,7 @@ allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 dependencies: []
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/triwich/
+upstream: [记忆共享中心]/技能配置/triwich/
 modifiable: true
 version: "3.9.3"
 cured_snapshot:

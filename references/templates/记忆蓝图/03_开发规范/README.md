@@ -5,7 +5,7 @@ status: active
 version: v1.2
 date: 2026-07-11
 summary: 记忆蓝图AI文件质量体系路由入口
-source: ~/个人AI档案/记忆蓝图/03_开发规范/README.md
+source: 记忆蓝图/03_开发规范/README.md
 complies_with: 文件格式规范 v1.0.1
 author: 皮叔
 related: 文件格式规范.md · 记忆蓝图/INDEX.md

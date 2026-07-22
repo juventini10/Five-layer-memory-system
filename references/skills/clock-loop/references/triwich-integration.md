@@ -1,13 +1,13 @@
 ---
 version: "3.9.3"
 source_skill: triwich
-source_path: ~/个人AI档案/技能配置/triwich/SKILL.md
+source_path: [记忆共享中心]/技能配置/triwich/SKILL.md
 ---
 
 # 三明智方法论固化引用
 
 > **来源**：triwich v3.9.2
-> **源头路径**：`~/个人AI档案/技能配置/triwich/SKILL.md`
+> **源头路径**：`[记忆共享中心]/技能配置/triwich/SKILL.md`
 > **引用模式**：固化引用（reference）——clock-loop直接读本文件执行，不调用triwich Skill
 > **版本检查**：阶段1.5知识网络构建时，对比本文件头部版本号与triwich SKILL.md YAML version字段，不一致则⚠️告警
 
@@ -146,7 +146,7 @@ L3 阶段2·全量审查新增「前提核验」子弹：凡结论依赖可测�
 
 ---
 
-> 固化版本：v3.9.2 | 固化日期：2026-07-13 | 源头：~/个人AI档案/技能配置/triwich/SKILL.md
+> 固化版本：v3.9.2 | 固化日期：2026-07-13 | 源头：[记忆共享中心]/技能配置/triwich/SKILL.md
 > v3.3.1→v3.8.6变更：+L3呈现骨架锁（段头写死）+L3内联转发门禁锁（签名前必须内联）+主agent角色锁+文件通道定位修正
 > v3.8.6→v3.8.9变更：+L3全量审查前提核验指针（可测前提须实测，未测标⚠️前提未实测）
 > v3.8.9→v3.9.2变更：仅升版本号同步（3.9.1框架Step0→G5+3.9.2兼容性trae-solo→trae-work修复，L1/L2/L3方法论未改，Case A仅升版）

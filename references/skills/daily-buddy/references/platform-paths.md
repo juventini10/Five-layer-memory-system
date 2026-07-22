@@ -11,9 +11,9 @@
 | 日记目录 | `{{OBSIDIAN_VAULT}}/1-每日计划/01-日记/` |
 | 核心启发库 | `~/Local_Obsidian_Vault/2-知识库/01-读书笔记/核心启发库.md` |
 | 成就脚本 | `scripts/`（自包含于 daily-buddy Skill 目录内，运行时从 Skill 根目录调用） |
-| 个人AI档案 | `~/个人AI档案/` |
-| 动态状态快照 | `~/个人AI档案/情境层/动态状态快照.md` |
-| SHADOW.md | `~/个人AI档案/潜意识层/SHADOW.md` |
+| 个人AI档案 | `[记忆共享中心]/` |
+| 动态状态快照 | `[记忆共享中心]/情境层/动态状态快照.md` |
+| SHADOW.md | `[记忆共享中心]/潜意识层/SHADOW.md` |
 
 ## 平台专属路径
 
@@ -23,7 +23,7 @@
 | QClaw | `~/.qclaw/memory/{YYYY-MM-DD}.md` | 待确认 |
 | Trae | `~/.trae/memory/{YYYY-MM-DD}.md` | |
 | Trae Work | `~/.trae-solo/memory/{YYYY-MM-DD}.md` | 原名Trae Solo，路径暂不变 |
-| 悟空 | `~/个人AI档案/wukong 记忆/{YYYY-MM-DD}.md` | |
+| 悟空 | `[记忆共享中心]/wukong 记忆/{YYYY-MM-DD}.md` | |
 | QoderWork | 待确认 | |
 
 ## 六端署名库

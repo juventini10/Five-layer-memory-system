@@ -2,7 +2,7 @@
 
 > **用途**：SKILL.md阶段2自查环节的增强模块，从"对照用户检查清单"升级为"专业规范矩阵+知识网络+哲学维度"的多维评分
 > **加载时机**：阶段2自查环节启动时Read本文件
-> **数据源**：`~/个人AI档案/评估知识库/` + `references/triwich-integration.md` + `references/philosophical-evaluation.md`
+> **数据源**：`[记忆共享中心]/评估知识库/` + `references/triwich-integration.md` + `references/philosophical-evaluation.md`
 > **v2.2.0变更**：权重调整（哲学15%↓/逻辑一致性20%↑）+ 哲学及格判定 + 维度去重 + 运行时验证项 + 类型微调 + 触顶判定
 
 ---
@@ -34,14 +34,14 @@
 
 ```
 1. 识别对象类型
-2. Read ~/个人AI档案/评估知识库/patterns/{对象类型}_patterns.yaml
+2. Read [记忆共享中心]/评估知识库/patterns/{对象类型}_patterns.yaml
    ├─ 文件存在 → 加载对应模式
    └─ 文件不存在 → 降级为 general_evaluation
-3. Read ~/个人AI档案/评估知识库/weights/current_weights.yaml
+3. Read [记忆共享中心]/评估知识库/weights/current_weights.yaml
    ├─ 提取 default_weights.{对象类型}
    ├─ v2.2.0: 提取 type_adjustment.{检测到的类型} → 应用微调 → 归一化
    └─ ⛔ adaptive_rules 已废弃（v2.1.2），不再走自适应分支
-4. Read ~/个人AI档案/评估知识库/references/second_brain_links.yaml
+4. Read [记忆共享中心]/评估知识库/references/second_brain_links.yaml
    ├─ 评估知识库支撑足够 → 跳过
    └─ 支撑不足 → 按references指向加载规范文档
 5. 版本检查（固化引用同步验证，4个固化文件）

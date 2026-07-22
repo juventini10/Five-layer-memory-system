@@ -6,7 +6,7 @@ status: active
 version: v5.8
 date: 2026-07-13
 summary: Skill结构模板与理论来源参考
-source: ~/个人AI档案/记忆蓝图/03_开发规范/Skill架构规范/Skill模板与来源.md
+source: 记忆蓝图/03_开发规范/Skill架构规范/Skill模板与来源.md
 ---
 
 # Skill 模板与来源

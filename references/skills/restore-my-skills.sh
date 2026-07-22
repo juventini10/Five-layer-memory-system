@@ -141,7 +141,7 @@ for line in skill_versions_raw.strip().split("\n"):
         ver_str = "未知"
     else:
         ver_str = f"v{ver}"
-    lines.append(f"| {name} | {ver_str} | `~/个人AI档案/技能配置/{name}/` |")
+    lines.append(f"| {name} | {ver_str} | `[记忆共享中心]/技能配置/{name}/` |")
 
 new_rows = "\n".join(lines)
 

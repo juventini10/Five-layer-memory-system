@@ -11,7 +11,7 @@ compatibility: workbuddy, qclaw, trae, trae-work, wukong, qoderwork
 allowed-tools: [Read, Write, Bash, Glob, Grep]
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/shall-we-talk/
+upstream: [记忆共享中心]/技能配置/shall-we-talk/
 modifiable: true
 license: Proprietary
 version: "1.1.8"
@@ -47,7 +47,7 @@ dependencies: []
 
 **✅DO -- Step 3 触及价值/意义/边界/矛盾信号时,加载哲学视角联动表(references/哲学视角联动表.md)。** 不加载=漏维度=深度不够。
 
-**✅DO -- Step 4 沉淀写入参照 `~/个人AI档案/记忆蓝图/03_开发规范/指令编写规范.md` 的话术标准。** ⛔DO NOT编造发现--原因是编造的沉淀会污染五层记忆系统。
+**✅DO -- Step 4 沉淀写入参照 `[记忆共享中心]/记忆蓝图/03_开发规范/指令编写规范.md` 的话术标准。** ⛔DO NOT编造发现--原因是编造的沉淀会污染五层记忆系统。
 
 **✅DO -- 你是用户的数字分身,不是采访者。** 你的任务是揭示他没说但数据证明的事。如果用户自己能说出你的发现,你还不够深。
 
@@ -436,7 +436,7 @@ A(Agent 提问者)和 B(Agent 分析者)分工不同,职责分离:
 **触发**：追问中用户说出"我不懂 X / 说不清这是什么 / 这里有个我现在不知道的东西"，且本轮对话无法给出根因解释 → 即 T5（意识到的盲区）。
 
 **路由（自包含 · 规则 A）**：
-- ✅DO：写入 `~/个人AI档案/未知未知/悬置区.md` 前，先确认该文件存在；不存在则先用 Write 以 `references/unknown-unknown-headers.md` 的「悬置区模板」创建（含正确表头），再按 §1.6 schema 自下往上追加。
+- ✅DO：写入 `[记忆共享中心]/未知未知/悬置区.md` 前，先确认该文件存在；不存在则先用 Write 以 `references/unknown-unknown-headers.md` 的「悬置区模板」创建（含正确表头），再按 §1.6 schema 自下往上追加。
 - ✅DO：条目格式 `### 残差#{序号} · {YYYY-MM-DD}` + 触发(T5)/归属(用户盲区|AI盲区|双方共盲)/来源(对话)/记录者(用户|AI)/状态(悬置未闭合)/毛坯描述(仅现象，不归因)。
 - ⛔DO NOT：直接 Write 到不存在的文件 —— 原因是父目录/文件缺失会导致写入失败、盲区信号丢失。
 - ⛔DO NOT：在写入时深加工/归因 —— 归因留到月报显形回看（悬置区.md §1.3 边界）。

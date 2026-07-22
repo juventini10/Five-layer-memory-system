@@ -16,7 +16,7 @@ dependencies:
     note: "前置配套——读书笔记写入Obsidian知识池，由日记/月报消费端触发复习"
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/reading-assistant/
+upstream: [记忆共享中心]/技能配置/reading-assistant/
 modifiable: true
 version: "3.2.5"
 license: MIT

@@ -9,7 +9,7 @@ allowed-tools: [Read, Write, Bash]
 dependencies: []
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/system-logger/
+upstream: [记忆共享中心]/技能配置/system-logger/
 modifiable: true
 version: "3.6.2"
 license: MIT
@@ -270,12 +270,12 @@ date "+%Y-%m-%d %H:%M"
 🔌 熔断器
 ├─ 成功条件：文件路径存在或可创建
 ├─ 失败处理：中止
-├─ 可修正参数：日志目录路径 → 检查 ~/个人AI档案/工作日志/系统日志/ 是否存在
+├─ 可修正参数：日志目录路径 → 检查 [记忆共享中心]/工作日志/系统日志/ 是否存在
 ├─ 重试次数：1
 └─ 降级方案：无——路径不可用时中止
 
 ```
-~/个人AI档案/工作日志/系统日志/系统日志_{YYYY-MM-DD}.md
+[记忆共享中心]/工作日志/系统日志/系统日志_{YYYY-MM-DD}.md
 ```
 
 **规则**：
@@ -486,7 +486,7 @@ date "+%Y-%m-%d %H:%M"
 
 系统日志写完后，✅DO 运行只读体检：
 ```bash
-bash ~/个人AI档案/开发工具/changelog-guard/changelog-guard.sh --check
+bash [记忆共享中心]/开发工具/changelog-guard/changelog-guard.sh --check
 ```
 读返回 JSON 的 `candidates`：
 - `candidates > 0` → 在本轮回复追加一行：`📋 变更日志：N 条 LIVE 变更疑未记（说"变更日志体检"可补）`
@@ -514,7 +514,7 @@ bash ~/个人AI档案/开发工具/changelog-guard/changelog-guard.sh --check
 
 #### 6.2 统计脚本路径
 
-`~/个人AI档案/开发工具/记忆系统自动化/sync-systemlog.sh`
+`[记忆共享中心]/开发工具/记忆系统自动化/sync-systemlog.sh`
 
 ```
 bash sync-systemlog.sh                 # 只读报告（今日条目数 vs 计数器行数）
@@ -526,7 +526,7 @@ bash sync-systemlog.sh --fix           # 修复v3.5.x遗留漂移（一次性·v
 
 #### 6.3 计数器文件角色重定义
 
-`~/个人AI档案/工作日志/系统日志/调用计数器_Skill调用追踪.md` 已转为**只读历史归档**：
+`[记忆共享中心]/工作日志/系统日志/调用计数器_Skill调用追踪.md` 已转为**只读历史归档**：
 - 保留07-02至07-15历史数据（含早期格式独有字段：调用场景/成功/备注）
 - v3.6.0起停止更新
 - 文件头部已标注「v3.6.0起停止更新」
@@ -538,7 +538,7 @@ bash sync-systemlog.sh --fix           # 修复v3.5.x遗留漂移（一次性·v
 
 > 每月初（次月1号）或用户主动触发，从上月系统日志提取「数据→模式→洞察→建议」四层递进分析。
 > 完整 4 步流程（D1 定位上月日志 / D2 结论导向分析含 🪞成就证据提取 / D3 月度综览 / D4 写入蒸馏中心）见 `references/monthly-distillation.md`（触发时按需 Read）。
-> 联动：**最伟大的我**——D2 提取工作成就写入 `~/个人AI档案/最伟大的我/成就证据/`（系统日志=成就证据的独立主数据源）。
+> 联动：**最伟大的我**——D2 提取工作成就写入 `[记忆共享中心]/最伟大的我/成就证据/`（系统日志=成就证据的独立主数据源）。
 
 ---
 

@@ -9,11 +9,11 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, Agent, TaskCreate, TaskUpda
 dependencies:
   - name: triwich
     version: "3.9.4"
-    path: ~/个人AI档案/技能配置/triwich/
+    path: [记忆共享中心]/技能配置/triwich/
     mode: reference
   - name: meta-aletheia
     version: "3.2.5"
-    path: ~/个人AI档案/技能配置/meta-aletheia/
+    path: [记忆共享中心]/技能配置/meta-aletheia/
     mode: reference
   - name: skill-arch-standard
     version: "5.16"
@@ -27,7 +27,7 @@ dependencies:
     note: "固化副本·自包含——源在记忆蓝图/03_开发规范/，改源后须重新固化到此并升version"
 author: 皮叔
 source: self-built
-upstream: ~/个人AI档案/技能配置/clock-loop/
+upstream: [记忆共享中心]/技能配置/clock-loop/
 modifiable: true
 version: "3.0.6"
 license: MIT
@@ -222,7 +222,7 @@ license: MIT
 | **输入契约** | 用户以"循环/loop"开头的任务描述 + 首次某类任务时用户选的标准 |
 | **输出契约** | 达标后交付最终结果 + 执行履历 + 多维评分表;超限/卡死时交付当前版 + 原因说明 |
 | **行为契约** | 后台自闭环,不自查完成前不交付。可逆性分级:🟢自主(读文件/写progress/写JSON/跑自查/spawn子Agent)🟡确认(覆盖已存在交付物)🔴阻止(执行未授权操作/发布外部/修改非本任务文件) |
-| **演化契约** | 同类任务自动复用历史标准(references/task-standards.json)。评估结果写入评估知识库(~/个人AI档案/评估知识库/)。标准可随每次交付微调 |
+| **演化契约** | 同类任务自动复用历史标准(references/task-standards.json)。评估结果写入评估知识库([记忆共享中心]/评估知识库/)。标准可随每次交付微调 |
 
 ---
 
@@ -401,15 +401,15 @@ license: MIT
 
 **Phase X-PKG：发布包机检（类比 Phase X 用 skill_eval.py，此处用 sync-check.sh + smoke-test.sh 作为发布包的 skill_eval 等价物）**
 - Step B：调用发布包检查脚本(步序法·物理依赖)
-  - ✅DO `bash "${BULUO_PKG_ROOT:-~/个人AI档案/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/sync-check.sh"`
+  - ✅DO `bash "${BULUO_PKG_ROOT:-[记忆共享中心]/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/sync-check.sh"`
     脚本把当前开发源(`BULUO_REPO`默认 `~/个人AI档案`)重生成到临时目录,与现有发布包逐文件比对:`0 FAIL` → 源包一致(健康);`N FAIL` → 开发源已漂移,发布包未跟上。
-  - ✅DO `bash "${BULUO_PKG_ROOT:-~/个人AI档案/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/smoke-test.sh"`
+  - ✅DO `bash "${BULUO_PKG_ROOT:-[记忆共享中心]/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/smoke-test.sh"`
     L1 静态检查:必含文件(INSTALL.md/CHANGELOG/步骤文件)+无 `~/` 之外的绝对路径残留+skills(白名单9)/templates(记忆蓝图)/步骤结构完整 → `0 fail`。
 - Step C：读取结果(步序法·物理依赖)
   - sync-check 退出码 0 → ✅解锁;非0 → 🔴输出漂移报告(列出 FAIL 文件 + 缺失于包项)
   - smoke-test 退出码 0 → ✅;非0 → 🔴输出缺陷报告
 - Step D：修正动作(漂移时自动修复)
-  - ✅DO 当 sync-check FAIL(源已改)→ 后台跑 `python3 ~/个人AI档案/开发工具/buluotuo-release-sync/generate_release.py` 重生成修复(sync-check 内部已用 `BULUO_PKG_ROOT` 临时重生成比对,此处修复是写到真实包),修复后重跑 sync-check 至 `0 FAIL`。
+  - ✅DO 当 sync-check FAIL(源已改)→ 后台跑 `python3 [记忆共享中心]/开发工具/buluotuo-release-sync/generate_release.py` 重生成修复(sync-check 内部已用 `BULUO_PKG_ROOT` 临时重生成比对,此处修复是写到真实包),修复后重跑 sync-check 至 `0 FAIL`。
   - ⛔DO NOT 在 sync-check 未达标时说"✅ 发布包健康"——原因是漂移未修 = 假健康,loop 失去意义。
 - 🔌 熔断器(脚本缺失):成功条件=两脚本存在且可执行;失败处理=跳过;降级方案=⚠️"检查脚本缺失,仅运行AI检查",不阻塞
 - 🔌 熔断器(脚本异常):成功条件=脚本正常退出;失败处理=跳过;降级方案=⚠️"脚本异常,建议手动诊断",不阻塞
@@ -421,9 +421,9 @@ license: MIT
 > 跨平台双验（v2.9.2）: install-audit.sh（Mac/Linux bash） + install-audit.ps1（Windows pwsh / macOS pwsh），双脚本均通过才判"过程完整"。
 
 - Step P：调用安装过程体检脚本(步序法·物理依赖,只读不写)
-  - **Mac/Linux** — ✅DO `bash "${BULUO_PKG_ROOT:-~/个人AI档案/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/install-audit.sh"`
+  - **Mac/Linux** — ✅DO `bash "${BULUO_PKG_ROOT:-[记忆共享中心]/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/install-audit.sh"`
     弹性候选集验证 Step5/6/7 真实产出物(纯产出物验证,`.install/stepN-done.md` 检查点仅作可选快筛信号,不依赖——可伪造不能证真):`0 FAIL` → 安装过程完整;`N FAIL` → 存在遗漏/跳过/残缺。
-  - **Windows / macOS 有 pwsh** — ✅DO 额外运行 `pwsh -NoProfile -File "${BULUO_PKG_ROOT:-~/个人AI档案/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/install-audit.ps1"`
+  - **Windows / macOS 有 pwsh** — ✅DO 额外运行 `pwsh -NoProfile -File "${BULUO_PKG_ROOT:-[记忆共享中心]/知识库/五层记忆系统/布洛陀-安装包}/references/开发工具/skill-sync-guard/install-audit.ps1"`
     行为与 install-audit.sh 一致（边界态检测、弹性候选、Step5/6/7 三段审计），`0 FAIL` → Windows 安装逻辑验证通过。
   - 平台选择：首先检测命令可用性（`command -v pwsh`），有则双跑；无则仅跑 .sh。
 - Step Q：读取结果(步序法·物理依赖)
@@ -459,9 +459,9 @@ license: MIT
    └─ 其他 → general_evaluation(降级)
 
 2. 加载评估知识库
-   ├─ Read ~/个人AI档案/评估知识库/patterns/{对象类型}_patterns.yaml
-   ├─ Read ~/个人AI档案/评估知识库/weights/current_weights.yaml
-   └─ 支撑不足 → Read ~/个人AI档案/评估知识库/references/second_brain_links.yaml 按指向加载规范文档
+   ├─ Read [记忆共享中心]/评估知识库/patterns/{对象类型}_patterns.yaml
+   ├─ Read [记忆共享中心]/评估知识库/weights/current_weights.yaml
+   └─ 支撑不足 → Read [记忆共享中心]/评估知识库/references/second_brain_links.yaml 按指向加载规范文档
 
 3. 固化引用版本核对(v2.6.0新增·防滞后机制·v2.8.3源侧闭环)
    ├─ 逐个读references/下带source_skill/source字段的固化引用文件
@@ -487,7 +487,7 @@ license: MIT
 🔌 熔断器（weights加载）
 ├─ 成功条件：Read weights/current_weights.yaml 返回非空内容
 ├─ 失败处理：降级
-├─ 可修正参数：权重文件路径 → 检查 ~/个人AI档案/评估知识库/weights/ 下文件是否存在
+├─ 可修正参数：权重文件路径 → 检查 [记忆共享中心]/评估知识库/weights/ 下文件是否存在
 ├─ 重试次数：1
 └─ 降级方案：weights文件缺失/为空→使用默认权重(各维度等分)，继续流程
 
@@ -502,7 +502,7 @@ license: MIT
 
 📦 产出物:progress.md + 本轮产出 + 多维评分表
 
-> **📋 progress.md**:每次Loop运行时自动创建,记录每一轮做了什么、子Agent发现了哪些问题、本轮修正了哪些。存储路径:`~/个人AI档案/评估知识库/test_results/{对象类型}_tests/progress_{对象名}_{YYYY-MM-DD}.md`。评估完成后自动归档为评估报告(同目录),progress.md不残留在Skill目录。模板见 `references/progress-template.md`。
+> **📋 progress.md**:每次Loop运行时自动创建,记录每一轮做了什么、子Agent发现了哪些问题、本轮修正了哪些。存储路径:`[记忆共享中心]/评估知识库/test_results/{对象类型}_tests/progress_{对象名}_{YYYY-MM-DD}.md`。评估完成后自动归档为评估报告(同目录),progress.md不残留在Skill目录。模板见 `references/progress-template.md`。
 
 循环结构如下--每一轮自动执行,你全程不在场。每轮迭代的边界是:**子Agent给出审查结果**。
 
@@ -518,7 +518,7 @@ license: MIT
   │    ├─ 第1轮:按你给的标准从头做
   │    └─ 第N轮(N>1):基于上轮子Agent的反馈修正
  │        修正前先备份:确定本次要修改的文件清单 → 逐一执行
- │          `cp {文件路径} ~/个人AI档案/记忆琥珀/技能升级备份/{文件名}_{YYMMDD_HHMM}.bak`
+ │          `cp {文件路径} [记忆共享中心]/记忆琥珀/技能升级备份/{文件名}_{YYMMDD_HHMM}.bak`
  │        --原因是:修改不可逆,备份是安全网。只有只读评估(不修文件)可跳过此步。
  │        如果触发过"策略切换"(反疲劳标志位=ON):换方法修
   │
@@ -751,14 +751,14 @@ license: MIT
 
 **评估报告自动归档**(v2.0.2新增 / v3.0.2 归档强制验证 / v3.0.3 写入前路径阻断):
 - 评估完成后,progress.md内容按 `references/report-template.md` 格式整理为评估报告（含YAML frontmatter 7必填字段）
-- 归档路径:`~/个人AI档案/评估知识库/test_results/{对象类型}_tests/{对象名}_{版本号}_评估报告_{YYYY-MM-DD}.md`
-- **写入前路径阻断（v3.0.3新增·Poka-Yoke接触法）**：✅DO 执行Write前校验目标路径——不以 `~/个人AI档案/评估知识库/test_results/` 开头 → 🔴物理阻断，中止写入，弹回正确路径。⛔DO NOT在路径校验通过前执行Write——原因是Write到错误路径=归档数据分散=后续检索断裂，事后Glob补救成本远高于事前阻断
+- 归档路径:`[记忆共享中心]/评估知识库/test_results/{对象类型}_tests/{对象名}_{版本号}_评估报告_{YYYY-MM-DD}.md`
+- **写入前路径阻断（v3.0.3新增·Poka-Yoke接触法）**：✅DO 执行Write前校验目标路径——不以 `[记忆共享中心]/评估知识库/test_results/` 开头 → 🔴物理阻断，中止写入，弹回正确路径。⛔DO NOT在路径校验通过前执行Write——原因是Write到错误路径=归档数据分散=后续检索断裂，事后Glob补救成本远高于事前阻断
 - **归档后存在性验证**：✅DO 写入后 Glob `test_results/skill_tests/{对象名}_*评估报告*` 验证文件存在——不存在=交付未完成，退回补写
 - 归档后progress.md删除,不残留在Skill目录
 - ⛔DO NOT将评估报告存放在Skill目录--原因是Skill目录只放Skill自身文件,评估产物放在Skill目录会污染Skill的纯粹性且导致目录膨胀
 
 **评估结果沉淀**:
-- 评估置信度≥0.8且覆盖维度>5 → 写入 `~/个人AI档案/评估知识库/test_results/`
+- 评估置信度≥0.8且覆盖维度>5 → 写入 `[记忆共享中心]/评估知识库/test_results/`
 - 评估置信度0.6-0.8 → 会话缓存,7天后清理
 - 评估置信度<0.6 → 丢弃
 - 累计评估数达到5的倍数（第5/10/15…份报告归档后）激活L3沉淀(跨周期模式提取,写入evolution/目录)
@@ -766,7 +766,7 @@ license: MIT
 **L3沉淀触发逻辑**(v2.2.0新增):
 ```
 阶段4交付后自动检查:
-  ├─ 读取 ~/个人AI档案/评估知识库/test_results/ 下的评估报告数量
+  ├─ 读取 [记忆共享中心]/评估知识库/test_results/ 下的评估报告数量
   ├─ 数量达到5的倍数（count % 5 == 0）→ 触发L3沉淀
   └─ 数量 < 5 → 跳过,正常结束
 ```
@@ -775,7 +775,7 @@ L3沉淀执行步骤:
 1. ✅DO: 扫描test_results/下所有评估报告,提取共性模式
 2. ✅DO: 识别跨Skill重复出现的问题(如“宪法声明缺失”“版本号不一致”等)
 3. ✅DO: 识别评分分布(各等级占比、维度强弱分布)
-4. ✅DO: 将提取结果写入 ~/个人AI档案/评估知识库/evolution/L3_沉淀_{YYYY-MM-DD}.md
+4. ✅DO: 将提取结果写入 [记忆共享中心]/评估知识库/evolution/L3_沉淀_{YYYY-MM-DD}.md
 5. ✅DO: 在交付总结后追加一句提示:"📊 已累计{N}次评估,L3沉淀已生成,路径:evolution/L3_沉淀_{日期}.md"
 6. ⛔DO NOT: 在L3沉淀中编造报告中不存在的问题
 7. ⛔DO NOT: 每次评估都触发L3沉淀--仅在累计达5的倍数时触发(5/10/15...)
@@ -816,9 +816,9 @@ L3沉淀执行步骤:
 | T5 意识到的盲区 | 评估者/审查者意识到"这里有个我现在不懂的东西" |
 
 **执行规则**:
-- ✅DO: 写入悬置区.md 前，先确认 `~/个人AI档案/未知未知/悬置区.md` 存在；不存在则先用 Write 以 `references/unknown-unknown-headers.md` 的「悬置区模板」创建（含正确表头），再按 §1.6 schema 自下往上追加。
+- ✅DO: 写入悬置区.md 前，先确认 `[记忆共享中心]/未知未知/悬置区.md` 存在；不存在则先用 Write 以 `references/unknown-unknown-headers.md` 的「悬置区模板」创建（含正确表头），再按 §1.6 schema 自下往上追加。
 - ⛔DO NOT: 直接 Write 到一个不存在的文件 —— 原因是父目录/文件缺失会导致写入失败、残差丢失。
-- ✅DO: 对照五类触发逐条扫描,有匹配则按悬置区.md §1.6 schema写入`~/个人AI档案/未知未知/悬置区.md`(自下往上追加)
+- ✅DO: 对照五类触发逐条扫描,有匹配则按悬置区.md §1.6 schema写入`[记忆共享中心]/未知未知/悬置区.md`(自下往上追加)
 - ✅DO: 无匹配则跳过,输出 `🌀 悬置区探针:本轮无残差信号`
 - ✅DO: 归属标签按双主体判定——评估者盲区标`AI盲区`,被评估对象设计者的认知盲区标`用户盲区`(若适用),双方都不清楚标`双方共盲`
 - ⛔DO NOT: 强行凑残差——有就有,没有就跳过,空填会贬值容器
@@ -863,8 +863,8 @@ L3沉淀执行步骤:
 - ✅DO:脚本自动做三件事(零AI主观):
   1. grep校验议题名是否命中已有列表 → 命中则复用,不重复造名
   2. 同议题名下不同立场 → 输出 `⚠️ T2冲突信号` + 旧/新立场对比
-  3. 追加断言到 `~/个人AI档案/未知未知/断言台账.md`
-- ✅DO:脚本输出 `⚠️ T2冲突信号` 时,按悬置区.md §1.6 schema写入 `~/个人AI档案/未知未知/悬置区.md`(T2触发+归属标签双主体判定)
+  3. 追加断言到 `[记忆共享中心]/未知未知/断言台账.md`
+- ✅DO:脚本输出 `⚠️ T2冲突信号` 时,按悬置区.md §1.6 schema写入 `[记忆共享中心]/未知未知/悬置区.md`(T2触发+归属标签双主体判定)
 - ✅DO:#1探针已处理的议题,本周期不再由#2重复触发(去重规则——避免双触发噪声)
 - ⛔DO NOT:在脚本输出T2信号时做归因——只冻现象,归因留月报显形回看
 
@@ -939,7 +939,7 @@ L3沉淀执行步骤:
 | 8 | ⛔DO NOT跳过阶段1.5知识网络构建直接执行 | 没知识网络=多维评分没有依据=退回凭感觉打分 |
 | 9 | ⛔DO NOT在多维评分中跳过L1拆解直接打分 | "凭感觉打分"是评估最大陷阱,L1拆解强制先理解再评分 |
 | 10 | ⛔DO NOT在多维评分完成后跳过L2自检 | 高分可能是锚定效应,L2自检是评分可信度的最后保障 |
-| 11 | ⛔DO NOT在未备份的情况下修改被评估文件--原因是:修改不可逆,无备份=改崩了无法还原。✅DO先将目标文件备份到 `~/个人AI档案/记忆琥珀/技能升级备份/{文件名}_{YYMMDD_HHMM}.bak` 再执行修改。 | 防误层;备份=修改前置条件 |
+| 11 | ⛔DO NOT在未备份的情况下修改被评估文件--原因是:修改不可逆,无备份=改崩了无法还原。✅DO先将目标文件备份到 `[记忆共享中心]/记忆琥珀/技能升级备份/{文件名}_{YYMMDD_HHMM}.bak` 再执行修改。 | 防误层;备份=修改前置条件 |
 | 12 | ⛔DO NOT将评估报告或progress.md存放在Skill目录 | Skill目录只放Skill自身文件,评估产物残留在Skill目录会污染纯粹性且导致目录膨胀 |
 | 13 | ⛔DO NOT在自评估时使用 `[clock-loop专属]` 检查项——原因是：自著考卷=自指偏差（Q3-3）。✅DO clock-loop自评估只用通用6项标准，专属8项仅供外部审计（双盲+人类锚）使用，详见 task-standards.json 的 `external_audit_checklist` 字段 | 自评估回避制·v3.0.0新增 |
 
@@ -989,7 +989,7 @@ L3沉淀执行步骤:
 | Skill | 方向 | 机制 | 依据 |
 |-------|:---:|------|------|
 | 系统日志 | **推** | 阶段3达标交付后自动触发系统日志记录(任务记录推送点) | 系统日志SKILL.md:"实质性任务完成后自动触发" |
-| 悬置区.md | **推** | Phase 4悬置区探针:评估完成后扫描五类残差触发,有匹配则写入`~/个人AI档案/未知未知/悬置区.md`(盲区信号推送点,v2.4.0新增) | 悬置区.md §1.6 schema + 未知未知前置容器阶段1 |
+| 悬置区.md | **推** | Phase 4悬置区探针:评估完成后扫描五类残差触发,有匹配则写入`[记忆共享中心]/未知未知/悬置区.md`(盲区信号推送点,v2.4.0新增) | 悬置区.md §1.6 schema + 未知未知前置容器阶段1 |
 | 成长箱 | **拉** | 成长箱做晋升检查时从评估知识库test_results/拉反复问题数据 | 成长箱晋升机制:pending(N/3) AND N≥3 |
 | 每日伙伴 | **拉**(间接) | 每日伙伴月报读系统日志→体现Skill健康度 | 系统日志SKILL.md:"每日伙伴月报读取系统日志" |
 | Shall We Talk | **拉** | Shall We Talk从系统日志拉评估发现作为钩子 | Shall We Talk SKILL.md:"系统日志(当天)选读" |

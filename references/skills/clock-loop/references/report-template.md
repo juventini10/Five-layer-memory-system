@@ -5,7 +5,7 @@ status: active
 version: v1.0.0
 date: {YYYY-MM-DD}
 summary: "{Skill名} {版本号} Loop评估结论与扣分分析"
-source: ~/个人AI档案/评估知识库/test_results/skill_tests/{文件名}.md
+source: 评估知识库/test_results/skill_tests/{文件名}.md
 author: QClaw
 complies_with: 文件格式规范 v1.0.2
 ---

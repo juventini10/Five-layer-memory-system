@@ -5,7 +5,7 @@ status: active
 version: v1.5
 date: 2026-06-22
 summary: WorkBuddy 平台品格SOUL.md设计哲学与适配
-source: ~/个人AI档案/记忆蓝图/04_系统文件设计/品格设计哲学/02-品格设计实例/WorkBuddy品格设计哲学文件.md
+source: 记忆蓝图/04_系统文件设计/品格设计哲学/02-品格设计实例/WorkBuddy品格设计哲学文件.md
 author: 皮叔
 ---
 

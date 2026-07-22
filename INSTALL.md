@@ -62,7 +62,7 @@ ls ~/.workbuddy/IDENTITY.md 2>/dev/null && echo "FOUND_IDENTITY"
 # 检测 2：是否有 .install 标记（旧版布洛陀或安装过至少一次）
 # ⚠️ 以下路径是已知可能位置——如果用户记忆共享中心不在这些路径，
 #    检测2结果为❌不影响决策（走半安装态或全新），不阻塞流程。
-ls ~/个人AI档案/.install/step7-done.md 2>/dev/null && echo "FOUND_INSTALL_MARKER"
+ls [记忆共享中心]/.install/step7-done.md 2>/dev/null && echo "FOUND_INSTALL_MARKER"
 ls ~/AI记忆库/.install/step7-done.md 2>/dev/null && echo "FOUND_INSTALL_MARKER_ALT"
 
 # 检测 3：是否有问卷答案（用于升级时补差异）

@@ -5,7 +5,7 @@ status: active
 version: v4.1
 date: {YYYY-MM-DD}
 summary: 潜意识层·知行偏差追踪与对质记录
-source: ~/个人AI档案/潜意识层/SHADOW.md
+source: 潜意识层/SHADOW.md
 author: 皮叔
 tags: [潜意识层, 知行偏差, 认知象限, SHADOW]
 area: 潜意识层
@@ -115,7 +115,7 @@ related:
 - 清理规则：每月检查，确认过期的偏差是否仍成立
 - **记录格式**：每条记录必须标注来源端 `[WorkBuddy]` / `[QClaw]` / `[Trae]`，用于溯源
 - **认知象限字段（强制）**：每条记录须含「认知象限」字段（取值见上方§规范）；未标注→默认「未知已知」（见§取值默认规则）。写入方为 daily-buddy `shadow-protocol.md`
-- **唯一文件**：三端共用 `~/个人AI档案/潜意识层/SHADOW.md`，不使用副本或软链接，Trae/QClaw 路由表直接指向此绝对路径
+- **唯一文件**：三端共用 `[记忆共享中心]/潜意识层/SHADOW.md`，不使用副本或软链接，Trae/QClaw 路由表直接指向此绝对路径
 
 ---
 

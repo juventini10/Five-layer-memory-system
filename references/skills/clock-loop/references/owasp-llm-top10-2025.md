@@ -11,8 +11,8 @@ complies_with: 文件格式规范 v1.0.2
 author: OWASP
 cached_at: 2026-07-17
 related:
-  - ~/个人AI档案/技能配置/clock-loop/SKILL.md
-  - ~/个人AI档案/记忆蓝图/02_设计理念/反方向的钟设计哲学.md
+  - [记忆共享中心]/技能配置/clock-loop/SKILL.md
+  - [记忆共享中心]/记忆蓝图/02_设计理念/反方向的钟设计哲学.md
 ---
 
 # OWASP Top 10 for LLM Applications 2025 — 外部权威锚点

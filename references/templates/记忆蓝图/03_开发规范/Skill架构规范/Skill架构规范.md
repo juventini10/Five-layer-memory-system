@@ -6,7 +6,7 @@ status: active
 version: v5.16
 date: 2026-07-13
 summary: Skill结构触发安全测试的宪法级定义规范
-source: ~/个人AI档案/记忆蓝图/03_开发规范/Skill架构规范/Skill架构规范.md
+source: 记忆蓝图/03_开发规范/Skill架构规范/Skill架构规范.md
 ---
 
 

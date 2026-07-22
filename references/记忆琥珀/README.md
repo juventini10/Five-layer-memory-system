@@ -55,7 +55,7 @@ scripts/
 
 ```bash
 # 手动触发备份
-bash ~/个人AI档案/记忆琥珀/engine/amber-backup.sh
+bash [记忆共享中心]/记忆琥珀/engine/amber-backup.sh
 
 # 查看 launchd 服务状态
 launchctl list | grep memoryamber
@@ -65,23 +65,23 @@ launchctl unload ~/Library/LaunchAgents/com.memoryamber.backup.plist
 launchctl load ~/Library/LaunchAgents/com.memoryamber.backup.plist
 
 # 查看备份日志
-tail -30 ~/个人AI档案/记忆琥珀/engine/logs/amber.log
+tail -30 [记忆共享中心]/记忆琥珀/engine/logs/amber.log
 
 # 查看所有备份
-ls -lt ~/个人AI档案/记忆琥珀/*.bak
+ls -lt [记忆共享中心]/记忆琥珀/*.bak
 
 # 回滚某文件到最新备份
-cp ~/个人AI档案/记忆琥珀/workspace_SOUL_20260715-043520_78d363.bak ~/个人AI档案/核心层/workspace/SOUL.md
+cp [记忆共享中心]/记忆琥珀/workspace_SOUL_20260715-043520_78d363.bak [记忆共享中心]/核心层/workspace/SOUL.md
 
 # 手动创建 major 备份（大版本升级前）
-cp ~/个人AI档案/核心层/workspace/SOUL.md ~/个人AI档案/记忆琥珀/workspace_SOUL_major_$(date '+%Y%m%d-%H%M%S')_manual.bak
+cp [记忆共享中心]/核心层/workspace/SOUL.md [记忆共享中心]/记忆琥珀/workspace_SOUL_major_$(date '+%Y%m%d-%H%M%S')_manual.bak
 ```
 
 ### Windows
 
 ```powershell
 # 手动触发备份
-pwsh -File ~/个人AI档案/记忆琥珀/engine/amber-backup.ps1
+pwsh -File [记忆共享中心]/记忆琥珀/engine/amber-backup.ps1
 
 # 查看 Task Scheduler 任务状态
 Get-ScheduledTask -TaskName MemoryAmberWatch | Get-ScheduledTaskInfo
@@ -91,18 +91,18 @@ Stop-ScheduledTask -TaskName MemoryAmberWatch
 Start-ScheduledTask -TaskName MemoryAmberWatch
 
 # 查看备份日志
-Get-Content ~/个人AI档案/记忆琥珀/engine/logs/amber.log -Tail 30
+Get-Content [记忆共享中心]/记忆琥珀/engine/logs/amber.log -Tail 30
 
 # 查看所有备份
-Get-ChildItem ~/个人AI档案/记忆琥珀/*.bak | Sort-Object LastWriteTime -Descending
+Get-ChildItem [记忆共享中心]/记忆琥珀/*.bak | Sort-Object LastWriteTime -Descending
 
 # 回滚某文件到最新备份
-$latest = Get-ChildItem ~/个人AI档案/记忆琥珀/workspace_SOUL_*.bak | Sort-Object Name -Descending | Select-Object -First 1
-Copy-Item $latest.FullName ~/个人AI档案/核心层/workspace/SOUL.md -Force
+$latest = Get-ChildItem [记忆共享中心]/记忆琥珀/workspace_SOUL_*.bak | Sort-Object Name -Descending | Select-Object -First 1
+Copy-Item $latest.FullName [记忆共享中心]/核心层/workspace/SOUL.md -Force
 
 # 手动创建 major 备份
 $ts = Get-Date -Format 'yyyyMMdd-HHmmss'
-Copy-Item ~/个人AI档案/核心层/workspace/SOUL.md "~/个人AI档案/记忆琥珀/workspace_SOUL_major_${ts}_manual.bak"
+Copy-Item [记忆共享中心]/核心层/workspace/SOUL.md "[记忆共享中心]/记忆琥珀/workspace_SOUL_major_${ts}_manual.bak"
 ```
 
 ## 清理规则
@@ -116,7 +116,7 @@ Copy-Item ~/个人AI档案/核心层/workspace/SOUL.md "~/个人AI档案/记忆�
 
 ## 添加新文件到白名单
 
-编辑 `~/个人AI档案/记忆琥珀/engine/amber-whitelist.txt`，加一行绝对路径即可。
+编辑 `[记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt`，加一行绝对路径即可。
 如果新文件所在目录不在监听列表里，还需要更新 `amber-fswatch-wrapper.sh`（macOS）或 `amber-watch.ps1`（Windows）的 `PATHS` / `$WatchPaths` 数组。
 
 ## 故障排查
@@ -125,12 +125,12 @@ Copy-Item ~/个人AI档案/核心层/workspace/SOUL.md "~/个人AI档案/记忆�
 
 **macOS**：
 1. `launchctl list | grep memoryamber` — 服务是否在跑
-2. `cat ~/个人AI档案/记忆琥珀/engine/logs/amber-fswatch.err.log` — 看错误
+2. `cat [记忆共享中心]/记忆琥珀/engine/logs/amber-fswatch.err.log` — 看错误
 3. `which fswatch` — 确认 fswatch 已安装
 
 **Windows**：
 1. `Get-ScheduledTask -TaskName MemoryAmberWatch` — 任务是否存在
-2. `Get-Content ~/个人AI档案/记忆琥珀/engine/logs/amber-watch.log` — 看监听日志
+2. `Get-Content [记忆共享中心]/记忆琥珀/engine/logs/amber-watch.log` — 看监听日志
 3. `Get-Process pwsh` — 确认 pwsh 进程在跑
 
 ### 备份没创建

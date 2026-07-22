@@ -6,7 +6,7 @@ status: active
 version: v5.15
 date: 2026-07-13
 summary: Skill类型分类与设计模式目录（Patterns层）
-source: ~/个人AI档案/记忆蓝图/03_开发规范/Skill架构规范/Skill设计模式.md
+source: 记忆蓝图/03_开发规范/Skill架构规范/Skill设计模式.md
 ---
 
 # Skill 设计模式（Patterns层）

@@ -175,7 +175,7 @@ Write-Host "✅ 白名单占位符已全部替换" -ForegroundColor Green
 
 ```bash
 # 给某文件加一个空行触发变化
-echo "" >> ~/个人AI档案/核心层/SOUL.md
+echo "" >> [记忆共享中心]/核心层/SOUL.md
 
 # 等 5 秒让 fswatch 触发
 sleep 5
@@ -184,7 +184,7 @@ sleep 5
 tail -3 {MEMORY_CENTER}/记忆琥珀/engine/logs/amber.log
 
 # 回滚测试修改
-perl -pi -e 'chomp if eof' ~/个人AI档案/核心层/SOUL.md
+perl -pi -e 'chomp if eof' [记忆共享中心]/核心层/SOUL.md
 ```
 
 ---
@@ -307,7 +307,7 @@ Get-Content {MEMORY_CENTER}/记忆琥珀/engine/logs/amber.log -Tail 5
 
 ```powershell
 # 给某文件加一个空行触发变化
-Add-Content ~/个人AI档案/核心层/SOUL.md ""
+Add-Content [记忆共享中心]/核心层/SOUL.md ""
 
 # 等 5 秒让 FileSystemWatcher 触发
 Start-Sleep -Seconds 5
@@ -316,9 +316,9 @@ Start-Sleep -Seconds 5
 Get-Content {MEMORY_CENTER}/记忆琥珀/engine/logs/amber.log -Tail 3
 
 # 回滚测试修改
-$content = Get-Content ~/个人AI档案/核心层/SOUL.md -Raw
+$content = Get-Content [记忆共享中心]/核心层/SOUL.md -Raw
 $content = $content.TrimEnd()
-Set-Content ~/个人AI档案/核心层/SOUL.md $content
+Set-Content [记忆共享中心]/核心层/SOUL.md $content
 ```
 
 ---
@@ -335,7 +335,7 @@ Set-Content ~/个人AI档案/核心层/SOUL.md $content
 白名单文件数：{N}
 首次备份结果：备份 {X} / 跳过 {Y} / 缺失 {Z}
 
-备份存储位置：~/个人AI档案/记忆琥珀/
+备份存储位置：[记忆共享中心]/记忆琥珀/
 日志位置：{MEMORY_CENTER}/记忆琥珀/engine/logs/amber.log
 
 💡 记忆琥珀会在你修改白名单文件时自动备份，无需任何手动操作。

@@ -5,7 +5,7 @@ status: active
 version: v2.2-S
 date: 2026-07-10
 summary: WorkBuddy 平台 MEMORY.md 设计哲学与适配
-source: ~/个人AI档案/记忆蓝图/04_系统文件设计/MEMORY设计哲学/02-MEMORY设计实例/MEMORY设计哲学文件-workbuddy.md
+source: 记忆蓝图/04_系统文件设计/MEMORY设计哲学/02-MEMORY设计实例/MEMORY设计哲学文件-workbuddy.md
 author: 皮叔
 ---
 

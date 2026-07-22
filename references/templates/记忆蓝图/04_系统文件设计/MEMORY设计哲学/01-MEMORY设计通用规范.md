@@ -5,7 +5,7 @@ status: active
 version: v1.0
 date: 2026-07-10
 summary: 所有平台 MEMORY.md 文件设计的宪法级通用规范
-source: ~/个人AI档案/记忆蓝图/04_系统文件设计/MEMORY设计哲学/01-MEMORY设计通用规范.md
+source: 记忆蓝图/04_系统文件设计/MEMORY设计哲学/01-MEMORY设计通用规范.md
 author: 皮叔
 ---
 
