@@ -146,7 +146,8 @@ jobs:
             $src = Join-Path $repo "references\skills\$sk"
             if (-not (Test-Path $src)) { Write-Host "FAIL: references/skills/$sk missing"; exit 1 }
             $dst = Join-Path $targetRoot $sk
-            Copy-Item -Recurse -Force (Join-Path $src '*') $dst
+            New-Item -ItemType Directory -Path $dst -Force | Out-Null
+            Copy-Item -Path "$src\*" -Destination "$dst\" -Recurse -Force
             $skillMd = Join-Path $dst "SKILL.md"
             if (-not (Test-Path $skillMd)) { Write-Host "FAIL: $sk SKILL.md missing after copy"; exit 1 }
             Write-Host "PASS: installed $sk (SKILL.md present)"
