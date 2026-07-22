@@ -67,6 +67,13 @@ jobs:
         fi
         echo "✅ no author absolute path"
 
+        echo "=== No hardcoded user path (~/个人AI档案/) ==="
+        if grep -rn "~/个人AI档案/" . --include="*.md" --include="*.sh" --include="*.ps1" --include="*.py" --exclude-dir=.git --exclude=CHANGELOG.md >/dev/null 2>&1; then
+          echo "❌ found hardcoded ~/个人AI档案/ — must use [记忆共享中心] placeholder"
+          exit 1
+        fi
+        echo "✅ no hardcoded user path"
+
         echo "=== No OS/runtime cruft committed ==="
         if find . -path ./.git -prune -o \( -name '.DS_Store' -o -name '*.bak' -o -name '.phaseX_last_run.json' \) -print | grep -q .; then
           echo "❌ found .DS_Store / .bak / .phaseX_last_run.json"

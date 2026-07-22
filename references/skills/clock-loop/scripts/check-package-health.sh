@@ -31,7 +31,7 @@ if [ -f "$CHLOG" ]; then
   PKG_VER=$(grep -oE 'version:[[:space:]]*"?[0-9]+\.[0-9]+\.[0-9]+' "$PKG/version.md" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
   [ -z "$PKG_VER" ] && PKG_VER="1.3.1"
   PKG_VER_ESC=$(printf '%s' "$PKG_VER" | sed 's/\./\\./g')
-  CURRENT=$(sed -n "/^## \[$PKG_VER_ESC\]/,/^## \[/p' "$CHLOG")
+  CURRENT=$(sed -n "/^## \[$PKG_VER_ESC\]/,/^## \[/p" "$CHLOG")
   while IFS= read -r token; do
     token=$(echo "$token" | tr -d '`')
     # 只查看起来像包内文件的（有.扩展名且不是网址）
@@ -100,13 +100,13 @@ fi
 
 # ── ⑤ 硬编码路径附加检测 ──
 echo -n "⑤ 全包硬编码路径: "
-SKIP_DIRS="CHANGELOG.md|\.git|__pycache__|记忆琥珀设计哲学|指令编写规范|source:|questionnaire|templates/"
+SKIP_DIRS="CHANGELOG.md|\.git|__pycache__|记忆琥珀设计哲学|指令编写规范|questionnaire|个人AI档案/"
 RES=$(grep -rn '个人AI档案' "$PKG" --include="*.md" --include="*.py" --include="*.sh" --include="*.ps1" \
   | grep -vE "$SKIP_DIRS" | grep -v '\[记忆共享中心\]' 2>/dev/null)
 if [ -z "$RES" ]; then
   echo "OK"
 else
-  echo "⚠️ ($(echo "$RES"|wc -l|tr -d ' ')处, 排除CHANGELOG/哲学/规范后)"
+  echo "⚠️ ($(echo "$RES"|wc -l|tr -d ' ')处, 排除路径前缀/历史/规范后)"
   echo "$RES" | while read line; do echo "   $line"; done
 fi
 
@@ -119,9 +119,9 @@ CURLY=$(grep -rn '{MEMORY_CENTER}\|{WORKBUDDY_HOME}' "$PKG" --include="*.templat
 # expanduser + [记忆共享中心] 双重路径危险模式
 EXPAND=$(grep -rn 'expanduser.*\[记忆共享中心\]' "$PKG" --include="*.py" 2>/dev/null)
 [ -n "$EXPAND" ] && FMT_ISSUES="$FMT_ISSUES\n  expanduser+占位符危险: $(echo "$EXPAND"|wc -l|tr -d ' ')处"
-# .ps1/.sh 中硬编码'个人AI档案'而非[记忆共享中心]
-HARD=$(grep -rn '个人AI档案' "$PKG" --include="*.ps1" --include="*.sh" 2>/dev/null | grep -v '\[记忆共享中心\]' | grep -v '记忆琥珀/备份' | grep -v '\.bak')
-[ -n "$HARD" ] && FMT_ISSUES="$FMT_ISSUES\n  .ps1/.sh硬编码个人AI档案: $(echo "$HARD"|wc -l|tr -d ' ')处"
+# .ps1/.sh/.md 中硬编码'个人AI档案'而非[记忆共享中心]
+HARD=$(grep -rn '个人AI档案' "$PKG" --include="*.ps1" --include="*.sh" --include="*.md" 2>/dev/null | grep -v '\[记忆共享中心\]' | grep -v '记忆琥珀/备份' | grep -v '\.bak' | grep -v 'CHANGELOG.md' | grep -v '个人AI档案/' | grep -v 'source:')
+[ -n "$HARD" ] && FMT_ISSUES="$FMT_ISSUES\n  .ps1/.sh/.md硬编码个人AI档案: $(echo "$HARD"|wc -l|tr -d ' ')处"
 if [ -z "$FMT_ISSUES" ]; then
   echo "OK"
 else
@@ -155,6 +155,18 @@ if [ -z "$DUP_ISSUES" ]; then
 else
   echo "FAIL"
   echo -e "$DUP_ISSUES"
+  FAILS=$((FAILS+1))
+fi
+
+# ── ⑧ 硬编码用户路径(~/个人AI档案/) —— 必须用 [记忆共享中心] 占位符 ──
+echo -n "⑧ 硬编码用户路径 ~/个人AI档案/: "
+HARD_USER=$(grep -rn '~/个人AI档案/' "$PKG" --include="*.md" --include="*.sh" --include="*.ps1" --include="*.py" 2>/dev/null \
+  | grep -v 'CHANGELOG.md' | grep -v '个人AI档案/' | head -20)
+if [ -z "$HARD_USER" ]; then
+  echo "OK"
+else
+  echo "FAIL ($(echo "$HARD_USER"|wc -l|tr -d ' ')处)"
+  echo "$HARD_USER" | while read line; do echo "   $line"; done
   FAILS=$((FAILS+1))
 fi
 
