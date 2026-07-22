@@ -89,3 +89,42 @@ jobs:
         echo "  - Total files: $(find . -path ./.git -prune -o -type f -print | wc -l)"
         echo "  - Skills: $(find references/skills -maxdepth 1 -type d | tail -n +2 | wc -l)"
         echo "  - README.md size: $(wc -l < README.md) lines"
+
+  # ── Real Windows machine guard ─────────────────────────────────────────────
+  # The package ships PowerShell scripts (restore-my-skills.ps1, rollback.ps1)
+  # containing Chinese text. Without a UTF-8 BOM, PowerShell 5.1 on a zh-CN
+  # system reads them as GBK and crashes. This job runs on a REAL windows-latest
+  # runner to assert the BOM and prove every .ps1 is syntactically loadable.
+  windows-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: PowerShell 5.1 — BOM + parse guard (real Windows machine)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fail = 0
+          $ps1 = Get-ChildItem -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notmatch '\\\.git\\' }
+          if ($ps1.Count -eq 0) { Write-Host "warning: no .ps1 found"; exit 0 }
+          foreach ($f in $ps1) {
+            $bytes = [System.IO.File]::ReadAllBytes($f.FullName)
+            $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+            $rel = $f.FullName.Replace($PWD.Path + '\', '')
+            if (-not $hasBom) {
+              Write-Host "FAIL: $rel - missing UTF-8 BOM (PS5.1 would parse Chinese as GBK -> crash)"
+              $fail++
+              continue
+            }
+            $code = [System.IO.File]::ReadAllText($f.FullName)
+            try { [void][ScriptBlock]::Create($code) }
+            catch {
+              Write-Host "FAIL: $rel - PowerShell parse error: $_"
+              $fail++
+              continue
+            }
+            Write-Host "PASS: $rel - UTF-8 BOM present + parses cleanly"
+          }
+          if ($fail -gt 0) { exit 1 }
+          Write-Host "All .ps1 files passed the Windows real-machine guard."
