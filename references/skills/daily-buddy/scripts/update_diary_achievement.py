@@ -11,10 +11,17 @@
   python3 update_diary_achievement.py              # 更新今天的日记
   python3 update_diary_achievement.py --date YYYY-MM-DD  # 更新指定日期的日记
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re
 import json
+import hashlib
 from datetime import date, datetime
 from pathlib import Path
 import sys
@@ -155,9 +162,43 @@ def run_achievement_check():
         return False
 
 
+# ─── 封口签名 ──────────────────────────────────────────────
+SEAL_SALT = "daily-buddy-seal-v1"
+
+
+def compute_seal(date_str, achievement_data):
+    """基于日期 + 6项成就数据计算确定性签名（非密码学安全，仅防跳过伪造）"""
+    fields = ["diary_total", "tomato_total", "total_late_nights",
+              "sleep_early_total", "wake_early_total", "reading_total"]
+    seed = date_str + "|" + "|".join(
+        str(achievement_data.get(f, 0) or 0) for f in fields
+    ) + "|" + SEAL_SALT
+    return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+
+
+def add_review_seal(content, date_str, achievement_data):
+    """在日记 YAML frontmatter 中添加/更新 review_sealed_sig 字段（唯一写者）"""
+    signature = compute_seal(date_str, achievement_data)
+    sig_line = f"review_sealed_sig: {date_str}:{signature}"
+
+    m = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+    if not m:
+        new_yaml = f"---\n{sig_line}\n---\n\n"
+        return new_yaml + content
+
+    yaml_block = m.group(1)
+    if "review_sealed_sig:" in yaml_block:
+        yaml_block = re.sub(r"review_sealed_sig:.*", sig_line, yaml_block)
+    else:
+        yaml_block = yaml_block.rstrip() + "\n" + sig_line
+
+    return content[:m.start(1)] + yaml_block + content[m.end(1):]
+
+
 # ─── 主流程 ────────────────────────────────────────────────
 def main():
     target_date = date.today()
+    skip_seal = "--no-seal" in sys.argv
     if "--date" in sys.argv:
         idx = sys.argv.index("--date")
         if idx + 1 < len(sys.argv):
@@ -182,6 +223,18 @@ def main():
 
     print("📝 更新日记成就模块...")
     if update_diary_achievement(diary_file, achievement_data):
+        # 封口签名（单写者·接触法防误：成就块只能由脚本产生合法签名）
+        if not skip_seal:
+            date_str = target_date.strftime("%Y-%m-%d")
+            with open(diary_file, "r", encoding="utf-8") as f:
+                content = f.read()
+            sealed_content = add_review_seal(content, date_str, achievement_data)
+            with open(diary_file, "w", encoding="utf-8") as f:
+                f.write(sealed_content)
+            sig = compute_seal(date_str, achievement_data)
+            print(f"🔒 已封口：review_sealed_sig: {date_str}:{sig}")
+        else:
+            print("⏭️ 跳过封口（--no-seal）")
         print("✅ 任务完成！")
         return 0
     else:

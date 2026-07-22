@@ -31,6 +31,12 @@ Skill S级合规评估脚本 v2.9.5
     类型判定信号已校准：分析型须具体词（思考检查点/结论块/多Agent/哲学）不用泛词"分析/批判/推理"，
     流程执行型含"步骤/流程"泛词——修正初版把awaken/system-logger/growth-box误判为分析/转换型。
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re

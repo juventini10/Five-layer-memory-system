@@ -14,6 +14,12 @@
   INDEX.md 的模式目录表是从错误源文件派生的数据。手工维护计数=双本账迟早漂移。
   本脚本只读源文件、实时计算派生数据，不另建独立写入源。
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import argparse
 import re

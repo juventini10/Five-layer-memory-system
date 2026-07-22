@@ -12,6 +12,26 @@
 
 ---
 
+## [1.3.1] — 2026-07-22
+
+> 修复 Windows 真机安装时 Skill 复制路径错配 + 跨平台脚本编码 + 全链路版本号一致性。
+
+### 🐛 修复（Windows 真机安装）
+
+- **单 Skill 安装/升级源路径错配** — `references/steps/step6-skill-install.md`、`references/upgrade/upgrade-plan.md`、INSTALL.md 单/全量安装流程，原从顶层 `skills/` 拷贝；该目录为陈旧孤儿（缺 `restore-my-skills.sh`、daily-buddy 停留在 3.17.2），而生成器只产出 `references/skills/`。导致真实安装复制不到正确 Skill。修复：全量改为 `references/skills/` 单一权威源（与 Windows 分支、 canonical 安装包一致），顶层 `skills/` 删除。
+- **版本号全链路不一致（C3 门禁缺口）** — 入口执行文件 / INSTALL.md / step1 / step7 / 盲审检查清单 停留在 1.2.4（1.3.0 发版时漏升），与 version.md / CHANGELOG 的 1.3.0 不符。修复：全链路统一升至 1.3.1。
+
+### 🔧 加固（跨平台）
+
+- **`restore-my-skills.ps1` UTF-8 BOM** — 源文件补齐 BOM，生成器 round-trip 后 `.ps1` 在 Windows PowerShell 5.1 中文环境下不再因 GBK 误读中文崩溃；本地三套测试（L1 冒烟 / L2 模板 / L3 集成）全绿。
+- **GitHub `windows-test` 真机 CI** — windows-latest runner 新增 BOM 字节级校验 + 脚本解析检查，包内 7 个 `.ps1` 全部 PASS。
+
+### ✨ 新增（Skill 同步）
+
+- **daily-buddy 3.18.0 成就封口硬化** — 新增 `verify_achievement_seal.py`（SHA256 封口校验），`update_diary_achievement.py` 写入成就时落 `review_sealed_sig`（SHA256 封口），防止成就数据被静默篡改；工作流 C 与 SKILL.md 同步改造。
+
+---
+
 ## [1.3.0] — 2026-07-22
 
 > 新增数据污染检测机制 + 跨平台加固。

@@ -1,16 +1,16 @@
 ---
-name: 五层记忆系统-布洛陀1.3.0-安装入口
+name: 五层记忆系统-布洛陀1.3.1-安装入口
 description: >
   统一安装入口。AI 收到"读取这个安装包，执行安装"后第一个读的文件。
   自动检测用户类型做分流——不占用户时间，不提问。
 target_platform: all
-author: 皮叔（五层记忆系统 · 布洛陀版本 v1.3.0）
+author: 皮叔（五层记忆系统 · 布洛陀版本 v1.3.1）
 license: MIT
-version: "1.3.0"
+version: "1.3.1"
 compatibility: workbuddy
 ---
 
-# 🏮 布洛陀 1.3.0 — 安装入口
+# 🏮 布洛陀 1.3.1 — 安装入口
 
 > 🔴 本文件是本安装包的**宪法级入口文件**。不是建议，是硬约束。不可跳过。
 > 🔴 所有安装流程从这里开始。不管用户怎么说，第一个读的文件必须是这里。
@@ -39,15 +39,15 @@ compatibility: workbuddy
 
 | 用户说的 | Skill 目录 |
 |----------|-----------|
-| 每日伙伴 / daily-buddy | `skills/daily-buddy/` |
-| 三明智 / triwich / 三明治 | `skills/triwich/` |
-| 反方向的钟 / clock-loop | `skills/clock-loop/` |
-| 成长箱 / growth-box | `skills/growth-box/` |
-| 唤醒记忆 / awaken-memory | `skills/awaken-memory-system/` |
-| 读书助手 / reading-assistant | `skills/reading-assistant/` |
-| 系统日志 / system-logger | `skills/system-logger/` |
-| 迁理之外 / meta-aletheia | `skills/meta-aletheia/` |
-| Shall We Talk / SWT | `skills/shall-we-talk/` |
+| 每日伙伴 / daily-buddy | `references/skills/daily-buddy/` |
+| 三明智 / triwich / 三明治 | `references/skills/triwich/` |
+| 反方向的钟 / clock-loop | `references/skills/clock-loop/` |
+| 成长箱 / growth-box | `references/skills/growth-box/` |
+| 唤醒记忆 / awaken-memory | `references/skills/awaken-memory-system/` |
+| 读书助手 / reading-assistant | `references/skills/reading-assistant/` |
+| 系统日志 / system-logger | `references/skills/system-logger/` |
+| 迁理之外 / meta-aletheia | `references/skills/meta-aletheia/` |
+| Shall We Talk / SWT | `references/skills/shall-we-talk/` |
 
 ---
 
@@ -136,7 +136,7 @@ find ~/ -maxdepth 4 -name "问卷答案汇总.md" 2>/dev/null | head -3
 ### 检测完成输出模板
 
 ```
-🏮 布洛陀 1.3.0 安装检测
+🏮 布洛陀 1.3.1 安装检测
 ├─ 用户类型：[全新 / 升级]
 ├─ 检测依据：[列出3项检测结果]
 │
@@ -204,15 +204,15 @@ python "<安装包>/数据污染检测.py" --memory-root "<记忆共享中心>" 
 
 | 用户说的 | 目录 |
 |----------|------|
-| 每日伙伴 / daily-buddy | `skills/daily-buddy/` |
-| 三明智 / triwich | `skills/triwich/` |
-| 反方向的钟 / clock-loop | `skills/clock-loop/` |
-| 成长箱 / growth-box | `skills/growth-box/` |
-| 唤醒记忆 / awaken-memory | `skills/awaken-memory-system/` |
-| 读书助手 / reading-assistant | `skills/reading-assistant/` |
-| 系统日志 / system-logger | `skills/system-logger/` |
-| 迁理之外 / meta-aletheia | `skills/meta-aletheia/` |
-| Shall We Talk / SWT | `skills/shall-we-talk/` |
+| 每日伙伴 / daily-buddy | `references/skills/daily-buddy/` |
+| 三明智 / triwich | `references/skills/triwich/` |
+| 反方向的钟 / clock-loop | `references/skills/clock-loop/` |
+| 成长箱 / growth-box | `references/skills/growth-box/` |
+| 唤醒记忆 / awaken-memory | `references/skills/awaken-memory-system/` |
+| 读书助手 / reading-assistant | `references/skills/reading-assistant/` |
+| 系统日志 / system-logger | `references/skills/system-logger/` |
+| 迁理之外 / meta-aletheia | `references/skills/meta-aletheia/` |
+| Shall We Talk / SWT | `references/skills/shall-we-talk/` |
 
 ### 安装步骤
 
@@ -231,7 +231,7 @@ python "<安装包>/数据污染检测.py" --memory-root "<记忆共享中心>" 
 
    # 复制
    mkdir -p "$MC/技能配置/$SKILL"
-   cp -r skills/"$SKILL"/* "$MC/技能配置/$SKILL/"
+   cp -r references/skills/"$SKILL"/* "$MC/技能配置/$SKILL/"
 
    # 替换占位符
    find "$MC/技能配置/$SKILL/" \( -name "*.md" -o -name "*.py" \) -exec perl -i -pe "s|\[记忆共享中心\]|$MC|g" {} \;
@@ -259,7 +259,7 @@ python "<安装包>/数据污染检测.py" --memory-root "<记忆共享中心>" 
 
    # 复制
    New-Item -ItemType Directory -Path "$MC\技能配置\$SKILL" -Force
-   Copy-Item "skills\$SKILL\*" "$MC\技能配置\$SKILL\" -Recurse
+   Copy-Item "references\skills\$SKILL\*" "$MC\技能配置\$SKILL\" -Recurse
 
    # 替换占位符
    Get-ChildItem "$MC\技能配置\$SKILL" -Include "*.md","*.py" -Recurse | ForEach-Object {

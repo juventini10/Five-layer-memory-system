@@ -128,3 +128,33 @@ jobs:
           }
           if ($fail -gt 0) { exit 1 }
           Write-Host "All .ps1 files passed the Windows real-machine guard."
+
+      - name: Real install-path test (references/skills is authoritative)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo = $PWD.Path
+          # 1) orphan guard — top-level skills/ was deleted, install must use references/skills/
+          if (Test-Path "$repo\skills") { Write-Host "FAIL: orphan skills/ still present"; exit 1 }
+          Write-Host "PASS: no orphan top-level skills/ dir"
+          # 2) install copy test from references/skills/
+          $targetRoot = Join-Path $env:TEMP "wb_skills_test"
+          if (Test-Path $targetRoot) { Remove-Item $targetRoot -Recurse -Force }
+          New-Item -ItemType Directory -Path $targetRoot | Out-Null
+          $skills = @('daily-buddy','clock-loop','triwich')
+          foreach ($sk in $skills) {
+            $src = Join-Path $repo "references\skills\$sk"
+            if (-not (Test-Path $src)) { Write-Host "FAIL: references/skills/$sk missing"; exit 1 }
+            $dst = Join-Path $targetRoot $sk
+            Copy-Item -Recurse -Force (Join-Path $src '*') $dst
+            $skillMd = Join-Path $dst "SKILL.md"
+            if (-not (Test-Path $skillMd)) { Write-Host "FAIL: $sk SKILL.md missing after copy"; exit 1 }
+            Write-Host "PASS: installed $sk (SKILL.md present)"
+            # 3) junction test (WorkBuddy soft-link convention, no admin needed)
+            $link = Join-Path $targetRoot "${sk}-link"
+            if (Test-Path $link) { Remove-Item $link -Force }
+            New-Item -ItemType Junction -Path $link -Target $src | Out-Null
+            if (-not (Test-Path (Join-Path $link "SKILL.md"))) { Write-Host "FAIL: junction $sk not resolving"; exit 1 }
+            Write-Host "PASS: junction $sk -> references/skills/$sk resolves"
+          }
+          Write-Host "All real Windows install-path tests passed."

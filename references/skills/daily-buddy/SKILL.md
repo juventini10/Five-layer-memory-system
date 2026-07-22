@@ -6,12 +6,12 @@ description: >
   不适用于纯闲聊/文件操作。
 compatibility: workbuddy, qclaw, trae, trae-solo, wukong, qoderwork
 allowed-tools: [Read, Write, Bash, Grep]
-dependencies: [scripts/create_skeleton.py, scripts/achievement_tracker.py, scripts/update_diary_achievement.py]
+dependencies: [scripts/create_skeleton.py, scripts/achievement_tracker.py, scripts/update_diary_achievement.py, scripts/verify_achievement_seal.py]
 author: 皮叔
 source: self-built
 upstream: ~/个人AI档案/技能配置/daily-buddy/
 modifiable: true
-version: "3.17.2"
+version: "3.18.0"
 license: MIT
 ---
 
@@ -131,6 +131,7 @@ license: MIT
 | JSON Schema强制校验 | 接触法（Contact Method） | 数据格式错误 | 最强（物理拒绝） |
 | 番茄数定值校验 | 定值法（Fixed-Value Method） | 番茄计数错误 | 最强（数量不符=阻断） |
 | 步骤强依赖 | 动作步序法（Motion-Step Method） | 跳步执行 | 最强（前步缺失=阻断） |
+| 成就封口签名校验 | 接触法(单写者)+定值法(签名==当日真实数据) | 成就检测被跳过/伪造 | 最强（签名不匹配=阻断） |
 
 ### 接触式防错（Contact Method）
 数据同步时强制JSON Schema校验。格式不对=物理拒绝写入，不是检查后报告。必填字段缺失/类型不符=立即阻断，不可降级继续。Schema定义：`daily_review_data`必须包含`date`/`tomato_count`/`sleep_duration`/`mood`/`task_summary`五个字段。
@@ -442,6 +443,7 @@ AI：（打开今日日记 → 找到"视频剪辑"行 → 实际列 +2 → 累�
 |:---|:----|:--------|
 | 成就脚本 | `scripts/achievement_tracker.py` | 成就检测/状态查询时 |
 | 成就脚本 | `scripts/update_diary_achievement.py` | 日记成就模块更新时 |
+| 成就验证脚本 | `scripts/verify_achievement_seal.py` | 成就封口签名独立校验时 |
 | 骨架生成脚本 | `scripts/create_skeleton.py` | 创建日记骨架时 |
 
 ## 🌀 未知未知写入前置（自包含引导）

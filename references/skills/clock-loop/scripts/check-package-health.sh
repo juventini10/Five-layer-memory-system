@@ -29,7 +29,7 @@ ISSUES=""
 if [ -f "$CHLOG" ]; then
   # 提取当前版本段（动态读取 version.md，避免硬编码旧版本号）
   PKG_VER=$(grep -oE 'version:[[:space:]]*"?[0-9]+\.[0-9]+\.[0-9]+' "$PKG/version.md" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-  [ -z "$PKG_VER" ] && PKG_VER="1.2.4"
+  [ -z "$PKG_VER" ] && PKG_VER="1.3.1"
   PKG_VER_ESC=$(printf '%s' "$PKG_VER" | sed 's/\./\\./g')
   CURRENT=$(sed -n "/^## \[$PKG_VER_ESC\]/,/^## \[/p' "$CHLOG")
   while IFS= read -r token; do

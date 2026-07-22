@@ -1,5 +1,13 @@
 # CHANGELOG
 
+### v3.18.0 — 2026-07-22
+成就门禁从"AI规则级"升为"代码级物理阻断"（L3成熟度·防误层）：
+- 新增 `scripts/verify_achievement_seal.py`：独立校验脚本，重算签名比对 → exit 0/1（接触法+定值法防伪）。
+- `scripts/update_diary_achievement.py`：写入成就块后自动计算 HMAC 封口签名（`review_sealed_sig`）写入日记 YAML frontmatter；新增 `--no-seal` 调试豁免。
+- `references/工作流C-晚间复盘.md`：步骤2成就校验（终检）重写为脚本物理阻断（exit≠0→回溯步骤2不可进步骤3）；步骤3入口加前步验证通过门禁；单写者声明（AI禁手写封口字段）。
+- `SKILL.md`：Poka-Yoke防误层表新增第4行"成就封口签名校验"；dependencies + 脚本表补 verify_achievement_seal.py；版本 3.17.2→3.18.0。
+- 设计哲学：封口签名基于当日6项真实成就数据（非密码学安全，仅防 AI 跳过伪造）——AI 未跑成就检测→无真实数据→签名不匹配→验证拦截。三明智 L3 双 Agent 盲审驱动（Agent A+Agent B 独立收敛）。
+
 ### v3.17.2 — 2026-07-18
 Skill 自包含化——成就脚本移入 Skill 目录（用户只装 daily-buddy 即可跑全流程）：
 - `scripts/` 新增：`achievement_tracker.py`（63KB）+ `update_diary_achievement.py`（7KB），从 `~/个人AI档案/成就系统/scripts/` 拷贝。

@@ -16,6 +16,12 @@ create_skeleton.py — 日记骨架生成器 + 灵感闪现注入
 
 输出：完整的日记骨架，AI 拿到后只能填充待填字段（目标/感悟/决策/总结），禁止手写 day_of_week。
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import argparse
 import datetime

@@ -18,6 +18,12 @@
   SKILL.md 只写一句：✅DO 启动时调 drain-backlog.py --check，按结果执行。
   依据：指令§6.1 单一来源（阈值/判定规则只存在一处）。
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import argparse
 import re

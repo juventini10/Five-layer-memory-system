@@ -33,7 +33,7 @@ Read CHANGELOG.md，从当前版本到目标版本的所有变更摘要，按类
 1. 比对 CHANGELOG 或 SKILL.md 版本号，识别需要升级的 Skill
 2. 对每个需升级的 Skill：
    - 备份旧版：`cp -r {记忆共享中心}/技能配置/{Skill名} {记忆共享中心}/记忆琥珀/升级前备份_{timestamp}/`
-   - 覆盖新版：`cp -r skills/{Skill名}/* {记忆共享中心}/技能配置/{Skill名}/`
+   - 覆盖新版：`cp -r references/skills/{Skill名}/* {记忆共享中心}/技能配置/{Skill名}/`
    - 替换路径占位符
 3. 更新软链接
 

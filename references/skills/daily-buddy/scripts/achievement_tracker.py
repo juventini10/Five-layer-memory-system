@@ -14,6 +14,12 @@
   python3 achievement_tracker.py --status    # 查看当前成就进度
   python3 achievement_tracker.py --sync-memory # 同步成就数据到 MEMORY.md
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re
@@ -716,8 +722,8 @@ def scan_all_diaries(cutoff=None):
         # 计算当前连续段（从最后一篇往前数）
         today = _date.today()
         last = diary_dates[-1]
-        # 如果最后一篇是今天或昨天才算当前连续（允许今天还没写）
-        if (today - last).days <= 1:
+        # 如果最后一篇是今天或明天才算当前连续（允许次日骨架已生成导致的"未来日期"边界）
+        if (last - today).days <= 1:
             _cur = 1
             for i in range(len(diary_dates)-1, 0, -1):
                 if (diary_dates[i] - diary_dates[i-1]) == _timedelta(days=1):
@@ -947,6 +953,8 @@ def run_check(scan_all=False, as_of_date=None):
         stats = scan_all_diaries()
         data["tomato_total"] = stats["tomato_total"]
         data["diary_total"] = stats["diary_total"]
+        data["diary_streak_current"] = stats.get("diary_streak_current", 0)
+        data["diary_streak_max"] = stats.get("diary_streak_max", 0)
         data["sleep_early_total"] = stats["sleep_early_total"]
         data["wake_early_total"] = stats["wake_early_total"]
         data["reading_total"] = stats["reading_total"]
@@ -981,10 +989,11 @@ def run_check(scan_all=False, as_of_date=None):
             pc = data["physiological_counts"]
             print(f"  生理状态：🟢{pc.get('green',0)}/🟡{pc.get('yellow',0)}/🔴{pc.get('red',0)}")
     else:
-        # 只扫描今日日记
+        # 只扫描今日日记（递归定位当月子目录，与 scan_all 同构）
         today = date.today().strftime("%Y-%m-%d")
-        today_file = DIARY_DIR / f"{today}.md"
-        if today_file.exists():
+        _cands = sorted(glob(str(DIARY_DIR / "**" / f"{today}.md"), recursive=True))
+        today_file = Path(_cands[0]) if _cands else None
+        if today_file is not None and today_file.exists():
             today_data = parse_diary_file(today_file)
             print(f"  今日番茄：{today_data['tomato']}🍅")
         else:

@@ -59,15 +59,15 @@ fi
 
 | Skill | 来源目录 | 安装到 |
 |------|---------|--------|
-| 唤醒记忆系统 | `skills/awaken-memory-system/` | `技能配置/awaken-memory-system/` |
-| 每日伙伴 | `skills/daily-buddy/` | `技能配置/daily-buddy/` |
-| 系统日志 | `skills/system-logger/` | `技能配置/system-logger/` |
-| 三明智 | `skills/triwich/` | `技能配置/triwich/` |
-| 迁理之外 | `skills/meta-aletheia/` | `技能配置/meta-aletheia/` |
-| 成长箱 | `skills/growth-box/` | `技能配置/growth-box/` |
-| Shall We Talk | `skills/shall-we-talk/` | `技能配置/shall-we-talk/` |
-| 读书助手 | `skills/reading-assistant/` | `技能配置/reading-assistant/` |
-| 反方向的钟 | `skills/clock-loop/` | `技能配置/clock-loop/` |
+| 唤醒记忆系统 | `references/skills/awaken-memory-system/` | `技能配置/awaken-memory-system/` |
+| 每日伙伴 | `references/skills/daily-buddy/` | `技能配置/daily-buddy/` |
+| 系统日志 | `references/skills/system-logger/` | `技能配置/system-logger/` |
+| 三明智 | `references/skills/triwich/` | `技能配置/triwich/` |
+| 迁理之外 | `references/skills/meta-aletheia/` | `技能配置/meta-aletheia/` |
+| 成长箱 | `references/skills/growth-box/` | `技能配置/growth-box/` |
+| Shall We Talk | `references/skills/shall-we-talk/` | `技能配置/shall-we-talk/` |
+| 读书助手 | `references/skills/reading-assistant/` | `技能配置/reading-assistant/` |
+| 反方向的钟 | `references/skills/clock-loop/` | `技能配置/clock-loop/` |
 
 ### macOS / Linux 安装流程
 
@@ -91,7 +91,7 @@ fi
    
    # 复制完整Skill目录（含 references/ 里的所有文件）
    mkdir -p "$MEMORY_CENTER/技能配置/$SKILL_NAME"
-   cp -r skills/"$SKILL_NAME"/* "$MEMORY_CENTER/技能配置/$SKILL_NAME/"
+   cp -r references/skills/"$SKILL_NAME"/* "$MEMORY_CENTER/技能配置/$SKILL_NAME/"
    
    # 替换所有 .md 和 .py 文件中的路径占位符（同时处理方括号和花括号两种格式）
    find "$MEMORY_CENTER/技能配置/$SKILL_NAME/" \( -name "*.md" -o -name "*.py" \) -exec \
@@ -102,7 +102,7 @@ fi
 
 4. **复制软链接自愈脚本**
    ```bash
-   cp skills/restore-my-skills.sh "$MEMORY_CENTER/技能配置/restore-my-skills.sh"
+   cp references/skills/restore-my-skills.sh "$MEMORY_CENTER/技能配置/restore-my-skills.sh"
    chmod +x "$MEMORY_CENTER/技能配置/restore-my-skills.sh"
    # 脚本内 [记忆共享中心] 占位符由 sed 替换（第5步统一处理）
    ```

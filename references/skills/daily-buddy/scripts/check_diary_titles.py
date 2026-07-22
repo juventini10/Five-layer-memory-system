@@ -3,6 +3,12 @@
 日记标题格式检查脚本
 验证所有日记是否符合规则：# YYYY-MM-DD(周X) 每日计划
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re

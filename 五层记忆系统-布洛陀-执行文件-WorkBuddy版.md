@@ -1,24 +1,24 @@
 ---
-name: 五层记忆系统-布洛陀1.2.4
+name: 五层记忆系统-布洛陀1.3.1
 description: >
-  布洛陀 1.2.4 执行文件。引导用户完成记忆系统初始化：答题产生数据、合成个性化文件、Skill安装、未知未知路由钩子安装、记忆琥珀安装、系统验证。
+  布洛陀 1.3.1 执行文件。引导用户完成记忆系统初始化：答题产生数据、合成个性化文件、Skill安装、未知未知路由钩子安装、记忆琥珀安装、系统验证。
   注意：这是子流程文件，AI 入口是根目录的 INSTALL.md。
 target_platform: WorkBuddy
-author: 皮叔（五层记忆系统 · 布洛陀版本 v1.2.4）
+author: 皮叔（五层记忆系统 · 布洛陀版本 v1.3.1）
 license: MIT
-version: 1.2.4
+version: 1.3.1
 compatibility: workbuddy
 ---
 
-# 五层记忆系统 布洛陀 1.2.4 — 执行文件
+# 五层记忆系统 布洛陀 1.3.1 — 执行文件
 
 > 🔴 本文件是安装流程的执行引擎。不是建议，是硬约束。不可跳过。
 > 🔴 所有 7 步必须按顺序执行，每一步先读 step 文件再做。
 
-> 📅 版本：布洛陀 1.2.4 | 🎯 目标平台：WorkBuddy | 📦 安装包结构：INSTALL.md（入口）+ references/ 按需加载
+> 📅 版本：布洛陀 1.3.1 | 🎯 目标平台：WorkBuddy | 📦 安装包结构：INSTALL.md（入口）+ references/ 按需加载
 > 🆕 布洛陀 1.2.1：新增「步骤6·钩子安装」子步骤——未知未知路由兜底钩子 route_unknown_unknown.py 挂入 settings.json 的 hooks.Stop，使 🕳️ 盲区段开箱即被自动路由到悬置区（1.1.0 仅文档化未发货，本次补断层）
 
-> 🏮 欢迎使用五层记忆系统·布洛陀 1.2.4。
+> 🏮 欢迎使用五层记忆系统·布洛陀 1.3.1。
 > 取名源自壮族智慧先祖，新版搭载三大思维，做你的专属智囊。
 > 它熟记你的点滴，懂你所思，往后相见皆是旧识。
 
@@ -30,7 +30,7 @@ compatibility: workbuddy
 ## 📦 安装包结构
 
 ```
-五层记忆系统-布洛陀1.2.4/
+五层记忆系统-布洛陀1.3.1/
 ├── INSTALL.md                                        ← 🚪 唯一入口（AI 先读这个做分流）
 ├── CHANGELOG.md                                      ← 📋 版本记录
 ├── rollback.sh                                       ← 🔄 一键回滚脚本
@@ -102,7 +102,7 @@ compatibility: workbuddy
     │       └── check_achievements.sh
     ├── 记忆琥珀/README.md                        ← 物理级文件哨兵说明
     ├── 记忆琥珀/scripts/                         ← 备份脚本（跨平台）
-    ├── skills/                                   ← 9个Skill（每个含SKILL.md+references/）
+    ├── references/skills/                        ← 9个Skill（每个含SKILL.md+references/）
     │   ├── 唤醒记忆系统/
     │   ├── 每日伙伴/
     │   ├── 系统日志/
@@ -243,4 +243,4 @@ compatibility: workbuddy
 
 ---
 
-版本：布洛陀 1.2.4（2026-07-21）
+版本：布洛陀 1.3.1（2026-07-22）

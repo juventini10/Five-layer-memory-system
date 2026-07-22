@@ -24,6 +24,12 @@
 用法：
   python3 load_claim_index.py [--ledger PATH]
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import argparse
 import json

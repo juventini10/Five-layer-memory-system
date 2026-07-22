@@ -7,6 +7,12 @@
 3. 验证数据一致性
 4. 输出验证结果
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re

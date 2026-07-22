@@ -31,6 +31,12 @@ clock-loop Phase 4.5据此写悬置区且#1已处理的本周期不再重复触�
 用法：
   python3 append_claim.py --topic "四象限定义" --stance "双主体认知框架" --source 对话 --date 2026-07-07
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import argparse
 import re

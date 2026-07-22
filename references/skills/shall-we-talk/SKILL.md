@@ -14,7 +14,7 @@ source: self-built
 upstream: ~/个人AI档案/技能配置/shall-we-talk/
 modifiable: true
 license: Proprietary
-version: "1.1.7"
+version: "1.1.8"
 dependencies: []
 ---
 

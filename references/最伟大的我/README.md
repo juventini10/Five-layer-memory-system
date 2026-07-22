@@ -5,7 +5,7 @@ date: 2026-07-18
 version: v1.0
 status: active
 summary: 五层记忆系统的镜像——人视角的成长全景图
-source: ~/个人AI档案/最伟大的我/README.md
+source: 最伟大的我/README.md
 author: 皮叔
 tags: [最伟大的我, README, 概述]
 area: 最伟大的我

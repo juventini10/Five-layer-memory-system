@@ -11,6 +11,12 @@
 
 设计原则：脚本机械读版本号比对——零手工，零 prose 判断。
 """
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import sys
 import yaml
