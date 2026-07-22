@@ -1,0 +1,91 @@
+name: Validate Memory System
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check top-level files
+      run: |
+        echo "=== Required top-level files ==="
+        for file in README.md CHANGELOG.md CONTRIBUTING.md LICENSE .gitignore INSTALL.md version.md; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+
+    - name: Check package payload structure
+      run: |
+        echo "=== Required directories ==="
+        for dir in references references/skills references/steps references/templates; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir exists"
+          else
+            echo "❌ $dir missing"
+            exit 1
+          fi
+        done
+
+        echo ""
+        echo "=== The 9 linked Skills ==="
+        for sk in awaken-memory-system shall-we-talk meta-aletheia daily-buddy growth-box system-logger triwich reading-assistant clock-loop; do
+          if [ -f "references/skills/$sk/SKILL.md" ]; then
+            echo "✅ $sk"
+          else
+            echo "❌ references/skills/$sk/SKILL.md missing"
+            exit 1
+          fi
+        done
+
+        echo ""
+        echo "=== Install steps (step1–step7 + step6.5) ==="
+        step_count=$(find references/steps -name "*.md" | wc -l | tr -d ' ')
+        echo "Found $step_count step files"
+        [ "$step_count" -ge 8 ] || { echo "❌ expected >= 8 step files"; exit 1; }
+
+    - name: Hygiene — no personal identifiers or cruft
+      run: |
+        echo "=== No author-specific absolute paths ==="
+        # Build the needle from parts so this workflow file never contains the
+        # literal path itself (otherwise the check would match its own source).
+        OWNER="juventini10"
+        if grep -rn "/Users/$OWNER" . --exclude-dir=.git >/dev/null 2>&1; then
+          echo "❌ found author home path in shipped content"
+          exit 1
+        fi
+        echo "✅ no author absolute path"
+
+        echo "=== No OS/runtime cruft committed ==="
+        if find . -path ./.git -prune -o \( -name '.DS_Store' -o -name '*.bak' -o -name '.phaseX_last_run.json' \) -print | grep -q .; then
+          echo "❌ found .DS_Store / .bak / .phaseX_last_run.json"
+          exit 1
+        fi
+        echo "✅ clean"
+
+    - name: Version consistency
+      run: |
+        echo "=== version.md ==="
+        cat version.md
+        grep -q 'version:' version.md || { echo "❌ version.md has no version field"; exit 1; }
+
+    - name: Summary
+      run: |
+        echo ""
+        echo "=========================================="
+        echo "✅ All validation checks passed!"
+        echo "=========================================="
+        echo "  - Total files: $(find . -path ./.git -prune -o -type f -print | wc -l)"
+        echo "  - Skills: $(find references/skills -maxdepth 1 -type d | tail -n +2 | wc -l)"
+        echo "  - README.md size: $(wc -l < README.md) lines"

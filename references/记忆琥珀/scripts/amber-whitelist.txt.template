@@ -1,0 +1,54 @@
+# 记忆琥珀白名单模板 — 每行一个绝对路径，# 开头为注释
+# 修改这些文件时会自动备份到 记忆琥珀/ 目录
+#
+# ⚠️ 安装时由 step6.5 自动替换以下占位符：
+#   [记忆共享中心]  → 用户的记忆共享中心路径（如 ~/[记忆共享中心] 或 ~/AI记忆库）
+#   ~/.workbuddy → WorkBuddy 安装目录（通常 ~/.workbuddy）
+#
+# 安装后此文件落到 [记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt
+
+# === 个人 AI 档案核心 ===
+[记忆共享中心]/核心层/CORE.md
+[记忆共享中心]/潜意识层/SHADOW.md
+[记忆共享中心]/情境层/动态状态快照.md
+
+# === 记忆规则（AI 行为底线，铁律级重要）===
+[记忆共享中心]/记忆规则/用户基本规则-铁律版.md
+[记忆共享中心]/记忆规则/用户基本规则-详解存档.md
+[记忆共享中心]/记忆规则/用户基本规则-摘要版.md
+
+# === WorkBuddy 系统文件 ===
+~/.workbuddy/IDENTITY.md
+~/.workbuddy/MEMORY.md
+~/.workbuddy/SOUL.md
+~/.workbuddy/USER.md
+
+# === 成就系统 ===
+[记忆共享中心]/成就系统/scripts/achievement_tracker.py
+[记忆共享中心]/成就系统/scripts/achievement_data.json
+
+# === 各 Skill 的 SKILL.md ===
+[记忆共享中心]/技能配置/daily-buddy/SKILL.md
+[记忆共享中心]/技能配置/shall-we-talk/SKILL.md
+[记忆共享中心]/技能配置/triwich/SKILL.md
+[记忆共享中心]/技能配置/clock-loop/SKILL.md
+[记忆共享中心]/技能配置/growth-box/SKILL.md
+[记忆共享中心]/技能配置/awaken-memory-system/SKILL.md
+[记忆共享中心]/技能配置/reading-assistant/SKILL.md
+[记忆共享中心]/技能配置/system-logger/SKILL.md
+[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+
+# === 记忆蓝图（设计依据库，目录级递归守护）===
+# 如果用户有记忆蓝图目录，取消下行注释即可自动备份目录内所有文件
+# [记忆共享中心]/记忆蓝图/
+
+# === Trae Work ===
+# TODO: 在此追加 Trae Work 关键文件路径（如 [记忆共享中心]/.../SOUL.md），追加后引擎自动保护
+# [记忆共享中心]/...
+
+# === 悟空 ===
+# TODO: 在此追加悟空关键文件路径
+# [记忆共享中心]/...
+
+# === 自检端点（调试用，放在核心层目录内以复用目录监听；macOS/Windows 通用）===
+[记忆共享中心]/核心层/_amber_selftest.txt

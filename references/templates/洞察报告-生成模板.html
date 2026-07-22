@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>底层洞察与协作契约报告</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+body {
+  font-family: "Georgia", "Noto Serif SC", "Source Han Serif SC", serif;
+  background: #f0ece4;
+  color: #2a2a28;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+}
+:root { --klein: #002fa7; --klein-light: rgba(0,47,167,0.06); }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 40px; }
+
+/* 封面 */
+.cover { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 80px 0; }
+.cover .wrap { max-width: 640px; }
+.cover-rule { width: 48px; height: 2px; background: #002fa7; margin-bottom: 32px; }
+.cover-title { font-size: 56px; font-weight: 700; line-height: 1.1; color: #1a1a18; letter-spacing: -0.5px; margin-bottom: 24px; }
+.cover-sub { font-size: 14px; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 48px; }
+.cover-lede { font-size: 17px; color: #555; line-height: 1.8; }
+.cover-quote-wrap { margin-top: 48px; background: #002fa7; border-radius: 4px; padding: 32px 28px 28px 28px; color: #fff; font-size: 18px; line-height: 1.8; font-style: italic; }
+.cover-quote-text { position: relative; display: inline; font-style: italic; }
+.cover-quote-text::before { content: "\201C"; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 72px; color: rgba(255,255,255,0.18); position: absolute; top: -24px; left: -20px; font-style: normal; pointer-events: none; user-select: none; line-height: 1; }
+.cover-quote-text::after { content: "\201D"; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 72px; color: rgba(255,255,255,0.18); position: absolute; bottom: -42px; right: -20px; font-style: normal; pointer-events: none; user-select: none; line-height: 1; }
+.cover-quote-source { font-size: 13px; color: rgba(255,255,255,0.6); font-style: normal; margin-top: 16px; }
+
+/* 导航栏 */
+.nav-fixed { position: fixed; top: 20px; right: 20px; z-index: 999; background: rgba(240,236,228,0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 4px; max-height: 80vh; overflow-y: auto; }
+.nav-label { font-size: 10px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; font-family: "Georgia", serif; }
+.nav-link { display: block; font-size: 12px; color: #777; text-decoration: none; padding: 3px 10px; border-radius: 4px; transition: all 0.2s; white-space: nowrap; font-family: "Georgia", serif; }
+.nav-link:hover { color: #002fa7; background: rgba(0,47,167,0.06); }
+.nav-link.active { color: #fff; background: #002fa7; }
+.chapter-anchor { scroll-margin-top: 20px; }
+
+/* 章节过渡 */
+.chapter { margin: 80px 0 48px; }
+.chapter-num { font-size: 12px; color: #002fa7; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; font-family: "Georgia", serif; }
+.chapter-title { font-size: 36px; font-weight: 700; color: #1a1a18; line-height: 1.25; margin-bottom: 4px; }
+.chapter-subtitle { font-size: 24px; font-weight: 500; color: #002fa7; margin-bottom: 16px; letter-spacing: 0.3px; }
+.chapter-lede { font-size: 16px; color: #888; line-height: 1.7; }
+
+/* 正文 */
+.p { font-size: 15.5px; color: #3a3a38; line-height: 1.9; margin-bottom: 20px; }
+.h2 { font-size: 20px; font-weight: 700; color: #1a1a18; margin: 52px 0 20px; letter-spacing: -0.2px; }
+.h3 { font-size: 17px; font-weight: 600; color: #2a2a28; margin: 36px 0 14px; }
+.insight { font-size: 22px; font-weight: 600; color: #1a1a18; line-height: 1.55; margin: 48px 0; background: #002fa7; color: #fff; padding: 24px 28px; border-radius: 4px; }
+
+/* 列表 */
+.ul { margin: 20px 0 28px; padding-left: 24px; }
+.ul li { font-size: 15.5px; color: #3a3a38; line-height: 1.9; margin-bottom: 10px; position: relative; list-style: none; }
+.ul li::before { content: '—'; position: absolute; left: -20px; color: #002fa7; font-weight: 600; }
+.ol { margin: 20px 0 28px; padding-left: 20px; }
+.ol li { font-size: 15.5px; color: #3a3a38; line-height: 1.9; margin-bottom: 10px; }
+
+/* 表格 */
+table { width: 100%; margin: 40px 0; border-collapse: collapse; font-size: 14.5px; }
+th { font-weight: 600; color: #1a1a18; text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid #002fa7; font-size: 13px; letter-spacing: 1px; }
+td { padding: 14px 12px 14px 0; color: #444; line-height: 1.7; border-bottom: 1px solid #eee8de; vertical-align: top; }
+td:first-child { color: #2a2a28; font-weight: 500; }
+.table-note { font-size: 13px; color: #aaa; margin-top: 8px; }
+
+/* 提示块：无左侧线条，简约设计 */
+.callout { margin: 40px 0; }
+
+/* 行动建议：克莱因蓝实色块，白字 */
+.c-action {
+  background: #002fa7;
+  color: #fff;
+  border-radius: 4px;
+  padding: 16px 20px;
+}
+.c-action .callout-title {
+  color: #fff;
+}
+.c-action .callout-body {
+  color: rgba(255,255,255,0.9);
+}
+.c-action .callout-body strong {
+  color: #fff;
+}
+.c-action .ul li {
+  color: rgba(255,255,255,0.9);
+}
+.c-action .ul li::before {
+  color: #fff;
+}
+
+/* 深入分析：深米黄底色，不抢眼，自然过渡 */
+.c-deep {
+  background: #e3dcd0;
+  border-radius: 4px;
+  padding: 16px 20px;
+}
+.fuel-module {
+  background: #E8C840;
+  border-radius: 4px;
+  padding: 16px 24px 14px;
+  margin: 32px 0;
+  color: #1a1a18;
+}
+.fuel-module .callout {
+  margin: 0;
+  padding: 0;
+}
+.fuel-module .callout-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1a1a18;
+}
+.fuel-module .callout-body {
+  font-size: 17px;
+  color: #1a1a18;
+  line-height: 1.8;
+}
+.c-warning { border-color: #e0a830; }
+.c-danger  { border-color: #c94040; }
+.c-info    { border-color: #002fa7; }
+.c-success { border-color: #2a8c4a; }
+.callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #1a1a18; }
+.callout-body { font-size: 15px; color: #3a3a38; line-height: 1.8; }
+
+.contract-quote { font-size: 18px; font-style: italic; font-weight: 600; color: #002fa7; letter-spacing: 0.02em; line-height: 1.7; margin: 48px 0; padding: 20px 24px; border-left: 2px solid #002fa7; background: rgba(0,47,167,0.04); }
+
+hr { border: none; border-top: 1px solid #e0d8c8; margin: 60px auto; max-width: 640px; }
+.rule-gold { border: none; border-top: 1px solid #002fa7; margin: 64px auto; max-width: 48px; }
+
+.footer { text-align: center; padding: 80px 40px; color: #ccc; font-size: 12px; letter-spacing: 2px; font-family: "Georgia", serif; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 24px; }
+  .cover-title { font-size: 30px; }
+  .chapter-title { font-size: 26px; }
+  .chapter-subtitle { font-size: 19px; }
+  .insight { font-size: 19px; }
+  .p { font-size: 15px; }
+  .nav-fixed { top: auto; bottom: 0; right: 0; left: 0; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; border-radius: 0; padding: 8px 12px; max-height: none; border-left: none; border-right: none; border-bottom: none; }
+  .nav-label { display: none; }
+  .nav-link { font-size: 11px; padding: 4px 10px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-fixed" id="nav-bar">
+  <div class="nav-label">章节导航</div>
+  <a class="nav-link" href="#ch-cover">封面</a>
+  <a class="nav-link" href="#ch-insight">核心结论</a>
+  <a class="nav-link" href="#ch-01">01 核心层</a>
+  <a class="nav-link" href="#ch-02">02 认知层</a>
+  <a class="nav-link" href="#ch-03">03 行为层</a>
+  <a class="nav-link" href="#ch-04">04 情境层</a>
+  <a class="nav-link" href="#ch-05">05 潜意识层</a>
+  <a class="nav-link" href="#ch-06">06 契约签订</a>
+  <a class="nav-link" href="#ch-07">07 记忆更新</a>
+  <a class="nav-link" href="#ch-08">08 月度校准</a>
+  <a class="nav-link" href="#ch-09">09 AI落地</a>
+</nav>
+
+<!-- 封面 -->
+<div class="cover chapter-anchor" id="ch-cover">
+  <div class="wrap">
+    <div class="cover-rule"></div>
+    <div class="cover-sub">Insight Report / {报告日期}</div>
+    <div class="cover-title">底层洞察<br>与协作契约</div>
+    <div class="cover-lede" style="margin-top:32px; max-width:480px;">
+      {报告导语}
+    </div>
+    <div class="cover-quote-wrap">
+      <span class="cover-quote-text">{Q31金句原文}</span>
+    </div>
+    <div class="cover-quote-source">— {金句来源}</div>
+  </div>
+</div>
+
+<div class="chapter-anchor" id="ch-insight"></div>
+<hr class="rule-gold">
+
+<div class="wrap">
+  <div class="p" style="margin-top:64px;">
+    {核心结论导语}
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="insight">
+    {核心结论}
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 01 核心层 ===== -->
+<div class="chapter chapter-anchor" id="ch-01">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 01 — L1 Core Layer</div>
+    <div class="chapter-title">核心层洞察</div>
+    <div class="chapter-subtitle">— 你是谁</div>
+    <div class="chapter-lede">
+      对应题目：Q1-Q7 | 更新频率：每年1次 | 核心原则：只增不改（修改需你确认）
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="fuel-module">
+  
+  <div class="callout c-warning">
+    <div class="callout-title">核心燃料</div>
+    <div class="callout-body">
+      {核心燃料}
+    </div>
+  </div>
+</div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {核心燃料_深入分析_导语}
+      <ul class="ul" style="margin:12px 0 0;">
+        <li><strong>Q1</strong>（勉强接受机会）：{核心燃料_深入分析_Q1}</li>
+        <li><strong>Q3</strong>（为重要目标放弃过什么）：{核心燃料_深入分析_Q3}</li>
+        <li><strong>Q5</strong>（突然做不了核心事业）：{核心燃料_深入分析_Q5}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li><strong>目标锚定</strong>：{核心燃料_AI策略_1}</li>
+        <li><strong>路径重构支持</strong>：{核心燃料_AI策略_2}</li>
+        <li><strong>关系成本提醒</strong>：{核心燃料_AI策略_3}</li>
+        <li><strong>资源积累追踪</strong>：{核心燃料_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{核心燃料_行动建议_1}</li>
+        <li>{核心燃料_行动建议_2}</li>
+        <li>{核心燃料_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-warning">
+    <div class="callout-title">交叉验证</div>
+    <div class="callout-body">
+      <table>
+        <tr><th>核心驱动力</th><th>行为表现</th><th>验证结果</th></tr>
+        <tr><td>{核心燃料_交叉验证_row1}</tr>
+        <tr><td>{核心燃料_交叉验证_row2}</tr>
+        <tr><td>{核心燃料_交叉验证_row3}</tr>
+        <tr><td>{核心燃料_交叉验证_row4}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="h2">绝对禁区</div>
+  
+  <div class="callout c-danger">
+    <div class="callout-title">红线（不可触碰）</div>
+    <div class="callout-body">
+      <table>
+        <tr><th>#</th><th>底线</th><th>来源</th></tr>
+        <tr><td>1</td><td>{绝对禁区_红线_1}</tr>
+        <tr><td>2</td><td>{绝对禁区_红线_2}</tr>
+        <tr><td>3</td><td>{绝对禁区_红线_3}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {绝对禁区_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{绝对禁区_AI策略_1}</li>
+        <li>{绝对禁区_AI策略_2}</li>
+        <li>{绝对禁区_AI策略_3}</li>
+        <li>{绝对禁区_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{绝对禁区_行动建议_1}</li>
+        <li>{绝对禁区_行动建议_2}</li>
+        <li>{绝对禁区_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">认知盲点</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">{认知盲点_标题}</div>
+    <div class="callout-body">
+      {认知盲点_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {认知盲点_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{认知盲点_AI策略_1}</li>
+        <li>{认知盲点_AI策略_2}</li>
+        <li>{认知盲点_AI策略_3}</li>
+        <li>{认知盲点_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{认知盲点_行动建议_1}</li>
+        <li>{认知盲点_行动建议_2}</li>
+        <li>{认知盲点_行动建议_3}</li>
+        <li>{认知盲点_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-warning">
+    <div class="callout-title">交叉验证</div>
+    <div class="callout-body">
+      <table>
+        <tr><th>认知盲点</th><th>行为表现</th><th>验证结果</th></tr>
+        <tr><td>{认知盲点_交叉验证_row1}</tr>
+        <tr><td>{认知盲点_交叉验证_row2}</tr>
+        <tr><td>{认知盲点_交叉验证_row3}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="h2">自我认知偏差检测</div>
+  
+  <div class="callout c-danger">
+    <div class="callout-title">一致性校验</div>
+    <div class="callout-body">
+      <table>
+        <tr><th>Q7愿景</th><th>正向题行为</th><th>判断</th><th>报告标注</th></tr>
+        <tr><td>{自我认知偏差_row1}</tr>
+        <tr><td>{自我认知偏差_row2}</tr>
+        <tr><td>{自我认知偏差_row3}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {自我认知偏差_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{自我认知偏差_AI策略_1}</li>
+        <li>{自我认知偏差_AI策略_2}</li>
+        <li>{自我认知偏差_AI策略_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{自我认知偏差_行动建议_1}</li>
+        <li>{自我认知偏差_行动建议_2}</li>
+        <li>{自我认知偏差_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">{最佩服品质_标题}</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">{最佩服品质_标题}</div>
+    <div class="callout-body">
+      {最佩服品质_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {最佩服品质_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{最佩服品质_AI策略_1}</li>
+        <li>{最佩服品质_AI策略_2}</li>
+        <li>{最佩服品质_AI策略_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{最佩服品质_行动建议_1}</li>
+        <li>{最佩服品质_行动建议_2}</li>
+        <li>{最佩服品质_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 02 认知层 ===== -->
+<div class="chapter chapter-anchor" id="ch-02">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 02 — L2 Cognitive Layer</div>
+    <div class="chapter-title">认知层洞察</div>
+    <div class="chapter-subtitle">— 你怎么想</div>
+    <div class="chapter-lede">
+      对应题目：Q8-Q17 | 更新频率：每3个月1次 | 共享范围：WorkBuddy全局
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="h2">核心思维模式</div>
+  
+  <table>
+    <tr><th>维度</th><th>洞察结论</th><th>对应题号</th></tr>
+    <tr><td>失败归因</td><td>{核心思维模式_失败归因}</tr>
+    <tr><td>决策风格</td><td>{核心思维模式_决策风格}</tr>
+    <tr><td>建议判断标准</td><td>{核心思维模式_判断标准}</tr>
+    <tr><td>改变主意的触发</td><td>{核心思维模式_改变主意触发}</tr>
+    <tr><td>硬撑的条件</td><td>{核心思维模式_硬撑条件}</tr>
+  </table>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {核心思维模式_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{核心思维模式_AI策略_1}</li>
+        <li>{核心思维模式_AI策略_2}</li>
+        <li>{核心思维模式_AI策略_3}</li>
+        <li>{核心思维模式_AI策略_4}</li>
+        <li>{核心思维模式_AI策略_5}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{核心思维模式_行动建议_1}</li>
+        <li>{核心思维模式_行动建议_2}</li>
+        <li>{核心思维模式_行动建议_3}</li>
+        <li>{核心思维模式_行动建议_4}</li>
+        <li>{核心思维模式_行动建议_5}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">AI交互规则</div>
+  
+  <table>
+    <tr><th>场景</th><th>规则</th><th>来源</th></tr>
+    <tr><td>方案分歧时</td><td>{AI交互规则_方案分歧}</tr>
+    <tr><td>犯错/内耗时</td><td>{AI交互规则_犯错内耗}</tr>
+    <tr><td>信息输出</td><td>{AI交互规则_信息输出}</tr>
+    <tr><td>排版格式</td><td>{AI交互规则_排版格式}</tr>
+    <tr><td>逻辑漏洞</td><td>{AI交互规则_逻辑漏洞}</tr>
+  </table>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {AI交互规则_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{AI交互规则_AI策略_1}</li>
+        <li>{AI交互规则_AI策略_2}</li>
+        <li>{AI交互规则_AI策略_3}</li>
+        <li>{AI交互规则_AI策略_4}</li>
+        <li>{AI交互规则_AI策略_5}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{AI交互规则_行动建议_1}</li>
+        <li>{AI交互规则_行动建议_2}</li>
+        <li>{AI交互规则_行动建议_3}</li>
+        <li>{AI交互规则_行动建议_4}</li>
+        <li>{AI交互规则_行动建议_5}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 03 行为层 ===== -->
+<div class="chapter chapter-anchor" id="ch-03">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 03 — L3 Behavior Layer</div>
+    <div class="chapter-title">行为层洞察</div>
+    <div class="chapter-subtitle">— 你怎么做</div>
+    <div class="chapter-lede">
+      对应题目：Q18-Q23 | 更新频率：每3个月1次 | 共享范围：WorkBuddy全局
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="h2">能量管理</div>
+  
+  <div class="callout c-success">
+    <div class="callout-title">能量管理策略</div>
+    <div class="callout-body">
+      {能量管理_描述}
+      <table>
+        <tr><th>你的状态</th><th>我的行为</th></tr>
+        <tr><td>{能量管理_高效}</tr>
+        <tr><td>{能量管理_中效}</tr>
+        <tr><td>{能量管理_低效}</tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {能量管理_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{能量管理_AI策略_1}</li>
+        <li>{能量管理_AI策略_2}</li>
+        <li>{能量管理_AI策略_3}</li>
+        <li>{能量管理_AI策略_4}</li>
+        <li>{能量管理_AI策略_5}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{能量管理_行动建议_1}</li>
+        <li>{能量管理_行动建议_2}</li>
+        <li>{能量管理_行动建议_3}</li>
+        <li>{能量管理_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">效率杀手</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">注意力碎片化</div>
+    <div class="callout-body">
+      {效率杀手_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {效率杀手_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{效率杀手_AI策略_1}</li>
+        <li>{效率杀手_AI策略_2}</li>
+        <li>{效率杀手_AI策略_3}</li>
+        <li>{效率杀手_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{效率杀手_行动建议_1}</li>
+        <li>{效率杀手_行动建议_2}</li>
+        <li>{效率杀手_行动建议_3}</li>
+        <li>{效率杀手_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">学习触发与成就感</div>
+  
+  <div class="p">{学习触发_描述}</div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {学习触发_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{学习触发_AI策略_1}</li>
+        <li>{学习触发_AI策略_2}</li>
+        <li>{学习触发_AI策略_3}</li>
+        <li>{学习触发_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{学习触发_行动建议_1}</li>
+        <li>{学习触发_行动建议_2}</li>
+        <li>{学习触发_行动建议_3}</li>
+        <li>{学习触发_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 04 情境层 ===== -->
+<div class="chapter chapter-anchor" id="ch-04">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 04 — L4 Situational Layer</div>
+    <div class="chapter-title">情境层洞察</div>
+    <div class="chapter-subtitle">— 你的目标</div>
+    <div class="chapter-lede">
+      对应题目：Q24-Q28 | 更新频率：每月1次 | TTL：3个月 | 存储路径：MEMORY.md
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="h2">90天核心目标</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">{90天核心目标_标题}</div>
+    <div class="callout-body">
+      {90天核心目标_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {90天核心目标_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{90天核心目标_AI策略_1}</li>
+        <li>{90天核心目标_AI策略_2}</li>
+        <li>{90天核心目标_AI策略_3}</li>
+        <li>{90天核心目标_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{90天核心目标_行动建议_1}</li>
+        <li>{90天核心目标_行动建议_2}</li>
+        <li>{90天核心目标_行动建议_3}</li>
+        <li>{90天核心目标_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">当前卡点</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">{当前卡点_标题}</div>
+    <div class="callout-body">
+      {当前卡点_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {当前卡点_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{当前卡点_AI策略_1}</li>
+        <li>{当前卡点_AI策略_2}</li>
+        <li>{当前卡点_AI策略_3}</li>
+        <li>{当前卡点_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{当前卡点_行动建议_1}</li>
+        <li>{当前卡点_行动建议_2}</li>
+        <li>{当前卡点_行动建议_3}</li>
+        <li>{当前卡点_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">本周紧急任务</div>
+  
+  <div class="callout c-info">
+    <div class="callout-title">{本周紧急任务_标题}</div>
+    <div class="callout-body">
+      <strong>{本周紧急任务_描述}</strong>
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {本周紧急任务_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{本周紧急任务_AI策略_1}</li>
+        <li>{本周紧急任务_AI策略_2}</li>
+        <li>{本周紧急任务_AI策略_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{本周紧急任务_行动建议_1}</li>
+        <li>{本周紧急任务_行动建议_2}</li>
+        <li>{本周紧急任务_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">当前最需要什么</div>
+  
+  <div class="callout c-info">
+    <div class="callout-title">{当前最需要_标题}</div>
+    <div class="callout-body">
+      {当前最需要_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {当前最需要_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{当前最需要_AI策略_1}</li>
+        <li>{当前最需要_AI策略_2}</li>
+        <li>{当前最需要_AI策略_3}</li>
+        <li>{当前最需要_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{当前最需要_行动建议_1}</li>
+        <li>{当前最需要_行动建议_2}</li>
+        <li>{当前最需要_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 05 潜意识层 ===== -->
+<div class="chapter chapter-anchor" id="ch-05">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 05 — L5 Subconscious Layer</div>
+    <div class="chapter-title">潜意识层洞察</div>
+    <div class="chapter-subtitle">— 你真正要什么</div>
+    <div class="chapter-lede">
+      对应题目：Q29-Q30 | 存储路径：SHADOW.md | 规则：每次对话最多记录1条，3次触发对质
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="h2">知行偏差线索</div>
+  
+  <table>
+    <tr><th>模式标签</th><th>触发场景</th><th>典型行为</th><th>归因</th><th>观察</th><th>状态</th></tr>
+    <tr><td>{知行偏差_row1}</tr>
+    <tr><td>{知行偏差_row2}</tr>
+    <tr><td>{知行偏差_row3}</tr>
+  </table>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {知行偏差_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{知行偏差_AI策略_1}</li>
+        <li>{知行偏差_AI策略_2}</li>
+        <li>{知行偏差_AI策略_3}</li>
+        <li>{知行偏差_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{知行偏差_行动建议_1}</li>
+        <li>{知行偏差_行动建议_2}</li>
+        <li>{知行偏差_行动建议_3}</li>
+        <li>{知行偏差_行动建议_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">对质偏好</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">{对质偏好_标题}</div>
+    <div class="callout-body">{对质偏好_描述}</div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {对质偏好_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{对质偏好_AI策略_1}</li>
+        <li>{对质偏好_AI策略_2}</li>
+        <li>{对质偏好_AI策略_3}</li>
+        <li>{对质偏好_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{对质偏好_行动建议_1}</li>
+        <li>{对质偏好_行动建议_2}</li>
+        <li>{对质偏好_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 06 契约签订 ===== -->
+<div class="chapter chapter-anchor" id="ch-06">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 06 — Contract</div>
+    <div class="chapter-title">契约签订</div>
+    <div class="chapter-subtitle">— 怎么服务你</div>
+    <div class="chapter-lede">
+      对应题目：Q31-Q33 | 存储路径：用户基本规则-摘要版
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="p" style="margin-top:48px;">
+    {契约签订_导语}
+  </div>
+
+  <div class="h2" style="font-weight:400;">金句铁律</div>
+  
+  <div class="contract-quote">
+    {Q31金句原文}
+  </div>
+  
+  <div class="p" style="margin-top:16px;">生效范围：所有对话、所有建议、所有方案评估。</div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {金句铁律_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{金句铁律_AI策略_1}</li>
+        <li>{金句铁律_AI策略_2}</li>
+        <li>{金句铁律_AI策略_3}</li>
+        <li>{金句铁律_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{金句铁律_行动建议_1}</li>
+        <li>{金句铁律_行动建议_2}</li>
+        <li>{金句铁律_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">补充诉求</div>
+  
+  <div class="callout c-info">
+    <div class="callout-title">问卷舒适度检查</div>
+    <div class="callout-body">
+      {补充诉求_描述}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{补充诉求_AI策略_1}</li>
+        <li>{补充诉求_AI策略_2}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{补充诉求_行动建议_1}</li>
+        <li>{补充诉求_行动建议_2}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="h2">原则违背自查</div>
+  
+  <div class="callout c-warning">
+    <div class="callout-title">过去一个月的原则违背记录</div>
+    <div class="callout-body">
+      {原则违背_描述}
+    </div>
+  </div>
+
+  <div class="callout c-danger c-deep">
+    <div class="callout-title">深入分析</div>
+    <div class="callout-body">
+      {原则违背_深入分析}
+    </div>
+  </div>
+
+  <div class="callout c-info">
+    <div class="callout-title">AI适配策略</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{原则违背_AI策略_1}</li>
+        <li>{原则违背_AI策略_2}</li>
+        <li>{原则违背_AI策略_3}</li>
+        <li>{原则违背_AI策略_4}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout c-success c-action">
+    <div class="callout-title">行动建议</div>
+    <div class="callout-body">
+      <ul class="ul" style="margin:12px 0 0;">
+        <li>{原则违背_行动建议_1}</li>
+        <li>{原则违背_行动建议_2}</li>
+        <li>{原则违背_行动建议_3}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 07 记忆更新 ===== -->
+<div class="chapter chapter-anchor" id="ch-07">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 07 — Memory Update</div>
+    <div class="chapter-title">记忆更新清单</div>
+    <div class="chapter-subtitle">— 更新频率</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <table>
+    <tr><th>层级</th><th>对应题目</th><th>更新频率</th><th>TTL</th><th>存储位置</th></tr>
+    <tr><td>L1 核心层</td><td>Q1-Q7</td><td>每年1次</td><td>永久</td><td>CORE.md</td></tr>
+    <tr><td>L2 认知层</td><td>Q8-Q17</td><td>每3月1次</td><td>6个月</td><td>用户基本规则-摘要版 + SOUL.md</td></tr>
+    <tr><td>L3 行为层</td><td>Q18-Q23</td><td>每3月1次</td><td>6个月</td><td>用户基本规则-摘要版</td></tr>
+    <tr><td>L4 情境层</td><td>Q24-Q28</td><td>每月1次</td><td>30天</td><td>USER.md + 动态状态快照.md + MEMORY.md</td></tr>
+    <tr><td>L5 潜意识层</td><td>Q29-Q30</td><td>触发式</td><td>3次触发</td><td>SHADOW.md</td></tr>
+    <tr><td>协作契约</td><td>Q31-Q33</td><td>每年1次</td><td>6个月</td><td>用户基本规则-摘要版</td></tr>
+  </table>
+</div>
+
+<hr>
+
+<!-- ===== 08 月度校准 ===== -->
+<div class="chapter chapter-anchor" id="ch-08">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 08 — Monthly Calibration</div>
+    <div class="chapter-title">月度校准提示</div>
+    <div class="chapter-subtitle">— 何时校准</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="callout c-info">
+    <div class="callout-title">每月1日自动提醒（可通过WorkBuddy automation配置）</div>
+    <div class="callout-body">
+      <div class="p" style="margin-top:12px;">请回答以下5个问题：</div>
+      <ol class="ol">
+        <li>过去一个月，你的主要目标（90天核心目标）有变化吗？（Q24校准）</li>
+        <li>你当前遇到的最大困难或阻碍是什么？（Q26校准）</li>
+        <li>你的社会时差类型和工作节奏有变化吗？（Q18-Q19校准）<br>社会时差类型：A. 自然型 B. 被迫型 C. 自律型 D. 混乱型<br>工作节奏：A. 专注大块时间 B. 番茄钟式 C. 灵感驱动 D. 最后期限驱动</li>
+        <li>你有没有发现自己言行不一致的新情况？（Q29-Q30补充）</li>
+        <li>你希望AI的交流方式有什么调整吗？（Q14-Q17校准）<br>犯错/内耗时：1. 直接指出 2. 共情再建议 3. 客观数据 4. 苏格拉底式提问<br>反馈格式：5. 极简要点 6. 结构化长文 7. 引导式提问<br>排版偏好：8. 表格控 9. 脑图/大纲控 10. 散文/叙述控<br>逻辑漏洞：11. 直接反驳 12. 末尾追加观察 13. 闭嘴执行</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ===== 09 AI落地 ===== -->
+<div class="chapter chapter-anchor" id="ch-09">
+  <div class="wrap">
+    <div class="chapter-num">Chapter 09 — Implementation</div>
+    <div class="chapter-title">AI落地建议</div>
+    <div class="chapter-subtitle">— 33题归属追踪</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <table>
+    <tr><th>题号</th><th>所属层</th><th>题目摘要</th><th>写入位置</th></tr>
+    <tr><td>Step2 Q1</td><td>用户基础</td><td>称呼</td><td>USER.md</td></tr>
+    <tr><td>Step2 Q2</td><td>用户基础</td><td>身份简介</td><td>USER.md</td></tr>
+    <tr><td>Step2 Q4</td><td>用户基础</td><td>署名表情</td><td>IDENTITY.md</td></tr>
+    <tr><td>Q1-Q7</td><td>L1核心层</td><td>性格/价值观/决策</td><td>CORE.md</td></tr>
+    <tr><td>Q8-Q13, Q15, Q17</td><td>L2认知层</td><td>归因/决策/判断/分歧</td><td>用户基本规则-摘要版</td></tr>
+    <tr><td>Q14</td><td>L2认知层</td><td>错误应答偏好</td><td>SOUL.md</td></tr>
+    <tr><td>Q16</td><td>L2认知层</td><td>排版偏好</td><td>SOUL.md</td></tr>
+    <tr><td>Q18-Q23</td><td>L3行为层</td><td>行为模式/成就感</td><td>用户基本规则-摘要版</td></tr>
+    <tr><td>Q24</td><td>L4情境层</td><td>北极星目标</td><td>USER.md + 动态状态快照.md</td></tr>
+    <tr><td>Q25-Q27</td><td>L4情境层</td><td>拖延/卡点/任务</td><td>动态状态快照.md</td></tr>
+    <tr><td>Q28</td><td>L4情境层</td><td>当前需求</td><td>USER.md</td></tr>
+    <tr><td>Q29-Q30</td><td>L5潜意识层</td><td>知行偏差/对质</td><td>SHADOW.md</td></tr>
+    <tr><td>Q31-Q33</td><td>协作契约</td><td>金句/诉求/自查</td><td>用户基本规则-摘要版</td></tr>
+  </table>
+
+  <table style="margin-top:48px;">
+    <tr><th>内容</th><th>写入位置</th><th>状态</th></tr>
+    <tr><td>核心身份</td><td>IDENTITY.md + USER.md</td><td>已写入</td></tr>
+    <tr><td>核心层数据</td><td>CORE.md</td><td>已写入</td></tr>
+    <tr><td>规则体系（认知层/行为层/协作契约）</td><td>用户基本规则-摘要版</td><td>已写入</td></tr>
+    <tr><td>交互风格</td><td>SOUL.md</td><td>已写入</td></tr>
+    <tr><td>情境层快照</td><td>动态状态快照.md</td><td>已写入</td></tr>
+    <tr><td>潜意识层</td><td>SHADOW.md</td><td>已写入</td></tr>
+  </table>
+  
+  <div class="p" style="margin-top:48px; font-style:italic;">
+    如有任何条款需要调整，随时告诉我。
+  </div>
+</div>
+
+<div class="footer">
+  — {报告版本标示} —
+</div>
+
+<script>
+(function(){
+  var navLinks = document.querySelectorAll('.nav-link');
+  var sections = [];
+  navLinks.forEach(function(a){
+    var id = a.getAttribute('href').replace('#','');
+    var el = document.getElementById(id);
+    if(el) sections.push({el:el, link:a});
+  });
+  function onScroll(){
+    var scroll = window.scrollY + 120;
+    var current = sections[0] ? sections[0].link : null;
+    for(var i=sections.length-1; i>=0; i--){
+      if(sections[i].el.offsetTop <= scroll){
+        current = sections[i].link;
+        break;
+      }
+    }
+    navLinks.forEach(function(a){ a.classList.remove('active'); });
+    if(current) current.classList.add('active');
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
