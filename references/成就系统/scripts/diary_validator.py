@@ -6,12 +6,22 @@
 - 验证累计数是否连续
 - 检查睡眠格式是否正确
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import re
 from pathlib import Path
 from glob import glob
 
-DIARY_DIR = Path.home() / "Local_Obsidian_Vault/1-每日计划/01-日记"
+DIARY_DIR = Path.home() / "[日记仓库]/1-每日计划/01-日记"
 
 def parse_diary_data(filepath):
     """解析日记文件，提取关键数据"""

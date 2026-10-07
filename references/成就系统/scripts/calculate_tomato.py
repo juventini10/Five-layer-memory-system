@@ -3,12 +3,22 @@
 """
 手动计算番茄数
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import glob
 import pathlib
 import re
 
-DIARY_DIR = pathlib.Path.home() / 'Local_Obsidian_Vault/1-每日计划/01-日记'
+DIARY_DIR = pathlib.Path.home() / '[日记仓库]/1-每日计划/01-日记'
 
 files = sorted(glob.glob(str(DIARY_DIR / '**' / '2026-*.md'), recursive=True))
 total = 0

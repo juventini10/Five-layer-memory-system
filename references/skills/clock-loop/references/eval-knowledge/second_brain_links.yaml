@@ -1,0 +1,45 @@
+# 与 second-brain 的联动引用 - v1.1
+# 用途：评估知识库找不到足够支撑时，查询 second-brain 已编译知识
+# v1.1变更：Skill架构规范和指令编写规范已固化到clock-loop/references/，此处改为固化引用声明
+# v1.2变更（2026-09-05 A24·台账#205①）：3处死路径修正（开发规范→03_开发规范·实测目录名）+ source_version 4处删除改指针（以源 frontmatter 为唯一真相源·防漂移）
+
+references:
+  - name: "Skill架构规范"
+    type: "固化引用"
+    ref_file: "clock-loop/references/skill-arch-standard.md"
+    source_path: "~/[记忆共享中心]/记忆蓝图/03_开发规范/Skill架构规范/Skill架构规范.md"
+    used_for: "Skill评估时的架构标准依据（开发规范符合度维度）"
+    note: "已固化到clock-loop本地；版本以源文件 frontmatter 为唯一真相源·本处不写版本号防漂移（#142·2026-09-05 A24）"
+
+  - name: "指令编写规范"
+    type: "固化引用"
+    ref_file: "clock-loop/references/instruction-standard.md"
+    source_path: "~/[记忆共享中心]/记忆蓝图/03_开发规范/指令编写规范.md"
+    used_for: "指令准确性评估参考（五级标注/因果链/Poka-Yoke/Alternatives/自检清单）"
+    note: "已固化到clock-loop本地；版本以源文件 frontmatter 为唯一真相源·本处不写版本号防漂移（#142·2026-09-05 A24）"
+
+  - name: "三明智方法论"
+    type: "固化引用"
+    ref_file: "clock-loop/references/triwich-integration.md"
+    source_path: "~/[记忆共享中心]/技能配置/triwich/SKILL.md"
+    used_for: "L1拆解+L2自检+L3沉淀的方法论依据"
+    note: "已固化到clock-loop本地；版本以源文件 frontmatter 为唯一真相源·本处不写版本号防漂移（#142·2026-09-05 A24）"
+
+  - name: "迁理之外哲学视角"
+    type: "固化引用"
+    ref_file: "clock-loop/references/philosophical-evaluation.md"
+    source_path: "~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md"
+    used_for: "哲学评估维度的5大视角+七项哲学检查来源"
+    note: "已固化到clock-loop本地；版本以源文件 frontmatter 为唯一真相源·本处不写版本号防漂移（#142·2026-09-05 A24）"
+
+  - name: "发布包编写规范"
+    type: "按需加载"
+    primary_path: "~/[记忆共享中心]/记忆蓝图/03_开发规范/发布包编写规范.md"
+    used_for: "发布包类对象评估参考（未固化，按需Read）"
+    note: "使用频率低，暂不固化"
+
+  - name: "三大思维白皮书"
+    type: "按需加载"
+    primary_path: "~/[记忆共享中心]/记忆蓝图/01_思维方法论/三大思维白皮书.md"
+    used_for: "三明智嵌入评估的方法论依据（深度查询时加载）"
+    note: "方法论核心已固化到triwich-integration.md，白皮书为深度参考"

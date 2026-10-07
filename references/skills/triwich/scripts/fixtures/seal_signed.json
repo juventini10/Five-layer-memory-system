@@ -1,0 +1,4 @@
+[
+  {"role": "user", "content": "请用三明智评估这个方案。"},
+  {"role": "assistant", "content": "## L2 评估 结果\n主要矛盾：xxx\n第一性原理：yyy\n[🧠 三明智 L2 完成 ✅ 深度达标]"}
+]

@@ -1,0 +1,11 @@
+name: guard-scheduler-hook
+version: 1.0.0
+description: >-
+  布洛陀守卫家族 · Hermes 会话结束守卫调度钩子。在 on_session_end 时按需运行
+  可独立执行的守卫（changelog_guard.py / normalize_tool.py / amber-checkup 等），
+  失败放行，结果写回系统日志。依赖 Claude Code/CodeBuddy 特定事件类的守卫
+  不可精确复刻，改用 Skill 承载近似。
+author: buluotuo
+type: user
+provides_hooks:
+  - on_session_end

@@ -1,13 +1,14 @@
 ---
-version: "3.2.5"
+version: "3.6.0"
 source_skill: meta-aletheia
-source_path: [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+source_path: ~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # 迁理之外哲学评估固化引用
 
-> **来源**：meta-aletheia v3.2.5
-> **源头路径**：`[记忆共享中心]/技能配置/meta-aletheia/SKILL.md`
+> **来源**：meta-aletheia v3.6.0
+> **源头路径**：`~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md`
 > **引用模式**：固化引用（reference）——clock-loop直接读本文件执行，不调用meta-aletheia Skill
 > **版本检查**：阶段1.5知识网络构建时，对比本文件头部版本号与meta-aletheia SKILL.md YAML version字段，不一致则⚠️告警
 
@@ -30,6 +31,8 @@ source_path: [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 每项检查：✅通过（1分）/ ⚠️部分通过（0.5分）/ ❌未通过（0分）
 
 哲学评估维度得分 = Σ(各项得分) / 7
+
+> ⚠️ **边界声明（2026-09-05批4 A15补＝#208）**：本文件只定义到 Σ/7 为止；**"总分≥85%→哲学及格（按10%权重满分计入）；<85%→不及格（零分计入）·不再逐项加分"的二值化规则**定义在消费端——权威住所=`references/eval-knowledge/patterns/skill_patterns.yaml` grading_rule P0-2（另见 phase2-execution.md 第61行）。只读本文件的 AI 不得把 Σ/7 连续值直接按权重计入。
 
 | # | 检查维度 | 哲学渊源 | 具体问题 | 评分依据 |
 |:-:|---------|---------|---------|---------|
@@ -109,4 +112,7 @@ source_path: [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 
 ---
 
-> 固化版本：v3.2.5 | 固化日期：2026-07-13 | 源头：[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+> 固化版本：v3.6.0 | 固化日期：2026-09-02 | 源头：~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+
+> **Case A 同步声明（2026-09-02）**：meta-aletheia v3.5.1→v3.6.0 变更为触发双源通道/eval-set二义/标注格式/沉淀写入路径/SHADOW豁免/视角组合表激活③/疲劳量化等触发与流程修复，未触及本文件固化的五大哲学视角/七项哲学检查/视角匹配规则/功能层等价规则/版本同步规则——仅版本号同步，固化内容无变化。
+> **Case A 同步声明（2026-09-01）**：meta-aletheia v3.5.0→v3.5.1 变更为斯多葛坏事预镜子节微调，未触及本文件固化的五大哲学视角/七项哲学检查/视角匹配规则/功能层等价规则/版本同步规则——仅版本号同步，固化内容无变化。

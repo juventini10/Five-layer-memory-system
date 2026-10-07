@@ -1,0 +1,9 @@
+name: route-audit-hook
+version: 1.0.0
+description: >-
+  布洛陀路由家族 · Hermes 会话结束审计钩子。在 on_session_end 时运行
+  路由审计脚本（route_guard_audit.py），把"本轮路由是否触发正确"写回系统日志。
+author: buluotuo
+type: user
+provides_hooks:
+  - on_session_end

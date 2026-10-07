@@ -4,7 +4,7 @@ create_skeleton.py — 日记骨架生成器 + 灵感闪现注入
 
 用法：
   # 推荐：自动写盘（幂等——文件已存在则跳过）
-  python3 create_skeleton.py --date 2026-07-03 --out ~/Local_Obsidian_Vault/.../2026-07-03.md
+  python3 create_skeleton.py --date 2026-07-03 --out ~/[日记仓库]/.../2026-07-03.md
 
   # 兼容旧用法：stdout 输出（供 AI 手动 Write）
   python3 create_skeleton.py --date 2026-07-03
@@ -16,6 +16,10 @@ create_skeleton.py — 日记骨架生成器 + 灵感闪现注入
 
 输出：完整的日记骨架，AI 拿到后只能填充待填字段（目标/感悟/决策/总结），禁止手写 day_of_week。
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -33,13 +37,14 @@ import hashlib
 from pathlib import Path
 
 
-# === 路径常量 ===
-DIARY_BASE = Path(os.path.expanduser(
-    "~/Local_Obsidian_Vault/1-每日计划/01-日记"
-))
-INSPIRATION_LIB = Path(os.path.expanduser(
-    "~/Local_Obsidian_Vault/2-知识库/01-读书笔记/核心启发库.md"
-))
+# === 环境自愈（第一性原理根治·Hermes 沙箱 HOME 劫持）===
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dbenv
+
+
+# === 路径常量（改用 dbenv 解析·破除沙箱 HOME 污染）===
+DIARY_BASE = dbenv.DIARY_DIR
+INSPIRATION_LIB = dbenv.HOME / "[日记仓库]/2-知识库/01-读书笔记/核心启发库.md"
 SCRIPT_DIR = Path(__file__).resolve().parent
 INSPIRATION_CACHE = SCRIPT_DIR / "daily_quotes_cache.json"
 
@@ -269,11 +274,11 @@ def build_inspiration_block(date_str: str) -> str:
                 else:
                     display = display + "……"
             quote_char = '"'
-            source_text = f"> 来源：昨日{quote_char}{display}{quote_char}——金句匹配《{book}》。\n"
+            source_text = f"> 来源：《{book}》·昨日关键词\n"
         elif matched:
-            source_text = f"> 来源：金句匹配《{book}》。\n"
+            source_text = f"> 来源：《{book}》·核心启发\n"
         else:
-            source_text = f"> 来源：灵感轮换《{book}》（昨日无强匹配，按日期轮换选取，14天内不重复）。\n"
+            source_text = f"> 来源：《{book}》·灵感轮换\n"
 
         return (
             f"💡 **灵感闪现**：{quote}\n"
@@ -296,6 +301,7 @@ def build_skeleton(date_str: str) -> str:
 
     return f"""---
 date: {d}
+type: daily-diary
 day_of_week: {wd}
 tags: [daily-buddy, pomodoro, goal, review]
 rating: 待评定
@@ -304,7 +310,7 @@ achievement_data:
   tomato: 0
   sleep_time: ""
   wake_time: ""
-  sleep_duration: 0
+  sleep_duration: 0  # 单位：小时（如6.5，禁止写分钟数如390·diary-template.md v2.0.0规范）
   sleep_quality: ""
   energy_pred: 0
   energy_actual: 0
@@ -312,15 +318,55 @@ achievement_data:
   calm_actual: 0
   satisfaction: 0
   physiological: ""
+  content_creation: 0
+  exercise: 0
 ---
 
-# {d}({wd}) 每日计划
+## {d}({wd}) 每日计划
 
-> [!tip] 🏆 今日含金量：**[待评定]**
+> [!info] 🏆 今日含金量：**待评定**（晚间复盘时按 v3.33 唯一版：callout 按评级分色·S/A→success、B→note、C→warning、N→info）
 
 {inspiration}
+【今日速读 · 30秒看完】
+> ⚠️ 待晚间复盘（AI 封口时生成：v4 唯一版=表格版——最值钱一件事 + | 信号 | 对比表 + 年度 + 近7天趋势sparkline + 明日3件事 + 灵感→明天；⛔禁文本版；封口脚本 exit 6 格式门禁）
+
+---
+> 📋 以下为详查区（溯源 / 月报用，每天可不读）
+
+<!-- SECTION: GOALS -->
+## 1️⃣ 🎯 今日工作
+
+### 续接锚点
+> 📌 昨天说今天要做：（待填写）
+> 📌 今天实际做了：（待填写）
+
+### 核心主表
+| 序号 | P1核心任务（最多3件） | 可验证完成标准 | 计划时段 | 时间象限（Q1-Q4） | 预判能量 | 实际完成 | 实际能量 |
+|------|----------------------|---------------|----------|------------------|---------|---------|---------|
+| 1 | （待填写） |  |  |  |  |  |  |
+| 2 |  |  |  |  |  |  |  |
+| 3 |  |  |  |  |  |  |  |
+
+---
+
+<!-- SECTION: ACHIEVEMENTS -->
+## 2️⃣ 🏆 今日成就达成
+> 本模块由系统自动生成，无需手动填写、禁止人工编辑修改
+
+- 本日新增达成：___（有成就达成→列出当天达成的成就名；无→写"今日无新成就解锁"）
+
+<!-- 💡 刚性规则（v3.33.0 移入HTML注释·人不可见/脚本可读·皮叔 2026-08-07 诊断"铁律对人读无意义"）：
+  - 全自动铁律：本模块由脚本自动渲染（achievement_tracker.py --all 检测），禁止手动新增/修改
+  - 数据源铁律：成就名必须来自 achievement_tracker.py --all 输出，禁止AI凭记忆手写（LRN-20260520-001：67篇写成"百篇文人已达成"的错误）
+  - 边界隔离铁律：仅展示当天客观成就，不允许主观感悟/情绪/规划内容
+  - 非评级关联铁律：本模块不参与A/B/C/S级任何评级判定
+  - 有才显示铁律：当天无新成就→只写"今日无新成就解锁"一行；成就累计进度不写入日记——YAML 是检索索引非内容副本（双本账教训）；进度真相源在成就系统 ~/[记忆共享中心]/成就系统/，周报/月报/工作台从它读
+-->
+
+---
+
 <!-- SECTION: SLEEP -->
-## 1️⃣ 😴 睡眠质量
+## 3️⃣ 😴 睡眠质量
 
 > 数据来源：Apple Watch
 > ⚠️ 待明早数据
@@ -337,40 +383,8 @@ achievement_data:
 
 ---
 
-<!-- SECTION: GOALS -->
-## 2️⃣ 🎯 今日工作
-
-### 续接锚点
-> 📌 昨天说今天要做：（待填写）
-> 📌 今天实际做了：（待填写）
-
-### 核心主表
-| 序号 | P1核心任务（最多3件） | 可验证完成标准 | 计划时段 | 时间象限（Q1-Q4） | 预判能量 | 实际完成 | 实际能量 |
-|------|----------------------|---------------|----------|------------------|---------|---------|---------|
-| 1 | （待填写） |  |  |  |  |  |  |
-| 2 |  |  |  |  |  |  |  |
-| 3 |  |  |  |  |  |  |  |
-
----
-
-<!-- SECTION: MILESTONES -->
-## 3️⃣ 📊 项目里程碑
-
-| 项目 | 最新状态 | 变更日期 |
-|------|---------|:--------:|
-| — | — | — |
-
----
-
-<!-- SECTION: ACHIEVEMENTS -->
-## 4️⃣ 🏆 今日成就达成
-
-> 待晚间复盘填充
-
----
-
 <!-- SECTION: MOOD_ENERGY -->
-## 5️⃣ 😊 心情与能量
+## 4️⃣ 😊 心情与能量
 
 ### 三分维度
 > ⚠️ 待晚间复盘
@@ -381,19 +395,19 @@ achievement_data:
 ---
 
 <!-- SECTION: INSIGHTS -->
-## 6️⃣ 💡 今日感悟
+## 5️⃣ 💡 今日感悟
 
 ---
 
 <!-- SECTION: BEST_DECISION -->
-## 7️⃣ 🎯 今日最佳决策
+## 6️⃣ 🎯 今日最佳决策
 
 > 待填写
 
 ---
 
 <!-- SECTION: CONSISTENCY_REVIEW -->
-## 8️⃣ 🪞 言行一致性复盘
+## 7️⃣ 🪞 言行一致性复盘
 
 > 待晚间复盘
 
@@ -402,31 +416,32 @@ achievement_data:
 <!-- SECTION: SUSPENSION -->
 ## 🌀 悬置/残差（认知盲区轴 · 按需填写）
 
-> 待晚间复盘（按需·非必填，确有残差才填；数据契约见 ~/个人AI档案/未知未知/悬置区.md）
+> 待晚间复盘（按需·非必填，确有残差才填；数据契约见 ~/[记忆共享中心]/未知未知/悬置区.md）
 
-| 序号 | 触发(T1-T5) | 归属(用户/AI/双方共盲) | 毛坯描述（仅现象） | 状态 |
+| 序号 | 触发(T1-T5) | 归属(你/AI/双方共盲) | 毛坯描述（仅现象） | 状态 |
 |------|------------|---------------------|-------------------|------|
-| 1 | | | | 悬置(未闭合) |
-| 2 | | | | 悬置(未闭合) |
+| {1} | | | | 悬置(未闭合) |
+
+*当日无残差：整块省略不留空表（v3.33.0·皮叔 2026-08-07 诊断"空表=无关信息"）；有残差才渲染，且仅渲染有内容的行*
 
 ---
 
 <!-- SECTION: SUMMARY -->
-## 9️⃣ 📝 今日总结
+## 8️⃣ 📝 今日总结
 
 > 待晚间复盘
 
 ---
 
 <!-- SECTION: TOMORROW -->
-## 🔟 🎯 明日目标
+## 9️⃣ 🎯 明日目标
 
 > 待晚间复盘
 
 ---
 
 <!-- SECTION: BUDDY_ADVICE -->
-## 1️⃣1️⃣ 🦞 每日伙伴建议
+## 🔟 🦞 每日伙伴建议
 
 > 待晚间复盘
 
@@ -454,10 +469,9 @@ def main():
         print(f"日期格式错误: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # 额外输出元信息供 AI 引用
-    d = datetime.date.fromisoformat(args.date)
-    wd = weekday_cn(d)
-    print(f"<!-- META: date={d} weekday={wd} -->", file=sys.stderr)
+    # ⛔ 2026-09-28 根治：META调试输出已删除——date/day_of_week 已内置于骨架 YAML frontmatter，
+    #     stderr 冗余输出曾被误写入日记文件首行（9/21-26 六天 frontmatter 失效事故 ERR-20260928-001）。
+    #     单一真源=骨架 frontmatter，禁止任何形式的 stderr 元信息输出（防 AI 误写入口）。
 
     if args.out:
         out_path.write_text(skeleton)
@@ -467,4 +481,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # ─── 环境自检（第一性原理根治·沙箱假 python 拒绝空跑）───
+    if not dbenv.self_check(verbose=True):
+        sys.exit(9)
     main()

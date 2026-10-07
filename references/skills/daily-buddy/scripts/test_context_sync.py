@@ -7,6 +7,10 @@
 3. 验证数据一致性
 4. 输出验证结果
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -19,8 +23,8 @@ import re
 import sys
 
 # 路径配置
-WEEKLY_REPORT_DIR = os.environ.get("OBSIDIAN_VAULT", os.path.expanduser("~/Local_Obsidian_Vault/1-每日计划/02-周报"))
-CONTEXT_FILE = os.path.expanduser("~/个人AI档案/情境层/动态状态快照.md")
+WEEKLY_REPORT_DIR = os.environ.get("OBSIDIAN_VAULT", os.path.expanduser("~/[日记仓库]/1-每日计划/02-周报"))
+CONTEXT_FILE = os.path.expanduser("[记忆共享中心]/情境层/动态状态快照.md")
 
 
 def get_latest_weekly_report():

@@ -1,0 +1,13 @@
+name: buluotuo-stop-hook
+version: 1.0.0
+description: >-
+  布洛陀 Stop 守卫（Hermes 端适配 · post_llm_call = 每轮 LLM 输出后·等价 Stop）。
+  承载 route_unknown_unknown.py（未知未知检测）——2026-10-01 全机 grep 实测该脚本在
+  Hermes 端零接入点，SSOT 旧记「✅ 2026-08-20 实装」属文档虚报，本插件补实。
+  契约适配：脚本吃 stdin {"transcript_path"}，Hermes 无 transcript 文件 ⇒ 借
+  _hermes_transcript_adapter 走 state.db→jsonl（与 route_audit.py 同法·已实测打通）。
+  只记录不拦截·失败放行·判据零复制·台账 ~/.hermes/buluotuo_stop_hook.log。
+author: Hermes
+type: user
+provides_hooks:
+  - post_llm_call

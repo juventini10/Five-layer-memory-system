@@ -1,0 +1,11 @@
+{
+  "id": "lobsterai-buluotuo-hooks",
+  "name": "布洛陀脚本体系（LobsterAI）",
+  "description": "WB 端 settings.json 钩子的本端等价载体（事件类映射）：UserPromptSubmit→before_prompt_build · Stop→agent_end · PreToolUse→before_tool_call · SessionStart→session_start。config.json 由 setup.sh 落定（记忆中心/脚本中心路径），⛔无硬编码路径、⛔零个人数据。",
+  "version": "0.1.0",
+  "author": "布洛陀",
+  "license": "MIT",
+  "entry": "./index.js",
+  "activation": { "onStartup": true },
+  "configSchema": { "type": "object", "additionalProperties": false, "properties": {} }
+}

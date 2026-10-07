@@ -1,0 +1,14 @@
+name: buluotuo-pretool-guards
+version: 1.0.0
+description: >-
+  布洛陀写侧守卫集群（Hermes 端适配 · pre_tool_call 通道·对齐 WorkBuddy PreToolUse 族 5 个）。
+  承载 grep_sandbox / edit_heading / change_reflux / skill_write_gate / skill_spec_read。
+  **Hermes 端特性比 WB 更硬**：pre_tool_call ∈ _HOOK_TIMEOUT_FAIL_CLOSED_HOOKS（内核 fail-closed
+  ·钩子异常=拦下），而 WB PreToolUse 默认 fail-open；载荷走 kwargs(tool_name+args) 而非 stdin JSON。
+  ⛔ 零判据内联（判据全在各脚本本体·只做喂参取 stdout 转 block 指令）。
+  拦截仅在脚本有明确违规输出时；⛔ 脚本缺失/超时/异常一律放行（守卫失灵不锁死用户的活干）。
+  只跑写侧工具（write_file/patch/edit 等）·非写工具零开销。台账 ~/.hermes/pretool_guards_hook.log。
+author: Hermes
+type: user
+provides_hooks:
+  - pre_tool_call

@@ -1,0 +1,243 @@
+# rule_triggers.yaml — 用户基本规则「加载时机」机器可执行触发规格
+#
+# ⚠️ 编译产物声明：本文件由 gen_rule_triggers.py 从 SSOT 编译生成——
+#   SSOT = ~/~/[记忆共享中心]/记忆规则/用户基本规则-铁律版.md 头部「加载时机索引表」
+#   ⛔DO NOT 手工编辑本文件的 id/name/resident/source_anchor（编译时会被 SSOT 覆盖）
+#   ✅DO match 正则调优可直接编辑本文件（调优资产·铁律-020：改匹配先 dry-run 看命中）
+#   重新编译：python3 [记忆共享中心]/脚本中心/gen_rule_triggers.py（dry-run 预览）→ --write 落盘
+#   ⑥门禁：rule_three_layer_guard.py 机械校验 索引表条数 == 本文件条数 防漂移
+#
+# 编译时间：2026-10-01 23:07
+version: 2
+source: 用户基本规则-铁律版.md 加载时机索引表 (SSOT·编译产物)
+triggers:
+  - id: "001"
+    name: 先看清，再动手
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-001"
+    match:
+      - "修改文件|创建文件|新建文件|删除文件|移动文件|覆盖文件|重命名文件"
+      - "批量修改|批量操作|批量删除|批量移动"
+      - "(文件|配置|目录|脚本).*(修改|创建|删除|移动|覆盖|重命名)"
+      - "改配置|修改配置|创建目录|删除目录|改脚本|新建脚本|写文件"
+      - "\\.json|\\.py|\\.md|\\.yaml|\\.yml|\\.txt|\\.sh|\\.toml|\\.csv|\\.js|\\.ts"
+      - "改成|修改为|设置为|调整.*配置|重命名|移动.*到"
+  - id: "002"
+    name: 实事求是底线
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-002"
+    match:
+      - "行数|字数|百分比|版本号|计数|统计"
+      - "数据断言|事实引用|文件路径|代码模式|记忆中说|写入记忆|写入MEMORY|写MEMORY|写记忆"
+      - "有几行|多少字|核对数字|数字断言|有几处|有多少条|几行|几处|核对|核实"
+  - id: "003"
+    name: 引用验证通用铁律
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-003"
+    match:
+      - "金句|书名|名言|警句|引用.*原话|quote|语录"
+      - "据说|研究表明|数据显示|统计.*表明|调查.*显示"
+      - "引用|来源|出处|根据.*说|据.*记载|历史事件"
+      - "他人观点|专家说|论文.*说|报告.*显示"
+  - id: "004"
+    name: 认知更新防复发
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-004"
+    match:
+      - "读取新文件|新文件|旧认知|认知冲突|复发|之前.*错|上次.*错|纠正.*认知"
+  - id: "005"
+    name: 删除防护
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-005"
+    match:
+      - "删除.{0,4}(文件|目录|夹)|删掉|移除文件|rm |trash|rmdir"
+      - "移动(文件|配置|目录|夹|到|入)|移走|mv |覆盖.{0,4}(文件)|重命名|改名"
+      - "批量(修改|删除|移动|操作)"
+  - id: "006"
+    name: 深度模式
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-006"
+    match:
+      - "深度模式|深度分析|严谨|全面分析|合理评估|三明智|triwich|第一性原理|底层逻辑|本质"
+  - id: "007"
+    name: 批判验证优先
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-007"
+    match:
+      - "靠谱吗|风险|证据|验证|可靠吗|对吗|成立吗|经得起|站得住"
+  - id: "008"
+    name: 回复格式铁律（意图分类+产出路由+署名）
+    resident: true
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-008"
+    match: []  # resident 行禁 match（覆盖守卫约束）
+  - id: "009"
+    name: （已合并入008·占位）
+    resident: true
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-009"
+    match: []  # resident 行禁 match（覆盖守卫约束）
+  - id: "010"
+    name: 召回验证
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-010"
+    match:
+      - "记忆中|记忆里|之前.*记|调用.*函数|配置路径|推荐.*文件|记得.*文件"
+  - id: "011"
+    name: 写操作安全
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-011"
+    match:
+      - "软链接|symlink|ffmpeg|rsync|写操作|输出路径.*同名|dd "
+  - id: "012"
+    name: 内容创作查源
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-012"
+    match:
+      - "案例|用户数据|历史事件|脚本|文案|视频|创作|内容"
+  - id: "013"
+    name: 自我要求不退档
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-013"
+    match:
+      - "沉淀|系统能力|长期能力|审美|战略任务|能力建设|建尺子"
+  - id: "014"
+    name: 写入工具安全
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-014"
+    match:
+      - "写入工具|写入类|脚本.*设计|上线|压测|并发写入|append"
+  - id: "015"
+    name: 自主执行遇阻塞
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-015"
+    match:
+      - "自主执行|自动化任务|发布任务|Loop|循环|阻塞|卡住|假阻塞"
+  - id: "016"
+    name: 审计权威源
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-016"
+    match:
+      - "审计|接入|落地|设计哲学|进度看板|状态结论|是否.*已|实盘"
+  - id: "017"
+    name: Skill路由强制启动
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-017"
+    match:
+      - "系统日志|成长箱|growth-box|sucair|好好学习|goood-good-study|skill.*路由|路由.*skill"
+  - id: "018"
+    name: 变更账本唯一写入口
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-018"
+    match:
+      - "变更日志|变更账本|追加记录|changelog|账本"
+  - id: "019"
+    name: 经验调用时效闸
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-019"
+    match:
+      - "历史经验|立场卡|情境|上次.*情况|类比|经验.*结论|快照|时效"
+  - id: "020"
+    name: 改匹配脚本前强制sanity check
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-020"
+    match:
+      - "改.*匹配|改.*正则|改.*关键词|改.*分类器|改.*全局匹配|匹配脚本|识别脚本|派生脚本"
+      - "修改.*pattern|修改.*regex|修改.*grep|dry-run|sanity check"
+  - id: "021"
+    name: 验证机制自验证+终检脚本物理拦截（v8.9 补④改动收尾三步）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-021"
+    match:
+      - "验证脚本|统计脚本|比对脚本|终检|长流程|月报|蒸馏|发布流程"
+      - "验证通过|检查完成|验证块|自验证|sanity"
+  - id: "022"
+    name: 授权≠流程豁免+身份标注真实可核验
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-022"
+    match:
+      - "授权|代行|Loop|代理执行|自主执行|充分授权"
+      - "你已确认|你已质证|身份标注|分身已质证|待你抽检"
+  - id: "023"
+    name: 认错即落袋（成长箱自动触发·C通道）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-023"
+    match:
+      - "记到成长箱|记入错误|计入成长箱|记录错误|沉淀"
+      - "不对|不是这样|又错了|又犯|假绿|说错了|判断错了|实测推翻"
+  - id: "024"
+    name: 自评不豁免执行（PAT-047晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-024"
+    match:
+      - "分级|例外|不适用|简化|轻量版|这次特殊|成本压力|省token"
+      - "自评|自由裁量|酌情|视情况决定"
+  - id: "025"
+    name: 常态只读SSOT配写入口
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-025"
+    match:
+      - "写入口|回锁|解锁.{0,8}写|只读.{0,6}(锁|文件).{0,8}写|0444|chmod.{0,6}444"
+      - "注册表.{0,12}(在跑|声称|漂|对齐|未更新)|(文件|SSOT).{0,10}长期未更新"
+      - "只读.{0,8}SSOT|SSOT.{0,10}(写入|只读)"
+  - id: "026"
+    name: 时刻字段必实取（PAT-045晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-026"
+    match:
+      - "时间戳|当前时间|现在.{0,2}(时间|几点)|实取.{0,4}时刻|事件窗"
+      - "(写入|填|补).{0,8}(时刻|时间)|签名.{0,6}(时间|日期)|估算.{0,4}时间"
+  - id: "027"
+    name: 生图指令对抗性约束（PAT-061/064晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-027"
+    match:
+      - "生图|文生图|图生图|图像生成|画一.{0,2}(张|幅|个)|(生成|画).{0,4}一?(张|幅).{0,6}(图|画|海报|插画|封面)"
+      - "ImageGen|image.gen|text.to.image"
+  - id: "028"
+    name: 否定断言先扫全载体（PAT-043晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-028"
+    match:
+      - "不存在|未定义|未覆盖|没有.{0,6}(记录|文件|条目|机制|配置|实现|注册)|找不到|搜不到|查无|零命中"
+      - "无.{0,6}(匹配|结果|记录|残留)|grep.{0,12}(无结果|零|没有)"
+  - id: "029"
+    name: 机器托管产物写入方向（PAT-032晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-029"
+    match:
+      - "(写|存|记|追加|回写|落|登记).{0,12}(切片|slices|core_slice|派生物|生成物|生成产物|manifest|canvas\\.json|findings\\.json|lock 文件)"
+      - "(被覆盖|被倒灌|倒灌|被抹|被还原|又没了|下次生成|整写|重写后(消失|丢|不见))"
+  - id: "030"
+    name: 端归属取证（成长箱反哺·非晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-030"
+    match: []  # TODO: 索引表新增行·match 正则待补（铁律-020 流程）

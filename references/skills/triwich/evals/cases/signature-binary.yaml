@@ -1,0 +1,14 @@
+id: signature-binary
+title: 签名二值化（✅/❌无第三值·含🧠标识）
+description: 签名锁：输出含"[🧠 三明智"签名字样且为二值化状态（SKILL.md §签名规则）
+input:
+  prompt: |
+    评估一下"先上线再修bug"这个发布策略合不合理。
+expect:
+  must_contain:
+    - "[🧠 三明智"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

@@ -1,0 +1,13 @@
+name: hermes-plugin-health
+version: 1.0.0
+description: >-
+  Hermes 端专属配置/健康守卫（元守卫·守护守卫本身）。on_session_end 调
+  hermes_plugin_health_guard.py：①死代码崩点扫描（插件 __init__.py 未定义名·py_compile
+  抓不到的那一类静默崩点）②幽灵插件双向对账（config.yaml plugins.enabled ↔ plugins/
+  目录）③注册名漂移（plugin.yaml 声明 ∪ register_hook 实参 ⊆ 内核 VALID_HOOKS）
+  ④健康台账新鲜度。端专属·报告制恒 exit 0·⛔不进 12-Hook 共享分母（对齐
+  qodercn_config_guard / zcode_config_guard / autoclaw_gateway_guard 三端元守卫先例）。
+author: Hermes
+type: user
+provides_hooks:
+  - on_session_end

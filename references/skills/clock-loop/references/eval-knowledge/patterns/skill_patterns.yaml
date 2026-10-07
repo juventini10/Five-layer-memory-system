@@ -1,0 +1,124 @@
+# Skill 评估模式库 - v1.3
+# 用途：Clock Loop 阶段2自查环节的多维度专业评分依据
+# v1.3变更：P0-3维度去重（A3∩C1合并）+ P0-1权重调整（权重微调·现行口径以 current_weights.yaml 为准：逻辑一致性0.27/哲学0.10）+ P1-1新增运行时验证维度 + P1-2类型微调声明
+# v1.2变更：哲学评估维度从5项补至7项（+语境理解+意义完整性），与philosophical-evaluation.md七项哲学检查完全对齐
+
+skill_evaluation:
+  type_detection:
+    # P1-2: Skill类型检测——仅作 AI 手工评分参照（零脚本消费·taxonomy-map §二①）
+    # ⛔ type_adjustment 已废弃（v3.55.4 C03·#99 零消费）——adjustment_ref 引用已清除，不做权重微调
+    rules:
+      - type: "workflow"
+        signal: "SKILL.md含阶段/Phase/步骤流程+执行+自查+审查"
+      - type: "dialog"
+        signal: "SKILL.md含对话回合+语境理解+情感响应"
+      - type: "loader"
+        signal: "SKILL.md含加载/注入/初始化"
+
+  dimensions:
+    - name: "开发规范符合度"
+      weight: 0.19  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/skill-arch-standard.md"
+      check_items:
+        - item: "SKILL.md 头部YAML元数据完整（name/description/version/兼容性等✅DO字段）"
+          source: "skill-arch-standard.md §一 YAML必填字段清单"
+        - item: "trigger词与description中声明的一致"
+          source: "skill-arch-standard.md §一 description字段要求"
+        - item: "产出物锁覆盖每步（接触法验证）"
+          source: "skill-arch-standard.md §四 Poka-Yoke接触法+§八 机制选配矩阵"
+        - item: "错误处理机制存在（熔断器+降级方案）"
+          source: "skill-arch-standard.md §四 Poka-Yoke+§五 四层契约行为契约"
+        - item: "四层契约完整（输入/输出/行为/演化）"
+          source: "skill-arch-standard.md §五 四层契约框架"
+        - item: "Poka-Yoke三法齐全（接触法+定值法+步序法）"
+          source: "skill-arch-standard.md §四 Poka-Yoke防错三法"
+        - item: "无反模式命中（反模式全集以 skill-arch-standard.md §七 反模式catalog 为唯一源·本处不枚举编号防漂移＝#142·v1.3曾写D1-D5/E1-E4/S1-S3漏D6+E5-E8共5个＝#204③讽刺闭环：漏的E5声明-执行gap/E6声明滞后恰是本体系主要病症）"
+          source: "skill-arch-standard.md §七 反模式catalog（唯一源·2026-09-05批4指针化）"
+        - item: "有Alternatives Considered段"
+          source: "skill-arch-standard.md §九 Alternatives Considered要求"
+
+    - name: "指令准确性"
+      weight: 0.18  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/instruction-standard.md"
+      check_items:
+        - item: "trigger词无歧义（精确匹配，非模糊包含）"
+          source: "instruction-standard.md §一 双轨制"
+        - item: "五级标注完整（✅DO/☑SHOULD/MAY/☑SHOULD NOT/⛔DO NOT），无旧版NEVER/CRITICAL/MUST残留"
+          source: "instruction-standard.md §一 §1.1 五级标注体系"
+        - item: "每条禁令附因果链（'不能X——原因是Y'）"
+          source: "instruction-standard.md §二 因果链强制"
+        - item: "禁令+正面双轨完整（不只给否定，也描述'做对了什么样'）"
+          source: "instruction-standard.md §一 §1.2 正面建模"
+        - item: "语义完整，不依赖上下文推断"
+          source: "instruction-standard.md §三 外行测试"
+
+    - name: "逻辑一致性"
+      weight: 0.27  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/skill-arch-standard.md + references/instruction-standard.md"
+      check_items:
+        - item: "端到端执行链路完整（从触发到交付无断点，含异常路径）"
+          source: "skill-arch-standard.md §四 Poka-Yoke步序法（v1.3去重：原C1步骤无断点合并到A3产出物锁，C1改为宏观链路完整性）"
+        - item: "条件分支覆盖完整（含正常+异常路径+降级路径）"
+          source: "skill-arch-standard.md §五 四层契约行为契约"
+        - item: "输入输出定义清晰"
+          source: "skill-arch-standard.md §五 四层契约输入/输出契约"
+        - item: "无内部矛盾（字段数/编号/版本号一致）"
+          source: "instruction-standard.md §九 自指优先原则"
+        - item: "运行时验证存在（eval-set可执行/有测试覆盖声明）"
+          source: "v2.2.0新增 P1-1 Goodhart Law防御——评设计质量也评运行时可验证性"
+
+    - name: "文档完整性"
+      weight: 0.14  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/skill-arch-standard.md"
+      check_items:
+        - item: "references/CHANGELOG.md存在且非空"
+          source: "skill-arch-standard.md §二 文件结构要求"
+        - item: "无README.md（规范禁止）"
+          source: "skill-arch-standard.md §二 文件结构要求"
+        - item: "使用示例可运行（含输入→预期输出对照）"
+          source: "skill-arch-standard.md §二 文件结构要求（v1.3补充可操作定义）"
+        - item: "依赖说明清晰"
+          source: "skill-arch-standard.md §一 YAML dependencies字段"
+
+    - name: "测试覆盖"
+      weight: 0.12  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/instruction-standard.md"
+      check_items:
+        - item: "评估集存在（≥10条测试用例）"
+          source: "instruction-standard.md §三 §3.2 评估集（v1.3提升阈值：原≥5→≥10）"
+        - item: "应触发/不应触发/运行时行为三类覆盖"
+          source: "instruction-standard.md §三 §3.2 评估集"
+        - item: "边界条件覆盖（异常输入/超限/卡死场景）"
+          source: "instruction-standard.md §三 §3.3 A/B对比"
+
+    - name: "哲学评估"
+      weight: 0.10  # v1.3: 对齐 skill_eval.py 宏观口径
+      standard_ref: "references/philosophical-evaluation.md"
+      grading_rule: "P0-2: 总分≥85%→哲学及格(满分计入)；<85%→哲学不及格(零分计入)。不再逐项加分。"
+      check_items_extra:
+        # v3.52.1批6d＝#29/#204③讽刺闭环补项：E5声明-执行gap机械化检查表（移植GS-1 reviewer-protocol G4三列·可机械化：声称→grep声明文本/实际→跑脚本查文件/一致→比对）
+        - item: "E5声明-执行gap：声称的机制在磁盘有对应实物（脚本/文件/字段）"
+          how: "声称→grep声明文本；实际→ls/跑脚本查文件；一致→比对（G4三列表：声称要做什么|实际做了什么|是否一致）"
+          source: "GS-1 reviewer-protocol 第216-223行 G4三列表·批6d移植"
+        - item: "E6声明滞后：版本/计数/清单类声明与权威源一致"
+          how: "声明数 vs 实测数分项核对（非只对总数）"
+          source: "skill-arch-standard §七 反模式E5/E6·批6d补"
+      check_items:
+        - item: "价值对齐：设计是否与人类价值观一致"
+          source: "philosophical-evaluation.md 七项哲学检查#1"
+        - item: "认知边界：是否清楚自身局限（熔断器/降级）"
+          source: "philosophical-evaluation.md 七项哲学检查#2"
+        - item: "语境理解：是否理解隐喻、语境和情感表达（trigger词考虑了语境区分）"
+          source: "philosophical-evaluation.md 七项哲学检查#3"
+        - item: "边界伦理：是否明确了不该做的事情（禁止行为表）"
+          source: "philosophical-evaluation.md 七项哲学检查#4"
+        - item: "反思能力：能否自我修正（反疲劳/卡死检测）"
+          source: "philosophical-evaluation.md 七项哲学检查#5"
+        - item: "偏见觉察：是否意识到认知偏差（Goodhart Law防御）"
+          source: "philosophical-evaluation.md 七项哲学检查#6"
+        - item: "意义完整性：'为什么做'是否和'怎么做'一样清晰（有Goals/Non-Goals声明）"
+          source: "philosophical-evaluation.md 七项哲学检查#7"
+
+# ── 通用评估模式（非Skill对象）已外移 ──（2026-09-05批4 A15＝#206孤儿段根治）
+# 唯一源 = references/eval-knowledge/patterns/general_patterns.yaml（v1.0 2026-09-02 新建·
+# 内容为本孤儿段的对齐重写版）。本文件不再维护第二份 general_evaluation（两处定义必漂移·#35第12例）。

@@ -1,10 +1,9 @@
-# 系统日志 — 六端署名对照表
+---
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
+---
 
-| 工具 | 署名 | emoji |
-|------|------|-------|
-| WorkBuddy | WorkBuddy ⚡ | ⚡ |
-| Qclaw | Qclaw 🦞 | 🦞 |
-| Trae | Trae 💡 | 💡 |
-| Trae Work | Trae Work 🤖 | 🤖 |
-| Wukong | 悟空 🐒 | 🐒 |
-| QoderWork | QoderWork 🦉 | 🦉 |
+# 系统日志 — 署名来源（已废弃）
+
+> ⚠️ 本文件原"不维护端署名名单、各端自由署名"设计实测导致 59 种工具名变体漂移（v3.6.6 及之前）。
+> v3.6.7 起工具名规范改为**单一事实源 allowlist**，见 SKILL.md「工具名规范」节。
+> 本文件仅保留历史溯源，不再作为写入依据。

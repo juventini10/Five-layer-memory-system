@@ -1,0 +1,7 @@
+{
+  "name": "lobsterai-buluotuo-hooks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "布洛陀脚本体系·LobsterAI 运行面（事件类映射·数据驱动 ROSTER·纯转发公共脚本）"
+}

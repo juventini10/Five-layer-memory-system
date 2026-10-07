@@ -7,8 +7,8 @@
 > **⚡ 步骤锁定协议**
 > ① 导航锁：每次回复首行输出 `步骤3/7`
 > ② 偏离锁：用户问无关问题 → 记到待办列表，不展开回答，继续安装
-> ③ 检查点前置依赖：Read `{记忆共享中心}/.install/step2-done.md` — **升级/续装用户**不存在则阻塞（防跳步）；**全新用户**（记忆中心路径本步才确定、此前无处写检查点）→ 跳过此前置检查、正常继续，⛔DO NOT 阻塞。本步确定路径后 ✅DO 创建 `{记忆共享中心}/.install/` 并补写 step1-done/step2-done/step3-done，使步骤4起检查点链正常。
-> ④ 检查点写入：末尾 Write `{记忆共享中心}/.install/step3-done.md`
+> ③ 检查点前置依赖：Read `[记忆共享中心]/.install/step2-done.md` — **升级/续装用户**不存在则阻塞（防跳步）；**全新用户**（记忆中心路径本步才确定、此前无处写检查点）→ 跳过此前置检查、正常继续，⛔DO NOT 阻塞。本步确定路径后 ✅DO 创建 `[记忆共享中心]/.install/` 并补写 step1-done/step2-done/step3-done，使步骤4起检查点链正常。
+> ④ 检查点写入：末尾 Write `[记忆共享中心]/.install/step3-done.md`
 > 🔒 门禁：路径已用 Bash 实际验证存在 + 记忆共享中心路径已确认写入
 
 ## 执行指令
@@ -87,11 +87,11 @@
 └── 自定义层/
 ```
 
-> 目录创建完毕 → 整目录复制 `references/最伟大的我/` 到 `[记忆共享中心]/最伟大的我/`（含README.md + 8个子目录：自画像/成就证据/认知发现/回避模式/变化轨迹/人生版本/已接受边界/原型试验）→ 整目录复制 `references/记忆琥珀/` 到 `[记忆共享中心]/记忆琥珀/`（含README.md）→ 整目录复制 `references/成就系统/` 到 `[记忆共享中心]/成就系统/`（含scripts/ + 成就定义文件，排除 __pycache__）→ 复制 `references/templates/自定义层/README.md` 到 `[记忆共享中心]/自定义层/README.md` → 写入 `{记忆共享中心}/.install/step3-done.md`（**必须包含路径变量，见下方3c**）→ 继续步骤4
+> 目录创建完毕 → 整目录复制 `references/最伟大的我/` 到 `[记忆共享中心]/最伟大的我/`（含README.md + 8个子目录：自画像/成就证据/认知发现/回避模式/变化轨迹/人生版本/已接受边界/原型试验）→ 整目录复制 `references/记忆琥珀/` 到 `[记忆共享中心]/记忆琥珀/`（含README.md）→ 整目录复制 `references/成就系统/` 到 `[记忆共享中心]/成就系统/`（含scripts/ + 成就定义文件，排除 __pycache__）→ 复制 `references/templates/自定义层/README.md` 到 `[记忆共享中心]/自定义层/README.md` → 写入 `[记忆共享中心]/.install/step3-done.md`（**必须包含路径变量，见下方3c**）→ 继续步骤4
 
 ### 3c. 记录路径变量
 
-安装过程中必须记录以下路径变量，**写入 `{记忆共享中心}/.install/step3-done.md` 文件头部**：
+安装过程中必须记录以下路径变量，**写入 `[记忆共享中心]/.install/step3-done.md` 文件头部**：
 
 ```
 📦 步骤3/7 路径配置 ✅ {date命令返回日期}
@@ -100,10 +100,24 @@
 MEMORY_CENTER=[记忆共享中心]
 DIARY_REPO=[日记仓库]
 KNOWLEDGE_BASE=[知识库]
+CONFIG_ROOT=[配置根]
 ```
 
 > ⚠️ **所有后续步骤从 `stepN-done.md` 文件读取路径变量，不靠AI上下文传递。**
 > 如果重启对话，第一步Read `step3-done.md` 获取路径。
 > 如果文件不存在，说明路径未配置完成，阻塞后续步骤。
+
+### 3c-2. 确认端配置根（v2.0.1·多端必做）
+
+按 INSTALL Step -0.5 判定的端 ID，从其 `adapters/<端ID>/capability.yaml` 读配置根：
+
+```bash
+CONFIG_ROOT=$(grep -m1 '^config_root:' "adapters/<端ID>/capability.yaml" | awk '{print $2}' | tr -d '"')
+[ -z "$CONFIG_ROOT" ] && CONFIG_ROOT="~/.workbuddy"   # 占位端/无 capability.yaml → 默认 WorkBuddy（向后兼容）
+```
+
+> 配置根=**端系统文件落点**（IDENTITY/SOUL/USER/MEMORY 与 hooks/、skills/、rules/ 均在其下）——WorkBuddy 为 `~/.workbuddy`，Qoder CN 为 `~/.qoder-cn`；Windows 端等价 `$env:USERPROFILE\<配置根目录名>`。
+> 本值随路径变量写入 `[记忆共享中心]/.install/step3-done.md`，步骤5/6/7 一律从该文件读取 CONFIG_ROOT；
+> ⛔ 后续步骤文档与命令中禁止再裸写 `~/.workbuddy`——裸写=非 WB 端落点错位=文件写了不生效（2026-09-30 L3 审计实证·step5 五处硬编码即此病根）。
 | `[日记仓库]` | 日记/笔记存储目录 | 用户自定义 |
 | `[知识库]` | 读书笔记/知识池目录 | 用户自定义（可同日记仓库） |

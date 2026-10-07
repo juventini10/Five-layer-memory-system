@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自建 HEXACO 100 题 · 分身版 · 答题页 v1</title>
+<style>
+  :root{--ink:#1E1A2E;--paper:#F6F0EB;--purple:#7A6CA8;--teal:#4A8A8A;--line:#D8CFE0;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;padding:24px 16px 120px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:22px;margin-bottom:4px;}
+  .sub{color:#666;font-size:13px;margin-bottom:18px;}
+  .guide{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px;margin-bottom:20px;}
+  .guide b{color:var(--purple);}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9;}
+  .bar .prog{font-size:13px;color:#666;min-width:90px;}
+  button{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:15px;cursor:pointer;}
+  button:disabled{background:#bbb;cursor:not-allowed;}
+  button.ghost{background:#fff;color:var(--purple);border:1px solid var(--purple);}
+  h2{font-size:17px;margin:26px 0 8px;padding-left:10px;border-left:4px solid var(--teal);}
+  .facet{font-size:12px;color:#999;margin:12px 0 4px;padding-left:10px;}
+  .q{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .q .no{display:inline-block;background:var(--teal);color:#fff;border-radius:6px;font-size:11px;padding:1px 7px;margin-right:8px;}
+  .q.rev .no{background:var(--purple);}
+  .q .txt{font-size:15px;margin-bottom:8px;}
+  .opts{display:flex;gap:6px;}
+  .opts label{flex:1;text-align:center;border:1px solid var(--line);border-radius:8px;padding:7px 2px;cursor:pointer;font-size:12px;color:#556;}
+  .opts input{display:none;}
+  .opts input:checked+span{color:#fff;}
+  .opts label:has(input:checked){background:var(--purple);border-color:var(--purple);}
+  .opts label:has(input:checked) span{color:#fff;}
+  .opts .sc{display:block;font-size:14px;font-weight:600;}
+  .legend{display:flex;gap:14px;font-size:12px;color:#888;margin-bottom:14px;padding-left:10px;}
+  #result{display:none;background:#fff;border:2px solid var(--teal);border-radius:10px;padding:16px;margin-top:20px;}
+  #result h3{margin-bottom:8px;}
+  #json{width:100%;height:180px;font-family:monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;padding:8px;background:#FAF7F4;}
+  .warn{color:#c0392b;font-size:13px;margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>自建 HEXACO 100 题 · 分身版</h1>
+  <div class="sub">v1.0 · 你的作答将用于生成<b>你自己</b>的人格基底 · 全程本地计算，不联网</div>
+  <div class="guide">
+    <b>答题指导</b>：下面的描述是关于人们日常行为与想法的。请按你<b>真实的样子</b>作答（不是理想中的自己），每题填一个数字代表同意程度。<b>答案没有对错，请勿漏答。</b>大约需要 15–20 分钟，建议一次性答完。
+  </div>
+  <div class="legend"><span>1 = 极不同意</span><span>2 = 不大同意</span><span>3 = 没意见</span><span>4 = 基本同意</span><span>5 = 非常同意</span></div>
+  <div id="form"></div>
+  <div id="result">
+    <h3>✅ 作答完成 · 结果数据</h3>
+    <div class="warn" id="valwarn" style="display:none"></div>
+    <p style="font-size:13px;margin-bottom:8px">点「复制结果」，把剪贴板内容<b>整段粘贴给 WorkBuddy</b>（或点「下载文件」把文件放到桌面后告诉 AI 文件名）。AI 将据此计分并与官方金标准做效度锚定。</p>
+    <textarea id="json" readonly></textarea>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button id="copy">复制结果</button>
+      <button class="ghost" id="dl">下载 .json 文件</button>
+    </div>
+  </div>
+</div>
+<div class="bar">
+  <span class="prog" id="prog">已答 0 / 100</span>
+  <button id="submit" disabled>生成结果</button>
+</div>
+<script>
+const Q=[
+[1,"H",0,"我帮别人是真心想帮，不是为了让对方欠我人情。","真诚"],
+[2,"H",1,"如果能稳赚一笔且绝不会被发现，我愿意做点不太诚实的事。","真诚"],
+[3,"H",0,"别人夸我夸得过了头，我会直说\"没那么好\"。","真诚"],
+[4,"H",1,"为了讨人喜欢，我会假装对对方的话题感兴趣，其实毫无兴趣。","真诚"],
+[5,"H",0,"就算没有惩罚、作弊能让我轻松赢，我也不会做。","公平"],
+[6,"H",1,"如果能确定不被抓，占点小便宜我是不介意的。","公平"],
+[7,"H",0,"分功劳时，我会坚持把每个人做的部分说清楚。","公平"],
+[8,"H",1,"制度有漏洞时先钻了再说——改规则反正轮不到我。","公平"],
+[9,"H",0,"真白给我一大笔钱，我会先怀疑附加条件是什么。","戒贪"],
+[10,"H",1,"看到别人晒高端设备，我会忍不住想换同款。","戒贪"],
+[11,"H",1,"身份和排场对我有实实在在的吸引力。","戒贪"],
+[12,"H",0,"有了钱我会先改善必要的生活，而不是撑场面。","戒贪"],
+[13,"H",0,"我觉得自己的成绩里，运气占了不少成分。","谦逊"],
+[14,"H",1,"看到有人靠关系拿到本该凭本事的位置，我会直接说出来。","谦逊"],
+[15,"H",0,"被人当专家对待时，我会先讲清自己懂什么、不懂什么。","谦逊"],
+[16,"H",1,"别人先得到本该属于我的重视，我会很难咽下去。","谦逊"],
+[17,"E",0,"一个人走夜路，我会不自觉地加快脚步。","恐惧"],
+[18,"E",1,"遇到突发状况，我的第一反应是看情况，而不是害怕。","恐惧"],
+[19,"E",0,"去陌生地方之前，我会把可能出岔子的环节先想一遍。","恐惧"],
+[20,"E",1,"恐怖片对我没什么影响，看完就忘。","恐惧"],
+[21,"E",0,"事情还没出结果的那几天，我容易睡不踏实。","焦虑"],
+[22,"E",1,"小事上的波折，基本不会在我心里停留超过一小时。","焦虑"],
+[23,"E",0,"我会为还没发生的麻烦反复做准备。","焦虑"],
+[24,"E",1,"别人已经很紧张的事，我常常后知后觉。","焦虑"],
+[25,"E",0,"遇到难处时，我需要有人听我说完才能缓过来。","依赖"],
+[26,"E",1,"我消化情绪基本靠自己，不太需要倾诉。","依赖"],
+[27,"E",0,"做重要决定前，我希望有个人陪我再确认一遍。","依赖"],
+[28,"E",1,"身边没人商量，也很少让我觉得没底。","依赖"],
+[29,"E",0,"看到别人受苦的新闻，我会难受一阵。","多情"],
+[30,"E",1,"和人道别时，我的情绪波动比对方小得多。","多情"],
+[31,"E",0,"有纪念意义的旧东西丢了，我是真心疼，不只嘴上说说。","多情"],
+[32,"E",1,"再感人的场面也很难让我掉眼泪。","多情"],
+[33,"X",0,"多数人等着看谁负责时，我已经在安排下一步了。","胜任自尊"],
+[34,"X",1,"让我去开一条没人走过的路，我会先想的是“凭什么是我”。","胜任自尊"],
+[35,"X",0,"再乱的摊子到我手里，我都有把握理出顺序。","胜任自尊"],
+[36,"X",1,"再熟悉的领域，当众讲解我还是心里没底。","胜任自尊"],
+[37,"X",0,"讨论里我会主动开口，哪怕想法还不成熟。","表达胆量"],
+[38,"X",1,"能不发言我就不发言，等别人先说。","表达胆量"],
+[39,"X",0,"没人试过的新路，让我先走我会来劲。","表达胆量"],
+[40,"X",1,"能不上台汇报我就不上，哪怕内容我最熟。","表达胆量"],
+[41,"X",0,"启动新事的头几天，我的兴奋压得过疲惫。","推进能量"],
+[42,"X",1,"推进到一半的新项目，我常常提不起当初的劲。","推进能量"],
+[43,"X",0,"连续攻坚的日子里，我的能量反而越推越足。","推进能量"],
+[44,"X",1,"让我长时间维持同一种节奏，我会觉得憋。","推进能量"],
+[45,"X",0,"我说话的手势和语气，常比周围人夸张。","表达活力"],
+[46,"X",1,"我讲话从头到尾基本一个调子。","表达活力"],
+[47,"X",0,"气氛沉闷时，我常常是先把话说开的那个人。","表达活力"],
+[48,"X",1,"再有意思的事，从我说出来都变得平淡。","表达活力"],
+[49,"A",0,"对方道歉到位了，我基本能翻篇。","宽恕"],
+[50,"A",1,"有人坑过我一次，我会记很久，哪怕表面和好。","宽恕"],
+[51,"A",0,"我给过坑过我的人第二次机会。","宽恕"],
+[52,"A",1,"有人对不起我，就算对方道了歉，我也会找机会让对方付出代价。","宽恕"],
+[53,"A",0,"批评人之前，我会先想怎么说对方才接得住。","温和"],
+[54,"A",1,"批评别人的错误时，我常会顺带贬低对方这个人。","温和"],
+[55,"A",0,"就算争执，我也尽量不碰对方的心理软肋。","温和"],
+[56,"A",1,"争执时我会翻旧账，专挑对方最痛的说。","温和"],
+[57,"A",0,"团队临时改方案，我能马上跟着调整。","灵活"],
+[58,"A",1,"定好的计划被临时改动，我会莫名烦躁。","灵活"],
+[59,"A",0,"和我合作的人，不太需要担心我固执。","灵活"],
+[60,"A",1,"就算对方的理由明显更充分，我也很难松口。","灵活"],
+[61,"A",0,"排队再久，我也不会烦躁到刷手机骂骂咧咧。","耐心"],
+[62,"A",1,"别人第三次问同一个问题，我的语气就开始变硬。","耐心"],
+[63,"A",0,"教新人的时候，我能忍住不自己上手替他做。","耐心"],
+[64,"A",1,"低效率的讨论会让我忍不住想打断。","耐心"],
+[65,"C",0,"我的工作区（桌面和文件夹）分类是清楚的。","条理"],
+[66,"C",1,"我的文件经常靠搜索才找得到，因为懒得归档。","条理"],
+[67,"C",0,"动手之前，我喜欢先把待办列出来。","条理"],
+[68,"C",1,"我的时间安排基本靠记忆，不靠清单。","条理"],
+[69,"C",0,"定了目标我基本能按节奏推进，不用人催。","勤奋"],
+[70,"C",1,"我经常雄心勃勃地开始，然后不了了之。","勤奋"],
+[71,"C",0,"交付前夜我还在打磨，哪怕没人要求。","勤奋"],
+[72,"C",1,"只要能交差，我不会再多花一分钟。","勤奋"],
+[73,"C",0,"交出去的东西里有个明显错误，我会难受。","完美"],
+[74,"C",1,"小瑕疵不影响使用就行，我看得开。","完美"],
+[75,"C",0,"我会反复检查自己的工作，哪怕已经查过两遍。","完美"],
+[76,"C",1,"\"差不多\"这三个字，替我省过不少时间。","完美"],
+[77,"C",0,"做决定之前，我会先把代价列一遍。","审慎"],
+[78,"C",1,"我经常先干了再想后果。","审慎"],
+[79,"C",0,"冲动消费之后后悔，这种事很少发生在我身上。","审慎"],
+[80,"C",1,"我做过不止一次\"当时觉得稳了\"后来翻车的决定。","审慎"],
+[81,"O",0,"排版难看的内容，信息再好我也读不下去。","审美"],
+[82,"O",1,"买东西或做东西，我基本只看功能，外观很少影响我。","审美"],
+[83,"O",0,"我会为一个配色、一句话的节奏，反复调很久。","审美"],
+[84,"O",1,"艺术展对我吸引力不大，不如逛超市。","审美"],
+[85,"O",0,"新工具新方法出来，我会第一时间拿上手玩。","好奇"],
+[86,"O",1,"对眼下用不上的知识，我通常不会主动去碰。","好奇"],
+[87,"O",0,"发现不同领域底层是同一个结构时，我会兴奋很久。","好奇"],
+[88,"O",1,"学新工具对我来说是负担，不是乐趣。","好奇"],
+[89,"O",0,"别人给的现成方案，我总忍不住改出一个自己的版本。","创造"],
+[90,"O",1,"有成熟模板我就直接用，不想另起炉灶。","创造"],
+[91,"O",0,"我常能把两个不相干的东西拼出新用法。","创造"],
+[92,"O",1,"需要新点子的时候，我更倾向等别人先想。","创造"],
+[93,"O",0,"大家都往一个方向走的时候，我会先看看别的路。","非常规"],
+[94,"O",1,"多数人认可的做法，照着做是最安全的。","非常规"],
+[95,"O",0,"我对\"从来都是这么干的\"天然警惕。","非常规"],
+[96,"O",1,"标新立异带来的麻烦多于好处，何必。","非常规"],
+["V1","VAL",0,"这道题请填 3。","效度"],
+["V2","VAL",1,"我这辈子从来没有说过一句谎。","效度"],
+["V3","VAL",0,"我是逐题认真读完再作答的。","效度"],
+["V4","VAL",1,"这道题请填 2。","效度"]
+];
+const DIMNAME={H:"H · 诚实-谦逊",E:"E · 情绪性",X:"X · 外向性",A:"A · 宜人性",C:"C · 尽责性",O:"O · 开放性",VAL:"效度检查题"};
+const SCALE=[[1,"极不同意"],[2,"不大同意"],[3,"没意见"],[4,"基本同意"],[5,"非常同意"]];
+const form=document.getElementById("form");
+let lastDim="",lastFacet="";
+Q.forEach(q=>{
+  const [n,dim,rev,text,facet]=q;
+  if(dim!==lastDim){lastDim=dim;lastFacet="";const h=document.createElement("h2");h.textContent=DIMNAME[dim];form.appendChild(h);}
+  if(facet!==lastFacet && dim!=="VAL"){lastFacet=facet;const f=document.createElement("div");f.className="facet";f.textContent="◇ "+facet;form.appendChild(f);}
+  const div=document.createElement("div");div.className="q"+(rev?" rev":"");
+  let opts=SCALE.map(s=>`<label><input type="radio" name="q${n}" value="${s[0]}"><span class="sc">${s[0]}</span>${s[1]}</label>`).join("");
+  div.innerHTML=`<span class="no">${n}</span><span class="txt">${text}</span><div class="opts">${opts}</div>`;
+  form.appendChild(div);
+});
+document.getElementById("form").addEventListener("change",updProg);
+function answered(){return Q.filter(q=>document.querySelector(`input[name="q${q[0]}"]:checked`)).length;}
+function updProg(){const n=answered();document.getElementById("prog").textContent=`已答 ${n} / 100`;document.getElementById("submit").disabled=n<100;}
+document.getElementById("submit").addEventListener("click",()=>{
+  if(answered()<100)return;
+  const answers={};Q.forEach(q=>{const c=document.querySelector(`input[name="q${q[0]}"]:checked`);answers[q[0]]=parseInt(c.value);});
+  // 效度校验
+  const warns=[];
+  if(answers["V1"]!==3)warns.push("V1 未按指令作答");
+  if(answers["V2"]===5)warns.push("V2 异常（\"从未说谎\"选了非常同意）");
+  if(answers["V3"]<4)warns.push("V3 自评未达\"基本同意\"");
+  if(answers["V4"]!==2)warns.push("V4 未按指令作答");
+  const payload={instrument:"selfbuild-hexaco-100-v1",answered_at:new Date().toISOString(),
+    duration_note:"见浏览器会话",
+    reverse_items:[2,4,6,8,10,11,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96],
+    dims:{H:[1,16],E:[17,32],X:[33,48],A:[49,64],C:[65,80],O:[81,96]},
+    validity:{V1:3,V2_not5:true,V3_ge4:true,V4:2},
+    answers:answers};
+  document.getElementById("json").value=JSON.stringify(payload,null,1);
+  const w=document.getElementById("valwarn");
+  if(warns.length){w.style.display="block";w.textContent="⚠️ 效度题提示："+warns.join("；")+"（数据仍会导出，计分时 AI 会标注）";}else{w.style.display="none";}
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth"});
+});
+document.getElementById("copy").addEventListener("click",function(){
+  const t=document.getElementById("json");t.select();
+  navigator.clipboard.writeText(t.value).then(()=>{this.textContent="✅ 已复制";setTimeout(()=>this.textContent="复制结果",1500);});
+});
+document.getElementById("dl").addEventListener("click",function(){
+  const blob=new Blob([document.getElementById("json").value],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="hexaco-selfbuild-answers-"+new Date().toISOString().slice(0,10)+".json";a.click();
+});
+updProg();
+</script>
+</body>
+</html>

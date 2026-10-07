@@ -14,6 +14,10 @@
   python3 achievement_tracker.py --status    # 查看当前成就进度
   python3 achievement_tracker.py --sync-memory # 同步成就数据到 MEMORY.md
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -33,11 +37,12 @@ from pathlib import Path
 from glob import glob
 
 # ─── 路径配置 ────────────────────────────────────────────────
-DIARY_DIR = Path.home() / "Local_Obsidian_Vault/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = Path.home() / "个人AI档案/成就系统"
+DIARY_DIR = Path.home() / "[日记仓库]/1-每日计划/01-日记"
+ACHIEVEMENT_DIR = "[记忆共享中心]/成就系统"
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
-READING_NOTES_DIR = Path.home() / "Local_Obsidian_Vault/2-知识库/01-读书笔记"
-GREATEST_ME_DIR = Path.home() / "个人AI档案/最伟大的我/成就证据"  # 与最伟大的我联动
+READING_NOTES_DIR = Path.home() / "[日记仓库]/2-知识库/01-读书笔记"
+KNOWLEDGE_INDEX = Path.home() / "[日记仓库]/2-知识库/05-知识池/INDEX.md"  # 读书助手拆书索引（⛔不再作为阅读数数据源·拆解≠阅读·2026-08-08）
+GREATEST_ME_DIR = "[记忆共享中心]/最伟大的我/成就证据"  # 与最伟大的我联动
 
 # ─── 成就定义 ────────────────────────────────────────────────
 ACHIEVEMENTS = {
@@ -55,11 +60,11 @@ ACHIEVEMENTS = {
         {"id": "tomato_500",   "name": "🥈 番茄大师-番茄500个",   "threshold": 500,   "level": "🥈 银牌"},
         {"id": "tomato_700",   "name": "🥈 番茄传奇-番茄700个",   "threshold": 700,   "level": "🥈 银牌"},
         {"id": "tomato_900",   "name": "🥈 番茄宗师-番茄900个",   "threshold": 900,   "level": "🥈 银牌"},
-        {"id": "tomato_1000",  "name": "💎 千番茄王者-番茄1000个","threshold": 1000,  "level": "💎 钻石"},
-        {"id": "tomato_2000",  "name": "🥇 两千番茄领主-番茄2000个","threshold": 2000, "level": "🥇 金牌"},
-        {"id": "tomato_3000",  "name": "🥇 三千番茄尊者-番茄3000个","threshold": 3000, "level": "🥇 金牌"},
-        {"id": "tomato_5000",  "name": "🥇 五千番茄帝皇-番茄5000个","threshold": 5000, "level": "🥇 金牌"},
-        {"id": "tomato_7000",  "name": "🥇 七千番茄神话-番茄7000个","threshold": 7000, "level": "🥇 金牌"},
+        {"id": "tomato_1000",  "name": "🥇 千番茄王者-番茄1000个","threshold": 1000,  "level": "🥇 金牌"},
+        {"id": "tomato_2000",  "name": "💎 两千番茄领主-番茄2000个","threshold": 2000, "level": "💎 钻石"},
+        {"id": "tomato_3000",  "name": "💎 三千番茄尊者-番茄3000个","threshold": 3000, "level": "💎 钻石"},
+        {"id": "tomato_5000",  "name": "💎 五千番茄帝皇-番茄5000个","threshold": 5000, "level": "💎 钻石"},
+        {"id": "tomato_7000",  "name": "💎 七千番茄神话-番茄7000个","threshold": 7000, "level": "💎 钻石"},
         {"id": "tomato_10000", "name": "💎 万番茄大师-番茄10000个",  "threshold": 10000, "level": "💎 钻石"},
         {"id": "tomato_15000", "name": "💎 万五里程碑-番茄15000个",  "threshold": 15000, "level": "💎 钻石"},
         {"id": "tomato_20000", "name": "💎 二万番茄传奇-番茄20000个","threshold": 20000, "level": "💎 钻石"},
@@ -93,6 +98,19 @@ ACHIEVEMENTS = {
         {"id": "diary_365", "name": "🗓️ 一年365天-日记365篇",    "threshold": 365,  "level": "🥇 金牌"},
         {"id": "diary_500", "name": "🏛️ 五百篇殿堂-日记500篇",   "threshold": 500,  "level": "💎 钻石"},
         {"id": "diary_1000","name": "👑 千篇传奇-日记1000篇",     "threshold": 1000, "level": "💎 钻石"},
+    ],
+
+    # 🔥 连续日记成就（真实连续天数·v3 修复：原为设计缺口——通用打卡成就.md有表但检测未接线）
+    # 判定数据：diary_streak_current（scan_all_diaries 按文件名日期真实计算，非估算）
+    "diary_streak": [
+        {"id": "streak_1",   "name": "🔥 连续第1天",   "threshold": 1,    "level": "🟢 铜牌"},
+        {"id": "streak_3",   "name": "🔥 连续第3天",   "threshold": 3,    "level": "🟢 铜牌"},
+        {"id": "streak_7",   "name": "🔥 连续第7天",   "threshold": 7,    "level": "🟢 铜牌"},
+        {"id": "streak_10",  "name": "🔥 连续第10天",  "threshold": 10,   "level": "🟢 铜牌"},
+        {"id": "streak_30",  "name": "🔥 连续第30天",  "threshold": 30,   "level": "🥈 银牌"},
+        {"id": "streak_50",  "name": "🔥 连续第50天",  "threshold": 50,   "level": "🥈 银牌"},
+        {"id": "streak_100", "name": "🔥 连续第100天", "threshold": 100,  "level": "🥈 银牌"},
+        {"id": "streak_365", "name": "🔥 连续第365天", "threshold": 365,  "level": "💎 钻石"},
     ],
 
     # 😴 早睡成就（累计23:30前入睡天数）
@@ -239,6 +257,22 @@ ACHIEVEMENTS = {
         {"id": "wake_365", "name": "🌟 一年365个晨光-早起365天",  "threshold": 365,  "level": "🥇 金牌"},
         {"id": "wake_1000","name": "♾️ 千晨光传奇-早起1000天",    "threshold": 1000, "level": "💎 钻石"},
     ],
+
+    # 🎬 内容创作成就（累计发布内容数：视频/文章/笔记等，取自日记 YAML achievement_data.content_creation）
+    "content_creation": [
+        {"id": "create_1",   "name": "🎬 初次创作-发布1篇",     "threshold": 1,    "level": "🟢 铜牌"},
+        {"id": "create_10",  "name": "🎬 十篇创作者-发布10篇",  "threshold": 10,   "level": "🥈 银牌"},
+        {"id": "create_50",  "name": "🎬 五十篇达人-发布50篇",  "threshold": 50,   "level": "🥇 金牌"},
+        {"id": "create_100", "name": "💎 百篇宗师-发布100篇",  "threshold": 100,  "level": "💎 钻石"},
+    ],
+
+    # 🏃 运动成就（累计运动次数，取自日记 YAML achievement_data.exercise）
+    "exercise": [
+        {"id": "exercise_10",  "name": "🏃 运动新手-运动10次",   "threshold": 10,   "level": "🟢 铜牌"},
+        {"id": "exercise_50",  "name": "🏃 运动达人-运动50次",   "threshold": 50,   "level": "🥈 银牌"},
+        {"id": "exercise_100", "name": "🏃 运动健将-运动100次",  "threshold": 100,  "level": "🥈 银牌"},
+        {"id": "exercise_1000","name": "💎 千次运动王-运动1000次","threshold": 1000, "level": "💎 钻石"},
+    ],
 }
 
 # ─── 通知函数 ────────────────────────────────────────────────
@@ -267,8 +301,20 @@ def send_achievement_notification(achievement, value):
         subprocess.run(["afplay", "/System/Library/Sounds/Glass.aiff"])
         ach_name = achievement["name"]
         ach_level = achievement["level"]
-        script = f'tell app "System Events" to display dialog "{ach_name}\\n\\n{ach_level} | 达成值：{value}天" with title "🎉 成就解锁！" buttons {{"OK"}} default button "OK" with icon note giving up after 60'
-        subprocess.run(["osascript", "-e", script])  # 阻塞等待用户点击
+        # v3.1 修复：改用 Standard Additions 裸 display dialog（无需「辅助功能」TCC 权限）——
+        # 原 `tell app "System Events" to display dialog` 依赖辅助功能授权，未授权时报 -10004 权限违例
+        # （2026-08-01 实测：裸 display dialog 无权限依赖可弹，System Events 版本才是权限依赖源）
+        script = f'display dialog "{ach_name}\\n\\n{ach_level} | 达成值：{value}天" with title "🎉 成就解锁！" buttons {{"OK"}} default button "OK" with icon note giving up after 60'
+        # fallback：若弹窗仍异常（极端环境），降级系统通知横幅，不静默失败
+        try:
+            res = subprocess.run(["osascript", "-e", script], capture_output=True, timeout=65)
+            if res.returncode != 0:
+                note = (f'display notification "{ach_name} | {ach_level} | 达成值：{value}天" '
+                        f'with title "🎉 成就解锁！" sound name "Glass"')
+                subprocess.run(["osascript", "-e", note], capture_output=True)
+                print("  ⚠️ display dialog 不可用，已用系统通知横幅替代")
+        except Exception as e:
+            print(f"  ⚠️ 弹窗异常：{e}（成就已正常存档）")
     elif platform.system() == "Windows":
         # 【2026-07-07】Windows 模态弹窗 + 系统提示音（点击式，等价 macOS display dialog）
         try:
@@ -351,7 +397,7 @@ def load_data():
             return json.load(f)
     return {
         "tomato_total": 0,
-        "reading_total": 3,       # 从成就系统建立后：《咸的玩笑》《卢浮宫的猫》《再见绘梨》
+        "reading_total": 0,       # 数据驱动：count_books_read() = 历史基线9 + 日记YAML books_read 增量（2026-08-08 重构·原数知识池拆书错误）
         "diary_total": 0,
         "diary_streak_current": 0,
         "diary_streak_max": 0,
@@ -450,6 +496,7 @@ def parse_diary_file(filepath):
         "energy_pred": None, "energy_actual": None,
         "calm_pred": None, "calm_actual": None,
         "satisfaction": None, "physiological": None,
+        "content_creation": 0, "exercise": 0,
     }
     try:
         with open(filepath, "r", encoding="utf-8") as f:
@@ -486,6 +533,10 @@ def parse_diary_file(filepath):
                 result["satisfaction"] = int(yaml_data["satisfaction"])
             if yaml_data.get("physiological"):
                 result["physiological"] = yaml_data["physiological"]
+            if yaml_data.get("content_creation") is not None and yaml_data["content_creation"] != 0:
+                result["content_creation"] = int(yaml_data["content_creation"])
+            if yaml_data.get("exercise") is not None and yaml_data["exercise"] != 0:
+                result["exercise"] = int(yaml_data["exercise"])
             # 信任YAML番茄→短路；否则fallthrough到regex
             if has_trusted_yaml:
                 return result
@@ -553,6 +604,62 @@ def parse_diary_file(filepath):
     return result
 
 
+def count_books_read():
+    """统计'已读'书本数（2026-08-08 第一性原理重构·你纠正拆书≠阅读）。
+
+    真相源 = 你的日记（唯一权威），两层构成：
+    1. 历史基线：皮叔 2026 年已读 9 本（铁证：2026-05-06 日记"📖 阅读9本"，
+       3/26→3/28 累计 5→8 本计数链 + 成就系统去污染前备份"阅读总量 8 本（2026年新读）"佐证）。
+       历史日记格式不统一，不逐日回填，直接以基线固化（READING_BASELINE）。
+    2. 增量：每晚复盘你把当天读完的书写入日记 YAML achievement_data.books_read
+       （如 books_read: ["《西瓜船》"]），脚本逐日扫描去重累加。
+
+    明确排除：知识池 INDEX.md（读书助手拆书仓库）——拆解≠阅读，不再作为数据源。
+    返回去重后的已读书本总数。
+    """
+    READING_BASELINE = 9  # 2026年已读历史基线（你 5/6 日记铁证），从该数字起步，YAML 增量往上加
+    yaml_books = set()    # 从日记 YAML books_read 收集的书名（去重）
+
+    files = sorted(glob(str(DIARY_DIR / "**" / "2026-*.md"), recursive=True))
+    for f in files:
+        f_path = Path(f)
+        if "备份" in f_path.name:
+            continue
+        try:
+            content = f_path.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        yaml_data = _extract_yaml_achievement_data(content)
+        if not yaml_data:
+            continue
+        br = yaml_data.get("books_read")
+        if not br:
+            continue
+        # 兼容字符串和数组两种写法
+        if isinstance(br, str):
+            br = [br]
+        if isinstance(br, list):
+            for b in br:
+                b = str(b).strip()
+                if b and b not in ("[]", ""):
+                    yaml_books.add(b)
+
+    return READING_BASELINE + len(yaml_books)
+
+
+def _normalize_physiological(val):
+    """将生理状态归一化为英文 key（green/yellow/red），消除 emoji/英文混写导致的统计分裂。"""
+    if not val:
+        return None
+    s = str(val).strip()
+    mapping = {
+        "🟢": "green", "green": "green", "绿": "green",
+        "🟡": "yellow", "yellow": "yellow", "黄": "yellow",
+        "🔴": "red", "red": "red", "红": "red",
+    }
+    return mapping.get(s)
+
+
 def scan_all_diaries(cutoff=None):
     """扫描所有日记，统计全量数据。cutoff='YYYY-MM-DD' 时只统计该日期及之前的日记。"""
     files = sorted(glob(str(DIARY_DIR / "**" / "2026-*.md"), recursive=True))
@@ -614,9 +721,8 @@ def scan_all_diaries(cutoff=None):
             if total_minutes <= 7 * 60 + 30:
                 wake_early_days += 1
 
-    # 阅读数量：手动维护（从日记中累计）
-    # 2026年已读：8本（《卢浮宫的猫》上下集、《再见绘梨》、《咸的玩笑》、《青之芦苇》1-5卷）
-    reading_count = 9
+    # 阅读数量：count_books_read() = 历史基线9 + 日记YAML books_read 增量（2026-08-08 重构·你纠正拆书≠阅读·不再数知识池）
+    reading_count = count_books_read()
 
     # 暗黑之子成就计算（熬夜判断：入睡时间 > 00:00）
     # 按日期升序排序（3/12 → 4/12），从旧到新遍历
@@ -633,6 +739,8 @@ def scan_all_diaries(cutoff=None):
     calm_pred_actual_pairs = []
     satisfaction_values = []
     physiological_counts = {"green": 0, "yellow": 0, "red": 0}
+    content_creation_total = 0
+    exercise_total = 0
 
     for f in sorted_files:
         # 修复：将字符串路径转换为 Path 对象
@@ -651,7 +759,11 @@ def scan_all_diaries(cutoff=None):
         if data.get("satisfaction") is not None:
             satisfaction_values.append(data["satisfaction"])
         if data.get("physiological"):
-            physiological_counts[data["physiological"]] = physiological_counts.get(data["physiological"], 0) + 1
+            pk = _normalize_physiological(data["physiological"])
+            if pk:
+                physiological_counts[pk] = physiological_counts.get(pk, 0) + 1
+        content_creation_total += data.get("content_creation", 0)
+        exercise_total += data.get("exercise", 0)
         
         if data["sleep_time"]:
             st = str(data["sleep_time"])
@@ -722,8 +834,8 @@ def scan_all_diaries(cutoff=None):
         # 计算当前连续段（从最后一篇往前数）
         today = _date.today()
         last = diary_dates[-1]
-        # 如果最后一篇是今天或明天才算当前连续（允许次日骨架已生成导致的"未来日期"边界）
-        if (last - today).days <= 1:
+        # 如果最后一篇是今天或昨天才算当前连续（允许今天还没写）
+        if (today - last).days <= 1:
             _cur = 1
             for i in range(len(diary_dates)-1, 0, -1):
                 if (diary_dates[i] - diary_dates[i-1]) == _timedelta(days=1):
@@ -777,6 +889,8 @@ def scan_all_diaries(cutoff=None):
         "avg_satisfaction": avg_satisfaction,
         "satisfaction_data_days": len(satisfaction_values),
         "physiological_counts": physiological_counts,
+        "content_creation_total": content_creation_total,
+        "exercise_total": exercise_total,
     }
 
 
@@ -788,10 +902,13 @@ def check_achievements(data):
         "tomato":      data["tomato_total"],
         "reading":     data["reading_total"],
         "diary":       data["diary_total"],
+        "diary_streak": data.get("diary_streak_current", 0),
         "sleep_early": data["sleep_early_total"],
         "wake_early":  data["wake_early_total"],
         "consecutive_late": data.get("consecutive_late_nights", 0),
         "total_late": data.get("total_late_nights", 0),
+        "content_creation": data.get("content_creation_total", 0),
+        "exercise": data.get("exercise_total", 0),
     }
 
     skip_keys = {"consecutive_late_daily"}
@@ -813,10 +930,13 @@ def get_next_targets(data):
         "tomato":      data["tomato_total"],
         "reading":     data["reading_total"],
         "diary":       data["diary_total"],
+        "diary_streak": data.get("diary_streak_current", 0),
         "sleep_early": data["sleep_early_total"],
         "wake_early":  data["wake_early_total"],
         "consecutive_late": data.get("consecutive_late_nights", 0),
         "total_late": data.get("total_late_nights", 0),
+        "content_creation": data.get("content_creation_total", 0),
+        "exercise": data.get("exercise_total", 0),
     }
     # 跳过每日等级表（它是显示用的字典，不是成就列表）
     skip_keys = {"consecutive_late_daily"}
@@ -844,6 +964,46 @@ def get_next_targets(data):
 
 
 # ─── 主流程 ────────────────────────────────────────────────
+def _sync_achievement_table(content, category, unlocked):
+    """同步通用打卡成就.md 指定成就表的状态列（⏳→✅ 已解锁）·按表标题段落+条件列数字匹配 threshold（v3 新增）"""
+    import re as _re
+    headers = {
+        "diary": "📔 日记篇数成就",
+        "diary_streak": "🔥 连续日记成就",
+    }
+    header = headers.get(category)
+    if not header:
+        return content
+    lines = content.split("\n")
+    start = end = None
+    for i, line in enumerate(lines):
+        if header in line:
+            start = i
+        elif start is not None and line.startswith("#"):
+            end = i
+            break
+    if start is None:
+        return content
+    if end is None:
+        end = len(lines)
+    ach_by_thr = {a["threshold"]: a["id"] for a in ACHIEVEMENTS.get(category, [])}
+    for i in range(start, end):
+        line = lines[i]
+        if not line.startswith("|") or line.startswith("|--"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        m = _re.search(r"(\d+)", cells[2])
+        if not m:
+            continue
+        aid = ach_by_thr.get(int(m.group(1)))
+        if aid and aid in unlocked and "⏳" in cells[3]:
+            cells[3] = cells[3].replace("⏳", "✅")
+            lines[i] = "| " + " | ".join(cells) + " |"
+    return "\n".join(lines)
+
+
 def update_achievement_markdown():
     """自动更新所有Markdown成就文件"""
     import shutil
@@ -871,9 +1031,12 @@ def update_achievement_markdown():
         # 更新连续天数（v2.1改用真实统计，不再min(总数,14)估算）
         streak = data.get("diary_streak_current", 0)
         content = re.sub(r'\| \*\*连续日记\*\* \| [^|]+ \|', f'| **连续日记** | {streak} 天 |', content)
+        # 成就等级表状态同步（v3：⏳→✅ 已解锁·打通存档展示；按表段落+threshold匹配）
+        content = _sync_achievement_table(content, "diary", data.get("unlocked", []))
+        content = _sync_achievement_table(content, "diary_streak", data.get("unlocked", []))
         content = re.sub(r'最后更新[^:]+:', f'最后更新：{timestamp}', content)
         diary_file.write_text(content, encoding="utf-8")
-        print(f"✅ 已更新通用打卡成就.md（连续日记={streak}天）")
+        print(f"✅ 已更新通用打卡成就.md（连续日记={streak}天·等级表状态已同步）")
     
     # 3. 更新健康成就.md（如果存在）
     health_file = ACHIEVEMENT_DIR / "健康成就.md"
@@ -899,6 +1062,33 @@ def update_achievement_markdown():
         dark_file.write_text(content, encoding="utf-8")
         print(f"✅ 已更新月亮之子成就.md")
     
+    # 5. 更新阅读成就.md（阅读总量，数据驱动）
+    reading_file = ACHIEVEMENT_DIR / "阅读成就.md"
+    if reading_file.exists():
+        content = reading_file.read_text(encoding="utf-8")
+        content = re.sub(r'\| \*\*阅读总量\*\* \| [^|]+ \|', f'| **阅读总量** | {data.get("reading_total", 0)} 本 |', content)
+        content = re.sub(r'最后更新[：:]\s*[^\n*]*', f'最后更新：{timestamp}', content)
+        reading_file.write_text(content, encoding="utf-8")
+        print(f"✅ 已更新阅读成就.md")
+
+    # 6. 更新运动成就.md（运动次数）
+    exercise_file = ACHIEVEMENT_DIR / "运动成就.md"
+    if exercise_file.exists():
+        content = exercise_file.read_text(encoding="utf-8")
+        content = re.sub(r'\| \*\*运动次数\*\* \| [^|]+ \|', f'| **运动次数** | {data.get("exercise_total", 0)} 次 |', content)
+        content = re.sub(r'最后更新[：:]\s*[^\n*]*', f'最后更新：{timestamp}', content)
+        exercise_file.write_text(content, encoding="utf-8")
+        print(f"✅ 已更新运动成就.md")
+
+    # 7. 更新内容创作成就.md（文案数量）
+    creation_file = ACHIEVEMENT_DIR / "内容创作成就.md"
+    if creation_file.exists():
+        content = creation_file.read_text(encoding="utf-8")
+        content = re.sub(r'\| \*\*文案数量\*\* \| [^|]+ \|', f'| **文案数量** | {data.get("content_creation_total", 0)} 篇 |', content)
+        content = re.sub(r'最后更新[：:]\s*[^\n*]*', f'最后更新：{timestamp}', content)
+        creation_file.write_text(content, encoding="utf-8")
+        print(f"✅ 已更新内容创作成就.md")
+
     print(f"\n🎯 Markdown同步完成！")
 
 
@@ -920,6 +1110,7 @@ def run_check(scan_all=False, as_of_date=None):
         preview_data.update({
             "tomato_total": stats["tomato_total"],
             "diary_total": stats["diary_total"],
+            "diary_streak_current": stats.get("diary_streak_current", 0),
             "sleep_early_total": stats["sleep_early_total"],
             "wake_early_total": stats["wake_early_total"],
             "reading_total": stats["reading_total"],
@@ -935,6 +1126,8 @@ def run_check(scan_all=False, as_of_date=None):
             "avg_satisfaction": stats.get("avg_satisfaction", 0.0),
             "satisfaction_data_days": stats.get("satisfaction_data_days", 0),
             "physiological_counts": stats.get("physiological_counts", {}),
+            "content_creation_total": stats.get("content_creation_total", 0),
+            "exercise_total": stats.get("exercise_total", 0),
         })
         print(f"  番茄总数：{preview_data['tomato_total']}🍅")
         print(f"  日记总数：{preview_data['diary_total']}篇")
@@ -954,7 +1147,6 @@ def run_check(scan_all=False, as_of_date=None):
         data["tomato_total"] = stats["tomato_total"]
         data["diary_total"] = stats["diary_total"]
         data["diary_streak_current"] = stats.get("diary_streak_current", 0)
-        data["diary_streak_max"] = stats.get("diary_streak_max", 0)
         data["sleep_early_total"] = stats["sleep_early_total"]
         data["wake_early_total"] = stats["wake_early_total"]
         data["reading_total"] = stats["reading_total"]
@@ -971,6 +1163,8 @@ def run_check(scan_all=False, as_of_date=None):
         data["avg_satisfaction"] = stats.get("avg_satisfaction", 0.0)
         data["satisfaction_data_days"] = stats.get("satisfaction_data_days", 0)
         data["physiological_counts"] = stats.get("physiological_counts", {})
+        data["content_creation_total"] = stats.get("content_creation_total", 0)
+        data["exercise_total"] = stats.get("exercise_total", 0)
         print(f"  番茄总数：{data['tomato_total']}🍅")
         print(f"  日记总数：{data['diary_total']}篇")
         print(f"  早睡天数：{data['sleep_early_total']}天")
@@ -989,11 +1183,10 @@ def run_check(scan_all=False, as_of_date=None):
             pc = data["physiological_counts"]
             print(f"  生理状态：🟢{pc.get('green',0)}/🟡{pc.get('yellow',0)}/🔴{pc.get('red',0)}")
     else:
-        # 只扫描今日日记（递归定位当月子目录，与 scan_all 同构）
+        # 只扫描今日日记
         today = date.today().strftime("%Y-%m-%d")
-        _cands = sorted(glob(str(DIARY_DIR / "**" / f"{today}.md"), recursive=True))
-        today_file = Path(_cands[0]) if _cands else None
-        if today_file is not None and today_file.exists():
+        today_file = DIARY_DIR / f"{today}.md"
+        if today_file.exists():
             today_data = parse_diary_file(today_file)
             print(f"  今日番茄：{today_data['tomato']}🍅")
         else:
@@ -1063,7 +1256,9 @@ def auto_notify():
     data["diary_total"] = stats["diary_total"]
     data["sleep_early_total"] = stats["sleep_early_total"]
     data["wake_early_total"] = stats["wake_early_total"]
-    data["reading_total"] = stats.get("reading_total", 9)
+    data["reading_total"] = stats.get("reading_total", 0)
+    data["content_creation_total"] = stats.get("content_creation_total", 0)
+    data["exercise_total"] = stats.get("exercise_total", 0)
     # v2.0 新字段持久化（2026-06-24）
     for k in ["sleep_quality_counts", "sleep_quality_data_days",
               "energy_accuracy", "energy_bias", "energy_data_days",
@@ -1088,6 +1283,8 @@ def show_status():
     print("=" * 50)
     print(f"  🍅 番茄总数：{data['tomato_total']}🍅")
     print(f"  📚 阅读总数：{data['reading_total']}本")
+    print(f"  🎬 内容创作：{stats.get('content_creation_total', 0)}篇")
+    print(f"  🏃 运动：{stats.get('exercise_total', 0)}次")
     print(f"  📔 日记总数：{data['diary_total']}篇")
     print(f"  😴 早睡天数：{data['sleep_early_total']}天")
     print(f"  🌅 早起天数：{data['wake_early_total']}天")
@@ -1120,13 +1317,13 @@ def show_status():
 
 # ─── MEMORY.md 同步 ─────────────────────────────────────────────
 def sync_memory_md():
-    """同步成就数据到 workspace MEMORY.md 和 QClaw记忆 MEMORY.md"""
+    """同步成就数据到用户级 MEMORY.md（.qoder / .workbuddy 真实路径）"""
     from datetime import datetime
     data = load_data()
     
     memory_files = [
-        Path.home() / ".openclaw" / "workspace" / "MEMORY.md",
-        Path.home() / "个人AI档案" / "QClaw记忆" / "MEMORY.md",
+        Path.home() / ".qoder" / "MEMORY.md",       # Qoder 端用户级跨项目记忆（替代原作者 openclaw/QClaw 死路径）
+        Path.home() / ".workbuddy" / "MEMORY.md",    # WorkBuddy 端用户级跨项目记忆
     ]
     
     # 计算下一目标
@@ -1175,8 +1372,11 @@ def sync_memory_md():
 # ─── 入口 ────────────────────────────────────────────────────
 if __name__ == "__main__":
     import sys
+    as_json = "--json" in sys.argv
+    if as_json:
+        sys.argv.remove("--json")
     if "--all" in sys.argv:
-        run_check(scan_all=True)
+        result = run_check(scan_all=True)
     elif "--date" in sys.argv:
         try:
             idx = sys.argv.index("--date")
@@ -1184,13 +1384,16 @@ if __name__ == "__main__":
         except Exception:
             dval = None
         if dval:
-            run_check(as_of_date=dval)
+            result = run_check(as_of_date=dval)
         else:
             print("用法：python3 achievement_tracker.py --date YYYY-MM-DD")
+            result = None
     elif "--status" in sys.argv:
         show_status()
+        result = None
     elif "--sync-memory" in sys.argv:
         sync_memory_md()
+        result = None
     elif "--force" in sys.argv:
         try:
             idx = sys.argv.index("--force")
@@ -1200,5 +1403,17 @@ if __name__ == "__main__":
                 print("用法：python3 achievement_tracker.py --force <achievement_id>")
         except Exception as e:
             print(f"错误：{e}")
+        result = None
     else:
-        run_check(scan_all=False)
+        result = run_check(scan_all=False)
+
+    if as_json:
+        # 结构化输出（第一性原理：消除 update 侧脆弱正则·真相源=JSON）
+        names = []
+        if isinstance(result, list):
+            for item in result:
+                if isinstance(item, tuple) and item:
+                    names.append(item[0].get("name") if isinstance(item[0], dict) else str(item[0]))
+                elif isinstance(item, dict) and item.get("name"):
+                    names.append(item["name"])
+        print(json.dumps({"newly_unlocked": names}, ensure_ascii=False))

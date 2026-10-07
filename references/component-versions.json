@@ -1,0 +1,110 @@
+{
+  "package_version": "2.1.0",
+  "as_of": "2026-10-03",
+  "components": {
+    "system_rules": "v8.21",
+    "skills": {
+      "awaken-memory-system": "8.3.2",
+      "clock-loop": "4.15.0",
+      "daily-buddy": "3.50.0",
+      "good-good-study": "0.13.2",
+      "growth-box": "4.4.0",
+      "meta-aletheia": "3.6.0",
+      "shall-we-talk": "1.6.2",
+      "sucair": "4.10.2",
+      "system-logger": "3.17.0",
+      "triwich": "v4.4.21"
+    },
+    "script_system": {
+      "files": 62,
+      "version": "1.0.0"
+    },
+    "digital_twin": {
+      "as_of": "2026-09-30",
+      "scope": "运行件白名单（09-19 融包终裁·09-20 方案A：运行件随包·本体内容件禁）",
+      "files": {
+        "devtools": 13,
+        "scripts": 12,
+        "gates": 5,
+        "k2-slice-generator": 10,
+        "hexaco": 10
+      },
+      "hooks_by_platform": {
+        "settings_json_ends": "UPS doenglingz_inject_prompt + Stop twin_verdict_ledger + Stop twin_changelog_guard（install_scripts 注册）",
+        "zcode": "UPS inject_prompt+position3_notify / Stop guard_zcode+level_declare+tsl_closeout（adapters/zcode/setup.sh 注册·2026-09-30 by ZCode）"
+      },
+      "note": "数字分身安装走 INSTALL §数字分身完整版单装（三阶段）；component-versions 此前 digital_twin=null 系版本对账未纳管，本条为首个登记态"
+    }
+  },
+  "platform_support": {
+    "workbuddy": true,
+    "qodercn": true,
+    "traework": true,
+    "zcode": true,
+    "doubaowork": true,
+    "autoclaw": false,
+    "hermes": true,
+    "lobsterai": true
+  },
+  "planned_platforms": [
+    "qwen",
+    "teleagent"
+  ],
+  "_note": "platform_support 仅计入已支持端（adapters/<端>/capability.yaml 存在）；planned_platforms 为规划中占位端，不计入支持数。新增端确认进包时，同步更新本文件 + INSTALL.md Step -0.9 平台表 + README.md 平台说明。",
+  "platform_support_notes": {
+    "as_of": "2026-10-02",
+    "why": "状态表的诚实标注与 INSTALL.md 同步（⛔ 不在此处发明新口径）",
+    "ends": {
+      "workbuddy": {
+        "status": "完整",
+        "get": "规则三文件+19钩子·自动注入",
+        "manual": false,
+        "note": "hooks_event=true ⇒ install_scripts 即完整部署链①②③·⛔不需 setup.sh"
+      },
+      "qodercn": {
+        "status": "完整",
+        "get": "规则三文件+4事件钩子·自动注入",
+        "manual": false,
+        "note": "同上（install_scripts 承载）"
+      },
+      "traework": {
+        "status": "进包ᵗ",
+        "get": "规则三文件+launchd巡检30min",
+        "manual": false,
+        "note": "⚠️ 无 hooks 事件（产品门禁）⇒ patrol 拉模式·非事件派发"
+      },
+      "zcode": {
+        "status": "完整",
+        "get": "规则三文件+7事件钩子+2项数据清理",
+        "manual": false
+      },
+      "doubaowork": {
+        "status": "进包ᵈ",
+        "get": "待粘贴文本",
+        "manual": true,
+        "note": "⚠️ 本端无规则目录·无 alwaysApply·唯一通道=设置里的文本框 ⇒ 粘贴+保存必须用户手动（2026-10-02 补 adapters/doubaowork/setup.sh）"
+      },
+      "autoclaw": {
+        "status": "完整",
+        "get": "规则三文件+extensions注入插件+crontab巡检",
+        "manual": false
+      },
+      "hermes": {
+        "status": "完整（未适配完毕）",
+        "get": "规则三文件+16个插件（人格注入/路由/守卫/台账）",
+        "manual": false,
+        "note": "2026-10-07 决策：支持列表中出现但标注（未适配完毕）·暂不推荐用户安装；适配完成后去掉标注（原 2026-10-02 实装记录见 git 历史）"
+      },
+      "lobsterai": {
+        "status": "完整（未适配完毕）",
+        "get": "规则三文件+4个 OpenClaw 插件",
+        "manual": false,
+        "note": "2026-10-07 决策：支持列表中出现但标注（未适配完毕）·暂不推荐用户安装；适配完成后去掉标注"
+      }
+    },
+    "excluded": [
+      "qwen",
+      "teleagent"
+    ]
+  }
+}

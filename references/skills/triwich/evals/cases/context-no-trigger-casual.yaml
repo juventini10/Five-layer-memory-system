@@ -1,0 +1,14 @@
+id: context-no-trigger-casual
+title: 反例·纯闲聊不触发
+description: NOT for子句：纯闲聊不触发（触发条件·不应该触发）
+input:
+  prompt: |
+    今天天气真不错，适合出去走走。
+expect:
+  must_not_contain:
+    - "三明智"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

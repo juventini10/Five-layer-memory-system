@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<!-- ═══════════════════════════════════════════════════════════════
+  好好学习 B线 · 学习路径图交付模板 v1.5.1（2026-07-27·物理锁+已过关可点击回看标准资源）
+  设计：Duolingo式单列路径 + WOW天赋点数 + 成就收集墙 + 轻庆祝
+  配色：米黄底#f0ece4 + 克莱因蓝#002fa7 + 金#E8C840（源：布洛陀上手说明DNA·你定）
+  同步：localStorage=交互缓存；「📋 一键复制进度」→发给AI→AI写progress.json(真值)+学习成就.md
+  防注水：过关须先经AI验收(B线Phase3·Agent B独立判定)——HTML勾选仅为视图标记，
+    ⚡入账以progress.json验收记录为准，同步文本与真值不符时以验收记录为准（对账闸门）
+  理论：Goal Gradient(分段进度) / Endowed Progress(起步不为0) / 渐进披露
+  规则：self-contained零依赖 · localStorage存进度 · 布洛陀米黄+经典蓝主题
+  ── AI生成实例时：只替换下方 <script> 内 const ROADMAP 对象，其余不动 ──
+═══════════════════════════════════════════════════════════════ -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习路径图</title>
+<style>
+  :root {
+    --indigo: #002fa7; --indigo-light: #e8edf7; --indigo-dark: #00217a;
+    --ink: #1a1a1a; --ink-soft: #666; --line: #e3dcd0;
+    --gold: #E8C840; --green: #10B981; --bg: #f0ece4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.6;
+    max-width: 640px; margin: 0 auto; padding: 32px 20px 80px;
+  }
+  /* ── 顶部：目标 + 能力点 ── */
+  header { margin-bottom: 28px; }
+  .goal-label { font-size: 13px; color: var(--ink-soft); letter-spacing: 2px; }
+  h1 { font-size: 26px; margin: 6px 0 10px; font-weight: 700; }
+  .goal-line { font-size: 15px; color: var(--ink-soft); background: var(--indigo-light);
+    border-left: 3px solid var(--indigo); padding: 10px 14px; border-radius: 0 10px 10px 0; }
+  .goal-line b { color: var(--indigo-dark); }
+  /* 能力点面板 */
+  .power-bar { display: flex; align-items: center; gap: 14px; margin-top: 18px;
+    background: #fff; border-radius: 14px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(30,41,59,.06); }
+  .power-total { font-size: 24px; font-weight: 800; color: var(--indigo); white-space: nowrap; }
+  .power-total small { font-size: 12px; color: var(--ink-soft); font-weight: 400; display: block; }
+  .power-kinds { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); }
+  .power-kinds span { background: var(--bg); padding: 3px 10px; border-radius: 99px; }
+  .btn-sync { margin-left: auto; padding: 8px 14px; border: 1.5px solid var(--indigo); background: #fff;
+    color: var(--indigo); border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: all .2s; }
+  .btn-sync:hover { background: var(--indigo); color: #fff; }
+  /* ── 分段进度条 ── */
+  .progress-wrap { margin: 22px 0 6px; }
+  .progress-track { display: flex; gap: 4px; height: 10px; }
+  .progress-seg { flex: 1; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .progress-seg i { display: block; height: 100%; width: 0; background: var(--indigo);
+    border-radius: 99px; transition: width .6s cubic-bezier(.22,1,.36,1); }
+  .progress-text { font-size: 12px; color: var(--ink-soft); margin-top: 6px; text-align: right; }
+  /* ── 节点卡片流 ── */
+  .path { position: relative; margin-top: 30px; }
+  .path::before { content: ""; position: absolute; left: 19px; top: 8px; bottom: 8px;
+    width: 2px; background: var(--line); }
+  .node { position: relative; padding-left: 56px; margin-bottom: 18px; }
+  .node-dot { position: absolute; left: 4px; top: 2px; width: 32px; height: 32px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; background: #fff; border: 2px solid var(--line); z-index: 1;
+    transition: all .3s; }
+  .node-card { background: #fff; border-radius: 14px; padding: 14px 18px;
+    box-shadow: 0 1px 4px rgba(30,41,59,.06); transition: all .3s; }
+  .node-title { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .node-pts { font-size: 12px; color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .node-what { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+  /* 三态 */
+  .node.done .node-dot { background: var(--green); border-color: var(--green); color: #fff; }
+  .node.done .node-card { opacity: .72; cursor: pointer; }
+  .node.done.expanded .node-detail { display: block; }
+  .node.done.expanded .node-card { opacity: .95; }
+  .node.done .node-what::after { content: " · 点击回看标准与资源 ▾"; color: var(--indigo); font-size: 12px; }
+  .node.done.expanded .node-what::after { content: " · 收起 ▴"; }
+  .node.done .node-title { text-decoration: line-through; text-decoration-color: rgba(30,41,59,.25); }
+  .node.locked { opacity: .45; filter: saturate(.3); }
+  .node.locked .node-dot { color: var(--ink-soft); }
+  .node.current .node-dot { background: var(--indigo); border-color: var(--indigo); color: #fff;
+    box-shadow: 0 0 0 6px var(--indigo-light); animation: pulse 2s infinite; }
+  .node.current .node-card { border: 1.5px solid var(--indigo); box-shadow: 0 4px 16px rgba(79,70,229,.14); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 6px var(--indigo-light); } 50% { box-shadow: 0 0 0 10px rgba(238,242,255,.5); } }
+  /* 当前卡展开区（渐进披露） */
+  .node-detail { display: none; margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; font-size: 13px; }
+  .node.current .node-detail { display: block; }
+  .detail-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .detail-row .k { color: var(--ink-soft); white-space: nowrap; }
+  /* .btn-done 旧版完成按钮残留已清（2026-08-11·物理锁=无按钮） */
+  /* .btn-done 旧版完成按钮残留已清（2026-08-11·物理锁=无按钮） */
+  .verify-hint { margin-top: 6px; padding: 12px; border-radius: 12px; text-align: center;
+    background: var(--indigo-light); color: var(--indigo-dark); font-size: 13px; font-weight: 600; }
+  /* ── 成就墙 ── */
+  .wall { margin-top: 44px; }
+  .wall h2 { font-size: 16px; margin-bottom: 14px; }
+  .wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px,1fr)); gap: 10px; }
+  .badge { background: #fff; border-radius: 12px; padding: 12px 8px; text-align: center;
+    box-shadow: 0 1px 4px rgba(30,41,59,.05); transition: all .4s; }
+  .badge .ico { font-size: 26px; display: block; }
+  .badge .nm { font-size: 11px; color: var(--ink-soft); margin-top: 4px; display: block; }
+  .badge.off { opacity: .38; filter: grayscale(1); }   /* 未获得=灰色剪影 → 收集欲 */
+  .badge.on { animation: badgeIn .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes badgeIn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  /* ── 反馈动画：飘字 + 庆祝 + toast ── */
+  .float-pts { position: fixed; font-weight: 800; color: var(--gold); font-size: 20px;
+    pointer-events: none; animation: floatUp 1.2s ease-out forwards; z-index: 99; }
+  @keyframes floatUp { to { transform: translateY(-70px); opacity: 0; } }
+  .confetti { position: fixed; top: -10px; font-size: 16px; pointer-events: none;
+    animation: fall linear forwards; z-index: 98; }
+  @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: .1; } }
+  .toast { position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%) translateY(120px);
+    background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 99px; font-size: 14px;
+    transition: transform .45s cubic-bezier(.34,1.56,.64,1); z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="goal-label">学习路径图 · 好好学习 B线</div>
+  <h1 id="map-title"></h1>
+  <div class="goal-line">学完你能：<b id="map-goal"></b></div>
+  <div class="power-bar">
+    <div class="power-total"><span id="pts-total">0</span>⚡<small>能力点</small></div>
+    <div class="power-kinds" id="pts-kinds"></div>
+    <button class="btn-sync" onclick="syncProgress()" title="一键复制进度文本到剪贴板，粘给AI即可写入真值源+触发学习成就">📋 一键复制进度</button>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track" id="progress-track"></div>
+    <div class="progress-text" id="progress-text"></div>
+  </div>
+</header>
+
+<div class="path" id="path"></div>
+
+<div class="wall">
+  <h2>🏆 成就墙</h2>
+  <div class="wall-grid" id="wall"></div>
+</div>
+
+<script>
+/* ═══════ AI生成实例时只改这个对象（数据来自B线YAML路径图）═══════
+   bloom → 人话能力名映射已内置，⛔不要向用户显示英文Bloom层级名 */
+const ROADMAP = {
+  id: "L000-DEMO",                       // 路径编号(localStorage隔离键)
+  title: "手冲咖啡入门",                  // ← {title}
+  goal: "为朋友冲出一杯有风味层次、可复现的手冲咖啡",  // ← {target_goal}
+  nodes: [                               // ← nodes[] 按序
+    { title: "认识器具与豆子", what: "滤杯/手冲壶/磨豆机各干什么，浅中深烘的区别",
+      standard: "能说出三种器具的作用和自己想买哪种、为什么", res: "任选一支入门视频", time: "1小时", bloom: "记住", pts: 1 },
+    { title: "看懂一张冲煮参数表", what: "粉水比、水温、研磨度、时间四个变量怎么互相影响",
+      standard: "能用自己的话解释'为什么水温高了会苦'", res: "任意咖啡参数入门文", time: "2小时", bloom: "理解", pts: 2 },
+    { title: "完整冲一杯", what: "按1:15粉水比92°C完成一次三段注水",
+      standard: "能独立冲完一杯且过程不手忙脚乱", res: "跟一次实操视频", time: "3次练习", bloom: "上手", pts: 3 },
+    { title: "调整一个变量救一杯酸咖啡", what: "喝出问题→定位变量→只动一个参数重冲",
+      standard: "能对比前后两杯说出改了什么、为什么有效", res: "—", time: "1周日常", bloom: "分析", pts: 4 },
+    { title: "定自己的固定配方", what: "综合口味偏好敲定一套专属参数并写下来",
+      standard: "能产出一张自己的冲煮卡片并连续复现3次", res: "—", time: "2周", bloom: "创造", pts: 6 },
+  ],
+  badges: [   // 主题定制成就（v1.4·AI出图时随内容创作·好玩+贴题+人话）
+      // when取值: "start"打开即得 / "node:i"第i关完成(0起) / "count:n"累计n关 / "half"过半 / "all"全通
+    { ico: "🌱", nm: "启程", when: "start" },
+    { ico: "☕", nm: "第一滴金", when: "node:2" },
+    { ico: "🔥", nm: "渐入佳境", when: "half" },
+    { ico: "👅", nm: "味觉侦探", when: "node:3" },
+    { ico: "📜", nm: "我的配方", when: "node:4" },
+    { ico: "🏆", nm: "出师之杯", when: "all" },   // 终局徽章也必须主题定制——⛔禁用"大满贯"通用名
+  ]
+};
+const VERIFIED = [];   // 🔒防注水物理锁(v1.5·你定)：已验收节点索引——只由AI在Agent B验收通过后编辑此行
+                       // 用户无法点击完成（按钮已移除），浏览器无法改文件——完成状态的唯一入口=AI改这里
+/* ═══════════════ 以下为引擎，生成实例时不要改动 ═══════════════ */
+const KEY = "ggs-map-" + ROADMAP.id;
+const state = {}; VERIFIED.forEach(i => state[i] = true);   // 完成态唯一来源=VERIFIED（文件真值）
+const doneCount = () => ROADMAP.nodes.filter((_, i) => state[i]).length;
+/* 成就引擎 v1.4：优先用 ROADMAP.badges 主题定制成就，未提供则降级通用款 */
+function parseWhen(w) {
+  if (w === "start") return () => true;                                    // Endowed Progress
+  if (w === "all") return () => doneCount() === ROADMAP.nodes.length;
+  if (w === "half") return () => doneCount() >= Math.ceil(ROADMAP.nodes.length / 2);
+  const [k, v] = String(w).split(":");
+  if (k === "node") return () => !!state[+v];
+  if (k === "count") return () => doneCount() >= +v;
+  return () => false;
+}
+const DEFAULT_BADGES = [
+  { ico: "🎯", nm: "启程", when: "start" }, { ico: "⚔️", nm: "首关告捷", when: "count:1" },
+  { ico: "🔥", nm: "渐入佳境", when: "half" }, { ico: "👑", nm: "大满贯", when: "all" },
+];
+const ACH = ((ROADMAP.badges && ROADMAP.badges.length) ? ROADMAP.badges : DEFAULT_BADGES)
+  .map(b => ({ ico: b.ico, nm: b.nm, test: parseWhen(b.when) }));
+let shownAch = JSON.parse(localStorage.getItem(KEY + "-ach") || "[]");
+
+function render(animPts) {
+  // 能力点
+  const total = ROADMAP.nodes.reduce((s, n, i) => s + (state[i] ? n.pts : 0), 0);
+  document.getElementById("pts-total").textContent = total;
+  const kinds = {};
+  ROADMAP.nodes.forEach((n, i) => { if (state[i]) kinds[n.bloom] = (kinds[n.bloom] || 0) + n.pts; });
+  document.getElementById("pts-kinds").innerHTML =
+    Object.entries(kinds).map(([k, v]) => `<span>${k} +${v}</span>`).join("") || "<span>完成关卡即获得能力点</span>";
+  // 分段进度条（Goal Gradient：一段一小目标）
+  const track = document.getElementById("progress-track");
+  track.innerHTML = ROADMAP.nodes.map((_, i) => `<div class="progress-seg"><i style="width:${state[i] ? 100 : 0}%"></i></div>`).join("");
+  document.getElementById("progress-text").textContent = `${doneCount()} / ${ROADMAP.nodes.length} 关 · 已在路上`;
+  // 节点流：done收起 / current展开 / locked
+  const cur = ROADMAP.nodes.findIndex((_, i) => !state[i]);
+  document.getElementById("path").innerHTML = ROADMAP.nodes.map((n, i) => {
+    const st = state[i] ? "done" : (i === cur ? "current" : "locked");
+    const dot = state[i] ? "✓" : (i === cur ? "▶" : "🔒");
+    const toggle = st === "done" ? ` onclick="this.parentElement.classList.toggle('expanded')"` : "";
+    return `<div class="node ${st}" id="node-${i}">
+      <div class="node-dot">${dot}</div>
+      <div class="node-card"${toggle}>
+        <div class="node-title"><span>${i + 1}. ${n.title}</span><span class="node-pts">+${n.pts}⚡</span></div>
+        <div class="node-what">${n.what}</div>
+        <div class="node-detail">
+          <div class="detail-row"><span class="k">🎯 过关标准</span><span>${n.standard}</span></div>
+          <div class="detail-row"><span class="k">📚 资源</span><span>${n.res}</span></div>
+          <div class="detail-row"><span class="k">⏱ 预计</span><span>${n.time} · 能力：${n.bloom}</span></div>
+          <div class="detail-row"><span class="k">🔍 过关方式</span><span>学完后对AI说「验收第${i + 1}关」——独立Agent按过关标准检验</span></div>
+          ${st === "current" ? `<div class="verify-hint">🔒 本关由AI验收点亮 · 通过后刷新本页看庆祝 +${n.pts}⚡</div>` : ""}
+          ${st === "done" ? `<div class="verify-hint" style="background:#e6f4ec;color:#0a7d4f">✓ 已验收通过 · +${n.pts}⚡已入账</div>` : ""}
+        </div>
+      </div></div>`;
+  }).join("");
+  // 成就墙（未获得=灰剪影→收集欲）
+  document.getElementById("wall").innerHTML = ACH.map((a, i) => {
+    const on = a.test();
+    if (on && !shownAch.includes(i) && animPts !== undefined) { toast(`🏆 成就解锁：${a.nm}`); shownAch.push(i); celebrate(); }
+    return `<div class="badge ${on ? "on" : "off"}"><span class="ico">${a.ico}</span><span class="nm">${a.nm}</span></div>`;
+  }).join("");
+  localStorage.setItem(KEY + "-ach", JSON.stringify(shownAch));
+}
+function celebrateNewVerify() {   // AI点亮新关卡后，你刷新页面时补放庆祝（赢来的才响）
+  const seenKey = KEY + "-seen";
+  const seen = +(localStorage.getItem(seenKey) || 0);
+  if (VERIFIED.length > seen) {
+    const newest = VERIFIED[VERIFIED.length - 1];
+    setTimeout(() => {
+      const f = document.createElement("div"); f.className = "float-pts";
+      f.textContent = `验收通过 +${ROADMAP.nodes[newest].pts}⚡`;
+      f.style.left = "42%"; f.style.top = "38%";
+      document.body.appendChild(f); setTimeout(() => f.remove(), 1400);
+      celebrate();
+      const cur = document.querySelector(".node.current");
+      if (cur) cur.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
+    localStorage.setItem(seenKey, VERIFIED.length);
+    return true;
+  }
+  return false;
+}
+function celebrate() {                                 // 轻庆祝：一小把彩纸,不轰炸
+  ["🎉", "✨", "⭐", "🎊"].forEach((e, k) => { for (let j = 0; j < 3; j++) {
+    const c = document.createElement("div"); c.className = "confetti"; c.textContent = e;
+    c.style.left = Math.random() * 100 + "vw"; c.style.animationDuration = (1.2 + Math.random()) + "s";
+    c.style.animationDelay = (k * .08 + j * .1) + "s";
+    document.body.appendChild(c); setTimeout(() => c.remove(), 2600); } });
+}
+function syncProgress() {   // 同步桥：一键复制→粘给AI→progress.json(真值)+学习成就.md
+  const total = ROADMAP.nodes.reduce((s, n, i) => s + (state[i] ? n.pts : 0), 0);
+  const kinds = ROADMAP.nodes.filter((_, i) => state[i]).map(n => n.bloom + "+" + n.pts).join("/") || "无";
+  const ach = ACH.filter(a => a.test()).map(a => a.nm).join("/");
+  const txt = `【学习进度同步】${ROADMAP.id}·${ROADMAP.title}｜${doneCount()}/${ROADMAP.nodes.length}关｜累计${total}⚡（${kinds}）｜成就：${ach}｜${new Date().toISOString().slice(0,10)}`;
+  const ok = () => toast("✅ 已复制，直接粘给AI即可同步进度与成就");
+  // 三层降级：现代clipboard → execCommand兼容 → prompt兵底（file://协议可能禁clipboard）
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(ok).catch(() => fallbackCopy(txt, ok));
+  } else { fallbackCopy(txt, ok); }
+}
+function fallbackCopy(txt, ok) {
+  try {
+    const ta = document.createElement("textarea"); ta.value = txt;
+    ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta);
+    ta.select(); const done = document.execCommand("copy"); ta.remove();
+    done ? ok() : prompt("自动复制受浏览器限制，请手动全选复制发给AI：", txt);
+  } catch (e) { prompt("请手动全选复制发给AI：", txt); }
+}
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 500); }, 2400);
+}
+// 初始化
+document.getElementById("map-title").textContent = ROADMAP.title;
+document.getElementById("map-goal").textContent = ROADMAP.goal;
+render(celebrateNewVerify() ? 1 : undefined);   // 有新验收→带庆祝渲染(成就toast可触发)
+// 打开自动定位"上次学到哪"
+const c0 = document.querySelector(".node.current");
+if (c0 && doneCount() > 0) setTimeout(() => c0.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+</script>
+</body>
+</html>

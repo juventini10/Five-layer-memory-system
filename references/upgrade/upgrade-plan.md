@@ -32,8 +32,8 @@ Read CHANGELOG.md，从当前版本到目标版本的所有变更摘要，按类
 
 1. 比对 CHANGELOG 或 SKILL.md 版本号，识别需要升级的 Skill
 2. 对每个需升级的 Skill：
-   - 备份旧版：`cp -r {记忆共享中心}/技能配置/{Skill名} {记忆共享中心}/记忆琥珀/升级前备份_{timestamp}/`
-   - 覆盖新版：`cp -r references/skills/{Skill名}/* {记忆共享中心}/技能配置/{Skill名}/`
+   - 备份旧版：`cp -r [记忆共享中心]/技能配置/{Skill名} [记忆共享中心]/记忆琥珀/升级前备份_{timestamp}/`
+   - 覆盖新版：`cp -r references/skills/{Skill名}/* [记忆共享中心]/技能配置/{Skill名}/`
    - 替换路径占位符
 3. 更新软链接
 
@@ -45,7 +45,7 @@ Read CHANGELOG.md，从当前版本到目标版本的所有变更摘要，按类
 
 > 记忆琥珀（物理级文件哨兵）是 1.1.0 新增核心组件。老用户从旧版升级**必须补装**——旧版只有"升级前整包备份"，不含新版 fswatch（macOS）/ FileSystemWatcher（Windows）自动监听。本步骤确保升级用户也装上哨兵，不漏安全网。
 
-1. 检测是否已装：`ls {记忆共享中心}/记忆琥珀/engine/amber-backup.sh 2>/dev/null && echo "AMBER_INSTALLED"`
+1. 检测是否已装：`ls [记忆共享中心]/记忆琥珀/engine/amber_backup.sh 2>/dev/null && echo "AMBER_INSTALLED"`
 2. 已装且守护在跑（`launchctl list | grep memoryamber` 或 `Get-ScheduledTask MemoryAmberWatch` 存在且状态 Running）→ **跳过本步骤**（幂等，不重复注册）
 3. 未装 → 读取 `references/steps/step6.5-amber-install.md`，执行 6.5a–6.5f（按平台装依赖 + 白名单 + 守护 + 首次备份 + 占位符残查）
 4. `mode: manual` 降级**仅限**系统版本过低无法装依赖（同 step6.5 熔断器规则），不在此放宽
@@ -126,14 +126,14 @@ Read CHANGELOG.md，从当前版本到目标版本的所有变更摘要，按类
 
 ```bash
 # 检测记忆蓝图是否已存在
-ls -d {记忆共享中心}/记忆蓝图/ 2>/dev/null && echo "FOUND_MEMORY_BLUEPRINT"
+ls -d [记忆共享中心]/记忆蓝图/ 2>/dev/null && echo "FOUND_MEMORY_BLUEPRINT"
 ```
 
 | 检测 | 动作 |
 |:----|:----|
-| 不存在 | `cp -r references/templates/记忆蓝图/ {记忆共享中心}/记忆蓝图/` → 完事 |
+| 不存在 | `cp -r references/templates/记忆蓝图/ [记忆共享中心]/记忆蓝图/` → 完事 |
 | 存在 + 用户说"不需要更新" | 不动，完事 |
-| 存在 + 用户说"需要更新" | ①`mv {记忆共享中心}/记忆蓝图/ {记忆共享中心}/记忆琥珀/备份_{时间戳}/记忆蓝图_` ②`cp -r references/templates/记忆蓝图/ {记忆共享中心}/记忆蓝图/` ③提示"原记忆蓝图已在记忆琥珀备份，如需保留旧内容请自行从记忆琥珀手动取回合并" |
+| 存在 + 用户说"需要更新" | ①`mv [记忆共享中心]/记忆蓝图/ [记忆共享中心]/记忆琥珀/备份_{时间戳}/记忆蓝图_` ②`cp -r references/templates/记忆蓝图/ [记忆共享中心]/记忆蓝图/` ③提示"原记忆蓝图已在记忆琥珀备份，如需保留旧内容请自行从记忆琥珀手动取回合并" |
 
 > ⚠️ 记忆蓝图含设计哲学/规范文档，用户可能手动改过（如本地化调整）。覆盖前 MUST 先备份，不静默覆盖。
 
@@ -145,7 +145,7 @@ ls -d {记忆共享中心}/记忆蓝图/ 2>/dev/null && echo "FOUND_MEMORY_BLUEP
 
 升级开始前：
 ```
-Write {记忆共享中心}/.install/upgrade-in-progress.md
+Write [记忆共享中心]/.install/upgrade-in-progress.md
 阶段: StepB-Skill升级 / StepB.5-记忆琥珀哨兵 / StepC-系统文件对账 / StepD-问卷增量 / StepE-更新manifest
 备份路径: 记忆琥珀/升级前备份_{timestamp}/
 ```

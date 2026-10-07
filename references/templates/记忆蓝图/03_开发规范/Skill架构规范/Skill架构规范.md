@@ -366,7 +366,7 @@ L1全部 + 以下：
 | YAML | +`version` +`author` +`license` | 追踪与归属 |
 | 文件结构 | +`references/CHANGELOG.md` | 变更历史非空 |
 | 正文格式 | +一句话设计哲学 | 标题后一行说明目的 |
-| 标注体系 | 五级标注（✅DO/☑SHOULD/✔MAY/⚠SHOULD NOT/⛔DO NOT） | 替代DO/DON'T |
+| 标注体系 | 五级标注（✅DO/☑SHOULD/MAY/☑SHOULD NOT/⛔DO NOT） | 替代DO/DON'T |
 | 熔断器 | 外部调用必有熔断器 | 5字段（触发/降级/重试/超时/日志） |
 | 可逆性分级 | 🟢自主/🟡确认/🔴阻止 | 替代枚举禁止列表 |
 
@@ -401,7 +401,7 @@ L2全部 + 以下：
 | D5 处理 | 常规阈值 | 见 §2.3 D5 角色维度解耦（role 豁免） |
 
 **典型**：三明智（软·SKILL.md 494 行 + references 1312 行）vs 反方向的钟（硬·922 行引擎编排）。
-**设计原则**：保障全流程 100% 执行 > 凑 ≤400 行（铁律·用户 2026-07-09 拍板）。硬复杂度 Skill 的行数是功能必要成本，非冗余。
+**设计原则**：保障全流程 100% 执行 > 凑 ≤400 行（铁律·皮叔 2026-07-09 拍板）。硬复杂度 Skill 的行数是功能必要成本，非冗余。
 
 ---
 
@@ -446,7 +446,7 @@ YAML结束后第一个section之前：
 
 | 升级 | 需要新增的项 | 检查方式 |
 |---|---|---|
-| L1→L2 | ①YAML补version+author+license（3字段）<br>②新建references/CHANGELOG.md（非空）<br>③正文开头加一句话设计哲学<br>④采用五级标注（✅DO/☑SHOULD/✔MAY/⚠SHOULD NOT/⛔DO NOT）<br>⑤外部调用加熔断器（5字段）<br>⑥采用可逆性分级（🟢自主/🟡确认/🔴阻止） | skill_eval.py L2检测 |
+| L1→L2 | ①YAML补version+author+license（3字段）<br>②新建references/CHANGELOG.md（非空）<br>③正文开头加一句话设计哲学<br>④采用五级标注（✅DO/☑SHOULD/MAY/☑SHOULD NOT/⛔DO NOT）<br>⑤外部调用加熔断器（5字段）<br>⑥采用可逆性分级（🟢自主/🟡确认/🔴阻止） | skill_eval.py L2检测 |
 | L2→L3 | ①YAML补全11字段（含compatibility/allowed-tools/dependencies/source/upstream/modifiable）<br>②新增四层契约（输入/输出/行为/演化）<br>③新增Poka-Yoke三法（接触法+定值法+步序法）<br>④新增T5对抗性声明（按攻击面5维度评估项数）<br>⑤新增eval-set（≥10条）<br>⑥新增Alternatives Considered<br>⑦D5行数≤400安全 | skill_eval.py L3检测 |
 
 #### 升级原则
@@ -513,11 +513,11 @@ YAML结束后第一个section之前：
 | 机制 | 流程执行型 | 生成型 | 查询型 | 转换型 | 交互型 | 分析型 | Poka-Yoke层级 |
 |:-----|:--:|:--:|:--:|:--:|:--:|:--:|:--------|
 | 产出物锁 | ✅DO | ✅DO | ☑SHOULD | ✅DO | ✅DO | ✅DO | 防错（动作步序法） |
-| 三级级联锁 | ☑SHOULD | ⚠SHOULD NOT | ⚠SHOULD NOT | ☑SHOULD | ☑SHOULD | ☑SHOULD | 防错（动作步序法） |
+| 三级级联锁 | ☑SHOULD | ☑SHOULD NOT | ☑SHOULD NOT | ☑SHOULD | ☑SHOULD | ☑SHOULD | 防错（动作步序法） |
 | 思考检查点 | ✅DO | ☑SHOULD | ☑SHOULD | ☑SHOULD | ✅DO | ✅DO | 防错 |
 | 熔断器 | ✅DO | ☑SHOULD | ✅DO | ☑SHOULD | ☑SHOULD | ✅DO | 防错（控制型=Fail-Fast） |
 | 完整性锁 | ✅DO | ✅DO | ☑SHOULD | ✅DO | ✅DO | ✅DO | 防错（定值法） |
-| 结论块分离 | ☑SHOULD | ☑SHOULD | ⚠SHOULD NOT | ⚠SHOULD NOT | ✅DO | ✅DO | 防错 |
+| 结论块分离 | ☑SHOULD | ☑SHOULD | ☑SHOULD NOT | ☑SHOULD NOT | ✅DO | ✅DO | 防错 |
 
 **分析型特征**（v5.15新增）：产出物锁+思考检查点+熔断器+完整性锁+结论块分离全部✅DO（和交互型相似但产出物形态不同——分析型可以直接给结论，交互型禁止直接给结论）
 
@@ -719,7 +719,7 @@ T5：   加法问法 — "对抗攻击时的防御声明到位没？"  → 满�
 |---|---|---|
 | **高风险** | ✅DO 11项全填 | 任意1个维度=高 |
 | **中风险** | ☑SHOULD 5项核心 | 无高，任意1个维度=中 |
-| **低风险** | ✔MAY 0项 | 全部维度=低 |
+| **低风险** | MAY 0项 | 全部维度=低 |
 
 **5项核心T5**：T5-01绕过 / T5-02权限 / T5-05间接注入 / T5-08 Context溢出 / T5-11渐进侵蚀
 
@@ -733,7 +733,7 @@ T5：   加法问法 — "对抗攻击时的防御声明到位没？"  → 满�
 | daily-buddy | 高(4) | 高(Write+Bash) | 低(单轮多步) | 高(多源12处) | 高(3处系统写入) | 高 | 11项 |
 | system-logger | 中(3) | 高(Write+Bash) | 低(单轮多步) | 高(多源8处) | 高(5处系统写入) | 高 | 11项 |
 | growth-box | 高(4) | 高(Write+Bash) | 低(单轮多步) | 高(多源14处) | 高(6处系统写入) | 高 | 11项 |
-| reading-assistant | 高(4) | 高(Write+Bash) | 低(单轮多步) | 中(单源31处读) | 中(2处写入) | 高 | 11项 |
+| sucair | 高(4) | 高(Write+Bash) | 低(单轮多步) | 中(单源31处读) | 中(2处写入) | 高 | 11项 |
 | awaken-memory-system | 高(5) | 高(Write+Bash) | 低(单轮多步) | 高(多源17处) | 高(7处系统写入) | 高 | 11项 |
 
 **关键发现**：
@@ -742,7 +742,7 @@ T5：   加法问法 — "对抗攻击时的防御声明到位没？"  → 满�
 - 只有开源贡献者的简单Skill（纯查询型、只读无写、单源输入）才可能降级到5项核心或0项
 - triwich虽然归"分析型"，但攻击面5维度中3个=高，T5要求11项（**不是5项**）
 - 类型标签≠攻击面，必须分开评估
-- D4修正：reading-assistant按"输入源种类"判定为单源（1本书），降为中风险。但整体攻击面仍为高（D1+D2=高）
+- D4修正：sucair按"输入源种类"判定为单源（1本书），降为中风险。但整体攻击面仍为高（D1+D2=高）
 
 ---
 

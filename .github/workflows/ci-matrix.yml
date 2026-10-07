@@ -1,0 +1,53 @@
+# ci-matrix.yml — 布洛陀 v2.0 全平台包 Windows CI 多 job 矩阵（2026-09-23 E2·Loop改进项#4立法落地）
+# 设计：①发版链须含跨平台真机项（Mac绿≠可发布·LRN-20260922-002）
+#      ②矩阵成员=带 capability.yaml 的已发布端（动态发现，⛔硬编码名单——教训:名单漂移）
+#      ③README-only 占位端自动不入矩阵（迁入落地 yaml 即自动进·零维护）
+name: ci-matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.ls.outputs.platforms }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ls
+        run: |
+          plats=$(for d in adapters/*/; do [ -f "$d/capability.yaml" ] && basename "$d"; done | jq -R . | jq -sc .)
+          echo "platforms=$plats" >> "$GITHUB_OUTPUT"
+          echo "matrix: $plats"
+
+  adapter-dryrun:
+    needs: discover
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJSON(needs.discover.outputs.platforms) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: ${{ matrix.platform }} 端 Step0 能力分流 dry-run（真机 Windows）
+        shell: pwsh
+        run: |
+          $mc = Join-Path $env:RUNNER_TEMP ("mc-" + "${{ matrix.platform }}")
+          New-Item -ItemType Directory -Path $mc -Force | Out-Null
+          $env:PYTHONIOENCODING = "utf-8"
+          python install_scripts.py --platform "${{ matrix.platform }}" --dry-run $mc
+          if ($LASTEXITCODE -ne 0) { Write-Host "FAIL: ${{ matrix.platform }} dry-run exit=$LASTEXITCODE" -ForegroundColor Red; exit 1 }
+          Write-Host "PASS: ${{ matrix.platform }}" -ForegroundColor Green
+
+  win-full:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 布洛陀 v2.0 全平台包 Windows 真机 harness（T1-T18 + V1-V15）
+        shell: pwsh
+        run: |
+          Write-Host "workspace: $env:GITHUB_WORKSPACE"
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\win-verify.ps1"

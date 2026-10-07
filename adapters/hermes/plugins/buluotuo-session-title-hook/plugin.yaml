@@ -1,0 +1,15 @@
+name: buluotuo-session-title-hook
+version: 1.0.0
+description: >-
+  布洛陀会话标题命名守卫（Hermes 端适配 · 承载 session_title_namer.py·作者 2026-10-01 点名装）。
+  标题格式 YYMMDD | 类型 | 主题，规则与启发式全部复用跨端中立原语 session_title_utils.py
+  （⛔ 零复制·接入不拥有）。**按 Hermes 特性适配而非照搬 WB**：WB 版 v0.5/v0.6 血泪史是
+  「宿主 AI 起名覆盖钩子名」⇒ 需后台夺回轮询（每 3s×2 分钟窗口）；Hermes 桌面端
+  display_name 实测全 NULL·无宿主起名 ⇒ ⛔ 不做后台守护进程，一条同步写完事。
+  端差异：WB 写 sessions.title/custom_title，Hermes 写官方字段 **display_name**。
+  通道：pre_llm_call + is_first_turn（⛔ 非首轮不写）。覆盖保护：只写 NULL/空值·用户手动
+  改过永不覆盖。只记录不拦截·恒返回 None·台账 ~/.hermes/session_title_hook.log。
+author: Hermes
+type: user
+provides_hooks:
+  - pre_llm_call

@@ -1,0 +1,14 @@
+id: conclusion-evidence-anchored
+title: 结论依据可追溯（结论块内自证）
+description: 门禁锁②：依据可追溯·结论块内自证不依赖正文推导（v4.2.1分层）
+input:
+  prompt: |
+    分析一下为什么推荐系统都要做A/B测试，从本质层拆。
+expect:
+  must_contain:
+    - "依据"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

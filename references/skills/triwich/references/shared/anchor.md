@@ -1,3 +1,7 @@
+---
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
+---
+
 # 锚点模板锁 — 两列对立面（Poka-Yoke接触式防错）
 
 > **使用层级**：L1第一性原理 / L2 / L3

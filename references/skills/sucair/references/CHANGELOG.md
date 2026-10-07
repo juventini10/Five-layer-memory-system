@@ -1,0 +1,307 @@
+---
+name: CHANGELOG
+description: 历史版本变更记录。当前版本信息在 SKILL.md 头部。
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
+---
+
+
+## 2026-10-03 · None：SKILL.md v4.10.1→v4.10.2
+> **变更**：commit `946c705c`「hermes: 修正两处账实脱节·awaken 8.3.0→8.3.1 + sucair 依赖声明对齐」——依赖声明账实对齐。
+> ⚠️ **守卫口径校准留痕**：本轮销账时我一度用「frontmatter 首个 version 行」解析得 `1.6.2` 并判「守卫解析错」——**是我错**。该文件 frontmatter 含**多段**（`---` 出现在 0/33/42 行·0-based 计数·1-based 为 1/34/43 行）·`1.6.2` 是 `dependencies` 内的依赖版本·真版本是 line29（0-based·1-based=line30）的 `4.10.2`。**判据沉淀：解析 frontmatter 版本⛔ 不得假设 `---` 只包裹一段**。
+# 变更日志
+
+### v4.11.0 — 2026-10-03（G2自动回归载体落地·Y级·F13销账·皮叔令「按符合愿景的最优解处理」）
+
+> **驱动**：v4.10.3 Loop R1 finding F13——SKILL.md:219 G2条款要求"eval-set 全量回归通过"但树内无任何可执行测试文件（CHANGELOG 旧称"机检 43 tests"无实物=历史E5断链），回归依赖人工核=断链风险留原位。皮叔 2026-10-03 令按愿景最优解裁决（形态选择不再上抛）：可一键跑+改一行即复验=全自动化+越用越好解，人工核=弃。
+- **落地**：新建 `scripts/test_sucair.py`——unittest 11 例（正文600定值双边界+标签保守口径坐实/题库计数不符+fail-closed/_yaml_hardcheck 裸vs引号/parse→dump→parse 往返/dedup 无第二解析器/CARD_BODY_MAX↔config 双源同数/_SOURCE_TYPE_SET 五类定值/CARD_SCHEMA_VERSION 收口锚/category/tags 必填入表）。断言全绑 note_validator 实物 API（首版两条凭形状猜的断言被实物打回后修正=写测试自身也走"断言绑实物"纪律）。
+- **G2条款挂载体**：SKILL.md 完整性锁 G2 行改为绑定 `python3 -m unittest test_sucair` exit 0，人工核不再是达标形态。
+- **版本判定**：4.10.3→**4.11.0**（Y级·新增自动化机制文件+条款载体化）。
+- **待办销账**：交接待办文件第1条标✅已兑现（第2/3条保留原状态）。
+
+### v4.10.3 — 2026-10-03（clock-loop E路径Loop修复批·R1独立审查14候选收口12项·Z 级）
+
+> **驱动**：完整Loop（20项沿用+v4.10.2声明对账专项）R1独立审查判"不通过(轻微)"——20/21通过，触发词双向缺口+12处口径漂移类（E5/E6家族文本收口，无行为缺陷）。备份=记忆琥珀/技能升级备份/sucair_R2收口_261003_1424/。
+- **收口12项**：F2/F7 真源反转口径全覆盖（SKILL:425+NV:8/71旧「数字源=config」改「机检真源=常量·config=投影」+_yaml_hardcheck 点名）；F3 schema v1.3.0→v1.3.1 两处；F4 complies_with 三处去版本锚（#142化）；F5 触发词双向补齐（description+5分钟精华/帮我做笔记·触发表+帮我做笔记/直呼名·tests头标×2）；F6 eval-set 19→20条；F8 R13 计数口径注（标签≈9字保守向）；F9 config 驱动口径注一行；F10 改造文件B1"去前缀"废弃留痕×1(实盘grep计数=1·审查员报的:219系转述变体)+SKILL引用注；F11 ggs 边界去版本锚+悬空归属软化为"以ggs侧声明为权威"；F12 CHANGELOG 0-based 计数标注；F14 dedup"四决策"统一为"三决策+CONFLICT共址"。
+- **未收口如实登记**：F1（题库 v4.7.0 立法后实盘0产物=消费边未验证·挂起🟢待真实读书任务产生）；F13（G2 全量回归无自动化载体·路由交接待办）；F12结构子项（留痕块位于H1前=留痕数据非版本条目·降级不改版式）。
+- **R3 复审通过 + 整改批（6项·并入同版本）**：R3 独立复审判"通过"（12/12收口实物验证+三链diff零漂移），附6条轻微整改：N2 config头标同步4.10.3、N3 表题权威括注（与:38驱动口径并读）、N4 description冗余"帮我做笔记"去重+tests补例2行（#14/#15）、N5 tests补元话语负例#6（直呼名≠委派）、N6 CHANGELOG留痕行加0-based/1-based基准注、N7 F13 待办落实物载体（见 待完成工作/sucair_G2自动化回归与schema锚点_待办_2026-10-03.md）。R3 复审员 py_compile 造成的 scripts/__pycache__ 3件已 trash（~/.Trash/sucair_pycache_r3_261003·非修复批产物·R3如实自报）。跨层残留（读书卡片schema.md:92 v1.3.0 自叉 + 三 schema 锚 文件格式规范v2.0.0 vs 实盘v2.6.0）登记待办交记忆蓝图侧，⛔本轮不越层改权威件。
+- **版本判定**：4.10.2→**4.10.3**（Z 级·文本口径收口，判定行为/机制零变更；⛔不升Y——无新检查项无新协议条文）。
+
+### v4.10.2 — 2026-10-03（声明-实盘对齐·依赖版本漂移修正·Z 级）
+
+> **驱动**：布洛陀安装包 10 Skill「Loop 覆盖缺口」盘点时，跨 Skill 依赖声明扫描逮到本 Skill 声明滞后。
+- **修正**：`dependencies` 中 daily-buddy 声明 `3.45.0` → **`3.50.0`**（实盘 `技能配置/daily-buddy/SKILL.md:14` frontmatter 为 3.50.0，滞后 5 个版本）。
+- **为什么改声明不改源**：依 Skill架构规范 §1.1「接触法扩展·外部同步主源」——外部同步升源后声明常滞后，须先查声明 vs 源文件实际版本，⛔DO NOT 直接改源文件。本 Skill 是消费方、daily-buddy 是被消费方且已独立演进（3.46~3.50 新增月报终检脚本化/签名规范/概念卡预筛焊闸），回退 daily-buddy 属倒流。
+- **消费面复核**：daily-buddy 3.45→3.50 变更集经 CHANGELOG 逐条核对，⛔未触及本 Skill 的消费边（读书笔记写入 Obsidian 知识池 → 日记/月报触发复习），故纯声明同步、无需适配代码。
+- **判级**：文件同步 + 声明修正 = Z 级（版本命名规范 §2.3「文件同步」「配置调整」）。无新功能/新机制 ⛔不升 Y。
+- **备份**：`记忆琥珀/技能升级备份/账实脱节修正_261003_0753/sucair_*.bak`
+
+### v4.10.1 — 2026-09-21
+
+> **文档侧收口（时钟Loop三连快批#3·你"继续"令）**：①references索引段8条目反引号token化+eval-set用例数声明（**36条**=T1-T11/N1-N5/R1-R20——首写35系漏数R20，机检当场纠正）②卫生：.DS_Store清除。纯修文（Z级）。机检97→**100/100**。
+
+### v4.10.0 — 2026-09-02
+
+> **清零批（你定调"对外发布·Loop必须彻底解决所有问题"·广授权执行·评估知识库三连评估遗留项全部清零）**。新功能（builder×2）升Y。
+
+- **#3 题库schema权威源落地**：新建 `记忆蓝图/03_开发规范/schemas/题库schema.md` v1.0.0（frontmatter 7必填=QUIZ_FIELDS 镜像 + 每题段结构 + SM-2-lite 初值/回写权归属）——此前四处 complies_with 引用悬空（跨Skill消费契约锚点悬空·你待决项授权后落地）。
+- **#10 builder 全覆盖**：`build_quizbank_frontmatter`（新增·QUIZ_FIELDS 同源自校验）+ `build_note_frontmatter` 现代化（增 title/source 参数支持精华摘要用法·向后兼容）——"⛔手写 frontmatter"禁令从 reading-card 扩展至 精华/题库 全产出物。实测：两 builder 产出过自身 validate + dump→parse 往返恒等。
+- **#11 verified 字段载体**：读书卡片schema v1.3.0→**v1.3.1**（新增选填 verified·值域 unverified/verified=CONFLICT 人工复核载体）+ CARD_FIELDS 同步入机检 + CARD_SCHEMA_ACCEPTED 表保留 v1.3.0（存量卡合法·实测零违规）。schema 文件/校验器/SKILL.md 引用三处同步。
+- **#8 数字真源反转**："600字·数字源=config.yaml"（名义单源·config为markdown不可机读）→ **机检真源=note_validator.CARD_BODY_MAX 常量，config.yaml 为人类可读投影（改数两处同步）**——三处 SKILL.md 措辞对齐。
+- **#14 verify_index 泛化**：master 行 source_type 列不再硬编码 `book`——所有行新增"精华链接目标存在性"校验；书行继续目录卡片数双重核对（非书行⛔不套书行计数——多文共居一夹会假阳性）。**落地即抓出 15 条存量失效链接**（毛选系列 13+2 条 INDEX 错链指向 文章卡片/，实际文件在 毛选/）——全部修复，`--index-check` 60本书 exit 0。
+- **#16 T5 重评**：t5-defense-assessment 停 v3.2.3 → v4.10.0 重评段（D4 外部内容攻击面因 URL 抓取升格确认=高·防线覆盖核查·综合维持高·无新增缺口）。
+- **#15 fetch_source 降级②**：依赖已装但转换失败（损坏PDF/异常编码）→ .md/.txt 直读容错兜底（errors=replace·不裸 Traceback），其余格式带原因报错——补齐 v4.5.1"不裸 Traceback"意图的转换失败态。
+- **验证**：skill_eval 复跑、全池 lint 1326 文件零违规、--index-check exit 0、builder 往返/负例实测全过。
+
+> 当前版本变更记录见 SKILL.md 头部。升版本时把旧版本行移入此文件。
+
+### v4.9.1 — 2026-09-01
+
+> Loop评估修复批（clock-loop v3.38.x 三连评估第1棒·独立审查16候选·lead裁决采纳11/挂起5）。纯修复升Z。
+
+- **P1·dump_frontmatter 幂等加固（note_validator.py）**：related 字符串值含 `[[ ]]`（parse 回读形态）现同样加引号输出——修前 MERGE 回写（parse→改→dump）会把合法 `related: "[[A]] [[B]]"` 裸化成非法双链（326 事故同款根因格式复现路径=官方 MERGE 流程）；同步 build_card_frontmatter 将 related 定形为规范字符串，build→dump→parse 往返 fm==fm2 恢复恒等（v4.2.0 声明因 v4.6.1 related 特判过期，本轮恢复）；复核N2追加：值内引号转义（dump 转义 `\"` + parse 对称反解），引号卡名不再产出非法 YAML。实测：回写幂等✅、往返一致✅、含引号负例合法✅、_yaml_hardcheck 放行✅。
+- **P2·SKILL.md L427 序列化描述纠正**：原"builder 的 list 路径会把 related 序列化为 `related: [[A], [B]]`"与实现相反（实际=引号字符串，且 `[[A], [B]]` 恰是代码注释明令禁止形态）——防326立法段内文档漂移，未来维护者按旧文"修回"即重开事故门。
+- **P2·CONFLICT 计数与措辞对齐**：Step4 确认模板补 `+ CONFLICT c` 计数位（原仅 ADD/MERGE/SKIP，与"CONFLICT 须计入完成确认"直接矛盾）；禁止行为"三选一/三种决策"措辞对齐 dedup-merge-gate ⑥ 立法本意——CONFLICT=独立立场一致性决策·非去重第4态（⛔不引入"四选一"新矛盾）。
+- **P2·Step3 INDEX 模板对齐机检**：精华列 "✅" → markdown 链接（`[精华摘要]({书名}/精华摘要.md)`）——verify_index 正则以链接列提取目录名，按旧模板写 INDEX 会使 --index-check 空转通过（0 本书假阴性）。
+- **P2·note-template.md 废弃标示落地**：status active→deprecated + 头部⛔不得用于生成（v4.5.1 H3 声称已修但只改了 SKILL.md 索引侧，文件自身未标——两份权威指向相反=活陷阱，本轮对齐）。
+- **P2·eval-set/tests 刷新（v4.5.1/v4.2.0 → v4.9.0）**：T10/T11"把这段归档/归档到知识库"变体入集；R7 对齐三选一+CONFLICT 独立计数；新增 R12-R19 覆盖 v4.6-v4.9 六批新机制（C1清单落盘熔断/600字定值拦截/builder序列化+硬YAML闸+幂等/题库落盘 quizbank 校验/Step4 计数/R1三分法/R2费曼/R3信号门控）——修前 G2"全量回归"回归的是不含近四个版本机制的旧题。
+- **P3 批**：C1 清单落盘路径补文章流口径（`文章卡片/{源标题}-C1穷举清单.md`，复核N1追加：Step2.0 熔断 Read 语句同步双口径）；Step4 出题档格式补"不出题（信息密度不足）"；config.yaml 头标 v4.7.0→v4.9.0；note_validator.py docstring 错别字"兑底"→"兜底"；YAML dependencies 同步（shall-we-talk 1.6.0→1.6.2 / daily-buddy 3.40.5→3.45.0，诚实章固化引用漂移×2 消除）。
+- **挂起项（显式留账·本轮不处置）**：①题库schema v1.0.0 文档不存在（四处 complies_with 权威源悬空——新建属记忆蓝图层3域，交你裁决）②"数字源=config.yaml"名义单源（config 为 markdown 不可机读，600 实际常量在 note_validator CARD_BODY_MAX）③note/quiz-bank 无 builder（"⛔手写"禁令仅覆盖 reading-card）④verified 字段三处提及无 schema/机检载体 ⑤t5-defense-assessment 停 v3.2.3、verify_index 仅核对 book 行、fetch_source 降级仅覆盖 ImportError 态——路由评估知识库待办。
+
+### v4.9.0 — 2026-09-01
+
+> 读书沉淀吸收（外部矩阵 v6 单列项 R3 · 信号触发式改造）：补上 R1/R2 之后单列的 R3（读书三倍思考）。**不做生成端强制字段**——尊重立场字段"首次生成不填·信号触发追加"设计（AI 预填=代反思，违反"系统逼你学"分权）。按 Skill 架构规范 原则6 五项前置检查落地：
+
+- **R3 三倍思考（可选复盘提示·信号门控·§2.2 立场字段追加时机后新增）**：读后复盘遇到「想对某卡加深/再加工」信号时，AI 提供三倍思考三步引导（①经验对照=落到现在哪段经历 ②反例边界=什么情况不成立、范围到哪 ③应用再加工=第一步具体做什么），由用户自主决定是否追加进卡片/复盘记录；AI 不预填内容、不主动弹出（不抢消费端控制权铁律）。与立场字段同源：**首次生成不填，"用出来"才追加**。
+- **机制边界**：纯提示性注记，未新增 frontmatter/body 必填字段，`scripts/note_validator.py` schema 兼容无感；不改生成端，不碰 `build_card_frontmatter` / `dump_frontmatter`。
+- **版本** v4.8.0→v4.9.0。至此 R1/R2/R3 三点读书沉淀吸收全闭环（R1 知识三分法过滤 + R2 费曼检测 + R3 三倍思考信号触发）。
+
+### v4.8.0 — 2026-09-01
+
+> 读书沉淀吸收（外部矩阵 v6 对账 + 童灵三角度复评 · L1 批次1 低风险项 R1/R2）：从近3天知识池卡片沉淀中吸收《费曼学习法》两项方法论。不改工作流结构、不碰立场字段（R3 单列信号触发，本次不动）。按 Skill 架构规范 原则6 五项前置检查 + 指令编写规范落地：
+
+- **R1 知识三分法过滤（§Step2前置C1）**：穷举时给每条标注 生长/模块/碎片 类型，碎片知识单列「碎片-不产卡」区、不进入 Step 2.0 写卡范围——C1 求"全"与写卡求"精"之间设 Poka-Yoke 过滤门，防知识池堆垃圾（吸收《费曼学习法》卡片14-内容留存率与知识三分法）。
+- **R2 费曼检测（§2.1.1 新增 · 精华交付前必过）**：5分钟精华生成后、进入 2.2 前，用大白话向假想读者复述 ⚔️矛盾+🎯3观点，卡壳处回 2.1 补全——保产出可消费（吸收《费曼学习法》卡片01-以教代学）。与 C3 批判三问互补：C3 查"全/漏/真"，费曼查"讲得清"。
+- **自检清单**：新增「费曼检测已过」「知识三分法过滤已过」两项勾选，使两机制可验证（§一1.1 设计消除错误）。
+- **规范依据**：Skill架构规范 v5.30 原则6 五项前置检查（读协议全文/查规范/路径glob/查MEMORY/公共脚本SSOT）+ 指令编写规范 §一1.1 防误优先。
+
+### v4.7.0 — 2026-08-31
+
+> 设计链断裂修复（朋友实测反馈·第一性原理处理·童灵全权执行）：原设计链「读书助手(卡片+题库)→日记阅读线索→Shall We Talk(复习/出题)」在消费端断裂。根因=§2.3 题库声明"AI内部维护，不单独生成文件"→ SWT 无物可消费、无复习流。按 Skill 架构规范 原则6 修改前置检查 + 指令编写规范（因果链/⛔切片拼接）落地：
+
+- **题库落盘为跨Skill消费边（SKILL.md §2.3 + config.yaml 路径/题库节）**：题库**必须落盘** `{书名}-题库.md`（书文件夹·type:quiz-bank·frontmatter+每题段含 问题/答案/难度/关联卡片/间隔参数）；文章/论文同夹 `文章卡片/{源标题}-题库.md`。⛔DO NOT "AI内部维护不单独生成文件"——不落盘=设计链断裂（朋友实测实证）。落盘=可验证、可跨Skill传递、可间隔重复调度。
+- **间隔参数(SM-2-lite)初值**：`interval=0; ease=2.5; due=创建日; lapses=0; reps=0`，由 SWT「阅读复习模式」复习判定后回写，实现间隔重复调度（愿景③自主进化）。
+- **每题 `关联卡片` 指向本书已写卡片**：使 SWT 复习时可联动升级该卡 `reading_status`（L1→L2→L3），闭合「生产→消费→回写」环。
+- **会话内即时自检改为「可选 OFFER」（SKILL.md Step 4）**：完成确认后主动 OFFER「用题库 2-3 题当场测一下？」（你可跳过）；⛔DO NOT 强制、⛔DO NOT 主动弹出"该复习了"——不抢控制权、不违反铁律「不负责复习」；不回写间隔参数（回写归 SWT）。
+- **铁律声明补注**：澄清「生成并落盘题库文件」属生产职责（消费边由 SWT 读取），不属"复习/推送/提醒"，本Skill仍不抢控制权。
+- **note_validator.py 新增 `validate_quizbank`（规则单源·E5 声明-执行一致）**：`type:quiz-bank` frontmatter 必填校验 + `question_count` 与正文 `## Q` 段数一致性校验，lint_path 按 type 派发；仅对 quiz-bank 文件生效，存量笔记/卡片机检不受影响。
+- **联动**：SWT v1.6.0 新增「阅读复习模式」消费本题库（见其 CHANGELOG）；`dependencies.shall-we-talk` 1.5.2→1.6.0；sucair 知识池关系表 Shall We Talk 行同步。
+- **规范依据**：Skill架构规范 v5.30 原则6 五项前置检查（读协议全文/查规范/路径glob/查MEMORY/公共脚本SSOT）+ 指令编写规范 §1.1 因果链强制 + §1.5 文件修改按行/单锚点Edit（⛔DO NOT 切片拼接）。
+
+### v4.6.2 — 2026-08-30
+
+- Loop马拉松修复轮（独立审查C1/C3/C4/C5/C6采纳）：触发条件表补「把这段归档/归档到知识库」变体（对齐description v4.5.2）；「指令质量要求详见上方」→下方（指针方向）；自检清单前补执行流程父节；eval-set R3 悬空引用改为分档表口径；config.yaml 头标版本同步；T5#7 悬空引用。挂账：C2 版本判级复核。
+
+### v4.6.1 — 2026-08-24
+
+> 根因修复（你质询"sucair 生成这么多违规格式"后第一性原理处理）：05-知识池 326 张卡片 YAML 非法（检索端 yaml.safe_load 解析即崩→整卡丢索引）。根因=两道防线同漏「YAML 整体可解析」：① 生成侧 SKILL.md 让 AI 手写 frontmatter（裸 `related: [[A]] [[B]]` 双链 + 裸引号 `title`），绕过正确序列化器；② 机检侧 lint_path 用容错解析器 parse_frontmatter，遇非法 YAML 不抛异常→脏卡放行。按 Skill 架构规范 §1.1「先问能否设计消除错误」+ 三件套（生成即自检/产物机检）落地 D 方案（C 主体接触法消除 + B 兜底定值法拦截）：
+
+- **C 主体·强制 builder 序列化（note_validator.py + SKILL.md）**：`build_card_frontmatter` 新增 `related` 参数；`dump_frontmatter` 对 `related` 特判为**字符串** `related: "[[A]] [[B]]"`（⛔DO NOT 走 list 行内 `[...]`——`[[...]]` 是 Obsidian 双链语法，再包一层会破坏链接且 YAML 非法）；SKILL.md 落盘铁律改为「⛔DO NOT 手写 frontmatter，✅DO 用 build_card_frontmatter + dump_frontmatter」——错误在生成层被消除，AI 无机会产出裸格式。
+- **B 兜底·硬 YAML 闸（note_validator.py `_yaml_hardcheck`）**：lint_path 新增权威裁判——优先用标准 `yaml.safe_load` 对整段 frontmatter 解析（零假阳性，中文冒号在值中等合法写法不误伤），不可用时降级只查裸 related 双链；非法即报违规。optional import yaml（try/except 降级），不破窗"无 yaml 硬依赖"约束。
+- **验证**：build_card_frontmatter(related=[...]) 输出合法字符串双链且往返通过；_yaml_hardcheck 对裸双链/裸引号精准报违规、合法写法正确放行；lint_path 扫 05-知识池 1229 文件真实违规 0（存量已清+未来可拦截）。
+- 来源：皮叔 2026-08-24 指示"读记忆蓝图 Skill 规范 + 结合愿景给第一性原理最优解"；规范依据=Skill架构规范 §1.1 三件套防错 + 原则6 修改前置检查。
+
+### v4.6.0 — 2026-08-17
+
+> 流程强制性加固（你质询“严格启动还是按印象执行”后第一性原理处理·AutoClaw 2026-08-17）：千面英雄蒸馏 34/39 卡正文超 600 字上限——根因=正文上限只有自检清单约束、无机器拦截（note_validator 只查 frontmatter）。按记忆蓝图 Skill 架构规范（防误>防错>事后纠错 + 三件套范式）落地：
+
+- **正文字数定值式防错（note_validator.py）**：新增 `CARD_BODY_MAX = 600`（数字源=config.yaml）+ `check_body_length(body)` + `validate_card_full(fm, body)`——生成即自检②（写卡前 validate_card_full）与产物机检③（lint_path 对 reading-card 扫 body）双生效；负例验证通过（700字/650字卡均拦截，600字边界放行）。
+- **C1 清单落盘熔断（SKILL.md Step2 前置+Step2.0）**：清单必须落盘 `05-知识池/{书名}/{书名}-C1穷举清单.md`；Step2.0 启动前 Read 该文件，读不到/为空回补——动作步序法防“清单只在对话中=不可验证”。
+- **题库留痕（SKILL.md Step4）**：完成确认摘要题库行改“默写 n / 应用 n / 逻辑链 n”必填具体题数，⛔DO NOT 写“由三明智涌现”代替——题库“内部维护”不可验证（反模式 D4），具体题数是唯一留痕。
+- **自检清单/定值式锚点/references 索引同步**：600 字上限标注机检兜底（check_body_length 生成自检+lint 双生效）。
+- **负例证据**：check_body_length 负例（700/650 字拦截）+ 边界（600 放行）已跑通；lint 集成负例（超长卡目录扫描拦截）已跑通。
+- 来源：皮叔 2026-08-17 指示“第一性原理最优处理 + 改前看 skill 规范”；规范依据=Skill架构规范 §1.1 三件套 + 指令编写规范 §5.7 Poka-Yoke。
+
+### v4.5.2 — 2026-08-12
+
+- desc 触发词补"归档"变体：把这段归档、归档到知识库（指令端健康检查发现"归档到知识库"不命中——desc 原只有"把这篇加进知识库"覆盖"加进"不覆盖"归档"说法）
+
+### v4.5.1 — 2026-08-12
+
+> Loop 评估修复（AutoClaw 2026-08-12 评估·有效层发现）：Python 运行时依赖未声明 + fetch_source 无降级路径。纯修复只升 Z（对齐版本命名规范§三口诀）。
+
+- **声明 Python 运行时依赖（YAML 新增 `python_dependencies` 段）**：markitdown（非MD→MD 格式归一化）+ crawl4ai（URL 抓取·本地无头 Chromium）——原 SKILL.md 仅在 Step 1 正文提一句"已实测"，dependencies 字段未声明 Python 包，换环境必踩坑（2026-08-12 实测本机两包均未安装）。
+- **fetch_source.py 降级路径**：`convert_file` 的 markitdown ImportError 时，`.md/.markdown/.txt` 直读降级（无需转换的源不被转换器绑架）；其他格式报错提示 `pip install markitdown`。`fetch_url` 的 crawl4ai ImportError 时友好报错提示安装，不再裸 Traceback。
+- **实测验证（2026-08-12·Loop 冒烟）**：本地 .md 直读降级✅ / 非 MD 格式缺依赖报错提示✅ / URL 缺依赖报错提示✅（依赖未装场景三态全覆盖）。
+- **题库节数字字面清理（并入本条目不升版本）**：SKILL.md §2.3 书档残留"默写3+应用场景3+逻辑链推导3"（v4.5.0 声称同步但磁盘残留）→ 改"题型=默写/应用/逻辑链三种（题数由三明智涌现·无硬上限——3+3+3 为典型参考非护栏，口径以 config.yaml 题库表为准）"——消除与 v4.5.0 数字护栏移除声明的并排矛盾（2026-08-12 Loop 评分核验发现）。
+- **独立审查修复批（并入本条目不升版本·2026-08-12 子Agent审查 19 候选）**：
+  - H1 幻影版本：dependencies shall-we-talk 4.5.0→1.5.2（磁盘真实·疑复制自家版本号）、daily-buddy 3.37.1→3.38.0（grep 校验真实版本）
+  - H2 reading_status 语义跨层：SKILL.md 尾部"与 schema 一一对应"声明修正——机器真源=note_validator.py；四级语义以 SKILL.md 表为准；schema 层旧语义（L1未读/L2在读/L3精读）差异已路由待办
+  - H3 note-template.md 索引标"已废弃·旧长笔记模板（v3.0 废除·仅历史存档）"，不再指向生成
+  - M1 eval-set T8"5-8卡"/R9"1-3卡"数字残留清理（对齐无硬上限）
+  - M2 SKILL.md §2.3 论文/长文"各取1道"（书档清理的漏网）→"题型同上·题数由三明智涌现"
+  - M3 config.yaml"详见SKILL.md禁止行为#1"引用断裂→语义锚（旧版9模块名已废除）
+  - M4 论证文字"文章 1-3 张卡"数字去除（SKILL.md §3 平铺论证）
+  - M5 演化契约"42本"无源数字去除（43=知识池存量书数吻合 v4.3.0 全样计数，42=旧笔记数，口径不同非矛盾）
+  - M6 dedup-merge-gate.md 补 SPLIT 说明（MERGE 对称动作·不单列第四态）
+  - L1 config.yaml 头标 v3.x→v4.5.x；L2 eval-set 头标 v4.0.0→v4.5.1；L3 CHANGELOG v4.3.0 <10/>18 数字加划销注记；L5 GGS v0.8.x→v0.10.x；L6 dedup-merge-gate 全半角声明对齐实现（全角空格归一/全角字母不归一·实测）；L7 platform-paths 01-读书笔记补 legacy 标注；L8 note_validator.py docstring v1.2.1 残留清除；L9 SKILL.md references 索引补 tests/ 行；L10 功能定位段补文章/URL 口径
+  - 挂起🟢（设计取舍·在案）：L4 "600字·⛔不硬编码"并排（SKILL.md 引用 config 值的可读性注记）；_CYEFIN_SET 拼写（改名风险>收益）
+  - **schema 统一完成（皮叔 2026-08-12 第一性原理拍板）**：层3 schema（读书卡片schema.md L74 / 笔记schema.md L57）reading_status 旧语义"未读/在读/精读"清除，改为"值域 L1-L4 由 schema 约束·业务语义由写入端定义（sucair 四级表）"——schema=What，Skill=What-it-means；两侧 schema 加变更注记（不升版本·字段契约未变）；本文件尾部引用同步（"差异已在案路由"→"已统一"）
+  - **挂起项第一性原理定案（皮叔 2026-08-12 拍板）**：①L4 "600字·⛔不硬编码"并排张力 → 改"600 字·数字源=config.yaml"（三处：Poka-Yoke 定值式/自检清单/禁止行为段）——"⛔不硬编码"的模糊标语（在哪不硬编码？）换成精确标注：数字单一真相源在 config，SKILL.md 保留可读性引用；②`_CYEFIN_SET` 拼写（cyefin→cynefin）改名——收益=grep"cynefin"可命中（维护一致性），风险≈0（机检 43 tests+685 文件零违规兜底）。并入本条目不升版本
+  - **运行时依赖安装完成（2026-08-12·你指示"去装"）**：markitdown + crawl4ai 经 uv `--break-system-packages` 安装（Homebrew Python PEP 668 环境）；实测三态——本地 .md 直读✅ / html→md markitdown 转换✅（44字） / URL→md crawl4ai 抓取✅（example.com·1.97s·166字）；playwright chromium 浏览器已缓存（chromium-1234）。Step 1 全部路径真实可用，降级分支保留为兜底不阻塞
+  - **INDEX 核对写入 Step 4（2026-08-12·成长箱反哺 SKILL-20260812-001·皮叔确认）**：完成确认增加 INDEX 核对检查——`ls 书目录卡片数` 与 INDEX.md 书目录索引行数+master 行卡片数一致，不一致回 Step 3 补更新。实证：穷查理宝典补卡后 INDEX 滞后 4 天+（卡 13-15 未同步）。并入本条目不升版本
+  - **INDEX 一致性校验脚本（2026-08-12·皮叔确认遗留项第一性原理处理）**：note_validator.py 新增 `--index-check`——以 master 行为单一映射锚（链接列=目录名·书名列镜像段标题），双重核对 master 卡片数+书目录索引行数 vs 目录实际卡数；校验阻断不自动写回（防掩盖误删）。落地即抓出 3 存量问题并修复：①系统之美 master 链接指向 legacy 旧精华→书目录新精华 ②《如何写出短视频爆款文案》段标题错误（卡全是短视频爆款文案-前缀）→改《短视频爆款文案》③穷查理宝典滞后（上轮已修）。实测 43 本书 exit 0 全部一致。并入本条目不升版本
+
+### v4.5.0 — 2026-08-11
+
+> 第一性原理 retract：精华字数 / 题库 数字护栏同构于卡片数18上限，一并移除（用户指令「从第一性原理去处理你说的这个数字，精华字数跟题库」）
+
+- **移除精华字数总字护栏**：config.yaml 分档表精华字数列 300/200/150/100 → 「由内容涌现·无硬上限」；保留 per-element 微护栏（定位≤30字/核心观点≤100字×3/行动≤50字）为合法结构护栏。SKILL.md 自检清单 L196 / 启动 Read L222 / 确认摘要 L461 同步改为「由内容涌现·无总字硬上限」。
+- **移除题库题数护栏**：分档表题库列 9题/3题 → 「由三明智涌现·无硬上限（题型：默写/应用/逻辑链）」；article-short/thread 仍「不出题」（信息密度不足，合法结构性决策非计数护栏）。题库表 L50 题型结构保留为参考、题数去硬上限。SKILL.md L199/L255/L404/L464 同步。
+- **判定依据（第一性原理）**：精华字数=内容×消费目标的涌现结果、题库题数同源——与卡片数同属「数字护栏」家族，逻辑应一致：C3 批判验证（每张卡独立原子概念+100%原文）+ 结构完整判定（⚔️矛盾+🎯3核心观点+⚡1行动）已兜底，数字上限属冗余机械锚定。保留 per-element 微护栏与题型结构（内容维度非计数维度）为合法结构护栏。
+- **配套同步**：eval-set T8/R9 去 200字/100字/3题 数字硬判；config.yaml 分档立法本意注释补「精华字数/题库不设数字护栏·题型为内容维度参考」。
+- **撤销 v4.4.0「保留：精华字数/题库分档」决定**（见下方 v4.4.0 条目划销）。
+
+### v4.4.0 — 2026-08-11
+
+> 取消卡片数数字上限（用户纠正：数量应完全由三明智评估涌现，C3 为唯一守卫，不设数字护栏）
+
+- **移除数字分档上限**：book 10-18、各 source_type 数字卡片数 → 「由三明智涌现·无硬上限」。原 18 上限被判定为重新引入机械锚定，与「第一性原理评估能拆多少就多少」的设计意图矛盾。
+- **C3 成为唯一数量守卫**：防注水/防漏拆机制 = C3 批判验证（每张卡须为 C1 枚举出的独立原子概念 + 100% 基于原文），不靠数字上限。下限同步取消（皮叔学习 8 张即合理浓缩，强塞固定数=注水）。
+- **配套同步**：config.yaml 分档表卡片数列全改「由三明智涌现·无硬上限」+ 列头补「（参考·非硬上限）」+ 立法本意注释改「数字仅作参考区间非护栏」；永久卡片⛔上限行改「不设数字上下限；防注水靠 C3」；eval-set R4/R11 取消数字硬判、改判 C3 质量；SKILL.md L236/L237/L381/L417/L449/L509 六处软/硬上限表述全清。
+- ~~**保留**：精华字数 / 题库 分档（格式与题量维度，非概念计数，未挑战）~~ **（已于 v4.5.0 撤销：第一性原理判定其与卡片数同构，一并改为涌现）**；保留项余：G 系列编号声明；note_validator 不数卡。
+
+### v4.3.0 — 2026-08-11
+
+> 三明智固化引用改造（clock-loop 范式·只取思维检查点不跑 full-flow；落地经三明智 L3 双 Agent 评估通过）
+
+- **C1 源卡片穷举（第一性原理）**：Step 1→2.0 之间新增「源卡片穷举清单」门禁——写卡前先按第一性原理穷举全书可原子化概念（不预设数量、不被分档锚定），形成带溯源锚的候选清单；清单数 <10 重读补漏、>18 进 C3 复查。⛔DO NOT 没列清单就「按 N 张生成」。~~（数字阈值已随 v4.4.0 取消卡片数上限一并撤销——仅历史留痕·2026-08-12 划销）~~
+- **C3 批判三问自检（批判验证）**：Step 2→3 之间新增写卡后闸门——对照三问（数量在band内？有无概念缺口？100%基于原文？）任一不过回对应步修正再进 Step 3。
+- **C2 归并点确认**：原 Step 2.0 去重合并门即抽象建模归并点（实体归一→交集检索→ADD/MERGE/SKIP），标记化为 C2，不新增子流程。
+- **分档语义软化（poka-yoke 升级）**：书档 10-15 → 10-18；「⛔DO NOT 超过分档上限」硬封死 → 「越界须 C3 复查」（>18 确认非注水可归并，<10 确认非漏拆）。分档降级为守卫带，非目标值。
+- **配套同步**：config.yaml 书档 10-15→10-18 + 分档立法本意补「上限18为守卫非硬封死」+ 永久卡片⛔上限改守卫语义；eval-set R4 book=10-15→10-18 + 新增 R11（C1/C3 回归）；SKILL.md L369/L424/L484 三处分档硬语软化；L131/L197/L222/L243/L392/L482 维持指向 config（M5 单数字源治理不动）。
+- **实证依据**：43 本存量全样计数——35% 超 15 张（认知觉醒21/主角18 等，标题复核非注水）、仅 1 本 <10（皮叔学习8，确为极简）；穷查理宝典现 12 张（带内）但漏双轨分析/坐等投资法/独立思想——证缺口在抽取彻底性（C1/C3 直接补），非分档上限。
+- **未动项**：G 系列编号（G2/G4 启用·G1/G3 保留未启用）声明不变；note_validator.py 不数卡（保持机检只查 frontmatter 合规）。
+
+### v4.2.0 — 2026-08-09
+
+> **2026-08-11 复审修复留痕（并入本条目·不升版本）**：①Poka-Yoke 行引用→语义锚；②题库/张数/字数硬编码→config 引用（题类型唯一口径=config.yaml）；③Step 4 补熔断器；④references 索引补 platform-paths.md；⑤tests 补 T4/T8/5分钟精华（11 条）；⑥eval-set R4 补 book 分档限定（原裸 ≥10 误判 paper/article-long）；⑦本条目 4 处 SKILL.md 行引用改语义锚。
+> **2026-08-11 复审补·续（并入本条目·不升版本）**：⑧新增 `## 🛡️ Poka-Yoke防误层（S级）` 三法防错标准化小节（接触式=实体归一+交集检索·Step2.0；定值式=分档数量≤600字以config为准⛔不硬编码·Step3-4；步序式=单线程四步强依赖·全程）；⑨完整性锁补 G 系列编号声明（G2=回归/G4=实体归一 启用；G1/G3 保留未启用·⛔不得无声明引用 G1/G3）。
+规则单源修复批（Loop 评估判 B级·不通过 → 机制性硬伤修复）：
+- **H3 类型契约断裂（根因修复：改 parser，不改校验器）**：`scripts/note_validator.py` 原 `parse_frontmatter` 把 frontmatter 所有值解析成 str，而 `STANCE_FIELDS` 的 `has_stance` 校验断言 `isinstance(v, bool)`——信号门控④追加 `has_stance: true` 写回后，写后机检必红（文档层自洽、运行层必然失败）。修复：新增 `_coerce_scalar()`（L268-284），未加引号的 `true/false`→bool、纯整数→int、其余→str，**加引号的一律保持 str**（YAML 语义：`'true'` 是字符串）；`dump_frontmatter`（L341-358）反向对称输出小写 `true/false`，保证 parse→dump→parse 往返不变。⛔DO NOT 改成「校验器容忍字符串 'true'」——类型转换属 I/O 边界职责，塞进校验层会让每个非字符串字段重复容错，且丢失 YAML 引号语义。
+- **单一解析器兑现**：`scripts/dedup_recall.py` 原自带第二份 `parse_frontmatter`（缺类型还原、多行数组处理有 bug），与 note_validator 逻辑漂移。改为 `from note_validator import parse_frontmatter`（L18-23），召回口径与机检口径合一；`recall()` 的 tags 读取兼容 list（新解析器的行内/多行数组）与旧式逗号字符串两种形态（L46-51）。
+- **H2 生成器与校验器同源**：`build_card_frontmatter` 补齐读书卡片 schema v1.3.0 全字段并在返回前自校验（Poka-Yoke·不合规抛 ValueError）；新增 `NOTE_SCHEMA_VERSION`/`CARD_SCHEMA_VERSION`/`CARD_SCHEMA_ACCEPTED` 版本单源常量（L55-64）——修复 builder 停在 schema v1.1.0 而校验器已到 v1.3.0、builder 产出过不了自己 `validate_card` 的自反矛盾。
+- **M6 检索键纳入机检**：`CARD_FIELDS` 的 `category`/`tags` 由选填升必填（L120-121），SKILL.md §卡片完整性锁同步标注——原为已知盲区：验证器不检查 → 缺这两键的卡永远召不回 → 去重合并门(Step 2.0)对它静默失效。
+- **验证（实测·2026-08-09）**：①`build_card_frontmatter` 产卡 → 追加 `has_stance: true` + `stance_completeness: shallow` → dump 写文件 → `note_validator.py` 机检实录输出「✅ 机检通过：扫描 1 个笔记/卡片文件，零违规」，exit=0；②内存 dict 路径与文件解析路径的 `validate_card` 均返回 `[]`，往返比对 `fm == fm2` 为 True；③`dedup_recall.py` 实跑四例（行内数组卡／多行数组卡／G4 归一变体 `agent记忆`+`AgentMemory` 命中 `Agent 记忆`+`agent memory`／空候选）全部符合预期。
+- **文档/配置一致性补全（同批·修复初评 9 项台账剩余项）**：
+  - **H1 状态语义统一**：SKILL.md 笔记/卡片模板 `reading_status: L1` 注释由「L1未读/L2在读/...」改为对齐 `reading_status 四级` 表（L1=AI已提炼/L2=你已阅读/L3=已应用/L4=已内化），消除与 Step 4 确认摘要表（语义锚）矛盾。
+  - **M4 去重门物理阻断**：`references/dedup-merge-gate.md` 新增🔌熔断器块（成功条件含三决策计数全计入+SKIP 显式列出 / 失败处理中止 / 重试1 / 降级），与 SKILL.md Step1/2/3/4 熔断器格式对齐（原 Step 2.0 细则唯一缺此块）。
+  - **M5 单数字源**：SKILL.md 自检清单（完整性锁·语义锚） + Step 1 熔断器成功条件（语义锚） + Step 3 卡片数校验（语义锚） 的硬编码分档数字全部改为指向 `references/config.yaml` 分档表（⛔不硬编码），消除与 config 漂移源（原 L348 行内仍重复书10-15等数字）。
+  - **M6 config 同步**：`references/config.yaml` paths 表补「精华输出(文章)」行（与 SKILL.md §2.1 路径分流一致）；INDEX 说明「一行一书」→「一行一源」（source 泛化后文章/论文/推文串与书同列一行）；禁止规则「三级状态」→「四级状态 L1-L4」（与 SKILL.md 实际使用一致）。
+  - **L7 完整性锁补全**：SKILL.md §卡片完整性锁补 frontmatter 必填段（category/tags 为去重门检索键、缺=静默失 recall；由 note_validator 机检兜底），与 v4.2.0 category/tags 升必填对齐。
+  - **L8 依赖版本对齐**：SKILL.md dependencies 的 shall-we-talk 1.4.0→1.5.0、daily-buddy 3.21.0→3.37.1（grep 校验真实版本），version_uniform 检查通过。
+  - **L9 解析器单源**：`scripts/dedup_recall.py` 删除自带分叉 `parse_frontmatter`，改为 `from note_validator import parse_frontmatter`；`recall()` 的 tags 读取兼容 list（新解析器行内/多行数组）与旧式逗号字符串两种形态。
+
+### v4.1.0 — 2026-08-08
++ 文档瘦身（皮叔Skill瘦身工程·档案09）：①攻击面5维度评估表外移 `references/t5-defense-assessment.md`（新建·留引用行）②Alternatives设计决策迁CHANGELOG本条目（主文件留引用行）③来源标注删（Skill架构规范v5.15反哺标注·CHANGELOG留痕）④T5段尾双分隔线清理 ⑤安全声明简表删除（仅1项LLM09·禁止行为段Fail-Closed安全哲学已覆盖·无独特信息）⑥来源与参考表外移 `references/academic-sources.md`（新建·留引用行）⑦中间过时版本标签"读书助手 v3.2.9"删除。538→~501行。未改评估标准/方法论/维度，固化引用仅升版本号
++ 设计决策记录（原Alternatives Considered）：笔记格式=结构化模板（自由记录难检索·模板=接触式防错）/读书进度=章节追踪（页码因版本不同·章节=稳定锚点）/知识存储=独立原子卡片（单文件800行看不完）/执行模式=单线程引擎（复习由SWT触发·避免重复读）/题库存储=Skill内部数据（不破坏测试效度）/笔记格式=纯Markdown（跨平台兼容·Obsidian原生）
+
+### v4.0.1 — 2026-08-07
+改名批（独立批次·与 v4.0.0 泛化隔离，方案 D6/红线3）：
+- Skill 代号 reading-assistant → **sucair（素裁）**：主源目录 `技能配置/sucair/`、name 字段、三端软链接（qoder-cn/workbuddy/trae）全部切换；中文名"读书助手"保留（产品名未变，仅工具代号变更）。
+- 命名语义（皮叔 2026-08-07 定稿）：素=褪去虚饰剔水分，裁=按规则甄别取舍非物理剪裁；Sucair 与 sucai（素材）刻意拼写区隔，-air 隐喻"虚浮如空气消散，沉淀紧致实质"；slogan：素材入，素裁行，汰芜存实。
+- 批量替换 38 处活跃引用（脚本执行·diff 留档 `改名批-diff记录-20260807_1032.md`），含 6 高危脚本全数同步（skill_eval.py/task-standards.json/restore-my-skills.ps1/release-sync三件套/sync-check.sh/consistency-check.sh）。
+- ⛔不改：归档/成长箱/最伟大的我/历史日志/评估报告（改=篡改历史）；⏸延后：分享侧（Github发布版/加强包/产品化/HTML）。
+- 验证：consistency-check.sh 零漂移✅ + skill_eval.py 实测 sucair 95/100 S级✅ + 活跃区 reading-assistant 零残留✅。
+
+### v4.0.0 — 2026-08-07
+进料口泛化：「书」→「源」（蒸馏扩大化方案 C · 三明智 L3 双Agent 评估通过 · D1-D9 全拍板）：
+- **输入契约**：书籍文件路径 → 源文件路径（书/文章/论文/推文串）或 URL；触发词补「蒸馏这篇文章/提炼这篇文章/把这篇做成卡片/蒸馏这个」。
+- **Step 1**：读取书籍 → 识别源类型+读取（格式归一化 markitdown/crawl4ai 本地·⛔云外发 → 字数测量判 source_type → 完整读取不提炼）。
+- **Step 2.0 去重合并门（新增）**：写卡前必过——实体归一(G4) → category+tags 交集召回 → ADD/MERGE/SKIP 三选一；MERGE=原卡追加来源+source_count+1；⛔静默 SKIP。细则外置 `references/dedup-merge-gate.md`。
+- **卡片模板**：按读书卡片 schema v1.3.0 泛化——source_type/source_title/source_author 必填 + source_url/source_date/source_count/trigger_scene/related 选填；book/book_author 降兼容别名（存量 551 张已回填，无条件分支）。
+- **写入路径**：书不变（书文件夹）；文章/论文/推文串 → `05-知识池/文章卡片/` 平铺（聚合单位由数量决定，防目录爆炸）。INDEX 表头加类型列。
+- **数量分档**：10-15 张硬上限 → source_type 分档（config.yaml 表驱动：书10-15/论文5-8/长文3-6/短文与推文串1-3），题库同步分档（书9题/论文与长文3题/短文不出题）。立法本意声明：分档=同一原则在不同量级的投影，非放宽。
+- **自检清单**：新增去重门计数、note_validator 机检零违规、eval-set 全量回归（G2 条款）三项。
+- **配套**：note_validator.py 迁入真源 scripts/（Wave 0）+ source_type 收紧必填（Wave 2.0）；schema v1.2.1→v1.3.0（Wave 1）；config.yaml 补分档表+修文件名前缀漂移。
+- **改名（素裁/sucair）⛔本批不做**——独立批次，见方案 D6/波次2.16-2.17（批次隔离红线）。
+
+### v3.3.1 — 2026-08-06
+卡片文件名规则修正（微调级·你设计决策）：
+- §2.2 文件名**保留书名前缀** `{书名}/{书名}-卡片{N}-{标题}.md`（原 v3.2.8"去书名前缀·文件夹已表意"废弃）——原因：文件名是跨上下文的原子标识（检索 grep/对话沟通/链接），去前缀后"卡片01"跨书歧义（皮叔 2026-08-06 指正"两本书都叫01号卡片矛盾"）；保留前缀=自包含标识，文件夹管浏览组织、前缀管标识，双保险不冲突。
+- 附带收益：文件名不变 → 书文件夹迁移为纯物理移动，wikilink/INDEX 零修改。
+- 同步《读书卡片schema》v1.2.0 → v1.2.1（§一适用范围路径定标）。
+
+### v3.3.0 — 2026-08-06
+永久卡片模板新增检索键（功能级·知识检索方案 v2 驱动）：
+- §2.2 卡片模板 frontmatter 加 `category`（领域分类·知识路由表键）+ `tags`（关键词数组·BM25 检索）——来源：2026-08-06 真实演示翻车（写作任务检索命中《精力管理》而非写作方法论，教训"词面grep≠任务意图"），知识路由表需要 category/tags 作匹配键。
+- 同步《读书卡片schema》v1.1.0 → v1.2.0（category 新增必填·tags 选填升必填·生成器对齐）。
+- 存量迁移：《系统之美》14 卡裸字段 → v1.2.0 完整字段（含新键）。
+
+### v3.2.9 — 2026-07-28
+框架图防错位规则（微调级·你真机发现）：
+- §2.1 🗺️框架图模板改为垂直单列树（├──/└──）+⛔DO NOT多列水平并排ASCII树——原因：中文字符占双宽，跨行水平对齐在不同字体/环境必错位（系统之美新版精华你阅读实测发现）；垂直树每行自包含无跨行对齐需求。同步修复存量：05-知识池/系统之美/精华摘要.md 框架图已换垂直树。
+
+### v3.2.8 — 2026-07-28
+改良四点+书文件夹结构+精华微调①打包落地（改造文件§四/§十一/§12.6·皮叔拍板 2026-07-28）：
+- **⚔️主要矛盾站第一屏**（精华微调①）：§2.1 模板次序 ⚔️→📖→🎯→⚡→🗺️。依据：精华定位=认知入口（Adler检视阅读必做动作=找书在回答什么问题 + Ausubel先行组织者 + SQ3R Survey，见改造文件§12.3 三权威锚）。另议的"给3个问题"钩子经 Via Negativa 否决（防与卡片自测题重叠）。
+- **书文件夹结构（§十一 B1定标落地）**：精华→`05-知识池/{书名}/精华摘要.md`（从01-读书笔记迁出）；卡片→`05-知识池/{书名}/卡片{N}-{标题}.md`（去书名前缀）；INDEX保持根级；演化契约同步"01-读书笔记=legacy停放区"；config.yaml paths表+读书卡片schema适用范围路径同步（消E6）。
+- **改良四点（§四·三明智L1收敛版）**：①关系表新增 good-good-study 互斥分工行（读一本书归本Skill/领域学习归B线） ②三库联邦关系备注软引用08设计（不写死库编号） ③消费端诚实声明：live分析端仍月报，⛔不得宣称概念层已消费 ④workspace根config.yaml孤儿归档入琥珀（零读者已验证·不硬删）。
+- **连带同步**：关系表 SWT 行补钩子#11质证回写；月报行补北极星·质证升级数；dependencies 版本修正（shall-we-talk "3.6.1"→"1.4.0"·原值为不存在的幻影版本；daily-buddy "3.17.2"→"3.21.0"）。
+- 待办不在本次：修14张存量旧卡（新壳+自测题+author真bug）属数据层，另轮执行；存量平铺卡不动（schema已标存量兼容）。
+
+### v3.2.7 — 2026-07-27
++ 卡片架构升级：单态渐进 + 立场扩展层（三明智 L3 双 Agent 评估驱动·S级改造立项核心交付）：
+  - **废除双态**（原模式A概念理解卡 + 模式B立场依据卡）→ **单态渐进模型**：一张 Zettelkasten 卡 = 理解 body + 可选立场 frontmatter 字段组
+  - **立场字段 13 个**全部 optional：浅立场(#1-3 主要矛盾/立场/推翻旧认知)+深立场(#4-9 依据链/让步条件/顶住红线/cynefin/steelman/证据等级)+碰撞溯源(#10)+反证推翻(#11)+完成度标记(has_stance/stance_completeness)
+  - **信号加权门控**替代硬阈值：1次引用→浅立场、再引用/碰撞→深立场；无信号不填（防讨好式表演独立·治讨好原则承接）
+  - §2.1 精华摘要 加「核心争论/未解决问题」段——库恩反常处=信息熵最高处，为后续立场升级提供认知钩子
+  - 同步：读书卡片schema v1.0.0→v1.1.0（新增 §六 立场扩展层）+ note_validator.py CARD_FIELDS 追加 STANCE_FIELDS(13字段)
++ **设计依据**：三明智 L3 深度评估——Agent A 核心洞见"认识深度是连续光谱不该用二进制状态建模"+ Agent B 对抗性验证(4/5星 steelman)揭示单态需补质量门控→最终方案="单态渐进+信号加权+立场完成度标记"。原方案双态过度设计已确认，四条核心约束(依据链优先/治讨好/跨模型移植/#S002)均不违反。
++ **理论背书**：Zettelkasten(Ahrens 2017)原子化+ELM(Petty&Cacioppo 1986)中央路径加工+Cynefin(Snowden 2007)领域分诊+Forte(2022)渐进总结Layer4++
+
+### v3.2.6 — 2026-07-27
++ 读书产出合规加固（封死「生成物不合规」缺口）：
+  - §2.1 精华摘要模板 frontmatter 改为符合《笔记schema》(type: note)——补 title/type/status/version/date/summary/source/author/book_author/reading_status(L1)/template_type/complies_with，弃用旧式 `date/author:作者/reading_status:AI已提炼`
+  - §2.2 永久卡片模板 frontmatter 改为符合《读书卡片schema》(type: reading-card)——补 title/status/version/date/summary/source/author/book_author/card_id/topic/card_type/reading_status(L1)/template_type/complies_with，弃用旧式裸字段
+  - 新增质量保证机制说明：写入前 `note_validator.py::validate_card()` 自检 + 写后 `python note_validator.py <知识池>` 机检兜底
+  - references 索引补 note-template.md / note_validator.py，并声明 `笔记schema.md`/`读书卡片schema.md` 为合规权威源（层3）
+  - 同步：新建 `03_开发规范/schemas/读书卡片schema.md`（封注册表原 `⚠️ 待建`），`笔记schema` 同步 `note_validator.py` 单源
+
+### v3.2.5 — 2026-07-13
++ v5.15 重Loop漂移修复（同型于awaken/triwich）：
+  - compatibility `trae-solo`→`trae-work`（与用户确认字节智能体命名一致）
+  - 来源 `Skill架构规范v5.1`→`v5.15`（L51）+ 结构合规来源 `v3.0`→`v5.15`（L420）
+  - 依赖 daily-buddy `3.13.0`→`3.16.3`（🔴 drift修复，源已升）
+  - 断链 `references/指令编写规范.md`：L41改指文件内「质量与证据声明」段 + L431索引行删除
+  - 版本号统一：description `v3.2.2`→`v3.2.5`、footer `v3.2.1`→`v3.2.5`、YAML `3.2.4`→`3.2.5`
+  - license `Proprietary`→`MIT`（与footer/项目协议一致，诚实声明）
+  - 模板硬编码 `~/Local_Obsidian_Vault`→`{{OBSIDIAN_VAULT}}`（L231/L258，对齐C2改造占位符）
+  - 补 动作步序法 poka_yoke 声明（接触法+定值法+动作步序法 三法齐备）
+
+### v3.2.4 — 2026-07-12
++ 补 §2.2 MUST机制缺口：新增「🔒 卡片完整性锁」——永久卡片必填字段Schema（标题/核心概念/来源/关联），缺字段=阻断写入。生成型原样补
+
+### v3.2.3 — 2026-07-12
++ 正文开头格式改造（v5.15 §1.6）：删除作者署名行+创建日期/版本/升级日期描述，新增设计哲学行+CHANGELOG指向。410→409行
++ T5攻击面5维度评估落地（v5.15 §二附B）：新增评估表（D1高/D2高/D3低/D4中/D5中→攻击面高→T5要求11项全填）。409→420行
+
+### v3.2.2 — 2026-07-10
++§4.3 熔断器合规改造：3个熔断器按新规范重写（外部调用→全量五字段/内部校验→简量三字段）。配合 Skill标准规范§4.3约束式重写（2026-07-10你确认闭环防回归）。版本号由3.2.1补升（原漏升）
+
+### v3.2.1 — 2026-07-07
++跨平台C2改造（按《9个Skill跨平台改造标准》v1.0）：config.yaml绝对路径→{{OBSIDIAN_VAULT}}/{{EBOOK_DIR}}占位符；新建references/platform-paths.md适配共享模板；Grep全目录/Users=0
+
+### v3.2.0 — 2026-06-29
++当前版本（详见SKILL.md头部）
+
+### v3.1.1 — 2026-06-29
++质量与证据声明（来源：Skill架构规范v5.1原则4+5）
+
+### v3.1.0 — 2026-06-XX
++Poka-Yoke防误层补全→S级
+
+### v3.0 — 2026-06-XX
+全量重构——从"一次性生成长篇笔记"到"知识池架构"
+
+### v2.1 — 2026-05-XX
+前身版本。详见历史备份。

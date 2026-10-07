@@ -1,5 +1,5 @@
 ﻿# amber-watch.ps1 — 记忆琥珀文件监听 (Windows / PowerShell 版 · 加固轮询版)
-# 等价于 macOS 版 amber-fswatch-wrapper.sh
+# 等价于 macOS 版 amber_fswatch_wrapper.sh
 # ─────────────────────────────────────────────────────────────
 # 加固版设计（对症两个已证实的故障因）：
 #   故障因 A —— 0xC000013A (STATUS_CONTROL_C_EXIT)：进程被控制台 CTRL+C 杀
@@ -79,6 +79,9 @@ function Resolve-PwshPath {
     }
     # 2) PATH 里找 pwsh
     $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    # ⑨黑名单（2026-09-20 补齐·与 dualtrack/task 同款）：拒收版本化 WindowsApps 路径——商店自动更新版本号即变，路径秒失效
+    if ($cmd -and $cmd.Source -like "*WindowsApps*") { $cmd = $null }
+    if ($cmd -and $cmd.Source -match 'Microsoft\.PowerShell_') { $cmd = $null }
     if ($cmd) { return $cmd.Source }
     # 3) 回退 Windows PowerShell 5.1（一样能跑备份脚本）
     $wp = Get-Command powershell.exe -ErrorAction SilentlyContinue
@@ -94,7 +97,7 @@ function Get-WatchPaths {
         '成就系统\scripts',
         '技能配置\daily-buddy','技能配置\shall-we-talk','技能配置\triwich',
         '技能配置\clock-loop','技能配置\growth-box','技能配置\awaken-memory-system',
-        '技能配置\reading-assistant','技能配置\system-logger','技能配置\meta-aletheia'
+        '技能配置\sucair','技能配置\system-logger','技能配置\meta-aletheia'
     )
     $paths = @(
         (Join-Path $HomeDir '.workbuddy')

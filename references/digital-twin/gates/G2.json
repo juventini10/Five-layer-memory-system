@@ -1,0 +1,9 @@
+{
+  "id": "G2",
+  "name": "红线触碰检查",
+  "severity": "block",
+  "status": "delegated",
+  "spec_ref": "童灵·人格规格书.md L38",
+  "delegate": "[记忆共享中心]/脚本中心/doenglingz_guard.py",
+  "note": "已由 doenglingz_guard.py 覆盖(红区六类+铁律关键词)·⛔不重复建设"
+}

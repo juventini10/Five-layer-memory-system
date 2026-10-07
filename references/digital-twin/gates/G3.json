@@ -1,0 +1,18 @@
+{
+  "id": "G3",
+  "name": "派生一致性(stats重算·drift=0)",
+  "severity": "block",
+  "status": "active",
+  "spec_ref": "童灵·人格规格书.md L38 + growth-box/stats.py docstring",
+  "judge": {
+    "type": "stats_drift",
+    "script": "[记忆共享中心]/技能配置/growth-box/scripts/stats.py",
+    "learnings_dir": "[记忆共享中心]/成长箱/learnings/",
+    "index": "[记忆共享中心]/成长箱/learnings/INDEX.md",
+    "pending_audit": "[记忆共享中心]/脚本中心/growth_box_pending_audit.py"
+  },
+  "basis": [
+    "stats.py docstring 明写「INDEX.md 的模式目录表是从错误源文件派生的数据。手工维护计数=双本账迟早漂移。本脚本只读源文件、实时计算派生数据，不另建独立写入源」"
+  ],
+  "method": "调 stats.py 重算 → 解析 PAT-XXX 的(累计次数,最新发生) → 与 INDEX.md 现有表逐项比对 → drift≠0 即 RED；扩展：pending 状态列漂移体检（幽灵条目阻断晋升·倒挂提示）"
+}

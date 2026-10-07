@@ -1,0 +1,136 @@
+# Qoder CN 能力矩阵（v2.0 合并包读取·install_scripts.py Step0 据此分支）
+platform: qodercn
+guard_baseline_seed: "py"   # C4-D：装机/升级期按 deploy 全量推导写 hook_baseline.json（期望集⛔实挂回声）；枚举 py|ps1|none·其余12端未启用=gaps如实见04指南
+config_root: "~/.qoder-cn"
+display_name: "Qoder CN"
+emoji: "🔮"
+capabilities:
+  rules_inject: true        # rules/*.md alwaysApply=true 常驻注入
+  agents_full_inject: true  # AGENTS.md 全文注入（08-27 实测推翻旧"不注入"结论）
+  hooks_event: true         # settings.json hooks (4事件: Stop/UserPromptSubmit/PreToolUse/SessionStart)
+  hook_stdout_inject: true  # UserPromptSubmit stdout → 注入本轮上下文
+  settings_json: true       # 可注册 hooks 到 settings.json
+  awareness: false          # 无 awareness 目录（不同于 QoderWork）
+  skill_symlink: true       # skills/ 软链安装
+  custom_directive: true    # 执行准则走 rules/ 通道
+  install_entry: "setup.sh" # 条文13扩展（2026-10-03）：端 setup 委派覆盖 hooks_event 端——
+                            # setup.sh 负责 rules/ 核心四件模板实体落盘 + 记忆数据三软链 + AGENTS.md/MEMORY.md 落盘 + skills 软链 + 自验证；
+                            # settings.json 4事件钩子仍由安装器标准分支注册（本端 setup ⛔不碰 settings.json·防双写）
+memory_root: "MEMORY.md"    # ~/.qoder-cn/MEMORY.md（经验积累器·非导航仪）
+
+# ─── 钩子路由（SSOT 指向·不复制矩阵内容·防双本账漂移）───
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+hooks_ssot: "[记忆共享中心]/记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/01-脚本架构设计通用规范.md#二·七"
+hooks_validator: "install_scripts.py --verify --platform qodercn"
+# hooks_validator 2026-10-02 B案归位：端侧可达校验器=包根安装器自检（旧值指向作者机件 platform_adaptation_check·in_package=False 端用户不可达——第四格悬空引用·判据=安装包条文一操作性判定段）
+# install 时: validator → 取 ✅ 列表 → 装对应脚本到 config_root/hooks/
+# 端专属: crossend_guard.py(SessionStart) + qodercn_inject_chain_guard.py(Stop)
+
+# v2.0.1 端专属 ROSTER 追加（数据化·2026-09-30 兑现上方"端专属"声明；install_scripts 逐条 append）
+extra_hooks:
+  - ["Stop", ".", "adapters/qodercn/hooks", "qodercn_inject_chain_guard.py", []]
+  # C1(2026-10-04 二期·title_namer入包同轮)：端适配器已在包references/scripts(10-03脱敏纳入)·本次补注册行+gaps翻转
+  - ["UserPromptSubmit", ".", "references/scripts", "qodercn_title_namer.py", ["session_title_utils.py"]]
+  - ["UserPromptSubmit", ".", "references/scripts", "philosophy_radar_inject.py", ["hook_protocol.py"]]
+  # C3(2026-10-05)四轻件注册：三件源10-03已在包(投影残留0·函数集一致·装载注册此前缺位=本轮补)，evidence 为今日投影新件
+  - ["PreToolUse", ".", "references/scripts", "registry_precheck_guard.py", []]
+  - ["PreToolUse", ".", "references/scripts", "stamp_precheck_guard.py", []]
+  - ["Stop", ".", "references/scripts", "report_backlog_guard.py", []]  # 包侧默认模式（房内triwich先例同款·deps槽误放参数系D-端到端首跑抓获）
+  - ["SubagentStop", ".", "references/scripts", "qodercn_subagent_evidence_guard.py", []]  # C2二期·扫描侧philosophy_radar走launchd(装机腿挂C4/component面)
+
+# ─── 条文32 · 五系统文件端自适配声明（2026-10-03·实测取证·非凭印象）──
+# 本端形态（2026-10-03 实测）：
+#   · rules/ 有端专属三件（core-soul 6792B / core-identity 5863B / core-user 1029B）⇒ **不共用公共模板**
+#   · MEMORY.md 独立在配置根（~/.qoder-cn/MEMORY.md·本端定位「经验积累器·非导航仪」）
+#   · 执行准则走 rules/execution-guidelines.md（⛔ 不是 UI 粘贴框）
+# ⚠️ 与 WorkBuddy 的差别：WB 五件走「公共模板 + 端名注入」+ 第五件在设置框；本端五件全是文件。
+system_file_paths:
+  SOUL: "rules/core-soul.md"              # 实测 6792 bytes（2026-10-07 签名焊本端后）
+  IDENTITY: "rules/core-identity.md"      # 实测 5863 bytes（2026-10-07 订正旧注释6467漂移）
+  USER: "rules/core-user.md"              # 实测 1029 bytes
+  MEMORY: "MEMORY.md"                     # 配置根·本端定位=经验积累器
+  customPrompt: "rules/execution-guidelines.md"   # 执行准则走 rules 通道·⛔ 非 UI 粘贴
+
+# ─── 条文33 · 端侧功能面映射声明（2026-10-03·按 41 条实挂盘点）──
+hooks_surface:
+  delivered:                    # 装完即得（链 A ROSTER + 数字分身三件 + 本端专属四件）
+    - {script: route_inject_prompt.py,            event: UserPromptSubmit, src: references/scripts}
+    - {script: kb_inject_prompt.py,               event: UserPromptSubmit, src: references/scripts}
+    - {script: rule_fragment_inject.py,           event: UserPromptSubmit, src: references/scripts, note: 铁律硬墙}
+    - {script: secret_key_guard.py,               event: UserPromptSubmit, src: references/scripts}
+    - {script: session_tail_inject.py,            event: UserPromptSubmit, src: references/scripts}
+    - {script: ttl_expiry_guard.py,               event: UserPromptSubmit, src: references/scripts}
+    - {script: doenglingz_inject_prompt.py,       event: UserPromptSubmit, src: references/digital-twin/devtools, component: twin}
+    - {script: edit_heading_guard.py,             event: PreToolUse,       src: references/scripts}
+    - {script: skill_write_gate_guard.py,         event: PreToolUse,       src: references/scripts}
+    - {script: skill_spec_read_guard.py,          event: PreToolUse,       src: references/scripts}
+    - {script: grep_sandbox_guard.py,             event: PreToolUse,       src: references/scripts}
+    - {script: crossend_guard.py,                 event: SessionStart,     src: references/scripts}
+    - {script: route_unknown_unknown.py,          event: Stop,             src: references/hooks}
+    - {script: rule_three_layer_guard.py,         event: Stop,             src: references/scripts}
+    - {script: systemlog_stophook_check.py,       event: Stop,             src: references/scripts}
+    - {script: reply_tail_guard.py,               event: Stop,             src: references/scripts}
+    - {script: post_change_guard.py,              event: Stop,             src: references/scripts}
+    - {script: delivery_boundary_guard.py,        event: Stop,             src: references/scripts}
+    - {script: twin_verdict_ledger.py,            event: Stop,             src: references/digital-twin/devtools, component: twin}
+    - {script: twin_changelog_guard.py,           event: Stop,             src: references/digital-twin/devtools, component: twin}
+    # ── 本端专属四件（setup.sh 注册）──
+    - {script: qodercn_inject_chain_guard.py,     event: Stop,             src: references/scripts, note: 端元守卫}
+    - {script: qodercn_title_namer.py,            event: UserPromptSubmit,  src: references/scripts, note: C1二期入包·端标题适配器}
+    - {script: registry_precheck_guard.py,          event: PreToolUse,         src: references/scripts, note: C3二期·投影残留0}
+    - {script: stamp_precheck_guard.py,             event: PreToolUse,         src: references/scripts, note: C3二期}
+    - {script: report_backlog_guard.py,             event: Stop,               src: references/scripts, note: C3二期 --json}
+    - {script: qodercn_subagent_evidence_guard.py,  event: SubagentStop,       src: references/scripts, note: C3二期·P2-9b质变钩子}
+  gaps:                          # 实盘在挂·包无承载（advisory·如实可见不判 FAIL）
+    - {script: qodercn_config_guard.py,     note: 端元守卫·**包内无源**·源在开发工具·未纳入镜像·待脱敏入包}
+    # qodercn_title_namer 已翻 delivered（C1 2026-10-04·extra_hooks 注册+源在包·原 gap 注撤销）
+    # philosophy_radar_inject 已翻 delivered（C2 2026-10-04·源在包且10-03版与作者侧逐函数一致·manifest补投递目）；philosophy_radar 扫描侧=launchd件挂 C4 装机腿
+    - {script: qodercn_inject_chain_guard.py, note: 端元守卫·**包内无源**·同上}
+    - {script: doenglingz_guard.py,      note: 分身守护执行体·走 gate_runner 委派非独立钩子}
+    - {script: platform_adaptation_check.py, note: 作者侧发版门禁·依赖作者侧日志目录}
+    - {script: registry_precheck_guard.py,   note: 端注册前置检查·依赖端特定配置}
+    - {script: stamp_precheck_guard.py,      note: 作者侧盖章检查}
+    - {script: report_backlog_guard.py,      note: 端报告面}
+twin_surface:
+  injection:
+    - {what: K2 core_slice+L6 常驻,  carrier: rules/core-user.md}
+    - {what: W1/W3 上岗注入,      hook: doenglingz_inject_prompt.py}
+  guards:
+    - {what: 分身守护,  hook: doenglingz_guard.py,  note: 经 gate_runner 委派}
+    - {what: 档位声明守卫, hook: doenglingz_level_declare_guard.py}
+  ledger:
+    - {what: 运行期裁决台账, hook: twin_verdict_ledger.py}
+    - {what: 规格书漂移守卫, hook: twin_changelog_guard.py}
+  tsl:
+    - {what: 逐行比对, hook: tsl_closeout_guard.py}
+    - {what: 三思维收口, hook: triwich_closeout_guard.py}
+  reach:
+    - {what: 岗位3触达, hook: position3_notify.py}
+  gaps:
+    - {what: 产树/树回执, note: 本端 TSL 产树走端侧观察层·包内无产树件}

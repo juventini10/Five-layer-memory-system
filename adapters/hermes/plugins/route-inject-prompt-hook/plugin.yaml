@@ -1,0 +1,9 @@
+name: route-inject-prompt-hook
+version: 1.0.0
+description: >-
+  布洛陀路由家族 · Hermes 会话开始准备钩子。在 on_session_start 时标记
+  路由上下文已激活（真实路由注入由 Skill buluotuo-scripts 承载）。
+author: buluotuo
+type: user
+provides_hooks:
+  - on_session_end

@@ -5,7 +5,9 @@ status: active
 version: v5.14
 date: 2026-07-11
 summary: Skill架构规范全局版本变更日志
-source: ~/个人AI档案/记忆蓝图/03_开发规范/Skill架构规范/references/CHANGELOG.md
+source: 记忆蓝图/03_开发规范/Skill架构规范/references/CHANGELOG.md
+complies_with: 文件格式规范 v2.0.0
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 author: 皮叔
 ---
 
@@ -16,6 +18,34 @@ author: 皮叔
 
 ---
 
+## [v5.29] — 2026-08-10
+
+### 🔧 变更
+
+- **§一1.1 新增「接触法扩展·声明-事实核对」条款** — 文档声称的路径/交付物须与磁盘现实逐一核对（upstream/备份目录/守卫脚本/外部文档），指向物不存在=P0，历史/示例/跨平台占位降 warning。来源：三明智审查报告 P0#1（triwich v3.9.3 upstream 指向 NOT EXISTS、CHANGELOG 声称已交付实则不存在，评估器全漏——同源自欺）。检测落地：skill_eval.py `declared_existence` 非计分警告（§6.7 幂等）。[来源: 成长箱反哺 | 日期: 2026-08-10 | 反哺标题: clock-loop 评估标准补「文档 vs 现实」核对层]
+
+## [v5.28] — 2026-08-10
+
+### 🔧 变更
+
+- **五级标注符号统一（第一性原理根治·符号漂移）** — 本文件 5 处使用自造符号 `✔MAY` / `⚠SHOULD NOT`（:414/:514/:640/:644/:846），与权威源 指令编写规范 §1.1 五级标注表（`MAY` 无前缀 / `☑SHOULD NOT` 用 ☑）不一致。全规范目录扫描确认仅本文件漂移（其余 4 文件均用权威符号）。统一为权威符号，语义不变。
+- **根因**：本规范 v5.0 是五级标注体系的「来源」之一（指令编写规范 §1.1 标注来源），v3.4 定型符号时本文件未回写——自指漂移（自己立的规矩自己没执行）。
+- **验证**：改后 grep 主源 `✔MAY|⚠SHOULD NOT` 0 残留；安装包副本经 mirror-sync 同步；Github发布版冻结不动（解冻清单已追加本项）。
+
+---
+## [v5.20] — 2026-07-27
+
+### ➕ 新增
+
+- **§一1.1 Poka-Yoke 三大方法表新增「三件套·复合防错」行** — 阶进三道（规则单源+生成即自检+产物机检），经读书助手 S 级改造全网实证（14/14 PASS + 故意 13 项缺失全被抓）。接触法+定值法+动作步序法组合实例。协同文件格式规范 §九 同步落地。
+[来源: 成长箱反哺 | 日期: 2026-07-27 | 反哺标题: 「三件套」生成合规保证模式]
+
+### 🔧 变更
+
+- **`Skill架构规范.md`** §一1.1 三大方法表新增一行 + 来源标注
+- **`文件格式规范.md`** v2.1.0 新增 §九「生成合规保证机制」
+
+---
 ## [v5.14] — 2026-07-11
 
 ### 🔧 变更（clock-loop 缺口3 实测反哺）
@@ -30,13 +60,13 @@ author: 皮叔
 
 ## [skill_eval v2.4] — 2026-07-09
 
-### 🔧 变更（用户拍板：降级最优 + 关键词刚性修复）
+### 🔧 变更（你拍板：降级最优 + 关键词刚性修复）
 
 - **`backup_gate` 降级为非计分提醒**（原权重4移除，满分仍锁死100）
   - 第一性原理：§6.6「修改前备份」真值在【修改动作/操作历史】而非文件内 → 计分=层错误+破坏幂等（同文件不同时间得分不同）
   - 权重 4 重分配：`eval_set_gate` 5→7（P0门禁加权）、`poka_yoke_layer` 13→15（§5.7第一原则加权）
   - 报告保留 `§6.6 备份提醒（非计分）`；强制载体移交**改前自动备份钩子（hook）**
-- **`poka_yoke_layer` 关键词刚性修复**（用户指出误杀 system-logger）
+- **`poka_yoke_layer` 关键词刚性修复**（你指出误杀 system-logger）
   - 旧：只认 `锚点/固定数量/状态机/产出物锁` 等窄词 → 用「接触法/步序法/阻断条件」合规词汇的Skill被误判 0 分
   - 新：三方法（接触法/定值法/动作步序法）各用**宽泛同义词集**，阈值 4/4/3 → 2（防单关键词刷分），真实反映用了几种方法
   - 验证：system-logger `poka_yoke_layer` 5/13 → **12/15**（实际=接触法×3+步序法×1，无定值法→分差真实非误杀）
@@ -85,7 +115,7 @@ author: 皮叔
 
 - **`Skill架构规范.md`** 版本v5.7→v5.8
 - **`skill_eval.py`** v2.0→v2.1（T5-05检测关键词修正：与实际Skill声明文本匹配）
-- **9个核心Skill** — shall-we-talk / triwich / awaken-memory-system / daily-buddy / system-logger / growth-box / meta-aletheia / reading-assistant / clock-loop
+- **9个核心Skill** — shall-we-talk / triwich / awaken-memory-system / daily-buddy / system-logger / growth-box / meta-aletheia / sucair / clock-loop
 
 ---
 

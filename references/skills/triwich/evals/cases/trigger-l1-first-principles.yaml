@@ -1,0 +1,15 @@
+id: trigger-l1-first-principles
+title: 触发词"为什么"命中L1第一性原理路径
+description: 验证第一性原理触发词路由正确（SKILL.md Step0对照表·仅含"为什么"行）
+input:
+  prompt: |
+    为什么团队代码评审总流于形式？从底层逻辑帮我拆一下。
+expect:
+  must_contain:
+    - "三明智 L1"
+    - "第一性原理"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

@@ -1,0 +1,15 @@
+name: buluotuo-closeout-guards
+version: 1.0.0
+description: >-
+  布洛陀收口守卫集群（Hermes 端适配 · post_llm_call 每轮通道·对齐 WB Stop 链 29 个中的收口族）。
+  承载 doenglingz_level_declare_guard（档位声明 + 非D3禁产TSL树）/ triwich_closeout_guard /
+  tsl_closeout_guard / reply_tail_guard（回复留尾巴）/ systemlog_stophook_check（实质工作必记日志）。
+  **动机**：Hermes 端 doenglingz-twin 每轮注入档位标签（童灵 06 §1.6 强制交代义务），
+  但此前零机械校验——义务纯靠 AI 自觉；本集群把它机械化（愿景①不依赖人记得）。
+  通道 ⛔ 不用 on_session_end（会话级一天一次·与 WB Stop 的每轮语义不同档）。
+  载荷双形态（response/output/assistant_message + session_id·脚本读法不一·冗余无害）。
+  只记录不拦截·恒返回 None·⛔失败放行·判据零内联·台账 ~/.hermes/closeout_guards_hook.log。
+author: Hermes
+type: user
+provides_hooks:
+  - post_llm_call

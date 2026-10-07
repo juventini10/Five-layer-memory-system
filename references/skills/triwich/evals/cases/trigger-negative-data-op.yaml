@@ -1,0 +1,14 @@
+id: trigger-negative-data-op
+title: 反例·宾语为数据/文件操作不触发
+description: 语境限定规则："分类"宾语是文件→物理操作不触发
+input:
+  prompt: |
+    帮我把当前目录下这些文件按扩展名分类到不同文件夹。
+expect:
+  must_not_contain:
+    - "三明智"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

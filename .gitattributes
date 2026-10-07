@@ -1,0 +1,5 @@
+# 保证 shell/python 脚本以 LF 落盘（Windows git 若 autocrlf=true 会转 CRLF，导致 .sh 失效）
+*.sh text eol=lf
+*.py text eol=lf
+*.ps1 text eol=crlf
+*.md text eol=lf

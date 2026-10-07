@@ -1,0 +1,12 @@
+{
+  "description": "GS-2关键词堆砌攻击样本·评估器抗刷分回归断言。当evaluator给结构完整但内容空洞的样本打高分时触发报警。来源：v3.54.2批6g（A30/#216·防假阴）。",
+  "checks": {
+    "alternatives_considered": {"op": "<=", "value": 3},
+    "fuse_mechanism": {"op": "<=", "value": 4},
+    "eval_set_gate": {"op": "<=", "value": 6},
+    "deliverable_definition": {"op": "<=", "value": 5},
+    "five_level_annotations": {"op": "<=", "value": 5},
+    "trigger_conditions": {"op": "<=", "value": 7}
+  },
+  "total": {"op": "<=", "value": 83, "baseline": 82}
+}

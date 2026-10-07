@@ -2,7 +2,7 @@
 # 修改这些文件时会自动备份到 记忆琥珀/ 目录
 #
 # ⚠️ 安装时由 step6.5 自动替换以下占位符：
-#   [记忆共享中心]  → 用户的记忆共享中心路径（如 ~/[记忆共享中心] 或 ~/AI记忆库）
+#   [记忆共享中心]  → 用户的记忆共享中心路径（如 [记忆共享中心] 或 ~/AI记忆库）
 #   ~/.workbuddy → WorkBuddy 安装目录（通常 ~/.workbuddy）
 #
 # 安装后此文件落到 [记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt
@@ -34,7 +34,7 @@
 [记忆共享中心]/技能配置/clock-loop/SKILL.md
 [记忆共享中心]/技能配置/growth-box/SKILL.md
 [记忆共享中心]/技能配置/awaken-memory-system/SKILL.md
-[记忆共享中心]/技能配置/reading-assistant/SKILL.md
+[记忆共享中心]/技能配置/sucair/SKILL.md
 [记忆共享中心]/技能配置/system-logger/SKILL.md
 [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 

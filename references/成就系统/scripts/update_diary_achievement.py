@@ -11,6 +11,16 @@
   python3 update_diary_achievement.py              # 更新今天的日记
   python3 update_diary_achievement.py --date YYYY-MM-DD  # 更新指定日期的日记
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+    _sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 import os
 import re
@@ -20,8 +30,8 @@ from pathlib import Path
 import sys
 
 # ─── 路径配置 ────────────────────────────────────────────────
-DIARY_DIR = Path.home() / "Local_Obsidian_Vault/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = Path.home() / "个人AI档案/成就系统"
+DIARY_DIR = Path.home() / "[日记仓库]/1-每日计划/01-日记"
+ACHIEVEMENT_DIR = "[记忆共享中心]/成就系统"
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
 # 优先用隔离 venv（已装 pyyaml），失败回退 bare python3
 VENV_PYTHON = "~/.workbuddy/binaries/python/envs/default/bin/python"

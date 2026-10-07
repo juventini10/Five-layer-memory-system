@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.doenglingz.drift-check-remind</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/env</string>
+        <string>python3</string>
+        <string>[数字分身中心]/scripts/doenglingz_drift_check_remind.py</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>DIGITALTWIN_HOME</key>
+        <string>[数字分身中心]</string>
+    </dict>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Day</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>[数字分身中心]/scripts/drift_check_remind.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>[数字分身中心]/scripts/drift_check_remind.err.log</string>
+</dict>
+</plist>

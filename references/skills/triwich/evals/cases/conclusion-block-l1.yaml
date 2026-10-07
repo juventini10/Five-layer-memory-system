@@ -1,0 +1,16 @@
+id: conclusion-block-l1
+title: L1结论块三要素（结果+依据+下一步）
+description: 结论块模板锁：🎯结果行/依据表/下一步在最终输出可见（v4.2.1信息分层）
+input:
+  prompt: |
+    为什么团队站会越开越长？帮我拆到本质。
+expect:
+  must_contain:
+    - "🎯 结果"
+    - "依据"
+    - "下一步"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

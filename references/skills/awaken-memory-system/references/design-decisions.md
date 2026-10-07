@@ -1,3 +1,7 @@
+---
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
+---
+
 # Alternatives Considered — 唤醒记忆系统
 
 > 外迁自 SKILL.md §Alternatives Considered（2026-07-10 P4.5 行数瘦身）

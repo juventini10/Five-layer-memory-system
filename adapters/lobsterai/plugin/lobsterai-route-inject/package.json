@@ -1,0 +1,7 @@
+{
+  "name": "lobsterai-route-inject",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "布洛陀路由注入（LobsterAI）·before_prompt_build 转发公共注入器 route_inject_prompt（config 驱动）"
+}

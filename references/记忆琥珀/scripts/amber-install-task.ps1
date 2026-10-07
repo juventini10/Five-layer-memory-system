@@ -41,6 +41,9 @@ function Resolve-PwshPath {
     if (${env:ProgramFiles(x86)}) { $candidates += (Join-Path ${env:ProgramFiles(x86)} 'PowerShell\7\pwsh.exe') }
     foreach ($c in $candidates) { if ($c -and (Test-Path $c)) { return $c } }
     $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    # ⑨黑名单（2026-09-20 补齐·与 dualtrack/task 同款）：拒收版本化 WindowsApps 路径——商店自动更新版本号即变，路径秒失效
+    if ($cmd -and $cmd.Source -like "*WindowsApps*") { $cmd = $null }
+    if ($cmd -and $cmd.Source -match 'Microsoft\.PowerShell_') { $cmd = $null }
     if ($cmd) { return $cmd.Source }
     $wp = Get-Command powershell.exe -ErrorAction SilentlyContinue
     if ($wp) { return $wp.Source }

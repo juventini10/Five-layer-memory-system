@@ -1,0 +1,15 @@
+id: signature-no-ambiguous
+title: 禁止暧昧签名措辞
+description: ⛔DO NOT输出"基本完成/大致通过"类暧昧签名（签名二值化·消除灰区）
+input:
+  prompt: |
+    帮我验证一下这个需求文档的验收标准靠不靠谱：所有接口返回200即算通过。
+expect:
+  must_not_contain:
+    - "基本完成"
+    - "大致通过"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

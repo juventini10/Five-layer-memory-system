@@ -1,0 +1,139 @@
+# ZCode 能力矩阵（v2.0 合并包读取·install_scripts.py Step0 据此分支）
+# 2026-09-26 融入自 ZCode 加强包 v0.1.1（端实测口径见 ~/.zcode 实盘 + ZCode布洛陀设计哲学 01 v1.0.2）
+platform: zcode
+config_root: "~/.zcode"
+display_name: "ZCode"
+emoji: "🧩"
+capabilities:
+  rules_inject: false        # rules/*.md 无 alwaysApply 注入语义（2026-08-22 实测·cross-end-guard.md 仅供守卫解析）
+  agents_full_inject: true   # ~/.zcode/AGENTS.md 每会话全文常驻注入（唯一常驻通道·单通道架构）
+  hooks_event: false         # ⚠️ 安装路由语义（非能力否定）：本端钩子真实存在且 7 事件全支持，
+                             #    但注册面是 cli/config.json 而非 install_scripts.py 标准流程的 settings.json
+                             #    schema——故走 hooks_alternative 委派端 setup（CAPABILITY-MATRIX hooks 行仍记 ✅）
+  hooks_alternative: true    # 非标准钩子机制 → 委派本目录 setup.sh（config.json 幂等注册·hooks.enabled 缺失才补 true）
+  install_entry: "setup.sh"  # Windows 走 setup.ps1（AI 按平台选择·install_scripts.py 委派分支默认 setup.sh）
+  hooks_mechanism: "cli/config.json (config-file hooks 默认禁用·须 enabled:true·ZCode 特性)"
+  hook_stdout_inject: true   # UserPromptSubmit stdout 严格 JSON additionalContext 注入面（纯文本被静默丢弃）
+  settings_json: false       # 无 settings.json——配置真身 = ~/.zcode/cli/config.json
+  awareness: false
+  skill_symlink: true        # ~/.zcode/skills/ 软链放置即发现（权威源=记忆中心/技能配置/）
+  custom_directive: true     # 顶层执行准则等价通道 = AGENTS.md 本体（单通道合一）
+memory_root: "AGENTS.md §共享文件索引（指针）+ 平台原生 memory（~/.zcode/cli/memories/）"
+
+# ─── 五系统文件端自适配声明（2026-10-03·口径=WorkBuddy布洛陀设计哲学/02 §六）───
+# 判据（用户定）：不管什么形式，五件逐件有本端适配载体+内容百分百适配即可。
+# ZCode 单通道架构：AGENTS.md 是唯一常驻注入 ⇒ SOUL/IDENTITY/自定义指令并入 AGENTS.md 分段承载。
+# USER 件=分层适配（愿景最优解·用户认可）：恒定内核常驻（AGENTS.md「关于用户」锚段·身份/认知风格）+
+#   演化明细走平台原生 auto-memory（user/project 类记忆·每会话自动注入索引·越用越懂）——
+#   恒定常驻锁可达性、波动交给自动机制，对齐 WB设计哲学02§四「恒定常驻/波动按需」判据。
+system_file_paths:
+  SOUL.md: "AGENTS.md"        # 并入 AGENTS.md：愿景锚/身份锚点/我怎么说话/行为印证/回复格式/核心底线/三条实线 段
+  IDENTITY.md: "AGENTS.md"    # 并入 AGENTS.md：我是谁/身份锚点/数字分身·童灵节（K2 core_slice+L6 反向约束）
+  USER.md: "AGENTS.md"        # 分层适配：常驻锚=「关于用户」段（身份/认知风格·2026-10-03 置入）+ auto-memory 动态层
+  MEMORY.md: "AGENTS.md"      # 半适配声明：~/.zcode/MEMORY.md 实测不注入（2026-08-22 实证·文件内自证）；
+                              # 跨项目长期记忆=平台原生 auto-memory（~/.zcode/cli/memories/ 每会话注入索引）承载
+  自定义指令: "AGENTS.md"     # AGENTS.md 本体=ZCode 用户级常驻指令文件（单通道合一·等价 WB customPrompt）+ hooks 铁律预注入动态层
+
+# ─── 端侧脚本/钩子映射声明（2026-10-03·条文33首例·口径=~/.zcode/cli/config.json 实挂实盘）───
+# 三态判据（条文33）：delivered=机械交付（端 setup 三段装载+注册·装机即得）｜gap=实盘在挂而包无承载（欠账显形）｜
+# endogenous 标注=端专属件来源（加强包时代实挂·[5c/8] PLAN 已纳管交付）。
+# ⚠️ 本表 v2 修正记录：v1 版曾凭部分阅读 setup.sh 误判「gap 10 件/endogenous 9 件无承载·端用户只拿 29%」——
+#    通读 [5c/8] 后证实 30 件全对齐（三段 1+7+22）。教训入条文33实据：盘点须双面读全（端实盘+安装包承载面）。
+hooks_surface:
+  delivered:                  # setup.sh 三段装载并注册（30 件全量·与端实盘对齐（hooks 域 2 件 2026-10-06 补登记））
+    # ── [5/8] 公共路由（adapters/zcode/hooks/ 源）──
+    - {script: route_unknown_unknown.py,     event: Stop,              src: adapters/zcode/hooks, seg: "5/8"}
+    # ── [5b/8] 数字分身 7 件（references/digital-twin/devtools 源·件在才挂）──
+    - {script: doenglingz_inject_prompt.py,  event: UserPromptSubmit,  src: digital-twin/devtools, component: twin, seg: "5b/8"}
+    - {script: position3_notify.py,          event: UserPromptSubmit,  src: digital-twin/devtools, component: twin, seg: "5b/8"}
+    - {script: doenglingz_level_declare_guard.py, event: Stop,         src: digital-twin/devtools, component: twin, seg: "5b/8"}
+    - {script: tsl_closeout_guard.py,        event: Stop,              src: digital-twin/devtools, component: twin, seg: "5b/8"}
+    - {script: twin_verdict_ledger.py,       event: Stop,              src: digital-twin/devtools, component: twin, seg: "5b/8", note: "裁决台账·分身治理本体件"}
+    - {script: twin_changelog_guard.py,      event: Stop,              src: digital-twin/devtools, component: twin, seg: "5b/8", note: "规格书漂移守卫"}
+    # ── [5c/8] 布洛陀通用层 22 件（部署源=references/scripts·公共部署落脚本中心·注册指脚本中心路径）──
+    - {script: crossend_guard.py,            event: SessionStart,      src: references/scripts, seg: "5c/8"}
+    - {script: edit_heading_guard.py,        event: PreToolUse,        src: references/scripts, seg: "5c/8"}
+    - {script: skill_write_gate_guard.py,    event: PreToolUse,        src: references/scripts, seg: "5c/8"}
+    - {script: zcode_config_guard.py,        event: PostToolUse,       src: references/scripts, seg: "5c/8", note: 端元守卫·Stop双挂}
+    - {script: route_inject_prompt.py,       event: UserPromptSubmit,  src: references/scripts, seg: "5c/8"}
+    - {script: route_miss_feeder.py,         event: UserPromptSubmit,  src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: kb_inject_prompt.py,          event: UserPromptSubmit,  src: references/scripts, seg: "5c/8"}
+    - {script: rule_fragment_inject.py,      event: UserPromptSubmit,  src: references/scripts, seg: "5c/8", note: 铁律硬墙}
+    - {script: session_tail_inject.py,       event: UserPromptSubmit,  src: references/scripts, seg: "5c/8"}
+    - {script: zcode_title_namer.py,         event: UserPromptSubmit,  src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: secret_key_guard.py,          event: UserPromptSubmit,  src: references/scripts, seg: "5c/8"}
+    - {script: ttl_expiry_guard.py,          event: UserPromptSubmit,  src: references/scripts, seg: "5c/8"}
+    - {script: audit_search_kb.py,           event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: route_audit.py,               event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: route_guard_audit.py,         event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: card_id_guard.py,             event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: feedback_detect.py,           event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: rule_three_layer_guard.py,    event: Stop,              src: references/scripts, seg: "5c/8", note: 铁律硬墙}
+    - {script: zcode_config_guard.py,        event: Stop,              src: references/scripts, seg: "5c/8", note: 端元守卫·Post双挂}
+    - {script: delivery_boundary_guard.py,   event: Stop,              src: references/scripts, seg: "5c/8"}
+    - {script: manifest_registrar.py,        event: Stop,              src: references/scripts, seg: "5c/8", note: 端专属}
+    - {script: triwich_closeout_guard.py,    event: Stop,  src: references/hooks, seg: "5c/8"}
+    - {script: systemlog_stophook_check.py,  event: Stop,  src: references/hooks, seg: "5c/8"}
+  gaps: []                    # 2026-10-03 用户授权根治：twin 2 件（裁决台账/规格书漂移守卫=分身治理本体件·与 guard_zcode 职责正交）纳管 [5b/8]→30 件全对齐
+  endogenous:                 # endogenous guards: built on this end, NOT shipped (T0 2026-10-04~05, rule33)
+    - {script: grep_sandbox_guard.py,          event: PreToolUse,  note: endogenous}
+    - {script: zcode_memory_size_guard.py,     event: PreToolUse,  note: endogenous}
+    - {script: zcode_skill_health_guard.py,    event: Stop,        note: endogenous}
+    - {script: zcode_philosophy_parity_guard.py, event: SessionStart,  note: endogenous}
+    - {script: zcode_failure_ledger.py,        event: PostToolUseFailure,  note: endogenous}
+
+# ─── 数字分身功能面映射（twin_surface·分身=可选组件但"可选≠缺声明"·条文16降级不阻塞）───
+twin_surface:
+  injection:                  # 人格注入
+    - {what: K2 core_slice 常驻, carrier: AGENTS.md 数字分身·童灵节}
+    - {what: W4 动态注入 PERSONA-BASE, hook: doenglingz_inject_prompt.py, carrier: UserPromptSubmit 严格 JSON}
+  guards:                     # 守卫
+    - {what: 分身守护, hook: doenglingz_guard_zcode.py}
+    - {what: D档位声明守卫（06§1.6）, hook: doenglingz_level_declare_guard.py}
+    - {what: TSL 收口守卫（v0.8 逐行比对·10-02 裁定保留在岗）, hook: tsl_closeout_guard.py}
+    - {what: 运行期裁决台账（L3 裁决可观测·三层分离）, hook: twin_verdict_ledger.py}
+    - {what: 规格书↔CHANGELOG 漂移守卫（提示级）, hook: twin_changelog_guard.py}
+  ledger:                     # 治理台账（2026-10-03 纳管）
+    - {what: 运行期裁决台账, hook: twin_verdict_ledger.py}
+    - {what: 规格书漂移守卫, hook: twin_changelog_guard.py}
+  tsl:                        # TSL 收口件（echo/tree 已 10-02 双树设计消除卸载·⛔勿复挂）
+    - {what: 逐行比对, hook: tsl_closeout_guard.py}
+  reach:                      # 触达
+    - {what: 岗位3触达, hook: position3_notify.py}
+  gaps:                       # 分身域已知缺口
+    - {what: K2 造芯管线/答题链, note: 走 INSTALL §数字分身完整版单装（三阶段）·verify 分身面 PASS=11（2026-09-30）}
+
+# ─── 钩子路由（SSOT 指向·不复制矩阵内容·防双本账漂移）───
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hooks_alternative: optional   # 非标准钩子机制（extensions/launchd/cli）·非本端形态即缺
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+hooks_ssot: "[记忆共享中心]/记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/01-脚本架构设计通用规范.md#二·七"
+hooks_validator: "install_scripts.py --verify --platform zcode"
+
+# ─── 安装状态（诚实标注）───
+install_status: "adapter-v1-delegated"  # --platform zcode → 委派本目录 setup.sh（加强包 v0.1.1 同源脚本·指纹门禁+脱敏+增量不覆盖）

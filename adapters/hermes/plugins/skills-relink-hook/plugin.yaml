@@ -1,0 +1,10 @@
+name: skills-relink-hook
+version: 1.0.0
+description: >-
+  技能软链接自愈钩子。在 on_session_end 时运行 skills_relink.py，
+  自动修复 ~/.hermes/skills/ 下因 /tmp 清理、重启等导致断裂的皮叔系技能软链接，
+  保证 clock-loop 等技能永不在斜杠菜单消失。幂等、失败放行、零人工记忆。
+author: hermes
+type: user
+provides_hooks:
+  - on_session_end

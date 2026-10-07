@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>[记忆共享中心]/记忆琥珀/engine/amber-fswatch-wrapper.sh</string>
+        <string>[记忆共享中心]/记忆琥珀/engine/amber_fswatch_wrapper.sh</string>
     </array>
 
     <key>RunAtLoad</key>

@@ -1,0 +1,20 @@
+name: buluotuo-readonly-guards
+version: 1.1.0
+description: >-
+  布洛陀只读巡检集群（Hermes 端适配 · on_session_end 通道·17 项零 stdin 契约批量承载）。
+  覆盖 guard_doc_consistency(--reverse 实挂未登记反查)/guard_registry_check/guard_heartbeat_check/
+  design_family_guard/manifest_registrar/post_change_guard/change_closedloop_guard/change_reflux_guard/
+  twin_changelog_guard/twin_verdict_ledger/vision_gate/gate_runner/
+  devtools_script_resolve_guard（运行时真源目录可达 + 注入器可执行）/
+  verifier_target_fidelity_guard（验证器保真：路径/内容/断言/运行时留痕四判据）/
+  devtools_single_source_guard（单一真相源：降级副本/路径污染/裸 ~/ 四判据）/
+  hermes_wb_parity_check（五系统文件语义 100% 适配·GAP=0 才放行）——把"AI 应该自觉巡检的一致性"
+  变成会话末尾机械核验（愿景①全自动化·不依赖人记得）。
+  **零契约适配成本**：这批脚本不吃 stdin·exit 0/1·⛔ 无需端适配（对比收口族需双形态载荷）。
+  降噪纪律：⛔ 只在非零退出或输出含告警标记时留痕·全绿不写盘（防告警疲劳·守卫规范 §3.5）。
+  单脚本异常跳过不拖累整批·报告制恒 exit 0·逃生阀 HERMES_READONLY_GUARDS=0。
+  端隔离：设 WORKBUDDY_CONFIG_DIR/DOENGLINGZ_CONFIG_DIR 指向 ~/.hermes/doenglingz·⛔台账不落他端。
+author: Hermes
+type: user
+provides_hooks:
+  - on_session_end

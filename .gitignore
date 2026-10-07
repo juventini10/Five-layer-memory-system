@@ -15,3 +15,9 @@ __pycache__/
 
 # ── clock-loop 运行时态（评估时生成，非发布产物）──
 .phaseX_last_run.json
+
+# ── 技能运行时日志（含会话 ID，非发布产物）──
+*.log
+
+# ── 写入串行锁运行时态（非发布产物）──
+.package-lock/

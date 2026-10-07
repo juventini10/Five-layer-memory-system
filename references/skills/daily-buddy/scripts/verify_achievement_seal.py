@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+  退出码：7=环境自检失败（沙箱假python·审查P2-3补）
 成就封口独立验证脚本（不在 AI 复盘主调用链上，可独立校验）
 - 读取日记 review_sealed_sig 字段
 - 基于当日真实成就数据重新计算签名
 - 比对一致 → exit 0；不一致/缺失 → exit 1
 - 用法：python3 verify_achievement_seal.py [--date YYYY-MM-DD]
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -22,9 +27,11 @@ from datetime import date, datetime
 from pathlib import Path
 import sys
 
-# ─── 路径配置 ────────────────────────────────────────────────
-DIARY_DIR = Path.home() / "Local_Obsidian_Vault/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = Path.home() / "个人AI档案/成就系统"
+# ─── 环境自愈（第一性原理根治·Hermes 沙箱 HOME 劫持）───
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dbenv
+DIARY_DIR = dbenv.DIARY_DIR
+ACHIEVEMENT_DIR = dbenv.ACHIEVEMENT_DIR
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
 SEAL_SALT = "daily-buddy-seal-v1"
 
@@ -78,6 +85,8 @@ def load_achievement_data():
 
 
 def main():
+    if not dbenv.self_check(verbose=True):
+        sys.exit(9)
     target_date = date.today()
     if "--date" in sys.argv:
         idx = sys.argv.index("--date")

@@ -1,0 +1,9 @@
+{
+  "checks": {
+    "security_hardcode": {
+      "op": "full",
+      "value": null
+    }
+  },
+  "note": "讲解密钥管理的文字含password/API_KEY/token字样但无真实凭据——security_hardcode必须满分不误伤（假阳性即回归）"
+}

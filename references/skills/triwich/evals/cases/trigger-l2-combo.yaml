@@ -1,0 +1,14 @@
+id: trigger-l2-combo
+title: 跨类别组合词（对比+判断词）路由L2
+description: 验证双关键词L2路由（对比意图判定表·有判断词行）
+input:
+  prompt: |
+    对比一下自建机房和云服务器，哪个更适合初创团队？
+expect:
+  must_contain:
+    - "三明智 L2"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

@@ -1,0 +1,23 @@
+{
+  "id": "G1",
+  "name": "标题/frontmatter 一致性门禁(Poka-Yoke)",
+  "severity": "block",
+  "status": "active",
+  "spec_ref": "童灵·人格规格书.md L38 + 文件格式规范 L145 + 指令编写规范 L734",
+  "judge": {
+    "type": "frontmatter_consistency"
+  },
+  "basis": [
+    "文件格式规范 L145「标题层级从 ##(H2) 起（frontmatter 已含 title，无需 H1）；不跳级」",
+    "指令编写规范 L734「改名后 frontmatter 的 title/source/version/date 须同步，⛔只改正文漏改头部」"
+  ],
+  "precedent": [
+    "SOUL 版本行缝合怪（实战）",
+    "Qoder系哲学合并后 source 仍指向已删文件（实战）"
+  ],
+  "checks": [
+    "H1 违规（正文应从 H2 起）",
+    "frontmatter.source 指向已删文件（硬阻断）",
+    "frontmatter.title 与首个 H2 不一致（提示）"
+  ]
+}

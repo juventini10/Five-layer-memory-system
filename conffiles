@@ -9,14 +9,24 @@
 #   包没改用户改 → 保留用户版
 #   都没改 → 不动
 
-{记忆共享中心}/核心层/CORE.md
-{记忆共享中心}/认知层/IDENTITY.md
-{记忆共享中心}/行为层/MEMORY.md
-{记忆共享中心}/情境层/动态状态快照.md
-{记忆共享中心}/潜意识层/SHADOW.md
-{记忆共享中心}/自定义层/USER.md
-{记忆共享中心}/记忆规则/用户基本规则-铁律版.md
-{记忆共享中心}/记忆规则/用户基本规则-摘要版.md
-{记忆共享中心}/记忆规则/用户基本规则-详解存档.md
-{记忆共享中心}/记忆蓝图/品格设计通用规范.md
-{记忆共享中心}/记忆蓝图/设计哲学.md
+[记忆共享中心]/核心层/CORE.md
+~/.workbuddy/IDENTITY.md
+~/.workbuddy/MEMORY.md
+[记忆共享中心]/情境层/动态状态快照.md
+[记忆共享中心]/潜意识层/SHADOW.md
+~/.workbuddy/USER.md
+~/.workbuddy/SOUL.md
+~/.qoder-cn/rules/core-identity.md
+~/.qoder-cn/rules/core-soul.md
+~/.qoder-cn/rules/core-user.md
+~/.qoder-cn/rules/execution-guidelines.md
+[记忆共享中心]/记忆规则/用户基本规则-铁律版.md
+[记忆共享中心]/记忆规则/用户基本规则-摘要版.md
+[记忆共享中心]/记忆规则/用户基本规则-详解存档版.md
+
+# LobsterAI 端五系统文件（2026-10-05 补·本端 config_root=~/Library/Application Support/LobsterAI/openclaw/state）
+# ⚠️ 落点是 bootstrap 工作区·⛔ 不用 [记忆共享中心] 前缀（本端五件是端自有实体·非中心副本）
+~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/SOUL.md
+~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/IDENTITY.md
+~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/USER.md
+~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/MEMORY.md

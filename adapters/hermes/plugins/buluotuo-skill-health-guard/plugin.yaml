@@ -1,0 +1,16 @@
+name: buluotuo-skill-health-guard
+version: 1.0.0
+description: >-
+  布洛陀 Skill 生态健康守卫（Hermes 端专属元守卫·skill 面·on_session_end 报告制）。
+  承载 开发工具/hermes_skill_health_guard.py —— **按《04-跨端接入指南》§二·七·〇 协议动作 3
+  「先查可复用」补齐元守卫族形态**：Hermes 端 config/plugin 两面已有元守卫，但 skill 面仅有
+  skills-relink-hook（只治软链断裂），而族内 teleagent/catpaw/doubaowork 三端均有 skill_health_guard。
+  四检测（对齐 teleagent_skill_health_guard v0.3 三端已验证判据）：①软链有效性 ②SKILL.md 存在性
+  + frontmatter name ③重名冲突（Hermes 按 name 加载·后者被静默忽略）④必备 Skill 缺失。
+  ⛔不照搬他端 --mc 端专属路径参数（本端 skills 根 ~/.hermes/skills/ 独立）；
+  ⛔分类目录豁免（mlops/web/note-taking 等有 DESCRIPTION.md 或含子 SKILL.md ⇒ 是 Hermes 原生组织
+  形态·非「缺件」·首跑 28 条噪声中 17 条由此产生）。只记录不拦截·默认恒 exit 0（--strict 才 exit 1）。
+author: Hermes
+type: user
+provides_hooks:
+  - on_session_end

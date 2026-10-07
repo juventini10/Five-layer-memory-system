@@ -14,7 +14,7 @@
 
 | 平台 | 文件监听 | 服务管理 | 备份脚本 |
 |:-----|:---------|:---------|:--------|
-| **macOS** | fswatch | launchd plist | amber-backup.sh + amber-fswatch-wrapper.sh |
+| **macOS** | fswatch | launchd plist | amber_backup.sh + amber_fswatch_wrapper.sh |
 | **Windows** | FileSystemWatcher | Task Scheduler | amber-backup.ps1 + amber-watch.ps1 + amber-install-task.ps1 |
 
 两端哲学等价、实现各自原生、零额外依赖。
@@ -23,9 +23,9 @@
 
 ```
 scripts/
-├── amber-backup.sh                      # macOS 备份脚本
+├── amber_backup.sh                      # macOS 备份脚本
 ├── amber-backup.ps1                     # Windows 备份脚本（PowerShell 7+）
-├── amber-fswatch-wrapper.sh             # macOS fswatch 监听 wrapper
+├── amber_fswatch_wrapper.sh             # macOS fswatch 监听 wrapper
 ├── amber-watch.ps1                      # Windows FileSystemWatcher 监听
 ├── amber-install-task.ps1               # Windows Task Scheduler 注册
 ├── amber-whitelist.txt.template         # 白名单模板（含占位符）
@@ -55,7 +55,7 @@ scripts/
 
 ```bash
 # 手动触发备份
-bash [记忆共享中心]/记忆琥珀/engine/amber-backup.sh
+bash [记忆共享中心]/记忆琥珀/engine/amber_backup.sh
 
 # 查看 launchd 服务状态
 launchctl list | grep memoryamber
@@ -117,7 +117,7 @@ Copy-Item [记忆共享中心]/核心层/workspace/SOUL.md "[记忆共享中心]
 ## 添加新文件到白名单
 
 编辑 `[记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt`，加一行绝对路径即可。
-如果新文件所在目录不在监听列表里，还需要更新 `amber-fswatch-wrapper.sh`（macOS）或 `amber-watch.ps1`（Windows）的 `PATHS` / `$WatchPaths` 数组。
+如果新文件所在目录不在监听列表里，还需要更新 `amber_fswatch_wrapper.sh`（macOS）或 `amber-watch.ps1`（Windows）的 `PATHS` / `$WatchPaths` 数组。
 
 ## 故障排查
 
@@ -138,3 +138,14 @@ Copy-Item [记忆共享中心]/核心层/workspace/SOUL.md "[记忆共享中心]
 1. 手动跑一次备份脚本看日志
 2. 检查文件是否在白名单里
 3. 检查文件内容是否真的变了（哈希对比）
+
+---
+
+## 双轨机制（2026-07-26 起）
+
+| 轨 | 位置 | 命运 | 谁决定 |
+|----|------|------|--------|
+| 临时备份（滚动轨） | 记忆琥珀顶层 `*.bak` | 同日只留1份，7天后自动清掉 | 机器全自动 |
+| 永久收藏（永久轨） | `记忆琥珀/永久收藏/` | 永不清理 | 人开口收藏（amber-pin），脚本永不自动判定 |
+
+配套：`amber-checkup`（每日体检写 amber-status.txt，30天无收藏/顶层散件两项告警，唤醒Skill读盘保底提醒）+ `amber-weekly-popup`（周日19:30中央弹窗周报，加强渠道）。mac 用 launchd（两个 plist 模板），Windows 用 Task Scheduler（amber-install-dualtrack.ps1 一键注册）。

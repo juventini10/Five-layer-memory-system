@@ -1,0 +1,16 @@
+name: buluotuo-transform-gate
+version: 1.0.0
+description: >-
+  Transform 层闸（Hermes 端适配 · transform_tool_result + transform_llm_output）。
+  官方 VALID_HOOKS（hermes_cli/plugins.py:109-112）里三个 Transform 是唯一能
+  **改写输出**的通道，而 2026-10-04 对账实锤：本端 17 个插件**零个**占这两个位。
+  承载 hermes_transform_gate.py —— 工具结果**进对话之前**洗掉作者绝对路径/测试临时目录/
+  双层 expanduser，AI 回复**投递之前**剥测试路径噪声。**动机**：当天最贵的错误族
+  「工具输出带脏数据 → AI 当事实读 → 造出一堆假病灶」在 Transform 层一道可根治，
+  优于逐个改 136 个源文件。⛔ 零判据内联·fail-open（脚本缺失/超时/异常一律不改输出）
+  ·有界（纯字符串处理·不跑子进程）·保守（LLM 侧绝不动语义）。
+author: Hermes
+type: user
+provides_hooks:
+  - transform_tool_result
+  - transform_llm_output

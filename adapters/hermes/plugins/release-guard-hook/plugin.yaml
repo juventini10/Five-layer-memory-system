@@ -1,0 +1,10 @@
+name: release-guard-hook
+version: 1.0.0
+description: >-
+  布洛陀发布包链路守卫 · Hermes pre_tool_call 窄匹配拦截钩子。仅当 write_file/patch
+  命中发布包目录时跑 content-gate（内容门禁·rc=1 拦截）与 sync_guard（manifest 一致性）。
+  普通写文件不触发，失败放行。
+author: buluotuo
+type: user
+provides_hooks:
+  - pre_tool_call

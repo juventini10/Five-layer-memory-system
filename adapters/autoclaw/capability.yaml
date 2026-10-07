@@ -1,0 +1,82 @@
+# AutoClaw 能力矩阵（v1.0·install_scripts.py --platform autoclaw 读取）
+# 平台底座：OpenClaw gateway（AutoClaw.app 分发）·配置根 = ~/.openclaw-autoclaw/
+platform: autoclaw
+config_root: "~/.openclaw-autoclaw"
+# ── 注册面形态声明（2026-10-06 补·工单 v1.90 处方「c端SSOT声明补全」·G3 六端验收实证）──
+# 病根：本端是**插件制端**（无 settings.json hook 面），但本文件缺机器可读的
+#      hooks_registration_face 字段 ⇒ install_scripts.py L772 的 plugin_form 分派判假
+#      ⇒ 落到 zcode 形态分支去核 `cli/config.json`（该文件在本端**根本不存在**）
+#      ⇒ **38 件全判「未注册」= 纯假红**（2026-10-06 实测：真注册面 openclaw.json
+#      的 plugins.entries 里 10 个 AutoClaw 域插件全部 enabled=true）。
+# 声明口径：注册粒度=**插件级**（⛔非脚本级38件——插件条目只有 {enabled:bool}，
+#      不含脚本路径，按脚本级核=判据面与落点面不相交=造假绿）。
+hooks_registration_face: openclaw_plugins
+# 插件注册面清单（install_scripts plugin_form 分支按此逐个核 openclaw.json 是否出现）
+plugin_ids:
+  - autoclaw-stop-hook
+  - autoclaw-tool-audit
+  - autoclaw-safety-guard
+  - autoclaw-web-search
+  - autoclaw-auto-legal
+  - autoclaw-visible-browser
+  - buluotuo-route-inject
+  - autoclaw-office-bridge
+  - autoclaw-doenglingz-guard
+  - autoclaw-evolution-write-guard
+display_name: "AutoClaw"
+emoji: "🦞"
+capabilities:
+  rules_inject: true         # workspace/AGENTS.md 即规则层（平台原生 bootstrap 注入）
+  agents_full_inject: true   # AGENTS.md 全文随 "Workspace Files (injected)" 每轮装配
+  hooks_event: false         # 无 settings.json hook 注册面（守卫走 extensions 插件+launchd patrol，见设计哲学 01/02）
+  hook_stdout_inject: false  # 入站改写走 before_prompt_build 插件（buluotuo-route-inject），非 hook stdout
+  settings_json: false       # openclaw.json 无 hooks.internal 之外的钩子注册形态
+  awareness: true            # workspace MEMORY.md + memory/YYYY-MM-DD.md 平台可读
+  skill_symlink: true        # ~/.openclaw-autoclaw/skills/ 托管技能目录直接发现
+  hooks_alternative: true
+  hooks_mechanism: "extensions 插件+launchd patrol"
+  install_entry: "setup.sh"  # 条文13（2026-10-03 显式化）：此前依赖安装器"缺省回退 setup.sh"垫片——声明后回退仅作兜底，不再作为本端唯一生效路径
+  custom_directive: true     # 执行准则=workspace AGENTS.md 注入节（本 adapter rules/ 正文）
+  launchd_patrol: true       # crontab */30 route_autoclaw_patrol.sh 心跳（2026-08-23 实证）
+post_install_message: |
+  ═══════════════════════════════════════════════════════════════
+  AutoClaw 端：执行准则走 workspace AGENTS.md 注入节。
+
+  操作（二选一）：
+    A. 自动：运行 adapters/autoclaw/setup.sh（多 agent 工作区逐个注入）
+    B. 手动：把 adapters/autoclaw/rules/execution-guidelines.md 正文
+       （# 标题起至第 9 条止）插入每个 agent workspace 的 AGENTS.md 头部，
+       用 <!-- buluotuo:execution-guidelines-v1 --> 成对标记包裹
+  验证：新开会话问"你必须遵守哪几条执行准则"——答出 9 条即生效；
+       或 python3 platform_adaptation_check.py --src autoclaw（exit=0）
+  ───────────────────────────────────────────────────────────────
+
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  hooks_alternative: optional   # 非标准钩子机制（extensions/launchd/cli）·非本端形态即缺
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+  launchd_patrol: optional   # 定时巡逻·部分端用内置 cron 替代

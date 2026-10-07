@@ -1,0 +1,119 @@
+# Trae Work 能力矩阵（v2.0 合并包读取·install_scripts.py Step0 据此分支）
+# ⚠️ 关键：hooks_event=false —— Trae Work 无 settings.json hook 机制（平台边界）
+platform: traework
+# config_root 指 Trae Work 本地注入根。
+# ⚠️ 2026-09-30 机制纠正：Trae Work(TRAE SOLO CN) 与 TraeCode(Trae CN) 的 product.json
+#    dataFolderName 同为 `.trae-cn` ⇒ 全局规则目录物理共用，**目录级隔离不存在**。
+#    故本端规则层 = ~/.trae-cn/user_rules/（每回合注入的实读目录）；
+#    ~/.trae/user_rules/ 是 peer 目录（ICUBE_PEER_USER_DATA_DIRS），⛔本端不读、写了不生效。
+#    （旧值 "~/.trae" 系 2026-09-16「分目录隔离」错误前提产物，2026-09-30 订正）
+config_root: "~/.trae-cn"
+display_name: "Trae Work"
+emoji: "🤖"
+capabilities:
+  rules_inject: true        # rules/ 常驻注入（user_rules 规则文件直落制 alwaysApply·本质承载通道）
+  agents_full_inject: false # 无 AGENTS.md 全文注入通道（不走 global_context）
+  hooks_event: false        # ⚠️ 无 settings.json hooks 机制（无 SessionStart/UserPromptSubmit/Stop 事件）
+  hook_stdout_inject: false # 无逐轮 prompt 事件·无 stdout 注入
+  settings_json: false      # 无可注册 hooks
+  awareness: true           # 有 session_memory jsonl（记忆摘要·无完整转录·摘要级审计）
+  skill_symlink: true       # 通用 skills/ 软链到记忆中心技能配置；⚠️童灵专属 2 件（doenglingz-guard/slice-nav）例外——2026-10-06 起由 setup.sh 直落 ~/.trae-cn/skills（真目录·⛔不进共享技能配置·防他端串用/冒用）
+  hooks_alternative: true
+  hooks_mechanism: "launchd patrol(30min)"
+  custom_directive: true    # 执行准则走 rules/ 通道（核心分层·adapter 不含执行准则，随 core 层统一）
+  launchd_patrol: true      # 端独有机制：launchd 定时 patrol（拉模式·非 hook 事件·cron 承载）
+# 非标准 hook 机制安装入口（install_scripts.py 按此转调 setup·缺则落"手动跑"）
+
+# ─── 五系统文件端自适配声明（2026-10-03·口径=WorkBuddy布洛陀设计哲学/02 §六）───
+# 判据（用户定）：不管什么形式，五件逐件有本端适配载体+内容百分百适配即可。
+# 本端=纯 rules 常驻注入端：五件全走 ~/.trae-cn/user_rules/ 直落制（每回合注入的实读目录），
+# 落盘名由 setup.sh [1/5] 承载名→注入名映射表决定（core-soul.md→SOUL.md 等）。
+system_file_paths:
+  SOUL.md: "user_rules/SOUL.md"                  # 品格/做事方式/产出格式（core-soul.md 落盘）
+  IDENTITY.md: "user_rules/IDENTITY.md"          # 双端判定表+署名（core-identity.md 落盘）
+  USER.md: "user_rules/USER.md"                  # 用户画像（core-user.md 落盘）
+  MEMORY.md: "user_rules/MEMORY.md"              # 跨项目记忆导航（core-memory.md 落盘）
+  自定义指令: "user_rules/trae_solo_rules.md"     # 执行准则（execution-guidelines.md 落盘·本端注入名）
+
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  hooks_alternative: optional   # 非标准钩子机制（extensions/launchd/cli）·非本端形态即缺
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+  launchd_patrol: optional   # 定时巡逻·部分端用内置 cron 替代
+install_entry: "setup.sh"   # 2026-09-23·根治委派缺口：安装器读本字段而非硬编码猜文件名
+
+# ─── 端侧脚本/钩子映射声明（2026-10-03·条文33·口径=launchd patrol 实盘名册）───
+# 三态判据（条文33）：delivered=机械交付（端 setup 落盘+patrol 名册引用·装机即得）｜
+#   gap=实盘在挂而包无承载（欠账显形）｜本端无「config.json 注册面」——端注册面 =
+#   ~/Library/LaunchAgents/com.buluotuo.traework.patrol.plist + patrol 脚本 ROSTER 行。
+# ⚠️ 形态诚实声明：本端**既非** settings.json 端、**也非** zcode 的 config.json 端——
+#   是「无钩子事件面·launchd 拉模式」第三形态。verify §1.6 / install_scripts --verify
+#   均按 plat=traework 分派读「plist+patrol 脚本」为注册面（⛔不读 zcode config.json——
+#   那会把本端全部名册件误判 MISS＝假红）。
+# 名册唯一数据源 = adapters/traework/scripts/route_traework_patrol.sh 的 ROSTER 数组。
+hooks_surface:
+  delivered:                  # patrol 名册 7 件（5 计入接入率分母 + 2 附加检查·见 patrol 头注）
+    - {script: route_audit.py,                  carrier: launchd-patrol, src: references/scripts}
+    - {script: route_guard_audit.py,            carrier: launchd-patrol, src: references/scripts}
+    - {script: audit_search_kb.py,              carrier: launchd-patrol, src: references/scripts}
+    - {script: rule_three_layer_guard.py,       carrier: launchd-patrol, src: references/scripts}
+    - {script: card_id_guard.py,                carrier: launchd-patrol, src: references/scripts}
+    - {script: session_memory_quality_guard.py, carrier: launchd-patrol, src: references/scripts}
+    - {script: trae_isolation_guard.py,         carrier: launchd-patrol, src: references/scripts}
+  # 平台边界（⛔非欠账·不进 gaps）：route_inject / miss_feeder / kb_inject（无 UserPromptSubmit 事件面）、
+  #   unknown_unknown / feedback_detect（无完整转录·摘要级审计不可达）——5 件计入接入率分母，
+  #   本 patrol 不实跑（SSOT §二·七「无转录」组）；crossend 设计不适用·排除分母。
+  gaps: []                    # 本端无「实盘在挂而包无承载」欠账
+
+# ─── 数字分身功能面映射（twin_surface·分身=可选组件但"可选≠缺声明"·条文16降级不阻塞）───
+twin_surface:
+  # ⚠️ 2026-10-06 端串用根治：以下两个童灵专属 Skill 的**实体**直落端原生消费目录
+  #    ~/.trae-cn/skills/（真目录），⛔不进 <MC>/技能配置/ 共享权威源——否则会被
+  #    restore-my-skills.sh 的「全端软链」机制分发到 Qoder/WorkBuddy/Hermes/ZCode 等异构端＝串端。
+  injection:                  # 人格注入（本端=rules 常驻注入 + Skill 按需装载）
+    - {what: K2 core_slice + L6 恒驻核, carrier: "~/.trae-cn/user_rules/doenglingz-core.md（alwaysApply 常驻）"}
+    - {what: 域切片 L2-L5 按需装载,     carrier: Skill doenglingz-slice-nav（~/.trae-cn/skills/布洛陀-童灵切片导航·实体直落·命中触发词 Read slices/LN_*.md）}
+  guards:                     # 守卫
+    - {what: 守护三查（8要素/试金石/切片新鲜度）, carrier: "Skill doenglingz-guard（~/.trae-cn/skills/布洛陀-童灵守护·实体直落）"}
+  reach: []                   # 岗位3触达：本端无 UserPromptSubmit 事件面 ⇒ 无承载（平台边界）
+  gaps:                       # 分身域已知缺口（平台边界·非欠账）
+    - {what: W1 上岗仪式（L3→L4→L5→L7 + TSL 清单）, note: "无钩子端·由 doenglingz-slice-nav §一 显式调用触发（软约束·🟡非机械）"}
+
+# ─── 钩子路由（SSOT 指向·不复制矩阵内容·防双本账漂移）───
+hooks_ssot: "[记忆共享中心]/记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/01-脚本架构设计通用规范.md#二·七"
+hooks_validator: "install_scripts.py --verify --platform traework"
+# install 时: hooks_event=false → ⚠️跳过 ②③ 钩子部署/注册（install_scripts.py 读本字段）
+#   公共资产 ①脚本中心/①a数字分身/①b规则层 **照装**（与端无关·2026-09-30 根治：
+#   此前委派 setup 后即 sys.exit(0)，把公共资产一并吞掉＝矩阵标✅完整却零脚本零分身）
+#   钩子承载 = 端专属 launchd patrol（route_traework_patrol.sh）拉模式·SSOT 标记 ✅/🔴 见 §二·七 Trae Work 列
+#   可接守卫（5 共享 patrol 降级）: route_audit / route_guard_audit / audit_search_kb /
+#                                 rule_three_layer_guard / card_id_guard
+#   专属守卫（+1 不计分母）: session_memory_quality_guard（Trae Work 专属·摘要质量检测）
+#   附加检查（不计分子分母）: trae_isolation_guard（Trae 系共享文件端中性巡检·2026-09-30）
+# 🔴 无 hook 事件装不上（计入分母）: route_inject / miss_feeder / kb_inject / unknown_unknown / feedback_detect
+# ❌ N/A（设计不适用·排除分母）: crossend_guard
+#   注：patrol 对包内不存在的守卫**跳过不报**（run_guard 前置 [ -f ] 判存·防"文件缺失"被误读成"结论不合规"告警）

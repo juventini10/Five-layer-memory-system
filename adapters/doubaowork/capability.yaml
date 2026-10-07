@@ -1,0 +1,122 @@
+# 豆包办公 能力矩阵（v1.0·install_scripts.py --platform doubaowork 读取）
+# ⚠️ 关键：hooks_event=false —— 豆包办公无 settings.json hook 机制，规则唯一通道是 UI「工作任务偏好指令」
+platform: doubaowork
+config_root: "~/.doubaowork-config"   # 五系统文件（SOUL/IDENTITY/USER/MEMORY/customPrompt）真实落盘于此，由T0指令强制Read
+display_name: "豆包办公"
+emoji: "🍵"
+capabilities:
+  rules_inject: false        # 无 rules/ 目录直落机制
+  agents_full_inject: false  # 无 AGENTS.md 全文注入通道
+  hooks_event: false         # ⚠️ 无 SessionStart/UserPromptSubmit/Stop 事件
+  hook_stdout_inject: false  # 无逐轮 prompt 事件
+  settings_json: false       # 无可注册 hooks
+  awareness: false           # 无 session_memory 可读
+  skill_symlink: false       # skills 走豆包办公官方 Skill 市场，非软链
+  # 🔴 端专属 Skill 声明（2026-10-03·restore-my-skills 全端动态扫描所需）
+  # ⛔ 旧版脚本只链固定三端 ⇒ 豆包专属 Skill 不会被误链到别的端（碰巧安全）。
+  # ⛔ 新版按 capability 派生全部软链端 ⇒ 必须显式声明「本端独占哪些」，
+  #    否则豆包端专属规则（含署名「—— 你的 豆包 🍵」）会被链到 Hermes = **串端**。
+  # ⇒ 语义：这些 Skill ⛔ 不链到本端**以外**的任何端。
+  skill_exclusive: "布洛陀-豆包办公规则, doenglingz-slice-nav-doubao"
+  hooks_alternative: false
+  install_entry: "setup.sh" # 条文13扩展（2026-10-03）：hooks_alternative=false ≠ 无端部署——setup.sh
+                            # 生成待粘贴文本（~/.doubaowork-config/doubaowork-paste.md + .readme）；
+                            # 旧逻辑在此形态下不委派 ⇒ 粘贴文本零产出（端 AI 不自觉跑 setup 即空壳）
+  custom_directive: true     # 执行准则走「设置→工作任务偏好指令」UI 粘贴（人工一步）
+  launchd_patrol: false      # 无 launchd patrol 通道（靠 cronjob 跨端蒸馏）
+
+# ─── 条文32·五系统文件端自适配声明律（2026-10-03）───
+# 豆包办公无自动加载机制，五系统文件落在 ~/.doubaowork-config/，
+# 由 T0 常驻 Read 指令（paste.md 首条）强制 AI 每次新会话首条先 Read。
+# customPrompt 为第5件（执行准则#10-13+铁律恒驻），与四系统文件同目录。
+system_file_paths:
+  SOUL: "~/.doubaowork-config/SOUL.md"
+  IDENTITY: "~/.doubaowork-config/IDENTITY.md"
+  USER: "~/.doubaowork-config/USER.md"
+  MEMORY: "~/.doubaowork-config/MEMORY.md"
+  customPrompt: "~/.doubaowork-config/customPrompt.md"
+
+# ─── 条文33·端侧功能面映射声明律（delivered/gaps/endogenous 三态）───
+# 豆包办公无 hook 事件面，守卫/分身功能靠端专属 Skill + paste.md + 五系统文件内生承载。
+# delivered=已交付可验证；gaps=平台边界型缺口（非执行缺口）；endogenous=内生等价承载。
+hooks_surface:
+  delivered: []              # 无标准 hook 事件面（hooks_event=false）
+  gaps: ["无Stop/UserPromptSubmit钩子=平台边界型，非执行缺口"]
+  endogenous:                # 守卫功能的内生等价承载
+    - "布洛陀-豆包办公规则 Skill：核心3守卫（回复格式/路由审计4维度/L3结论）+ 端专属铁律11条"
+    - "paste.md T0指令：强制每次新会话首条Read五系统文件"
+    - "customPrompt.md 铁律恒驻：C类铁律T0注入（引用验证/认知更新/深度模式/阻塞自解）"
+twin_surface:
+  delivered:
+    - "doenglingz-slice-nav-doubao Skill：W1上岗激活（14契约·含第14条三守卫主动检查）+ W3域切片L2-L5按需路由"
+    - "USER.md「数字分身·童灵」节：K2 core_slice+L6恒驻核"
+    - "paste.md 童灵框架声明：四重职能+三档位在场深度+触发词+造芯流程"
+    - "分身域三守卫Skill承载等价物（v1.3.9·第14条）：童灵上岗时主动执行twin_verdict_ledger --selfcheck + twin_changelog_guard --check + drift_check_remind.log检查（无Stop钩子端=Skill前置注入替代WB事后扫描）"
+  gaps: []
+  endogenous:
+    - "Skill规则前置注入=行为时强制（替代WB钩子后扫描的事后提醒）"
+    - "童灵思考沉淀硬约束：append_log_entry.py --reflection 机械打[童灵思考]前缀"
+    - "三守卫主动检查=上岗时一次性执行（非每回合Stop钩子触发，提醒级alarm恒false不阻塞）"
+
+# ─── 安装后喊话（install_scripts.py 读到本字段就打印，用户终端直接看整段）───
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  hooks_alternative: optional   # 非标准钩子机制（extensions/launchd/cli）·非本端形态即缺
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+  launchd_patrol: optional   # 定时巡逻·部分端用内置 cron 替代
+post_install_message: |
+  ═══════════════════════════════════════════════════════════════
+  ✅ 豆包办公端部署完成
+
+  安装器已自动完成：
+  1. 五系统文件部署到 ~/.doubaowork-config/
+     （SOUL/IDENTITY/USER/MEMORY/customPrompt，T0指令强制每次新会话首条Read）
+  2. 12个Skill部署到豆包user_skills目录
+     （2个端专属直部署S1实体·⛔不进MC共享目录：布洛陀-豆包办公规则 + doenglingz-slice-nav-doubao
+      10个通用走MC真源→S1软链：awaken-memory-system/clock-loop/daily-buddy/good-good-study/
+      growth-box/meta-aletheia/shall-we-talk/sucair/system-logger/triwich）
+  3. 待粘贴文本生成：~/.doubaowork-config/doubaowork-paste.md
+
+  ⚠️ 还有 1 步必须你手动做（本端机制使然，脚本代劳不了）：
+  「工作任务偏好指令」是豆包办公的全局规则框——写一次，以后每次
+  新开工作任务自动注入，不用每次重复说要求。
+
+  操作：
+    1. 豆包办公 → 设置 → 工作模式任务设置 → 工作任务偏好指令
+    2. 打开 ~/.doubaowork-config/doubaowork-paste.md，全选复制全部内容
+    3. 粘贴进输入框 → 保存
+       （同目录的 .readme 是说明，不用粘）
+
+  ⚠️ 关于字数上限：
+     豆包官方已公布该文本框上限为 10000 字符。
+     安装器生成的 paste.md 约 4800 字，剩余空间充足，可放心追加个人偏好。
+
+  验证：新开一个会话，问"你的准则第一条是什么"
+    答出"退一步再动/先说假设" = ✅ 生效
+    答不出 = ❌ 没粘上或没保存，回设置检查
+  ═══════════════════════════════════════════════════════════════
+

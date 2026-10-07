@@ -7,6 +7,8 @@ version: v5.15
 date: 2026-07-13
 summary: Skill类型分类与设计模式目录（Patterns层）
 source: 记忆蓝图/03_开发规范/Skill架构规范/Skill设计模式.md
+complies_with: 文件格式规范 v2.0.0
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # Skill 设计模式（Patterns层）
@@ -50,7 +52,7 @@ source: 记忆蓝图/03_开发规范/Skill架构规范/Skill设计模式.md
 | daily-buddy | 流程执行型 | 有流程A/B/C，产出物是日记 |
 | system-logger | 流程执行型 | 有写入/蒸馏两条路径，产出物是日志 |
 | growth-box | 流程执行型 | 5个流程A-E，产出物是错误记录/蒸馏报告 |
-| reading-assistant | 生成型 | 输入一本书→输出读书笔记 |
+| sucair | 生成型 | 输入一本书→输出读书笔记 |
 | awaken-memory-system | 查询型 | 只读记忆文件→输出情境概览 |
 | shall-we-talk | 交互型 | 多轮深度对话，禁止直接给结论 |
 | meta-aletheia | 交互型 | 苏格拉底追问，禁止直接输出分析结论 |
@@ -291,6 +293,7 @@ A级 → S级：加防误层（设计端约束）+Alternatives记录+质量标�
 | S4 | 质量标准达到S线（触发≥95%/完成≥99%/成功≥95%）？ |
 | S5 | SKILL.md与所有reference文件步骤序列一致？①步骤数声明与reference文件对齐 ②reference文件包含SKILL.md要求的强制步骤（如结论块+门禁锁）③标注体系一致（reference不残留已废弃标注） |
 | **S6** | **反模式·跳过中间产物直接交付**：模板编排型/流程执行型Skill是否定义了不可跳过校验步骤直接交付的禁令？——原因是跳过校验直接交付=让未经检查的产物流向用户=最隐蔽的降质方式 |
+| **S7** | **防误层深度验证·所有工作流终检脚本物理拦截**：流程执行型Skill的所有工作流（日记/周报/月报等）终检是否都有脚本exit code物理拦截，而非仅AI自检清单（文本checkbox）？同一Skill内不同工作流的防误标准是否一致？——原因是终检为AI自检=可被绕过（"以为做了"或直接跳过），同一Skill内两套标准=流程最长的工作流往往防护最弱必然跳步。实证：daily-buddy日记有finalize_diary.py脚本拦截，月报没有，月报第6.5步五容器回流整步跳步（2026-09-02） |
 
 ### 5.1 反模式目录
 

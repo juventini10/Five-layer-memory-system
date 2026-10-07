@@ -31,6 +31,10 @@ clock-loop Phase 4.5据此写悬置区且#1已处理的本周期不再重复触�
 用法：
   python3 append_claim.py --topic "四象限定义" --stance "双主体认知框架" --source 对话 --date 2026-07-07
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -43,7 +47,7 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_LEDGER = "~/个人AI档案/未知未知/断言台账.md"
+DEFAULT_LEDGER = "~/[记忆共享中心]/未知未知/断言台账.md"
 VALID_SOURCES = {"对话", "日记", "复盘", "探针"}
 
 # 未知未知三文件冻结表头（与 主文件 / references/unknown-unknown-headers.md 逐字一致）
@@ -62,9 +66,9 @@ HEADER_SUSPENSION = """# 🌀 未知未知 · 悬置区（认知盲区轴·毛�
 ```
 ### 残差#{序号} · {YYYY-MM-DD}
 - 触发: T1|T2|T3|T4|T5
-- 归属: 用户盲区|AI盲区|双方共盲
+- 归属: 你盲区|AI盲区|双方共盲
 - 来源: 对话|日记|复盘|探针(反方向的钟/S级评审/迁理之外/三明智)
-- 记录者: 用户|AI
+- 记录者: 你|AI
 - 状态: 悬置(未闭合)
 - 毛坯描述: (仅冻现象，禁止当时深加工/归因)
 ```
@@ -97,7 +101,7 @@ HEADER_ASSERT = """# 📊 断言台账（对话冲突检测·持久化容器）
 HEADER_MANIFEST = """# 📋 悬置区 · 显形台账
 
 > **用途**：月报「悬置区显形回看」（月报SOP 第1.6步）时，把每条残差的去向记录于此，形成闭环可追溯。
-> **配套**：`~/个人AI档案/未知未知/悬置区.md`。
+> **配套**：`~/[记忆共享中心]/未知未知/悬置区.md`。
 > **成功标准**：显形率 / 平均盲区存活时长。目标不是清零。
 
 | 残差# | 日期 | 触发 | 归属 | 显形判定日期 | 去向 | 备注 |
@@ -149,6 +153,30 @@ def find_conflict(claims, topic, stance):
     return None
 
 
+def _rewrite_claim_field(ledger_path: Path, n: int, field: str, new_value: str):
+    """v3.51.1（#38/#39半截机制补全）：改写指定断言块内的某字段行（幂等·行级替换）。
+
+    #38：立场一致→更新该断言的"最近时间"（旧版docstring承诺却零实现·生产台账38条
+        全部首次==最近）。#39：冲突追加后→旧断言"状态: 活跃"改"废弃"（旧版同议题
+        永久共存两条矛盾活跃断言·find_conflict反复报同一冲突）。
+    """
+    text = ledger_path.read_text(encoding="utf-8")
+    pat = re.compile(r'(?ms)(^###\s+断言#0*%d\b.*?)(?=^###\s+断言#\d+|\Z)' % n)
+    m = pat.search(text)
+    if not m:
+        return False
+    block = m.group(1)
+    if field == "状态":
+        new_block, cnt = re.subn(r'(?m)^- 状态:\s*.*$', '- 状态: ' + new_value, block, count=1)
+    else:
+        new_block, cnt = re.subn(r'(?m)^- %s:\s*.*$' % field, '- %s: %s' % (field, new_value), block, count=1)
+    if cnt == 0:
+        return False
+    text = text[:m.start(1)] + new_block + text[m.end(1):]
+    ledger_path.write_text(text, encoding="utf-8")
+    return True
+
+
 def build_block(n, topic, stance, source, date):
     return (
         f"\n### 断言#{n:03d} · {date}\n"
@@ -181,10 +209,12 @@ def main():
     # 自包含引导（规则 A）：写方 Skill 必须保证「文件夹 + 三文件」齐备，不依赖别的 Skill 先跑
     suspension = uk_dir / "悬置区.md"
     manifest = uk_dir / "显形台账.md"
+    # v3.50.1（#36首次运行崩溃根治）：目录创建必须先于任何文件写入——
+    # 旧序 suspension.write_text 在 mkdir 之前，目录不存在时 FileNotFoundError 实锤
+    uk_dir.mkdir(parents=True, exist_ok=True)
     if not suspension.exists():
         suspension.write_text(HEADER_SUSPENSION, encoding="utf-8")
     if not ledger.exists():
-        uk_dir.mkdir(parents=True, exist_ok=True)
         ledger.write_text(HEADER_ASSERT, encoding="utf-8")
     if not manifest.exists():
         manifest.write_text(HEADER_MANIFEST, encoding="utf-8")
@@ -216,9 +246,25 @@ def main():
             new_n = max_n + 1
             block = build_block(new_n, args.topic, args.stance, args.source, args.date)
             write_or_dry(block, f"已追加 断言#{new_n:03d} | 议题:[{args.topic}]（保留冲突信号）")
+            # v3.51.1（#39补全）：冲突追加后旧活跃断言标废弃——去重从prose级升机械级
+            # （旧版同议题永久共存两条矛盾活跃断言·find_conflict反复报同一冲突）
+            if not args.dry_run:
+                dep = 0
+                for c in claims:
+                    if c["topic"] == args.topic and c["status"] == "活跃":
+                        if _rewrite_claim_field(ledger, c["n"], "状态", f"废弃（被断言#{new_n:03d}冲突取代）"):
+                            dep += 1
+                if dep:
+                    print(f"   已将同议题旧活跃断言{dep}条标废弃（防冲突信号重复触发·#39）")
             sys.exit(0)
         else:
-            print(f"✅ 立场一致 | 无冲突，本次不重复追加")
+            # v3.51.1（#38补全）：立场一致→更新命中断言的"最近时间"（docstring承诺的实现）
+            touched = False
+            for c in claims:
+                if c["topic"] == args.topic and c["status"] == "活跃" and c["stance"] == args.stance:
+                    if _rewrite_claim_field(ledger, c["n"], "最近时间", args.date):
+                        touched = True
+            print(f"✅ 立场一致 | 无冲突，本次不重复追加" + (f" | 已更新最近时间→{args.date}（断言#{c['n']:03d}）" if touched else ""))
             sys.exit(0)
 
     # 新议题 → 追加

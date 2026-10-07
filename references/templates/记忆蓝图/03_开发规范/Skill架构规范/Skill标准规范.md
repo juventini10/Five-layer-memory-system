@@ -3,10 +3,12 @@ author: 皮叔
 title: Skill 标准规范
 type: reference
 status: active
-version: v5.14
+version: v5.16
 date: 2026-07-11
 summary: Skill编写的质量结构机制标准（Reference层）
 source: 记忆蓝图/03_开发规范/Skill架构规范/Skill标准规范.md
+complies_with: 文件格式规范 v2.0.0
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # Skill 标准规范（Reference层）
@@ -15,7 +17,7 @@ source: 记忆蓝图/03_开发规范/Skill架构规范/Skill标准规范.md
 > **所属体系**：Skill架构规范 v5.10 · Diátaxis"实操"象限
 > **本文件内容**：YAML元数据 / 文件结构 / 渐进披露 / 执行层机制 / 安全十维 / 评估与测试 / 多Skill共存
 > **何时读**：写Skill时按需查阅具体规则
-> **版本**：v5.14（随架构规范同步升版）| **变更**：2026-07-11 +§2 字数优先级铁律实例锚点（来源：clock-loop 缺口3 确定性脚本+沙盒验证）
+> **版本**：v5.16（随架构规范同步升版）| **变更**：2026-08-08 +§1 when_to_use/disable-model-invocation 字段 +路由信息专用原则 +§6.8 区分度门禁（来源：Description 强路由研究·权威对照 2026-08）
 
 ---
 
@@ -56,6 +58,8 @@ source: 记忆蓝图/03_开发规范/Skill架构规范/Skill标准规范.md
 | `upstream` | 更新来源路径或URL | 自建=本地路径，SkillHub安装=registry URL，fork=原始repo |
 | `role` | 复杂度类型声明（engine/host/leaf/methodology，默认 leaf）——D5 角色维度解耦用（见Skill架构规范§2.3 D5） |
 | `modifiable` | AI是否可修改此Skill | `true` / `false` / `ask` |
+| `when_to_use` | 承载"何时用"细节的自由文本（触发场景/输入形态/边界） | description 腾出空间给触发词，细节下沉此字段（对齐 Anthropic 开放标准） |
+| `disable-model-invocation` | `true`=任务型（仅用户显式触发，如 skill-forge）/ `false`=参考型（默认，模型按上下文自动判断） | 任务型防误触发：高频词 Skill 声明 true 后不再被模型擅自调用 |
 
 ### Description 工程学
 
@@ -65,6 +69,10 @@ source: 记忆蓝图/03_开发规范/Skill架构规范/Skill标准规范.md
 | **显式排除** | 声明"NOT for X"——防止过触发 |
 | **关键词覆盖** | 用户可能说出的多种表达 |
 | **文件类型提示** | 涉及特定格式时明确 |
+| **第三人称** | description 用第三人称（如 "drafts weekly status updates for managers"），⛔DO NOT 用第一人称 "i can help you..."——与系统视角冲突，AI 易搞混 |
+| **用户口语触发词** | 触发词写用户自然会说的话，⛔DO NOT 只写技术名词（做珠宝的 Skill 触发词写"整理文件"=AI 多一层推理=该触发时不触发） |
+| **路由信息专用** | description 只保留触发决策信息（做什么+何时用+触发词+排除）——⛔DO NOT 塞机制/流程/能力细节（如"通过双Agent混合模式…""T5防御声明检查…"）——细节移正文/refs，description 信噪比=触发精准率的物理上限（clock-loop 452字实证：能力说明挤占路由信息，该触发时模型反而犹豫） |
+| **禁内部黑话** | 触发词⛔DO NOT 用体系内黑话/系统术语（"开荒（AI线）""修行X（你线）""解耦方向D"）——用户不会这么说=模型永远匹配不到；写用户会自然说出的完整句子 |
 
 **反向触发标准写法**：`NOT for simple file operations, NOT for general Q&A, only when user explicitly mentions X.`
 
@@ -139,6 +147,14 @@ skill-name/
 └── tests/                # 测试用例
 ```
 
+#### 内容放入决策（v5.15新增·来源：Skill知识分享实战教学 2026-08）
+
+| 内容类型 | 放入 | 原因 |
+|:--------|:-----|:-----|
+| 大量参考资料/公司术语表/按需场景范例（如"进度落后时写法"） | `references/` | 非每次需要，按需载入省 token |
+| 确定性操作（排序/格式验证/API呼叫/计算） | `scripts/` | 脚本代码不进 context 只回传执行结果——稳定+省 token |
+| 判断型内容（该不该讲某指标/选什么标准） | SKILL.md 原则 | 有客观对错才写窄步骤；无客观标准写原则，⛔DO NOT 用窄 SOP 假设模型不能判断 |
+
 ⛔DO NOT放README.md——原因是README在Skill体系内无固定语义位置，AI不知道什么时候该读它。
 ✅替代方案：使用标准文件结构 `skill-name/SKILL.md + references/ + scripts/ + assets/ + tests/`。
 
@@ -163,7 +179,7 @@ skill-name/
 
 | 场景 | 推荐路径方案 | 示例 |
 |:----|:----------|:----|
-| **自用（个人 Skill）** | 绝对路径 `~/` 开头 | `[记忆共享中心]/记忆蓝图/XXX.md` |
+| **自用（个人 Skill）** | 绝对路径 `~/` 开头 | `~/[记忆共享中心]/记忆蓝图/XXX.md` |
 | **发布（跨平台分发）** | 变量占位，在YAML或正文头部声明映射表 | `[记忆共享中心]/记忆蓝图/XXX.md` + 映射表 |
 | **混合（自用但保留跨平台可能）** | 绝对路径 + `references/路径映射.md` 声明 | 绝对路径，注释标注"跨平台时统一替换" |
 
@@ -460,6 +476,22 @@ skill_eval.py 是规范的**可执行镜像**，其自身设计受两条硬约�
 - **满分=100 不可动**：新增维度必须在 100 内重分配权重（集中权重字典 + `assert sum(WEIGHTS)==100` 物理防超），⛔DO NOT 简单加总导致满分溢出（v2.2 曾因 +5 分变 105，已修）。
 - **评分只反映文件设计端（幂等）**：流程类规则（如 §6.6 修改前备份）属**开发者行为层**，其真值不在文件内、而在操作历史上。✅DO 由**改前自动备份钩子（hook）** 强制拦截，而非由评测维度扣分——否则评分非幂等（同文件不同时间得分不同）。若评测仅作提醒，降级为「非计分警告」。
 - **评估集门禁（§6.1）以 `references/eval-set.md` 为唯一判定对象**，内联评估集不计入门禁通过。
+
+---
+
+### 6.8 区分度门禁（distractor test · v5.16新增）
+
+> 来源：Description 强路由研究·权威对照 2026-08（Anthropic BFCL v4 实证：3 个相似 Skill 比 100 个不相似的更坑——问题在系统竞争，不在单条质量）
+
+**触发场景**：新增 Skill / 修改 description / 两个 Skill 管辖权重叠时，✅DO 跑区分度门禁，⛔DO NOT 只测自身触发不测被误伤方。
+
+| 测试 | 做法 | 通过标准 |
+|:-----|:-----|:--------|
+| **负样本验证** | 取 2-3 个相似 Skill 的典型输入作为本 Skill 的负样本（如 triwich 用"分析代码"、热点捕手用"写文案"） | 负样本不触发本 Skill；对应 Skill 正常触发 |
+| **复述测试法** | 把 description 给不熟悉本 Skill 的人/模型读，要求复述"何时该用、何时不该用" | 能准确复述=清晰；复述不出或含糊=重写 description |
+| **同义改写** | 同一意图用不同说法表达（"写文案"/"帮我配个文案"/"口播稿"），各测 1 次 | 全部命中预期 Skill |
+
+**与§6.2触发测试的分工**：§6.2 测"单条是否触发正确"（正向+负向），§6.8 测"相似Skill之间是否打架"（竞争面）——两者不可互相替代。
 
 ---
 

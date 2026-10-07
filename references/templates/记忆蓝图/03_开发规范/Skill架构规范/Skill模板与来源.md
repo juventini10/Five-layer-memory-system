@@ -7,6 +7,8 @@ version: v5.8
 date: 2026-07-13
 summary: Skill结构模板与理论来源参考
 source: 记忆蓝图/03_开发规范/Skill架构规范/Skill模板与来源.md
+complies_with: 文件格式规范 v2.0.0
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # Skill 模板与来源

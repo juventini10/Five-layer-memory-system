@@ -4,13 +4,17 @@
 自动更新日记成就模块脚本
 - 运行成就检测（可选，失败不阻塞）
 - 读取最新成就数据
-- 精准替换当天日记「成就进度备忘」6行固定格式（不动其它内容）
+- 精准替换当天日记「本日新增达成」行（有/无由 achievement_tracker stdout 判定，不动其它内容）
 - 支持指定日期的日记更新
 
 用法：
   python3 update_diary_achievement.py              # 更新今天的日记
   python3 update_diary_achievement.py --date YYYY-MM-DD  # 更新指定日期的日记
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -26,32 +30,21 @@ from datetime import date, datetime
 from pathlib import Path
 import sys
 
-# ─── 路径配置 ────────────────────────────────────────────────
-DIARY_DIR = Path.home() / "Local_Obsidian_Vault/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = Path.home() / "个人AI档案/成就系统"
+# ─── 环境自愈（第一性原理根治·Hermes 沙箱 HOME 劫持 + 假 python 空跑）───
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dbenv
+# 路径全部改用 dbenv 解析（破除沙箱 HOME 指向 /tmp/hb_sb/home 的污染）
+DIARY_DIR = dbenv.DIARY_DIR
+ACHIEVEMENT_DIR = dbenv.ACHIEVEMENT_DIR
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
-# 优先用隔离 venv（已装 pyyaml），失败回退 bare python3
-VENV_PYTHON = "~/.workbuddy/binaries/python/envs/default/bin/python"
+# 优先用隔离 venv（已装 pyyaml），失败回退真实 python3（绝不裸 "python3"→沙箱假二进制）
+VENV_PYTHON = dbenv.REAL_PYTHON
 
-# ─── 6行成就进度备忘配置（与 diary-template.md 严格对齐）──────
-# (emoji, 行内标签, 成就名, 目标值, json字段, 单位)
-ACHIEVEMENT_METRICS = [
-    ("🍅", "累计", "番茄传奇", 700, "tomato_total", "🍅"),
-    ("📝", "日记", "百篇文人", 100, "diary_total", "篇"),
-    ("📚", "阅读", "十本学者", 10, "reading_total", "本"),
-    ("😴", "早睡", "两个月睡神", 60, "sleep_early_total", "天"),
-    ("🌅", "早起", "两个月日出猎人", 60, "wake_early_total", "天"),
-    ("🦉", "累计熬夜", "死神契约", 40, "total_late_nights", "天"),
-]
-
-# 精准替换正则：抓「成就进度备忘」标题行 + 其后 6 个 bullet 行，
-# 锚定其后紧跟的刚性规则块，避免误吞日记其它内容。
-BULLET_BLOCK_RE = re.compile(
-    r"(- 成就进度备忘（6行固定格式[^\n]*\n)"   # group1: 标题行（含“成就进度备忘（6行固定格式”）
-    r"(?:[ \t]*- .*\n){6}"                     # 其后正好 6 个 bullet 行
-    r"(?=\n+> 💡 \*\*刚性规则\*\*)",            # 锚定刚性规则块，防止越界
-    re.DOTALL,
-)
+# ─── 成就模块更新：只写「本日新增达成」行（对齐 diary-template.md 有才显示铁律）───
+# 6行"距目标差"累计进度已删除——YAML是检索索引非内容副本（双本账教训）；进度真相源在成就系统
+UNLOCKED_MARK = "解锁了"          # achievement_tracker --all stdout 有新成就标记
+NO_UNLOCKED_MARK = "暂无新成就解锁"
+ACHIEVEMENT_LINE_RE = re.compile(r"(- 本日新增达成：).*")
 
 
 # ─── 工具函数 ────────────────────────────────────────────────
@@ -72,27 +65,6 @@ def load_achievement_data():
     }
 
 
-def build_six_lines(data):
-    """按模板格式生成 6 行成就进度备忘文本（不含缩进的 2 空格前缀）"""
-    lines = []
-    for emoji, label, name, target, field, unit in ACHIEVEMENT_METRICS:
-        value = data.get(field, 0) or 0
-        if value >= target:
-            diff = value - target
-            tail = f" 已达成(+{fmt_num(diff)}{unit})"
-        else:
-            tail = f"差{target - value}{unit}"
-        lines.append(f"{emoji} {label} {fmt_num(value)}{unit}，距{name}({target}{unit}){tail}")
-    return lines
-
-
-def fmt_num(v):
-    """整数不显示小数，浮点保留原样（如 1292.5）"""
-    if isinstance(v, float) and v.is_integer():
-        return str(int(v))
-    return str(v)
-
-
 def find_diary_file(target_date):
     """找到指定日期的日记文件"""
     year_month = target_date.strftime("%Y-%m")
@@ -106,8 +78,8 @@ def find_diary_file(target_date):
     return None
 
 
-def update_diary_achievement(diary_file, achievement_data):
-    """精准替换日记的「成就进度备忘」6行块，保留模板其余结构"""
+def update_diary_achievement(diary_file, achievement_names):
+    """更新日记成就模块「本日新增达成」行（成就名从 achievement_tracker stdout 解析·全自动）"""
     if not diary_file.exists():
         print(f"❌ 日记文件不存在：{diary_file}")
         return False
@@ -120,46 +92,123 @@ def update_diary_achievement(diary_file, achievement_data):
         print(f"❌ 日记中没有找到成就模块：{diary_file}")
         return False
 
-    m = BULLET_BLOCK_RE.search(content)
+    m = ACHIEVEMENT_LINE_RE.search(content)
     if not m:
-        print(f"❌ 未匹配到「成就进度备忘」6行块（模板结构可能已变）：{diary_file}")
+        print(f"❌ 未匹配到「本日新增达成」行（模板结构可能已变）：{diary_file}")
         return False
 
-    header = m.group(1)  # 标题行（含“成就进度备忘（6行固定格式...）”）
-    six_lines = build_six_lines(achievement_data)
-    new_block = header + "".join(f"  - {line}\n" for line in six_lines)
-
-    new_content = content[:m.start()] + new_block + content[m.end():]
+    if achievement_names:
+        text = " / ".join(achievement_names)
+    else:
+        text = "今日无新成就解锁"
+    # v3.29.1 修复：用 group0 整行替换（旧逻辑只替换前缀、残留骨架说明后缀如"___（有成就达成→…）"）
+    new_content = content[:m.start()] + f"- 本日新增达成：{text}" + content[m.end():]
 
     with open(diary_file, "w", encoding="utf-8") as f:
         f.write(new_content)
 
-    print(f"✅ 已更新日记成就模块（6行）：{diary_file}")
+    print(f"✅ 已更新日记成就模块（本日新增达成）：{diary_file}")
     return True
 
 
 def run_achievement_check():
-    """运行成就检测刷新数据；失败不阻塞主流程"""
+    """运行成就检测刷新数据；失败不阻塞主流程。返回 (成功与否, stdout文本)"""
     import subprocess
     script_path = Path(__file__).parent / "achievement_tracker.py"
-    py = VENV_PYTHON if os.path.exists(VENV_PYTHON) else "python3"
+    # 🔒 防漂移校验：achievement_tracker.py 必须是指向成就系统真源的软链
+    # 单源架构：真源 = [记忆共享中心]/成就系统/scripts/achievement_tracker.py，daily-buddy 侧仅软链
+    # 若被编辑器物化成实体副本 / 改指别处 → 立即报错退出，杜绝静默漂移（2026-08-02 修复）
+    _REAL_SRC = ("[记忆共享中心]/成就系统/scripts/achievement_tracker.py").resolve()
+    if not script_path.is_symlink():
+        raise SystemExit(
+            f"❌ 漂移告警：{script_path} 已物化为实体副本（非软链）。\n"
+            f"   修复：rm {script_path} && ln -s {_REAL_SRC} {script_path}"
+        )
+    if script_path.resolve() != _REAL_SRC:
+        raise SystemExit(
+            f"❌ 漂移告警：软链指向 {script_path.resolve()} 而非真源 {_REAL_SRC}。\n"
+            f"   修复：rm {script_path} && ln -s {_REAL_SRC} {script_path}"
+        )
+    py = VENV_PYTHON if os.path.exists(VENV_PYTHON) else dbenv.REAL_PYTHON
     try:
-        result = subprocess.run(
-            [py, str(script_path), "--all"],
+        # 用真实 python3 + --json 结构化输出（dbenv.run_real 杜绝沙箱假 binary 空跑）
+        result = dbenv.run_real(
+            [str(script_path), "--all", "--json"],
             capture_output=True,
             text=True,
             timeout=60,
         )
         if result.stdout.strip():
-            print("成就检测结果：")
+            print("成就检测原始输出：")
+            # JSON 行以外的普通 print 也透出（tracker 在非 --json 时纯文本，--json 时末行 JSON）
             print(result.stdout)
         if result.stderr.strip():
             print("⚠️ 成就检测 stderr：")
             print(result.stderr)
-        return result.returncode == 0
+        # 解析结构化成就名（第一性原理：真相源=结构化数据，非脆弱正则刮文本）
+        names = _parse_achievement_names(result.stdout)
+        return result.returncode == 0, result.stdout or "", names
     except Exception as e:
         print(f"⚠️ 成就检测未执行（不影响日记更新）：{e}")
-        return False
+        return False, "", []
+
+
+def _parse_achievement_names(stdout_text):
+    """从 tracker --json 输出解析当日新解锁成就名列表。
+
+    tracker 返回 newly_unlocked 元素结构：
+      - 元组 (ach_dict, value) 经 JSON 序列化后变为 [ach_dict, value]
+      - 故 item 为 list：item[0] 是含 "name" 的 dict
+    """
+    names = []
+    for line in stdout_text.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict) and "newly_unlocked" in obj:
+            for item in obj["newly_unlocked"]:
+                name = None
+                if isinstance(item, dict):
+                    name = item.get("name")
+                elif isinstance(item, (list, tuple)) and item:
+                    first = item[0]
+                    if isinstance(first, dict):
+                        name = first.get("name")
+                    elif isinstance(first, str):
+                        name = first
+                if name:
+                    names.append(name)
+    return names
+
+
+def _scan_day_evidence(target_date: date):
+    """第一性原理根治·按日期归属成就（幂等·不依赖 tracker 瞬态）。
+
+    真相源 = 成就证据目录中 `{达成日期}-{成就ID}.md` 文件：
+      - 文件名前缀 `{日期}-` 即持久归因（写入时由 tracker 用真实达成日命名）
+      - 正文标题 `# 成就证据 · {成就名}` 即权威成就名
+    扫描当日前缀文件 → 提取成就名 → 无论 tracker 是否已入账，重跑均稳定一致。
+    """
+    if not dbenv.EVIDENCE_DIR.exists():
+        return []
+    prefix = target_date.isoformat() + "-"
+    names = []
+    for f in sorted(dbenv.EVIDENCE_DIR.glob(prefix + "*.md")):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        # 优先取标题 `# 成就证据 · 名`（最权威）
+        m = re.search(r"^#\s*成就证据\s*[·・:：]?\s*(.+)$", text, re.MULTILINE)
+        if m:
+            name = m.group(1).strip()
+            if name:
+                names.append(name)
+    return names
 
 
 # ─── 封口签名 ──────────────────────────────────────────────
@@ -197,6 +246,9 @@ def add_review_seal(content, date_str, achievement_data):
 
 # ─── 主流程 ────────────────────────────────────────────────
 def main():
+    # ─── 环境自检（第一性原理根治·沙箱假 python 拒绝空跑）───
+    if not dbenv.self_check(verbose=True):
+        sys.exit(9)
     target_date = date.today()
     skip_seal = "--no-seal" in sys.argv
     if "--date" in sys.argv:
@@ -211,7 +263,18 @@ def main():
     print(f"📅 处理日期：{target_date}")
 
     print("🔍 运行成就检测（刷新数据）...")
-    run_achievement_check()  # 失败不阻塞
+    _, check_stdout, tracker_names = run_achievement_check()  # 失败不阻塞
+
+    # 第一性原理根治·成就名以「证据目录按日期归属」为准（幂等·不依赖 tracker 瞬态）
+    # tracker JSON 仅作兜底（证据目录缺失时）
+    evidence_names = _scan_day_evidence(target_date)
+    if evidence_names:
+        achievement_names = evidence_names
+        print(f"📌 当日成就（证据目录归因·{len(achievement_names)}项）：{achievement_names}")
+    else:
+        achievement_names = tracker_names
+        if achievement_names:
+            print(f"⚠️ 证据目录无 {target_date} 记录，回退 tracker 瞬态判定：{achievement_names}")
 
     print("📊 读取成就数据...")
     achievement_data = load_achievement_data()
@@ -222,7 +285,7 @@ def main():
         return 1
 
     print("📝 更新日记成就模块...")
-    if update_diary_achievement(diary_file, achievement_data):
+    if update_diary_achievement(diary_file, achievement_names):
         # 封口签名（单写者·接触法防误：成就块只能由脚本产生合法签名）
         if not skip_seal:
             date_str = target_date.strftime("%Y-%m-%d")

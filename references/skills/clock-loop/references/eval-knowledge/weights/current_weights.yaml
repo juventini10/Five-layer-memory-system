@@ -1,0 +1,61 @@
+# 评估权重配置 - v1.4
+# 用途：Clock Loop 多维度评分的权重配置
+
+version: "1.4"
+last_updated: "2026-09-06"
+
+# ⛔ 权重唯一权威源 = scripts/skill_eval.py WEIGHTS/MACRO_DIMENSIONS（脚本常量·启动自检物理拦截）
+# 注（v4.12.1·F-VER-TAG）：下文注释中的 v5.16.0 等 = Skill架构规范版本线（规范侧改动编号），非 clock-loop 版本（4.x线）——两套版本线同页并存须显式声明归属
+# 本文件 default_weights 是 AI 手工评分参照镜像——对账由 skill_eval.py verify_dimension_consistency()
+# 检查6 机械执行（v3.55.4 C03·#204：541行AI手工资产脚本零消费·v1.3曾一次性对齐但无持续机制；
+# 镜像滞后脚本权威源 = 启动自检失败 exit 1，⛔不依赖人工记得对齐）
+
+# ⛔ adaptive_rules 已废弃（v2.1.2）
+# 原因：triwich + growth-box 双样本验证——自适应规则预设的"核心Skill/用户Skill"分类
+# 与实际Skill结构无关，权重偏移成为噪音而非信号。标准权重重评后分数反而更合理。
+# 保留文件备查，clock-loop 不再走自适应分支。
+
+default_weights:
+  skill:
+    skill_development: 0.19     # v1.4: 对齐 skill_eval.py 宏观口径（WEIGHTS 微观之和 19/21/29/14/7/10）
+    instruction_accuracy: 0.21  # v5.16.0 0.18→0.21（security_hardcode 5→8·token_budget 释放给安全类）
+    code_logic: 0.29            # v5.16.0 0.27→0.29（poka_yoke_layer 15→17·token_budget 释放给第一原则）
+    documentation: 0.14         # 不变
+    test_coverage: 0.07         # v5.16.0 0.12→0.07（token_budget 移出评分·仅剩 fuse_mechanism+trigger_coverage）
+    philosophical: 0.10         # 不变
+
+# v5.16.0 变更说明（2026-09-06）：
+#  第一性原理分析（童灵 L2·L5）：token_budget 行数与质量无因果·测的是代理噪声
+#  → 从 WEIGHTS 移出·权重 5 重分配 poka_yoke +2 / security_hardcode +3
+#  → test_coverage 从 0.12 降至 0.07
+#  → instruction_accuracy +3（安全类 P0·理应更重）、code_logic +2（Poka-Yoke 第一原则·理应更重）
+# 理论支撑：梅多斯系统之美杠杆点违反直觉 + 穷查理逆向思维 + L5 已接受边界
+
+  general:
+    content_quality: 0.35
+    structure_clarity: 0.25
+    actionability: 0.25
+    philosophical: 0.15
+
+# ⛔ type_adjustment 已废弃（v3.55.4 C03·#99 实测零消费）
+# 原因：skill_eval.py 对 type_adjustment 引用=0（脚本不读本文件）·文档声称"类型确定后±微调"实际
+# 从未被执行——幽灵流程（prose 纪律：声明须有执行证据·C05 同族）。保留备查不再应用。
+# 类型检测（workflow/dialog/loader）仅作 AI 手工评分参照（taxonomy-map §二①·🟡活）
+# Skill类型微调区间（P1: 消除工作流vs对话型系统偏差）
+# 应用方式：基础权重 ± 类型微调值，结果归一化
+type_adjustment:
+  workflow:
+    # 工作流型哲学天然偏低（均值78.2% vs 对话型98.5%），微调补偿
+    philosophical: +0.03    # 10%→13%等效（基数0.10）
+    code_logic: -0.03       # 27%→24%等效（基数0.27）
+  dialog:
+    # 对话型哲学天然偏高，微调下调
+    philosophical: -0.02    # 10%→8%等效（基数0.10）
+    code_logic: +0.02       # 27%→29%等效（基数0.27）
+  loader:
+    # 加载器型：无微调
+    pass_through: true
+
+# === 以下废弃（2026-07-03，v2.1.2）=== 
+# adaptive_rules:
+#   ...  （已废弃，不再激活）

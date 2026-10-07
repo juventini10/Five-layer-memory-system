@@ -7,8 +7,8 @@
 > **⚡ 步骤锁定协议**
 > ① 导航锁：每次回复首行输出 `步骤5/7`
 > ② 偏离锁：用户问无关问题 → 记到待办列表，继续合成
-> ③ 检查点前置依赖：Read `{记忆共享中心}/.install/step4-done.md` — 不存在则阻塞
-> ④ 检查点写入：末尾 Write `{记忆共享中心}/.install/step5-done.md`
+> ③ 检查点前置依赖：Read `[记忆共享中心]/.install/step4-done.md` — 不存在则阻塞
+> ④ 检查点写入：末尾 Write `[记忆共享中心]/.install/step5-done.md`
 
 ## 执行指令
 
@@ -29,9 +29,9 @@
 
 ### 5a. 数据来源切换
 
-> ⚠️ 本步骤所需33题数据从 `{记忆共享中心}/.install/问卷答案汇总.md` 读取（由步骤4写入并经过两段验证），不再依赖AI上下文。文件缺失 → 回退步骤4补答。
+> ⚠️ 本步骤所需33题数据从 `[记忆共享中心]/.install/问卷答案汇总.md` 读取（由步骤4写入并经过两段验证），不再依赖AI上下文。文件缺失 → 回退步骤4补答。
 
-1. Read `{记忆共享中心}/.install/问卷答案汇总.md`，提取Q1-Q33答案
+1. Read `[记忆共享中心]/.install/问卷答案汇总.md`，提取Q1-Q33答案
 2. Read `references/templates/` 下的对应模板文件
 
 ### 5b. 用户类型分支
@@ -137,17 +137,42 @@
 #### Step 5d-0：IDENTITY.md 生成
 
 读取 `references/templates/IDENTITY.md` 通用骨架 → 填入Step2预问卷数据：
-- 工具名：WorkBuddy
+- 工具名：[端名]
 - Name: 助理
 - 核心身份：用户的AI搭档
 - Emoji：{Step2 Q4答案，默认⚡}
-- 署名格式：`—— 你的 WorkBuddy {Emoji}`
+- 署名格式：`—— 你的 [端名] {Emoji}`
 
-📍 **写入目标**：`~/.workbuddy/IDENTITY.md`（平台系统文件专属落点，**非** `[记忆共享中心]`）
+📍 **写入目标**：`[配置根]/IDENTITY.md`（端系统文件专属落点，**非** `[记忆共享中心]`；配置根=step3-done 的 CONFIG_ROOT，WB=`~/.workbuddy`、Qoder CN=`~/.qoder-cn`）
+
+> 🔌 **端名注入（G2-2 走查缺陷修·ID-5）**：合成前把模板内 `[端名]`/`[端徽标]` 替换为 Step -0.5 判定端 `adapters/<端ID>/capability.yaml` 的 `display_name`/`emoji`（如 Qoder CN/🔮、WorkBuddy/⚡）——⛔署名行不得残留任何他端字面值（签名串端=2026-09-09 红线的装机面复发面）。
 
 > 声明式写法：一句身份一句数据，不写MUST/NEVER。
 
-#### Step 5d-1：摘要版合成
+#### Step 5d-1：规则三层统一落位 + 摘要版答案注入
+
+📍 **写入目标**：`[记忆共享中心]/记忆规则/` 下的 **3 个文件**（**唯一位置**·⛔ 不是 `[配置根]/`）
+
+> 🔴 **三件一体·唯一来源（2026-10-03 补·铁律级）**
+>
+> **用户基本规则 = 3 个文件，每端只有一份，任何端不得重复安装第二份：**
+>
+> | 文件 | 唯一落点 | 段 id | 版本号 |
+> |:---|:---|:---|:---|
+> | `用户基本规则-摘要版.md` | `[记忆共享中心]/记忆规则/` | `rules.summary` | `> 版本：vX.Y` |
+> | `用户基本规则-铁律版.md` | 同上 | `rules.tielu` | `> 版本：vX.Y` |
+> | `用户基本规则-详解存档版.md` | 同上 | `rules.detail` | `> 版本：vX.Y` |
+>
+> **三层共享同一版本号**（铁律版：改任何一层 → 三层版本号一起升）⇒ **必须三件一起比对，不许只比一件**。
+>
+> **装法（唯一正确路径·⛔ 禁止分段单装）**：
+> ① **三件一起装**：链 A `install_scripts.py` 的 `install_rule_files` **一次装齐三件**（断章增量·幂等）
+> ② **增量判据**：读三件各自版本号 →
+>    · **三件版本都与用户现有的一致** ⇒ 判 `UNCHANGED`·⛔ 不写盘（幂等·省一次全量比对）
+>    · **任一件版本不同** ⇒ 该件走**断章合并**：段正文一致 → 不写；用户改过 → 报 `CONFLICT` 请用户裁决
+> ③ **本步只做摘要版的额外动作**：在**已装好的** `rules.summary` 段内注入答题答案
+>    → ⛔ **不整file覆盖**（会毁断章标记·也会覆盖铁律版/详解版）
+> ④ ⛔ **本步不许新建任何同名文件**——新建即第二份，`verify.sh §2b` 唯一性校核判红
 
 从 `templates/用户基本规则-摘要版.md` 读取干净的通用模板 → 将答题答案按答案写入规则注入认知层表/行为层表/协作契约表。
 
@@ -168,7 +193,7 @@
 
 > 规则式写法：简短执行指令，用NEVER/必须/帮/先XX等，附原因（因果链）。
 
-#### Step 5d-2：SOUL.md 品格注入
+Step 5d-2：SOUL.md 品格注入
 
 读取 `references/templates/SOUL.md` 通用骨架 → 填入答题数据至 `{...}` 占位符：
 - 核心价值观 ← Q1-Q7（替换`{核心价值观——由Q1-Q7答题生成}`）
@@ -177,7 +202,7 @@
 - Q30 → 「我是谁」段：以品格式写入对质规则（替换`{从Q30答题生成的个性化对质规则}`）
 - 反馈偏好 → 「我怎么说话」段（替换`{从Q14/Q16答题生成的反馈偏好规则}`）
 
-📍 **写入目标**：`~/.workbuddy/SOUL.md`（平台系统文件专属落点，**非** `[记忆共享中心]`）
+📍 **写入目标**：`[配置根]/SOUL.md`（平台系统文件专属落点，**非** `[记忆共享中心]`）
 
 > 品格式写法：身份宣言（"你是一个会XX的人"）+ 行为印证（自然描述该行为的结果）。
 > NEVER使用MUST/NEVER/禁止/CRITICAL——品格不是规则，品格是你是谁。
@@ -190,8 +215,10 @@
 - 当前关注（核心目标） ← Q24
 - 当前需求 ← Q28
 - 认知风格段 ← 从Q8归因/Q9驱动/Q12判断标准/Q13争议处理提取描述
+  > **执行方式（A级·映射填充）**：Q8-Q13为选择题，每个选项对应唯一预写品格描述。AI 只做"查用户选了哪个→贴对应预写描述"，⛔DO NOT 自由发挥改写品格措辞。开放题（Q1称呼/Q2身份/Q10-Q11关注）原样填入用户原话，不做摘要/改写。
+  > **后置验证**：文件写入后 ✅DO 输出认知风格段让用户确认"这是你吗？"——用户说"对"才继续。
 
-📍 **写入目标**：`~/.workbuddy/USER.md`（平台系统文件专属落点，**非** `[记忆共享中心]`）
+📍 **写入目标**：`[配置根]/USER.md`（平台系统文件专属落点，**非** `[记忆共享中心]`）
 
 > 描述式写法：客观描述用户特质，不写任何指令/规则/建议。
 
@@ -207,7 +234,7 @@
 
 #### Step 5d-6：MEMORY.md 通用骨架
 
-读取 `references/templates/MEMORY.md` → **文件写入 `~/.workbuddy/MEMORY.md`**（平台系统文件专属落点）。模板内的 `{记忆共享中心}` 占位符仍按 step3 实际**归档**路径替换（指向 `[记忆共享中心]`，**绝不**指向 `~/.workbuddy/`）。
+读取 `references/templates/MEMORY.md` → **文件写入 `[配置根]/MEMORY.md`**（平台系统文件专属落点）。模板内的 `[记忆共享中心]` 占位符仍按 step3 实际**归档**路径替换（指向 `[记忆共享中心]`，**绝不**指向 `[配置根]/`）。
 无需答题数据——硬路牌（意图分类+产出签名+铁律骨架指针）+ 写入纪律（三问）+ 路径索引。
 
 #### Step 5d-7：动态状态快照
@@ -226,10 +253,10 @@
 | `最伟大的我/`（完整目录·8子目录骨架） | `cp -r references/最伟大的我/ [记忆共享中心]/最伟大的我/` |
 | `情境层/动态状态快照.md` | `references/templates/情境层-动态状态快照.md` |
 | `记忆规则/TTL注册表.md` | `references/templates/TTL注册表.md`（新建骨架） |
-| `IDENTITY.md`（→ `~/.workbuddy/IDENTITY.md`） | `references/templates/IDENTITY.md`（合成+注入） |
-| `SOUL.md`（→ `~/.workbuddy/SOUL.md`） | `references/templates/SOUL.md`（合成+注入） |
-| `USER.md`（→ `~/.workbuddy/USER.md`） | `references/templates/USER.md`（合成+注入） |
-| `MEMORY.md`（→ `~/.workbuddy/MEMORY.md`） | `references/templates/MEMORY.md`（合成+替换占位符） |
+| `IDENTITY.md`（→ `[配置根]/IDENTITY.md`） | `references/templates/IDENTITY.md`（合成+注入） |
+| `SOUL.md`（→ `[配置根]/SOUL.md`） | `references/templates/SOUL.md`（合成+注入） |
+| `USER.md`（→ `[配置根]/USER.md`） | `references/templates/USER.md`（合成+注入） |
+| `MEMORY.md`（→ `[配置根]/MEMORY.md`） | `references/templates/MEMORY.md`（合成+替换占位符） |
 | `未知未知/`（完整目录·悬置区容器） | `cp -r references/未知未知/ [记忆共享中心]/未知未知/`（含悬置区.md/显形台账.md/断言台账.md；route_unknown_unknown.py 钩子写入目标） |
 
 ### 5e. 用户确认
@@ -253,8 +280,47 @@
 | USER.md 无指令 | 不包含"必须/NEVER/禁止/帮"等指令词 | ⚠️ 包含 → 改为描述式 |
 
 > ✅ 全部通过 → **分两路写入**：
-> - **4 个系统文件（IDENTITY / SOUL / USER / MEMORY）→ `~/.workbuddy/`**（平台系统文件专属落点；写别处即非系统文件，不生效）
+> - **4 个系统文件（IDENTITY / SOUL / USER / MEMORY）→ 按 `adapters/<端>/capability.yaml` 的 `system_file_paths` 声明落点**
 > - 其余内容文件（摘要版 / CORE / SHADOW / 记忆规则 / 情境层 / 记忆蓝图 / 最伟大的我 ）→ `[记忆共享中心]/`
+
+#### 🔴 落点怎么定（2026-10-02 改·⛔ 不再一律写 `[配置根]/`）
+
+**读声明，不猜**：
+
+```bash
+# 取本端的 system_file_paths（未声明的端回落 [配置根]/，向后兼容）
+python3 - <<'EOF'
+import importlib.util, os, sys
+sys.path.insert(0, "<包根>")
+spec = importlib.util.spec_from_file_location("ins", os.path.join("<包根>", "install_scripts.py"))
+ins = importlib.util.module_from_spec(spec); spec.loader.exec_module(ins)
+cap = ins.load_capability(os.path.join("<包根>", "adapters", "<端ID>", "capability.yaml"))
+paths = cap.get("system_file_paths") or {}
+segs  = cap.get("system_file_segments") or {}
+for f in ("SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md"):
+    rel = paths.get(f, f)          # 未声明 ⇒ 默认配置根
+    print("%-12s → %s   段id=%s" % (f, rel, segs.get(f, "（未声明·用默认）")))
+EOF
+```
+
+| 端形态 | `system_file_paths` | 举例 |
+|:---|:---|:---|
+| **扁平配置根**（多数端） | 未声明 ⇒ 全部落 `[配置根]/` | WorkBuddy `~/.workbuddy/USER.md` |
+| **混合结构**（Hermes） | 显式声明 | `USER.md → memories/USER.md`·`IDENTITY.md → null` |
+
+⚠️ **`null` = 该端没有这个文件的载体**（不是"路径为空"）。遇到 `null`：
+- ⛔ **不许**把文件留在 `[配置根]/`（会成**永远不被加载的孤儿文件**）
+- ✅ **并入**本端的主人格载体（Hermes = 并进 `SOUL.md`），并在该文件里保留原章节标题
+
+⚠️ **为什么必须声明而不能统一写配置根**：`[配置根]/` 对扁平端是对的，但对
+Hermes 是**错的**——写进去的文件 Hermes 根本不读，而 verify 查的是"文件在不在"
+⇒ **落错了也报绿**（恒真判据·实测踩过）。
+
+#### 写入前必须过的三道闸（⛔ 缺一不可）
+
+1. **落点存在性**：目标目录不存在 ⇒ 先 `mkdir -p`，⛔ 不许静默跳过
+2. **端真身对账**：`system_file_paths` 里每一条都要能在该端**源码/文档常量**里找到对应（Hermes 的锚点见 `system_file_anchors`）
+3. **写后可达性**：写完必须确认「该端真的读这个位置」——⛔ 只验"文件在"是恒真判据
 
 ---
 
@@ -275,21 +341,23 @@
 
 #### 🔄 旧版迁移（升级前必做·仅旧包用户触发）
 
-> 历史版本曾把 4 个系统文件写入 `[记忆共享中心]`（归档根），属位置错误（系统文件必须位于 `~/.workbuddy/` 才生效）。**本版安装器已修正写目标**，但旧包装出的用户机器上这 4 件可能仍在归档根。
+> 历史版本曾把 4 个系统文件写入 `[记忆共享中心]`（归档根），属位置错误（系统文件必须位于 `[配置根]/` 才生效）。**本版安装器已修正写目标**，但旧包装出的用户机器上这 4 件可能仍在归档根。
 
 升级合并前，先检测并迁移：
 
 ```bash
+CONFIG_ROOT=$(grep -m1 '^CONFIG_ROOT=' "$MEMORY_CENTER/.install/step3-done.md" | cut -d= -f2)
+CFG_DIR="${CONFIG_ROOT/#\~/$HOME}"   # ~ 展开：如 ~/.qoder-cn → $HOME/.qoder-cn
 for f in IDENTITY SOUL USER MEMORY; do
-  if [ -f "$MEMORY_CENTER/$f.md" ] && [ ! -f "$HOME/.workbuddy/$f.md" ]; then
-    mv "$MEMORY_CENTER/$f.md" "$HOME/.workbuddy/$f.md"   # 归档根 → 系统目录
-    echo "↪️ 已迁移 $f.md → ~/.workbuddy/"
+  if [ -f "$MEMORY_CENTER/$f.md" ] && [ ! -f "$CFG_DIR/$f.md" ]; then
+    mv "$MEMORY_CENTER/$f.md" "$CFG_DIR/$f.md"   # 归档根 → 端系统目录
+    echo "↪️ 已迁移 $f.md → $CONFIG_ROOT/"
   fi
 done
 ```
 
-- 若 `~/.workbuddy/` 已有同名文件 → 不覆盖，按下方「锁一备份锁」走合并逻辑。
-- 迁移后这 4 件统一位于 `~/.workbuddy/`，后续读/写/回滚全部以此为准。
+- 若 `[配置根]/` 已有同名文件 → 不覆盖，按下方「锁一备份锁」走合并逻辑。
+- 迁移后这 4 件统一位于 `[配置根]/`，后续读/写/回滚全部以此为准。
 
 **处理范围**：4 个系统文件
 
@@ -315,8 +383,8 @@ done
 对每个系统文件，逐个执行备份（4次循环）：
 
 ```
-1. Read 旧文件（位于 `~/.workbuddy/`：`~/.workbuddy/IDENTITY.md` 等）→ 提取用户原有数据（品格描述/称呼/Emoji/自定义记忆等）
-2. Write 备份 → {记忆共享中心}/记忆琥珀/升级备份_{时间戳}/{文件名}.bak
+1. Read 旧文件（位于 `[配置根]/`：`[配置根]/IDENTITY.md` 等）→ 提取用户原有数据（品格描述/称呼/Emoji/自定义记忆等）
+2. Write 备份 → [记忆共享中心]/记忆琥珀/升级备份_{时间戳}/{文件名}.bak
 3. 确认 .bak 文件存在且非零字节
 ```
 
@@ -487,11 +555,11 @@ Read 旧文件 → 提取用户数据 → Read 新模板 → 注入合并 → Wr
 
 | 目标文件 | 操作 | 说明 |
 |:--------|:----|:----|
-| `{记忆共享中心}/记忆规则/TTL注册表.md` | Read `references/templates/TTL注册表.md` → 替换 `{记忆共享中心}` 为用户实际路径 → 写入 | 含变量占位符，需替换 |
-| `{记忆共享中心}/记忆蓝图/` | **#23统一逻辑**：不存在→`cp -r`；存在→询问是否覆盖→否不动/是则整目录移`记忆琥珀/备份_{时间戳}/`后`cp -r`新版覆盖 | 整目录静态复制，无变量 |
-| `{记忆共享中心}/最伟大的我/` | 不存在则 `cp -r references/最伟大的我/ 目标路径`；已存在则跳过（不覆盖用户个人成长数据） | 8子目录骨架，个人数据运行时填充 |
-| `{记忆共享中心}/成就系统/` | `cp -r references/成就系统/ 目标路径`（排除 __pycache__） | 子系统整目录复制 |
-| `{记忆共享中心}/未知未知/` | 不存在则 `cp -r references/未知未知/ 目标路径`；已存在则跳过（不覆盖用户残差条目） | 悬置区容器+台账，route_unknown_unknown.py 钩子写入目标 |
+| `[记忆共享中心]/记忆规则/TTL注册表.md` | Read `references/templates/TTL注册表.md` → 替换 `[记忆共享中心]` 为用户实际路径 → 写入 | 含变量占位符，需替换 |
+| `[记忆共享中心]/记忆蓝图/` | **#23统一逻辑**：不存在→`cp -r`；存在→询问是否覆盖→否不动/是则整目录移`记忆琥珀/备份_{时间戳}/`后`cp -r`新版覆盖 | 整目录静态复制，无变量 |
+| `[记忆共享中心]/最伟大的我/` | 不存在则 `cp -r references/最伟大的我/ 目标路径`；已存在则跳过（不覆盖用户个人成长数据） | 8子目录骨架，个人数据运行时填充 |
+| `[记忆共享中心]/成就系统/` | `cp -r references/成就系统/ 目标路径`（排除 __pycache__） | 子系统整目录复制 |
+| `[记忆共享中心]/未知未知/` | 不存在则 `cp -r references/未知未知/ 目标路径`；已存在则跳过（不覆盖用户残差条目） | 悬置区容器+台账，route_unknown_unknown.py 钩子写入目标 |
 
 **输出补充**：
 ```
@@ -507,7 +575,15 @@ Read 旧文件 → 提取用户数据 → Read 新模板 → 注入合并 → Wr
 **全新用户**（走5a-5f）：
 1. 33题答案是否全部处理？缺任一道 → 回到步骤4补答
 2. 所有目标文件（5d清单 + 5d-8清单）是否已存在？缺任一个 → 补写
-3. 风格合规检查（5f）是否全部通过？未通过 → 修正后重检
+3. **机械断言（强制·2026-09-21 新增）**——跑：
+   ```bash
+   python3 synthesis_assert.py --memory-center "<记忆共享中心>" --strict-style
+   ```
+   判据（基准=包内 `references/templates/`，⛔不凭印象）：①各产物结构段在位 ②合成类文件**占位符清零** ③落点在位（4 系统文件→平台目录，其余→记忆中心）④风格合规（SOUL 品格式）。
+   - 输出 `✅ 全过` 才可写检查点；报 `FAIL` → 按明细修正后重跑
+   - 自检门禁本身是否有效：`python3 synthesis_assert.py --selftest`
+   > 🔑 **为什么必须机械化**：原第 3 条「风格合规检查（5f）」是一张**给 AI 看的表格**，AI 自己执行=**自己给自己判卷**。本步是 7 步里唯一"靠 AI 现场发挥"的环节，必须有独立判据兜底。
+4. 5f 风格合规逐项确认（机械断言覆盖不到的语义项：USER.md 描述式语气、摘要版规则式措辞的"读起来对不对"）
 
 **升级用户**（走5g + 5g-2）：
 1. **五道锁全部通过**（见上方5g节）：
@@ -520,4 +596,4 @@ Read 旧文件 → 提取用户数据 → Read 新模板 → 注入合并 → Wr
 
 ⚠️ 五道锁任一项 ❌ → MUST中止，回到5g重试。未完成锁不得走下一步。
 
-> 文件合成完毕 → 写入 `{记忆共享中心}/.install/step5-done.md` → 继续步骤6
+> 文件合成完毕 → 写入 `[记忆共享中心]/.install/step5-done.md` → 继续步骤6

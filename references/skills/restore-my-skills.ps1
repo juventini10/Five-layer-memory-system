@@ -24,7 +24,7 @@ if ($env:OS -notlike "*Windows*") {
     exit 0
 }
 
-$SKILLS = @("daily-buddy", "awaken-memory-system", "reading-assistant", "system-logger", "triwich", "growth-box", "meta-aletheia", "shall-we-talk", "skill-lookup")
+$SKILLS = @("daily-buddy", "awaken-memory-system", "sucair", "system-logger", "triwich", "growth-box", "meta-aletheia", "shall-we-talk", "skill-lookup")
 
 function New-SkillLink {
     param([string]$SkillName, [string]$Platform, [string]$TargetDir)

@@ -1,0 +1,11 @@
+{
+  "id": "lobsterai-kb-inject",
+  "name": "布洛陀知识库注入",
+  "description": "用户消息属知识场景 → 注入 Top-K 知识锚点（含立场卡检索）。config.json 由 setup.sh 落定（记忆中心/公共脚本路径），⛔无硬编码路径、⛔零个人数据。",
+  "version": "0.1.0",
+  "author": "布洛陀",
+  "license": "MIT",
+  "entry": "./index.js",
+  "activation": { "onStartup": true },
+  "configSchema": { "type": "object", "additionalProperties": false, "properties": {} }
+}

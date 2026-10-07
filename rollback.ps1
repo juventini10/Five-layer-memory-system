@@ -1,5 +1,5 @@
 ﻿# =============================================================================
-# rollback.ps1 — 布洛陀 1.10 · 系统文件回滚脚本（Windows / PowerShell 等价实现）
+# rollback.ps1 — 布洛陀 2.1.0 · 系统文件回滚脚本（Windows / PowerShell 等价实现）
 # -----------------------------------------------------------------------------
 # 用途：从记忆琥珀备份中恢复系统核心文件（SOUL/IDENTITY/USER/MEMORY）到
 #       WorkBuddy 平台目录 ~/.workbuddy/（系统文件专属落点）。
@@ -7,6 +7,7 @@
 # 用法：
 #   .\rollback.ps1                          # 列出可用备份
 #   .\rollback.ps1 -Preview                 # 预览最近一次备份的文件差异
+#   .\rollback.ps1 -Preview -Timestamp 2026-07-14_12   # 预览指定时间戳的备份
 #   .\rollback.ps1 -Restore                 # 恢复最近一次备份
 #   .\rollback.ps1 -Restore 2026-07-14_12   # 恢复指定时间戳的备份
 #
@@ -17,8 +18,9 @@
 # =============================================================================
 
 param(
-  [string]$Preview,
-  [string]$Restore
+  [switch]$Preview,
+  [string]$Restore,
+  [string]$Timestamp
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -120,6 +122,6 @@ function Do-Restore([string]$ts) {
 }
 
 # ── 入口 ──
-if ($Preview -ne "") { Preview-Diff $Preview }
-elseif ($Restore -ne "") { Do-Restore $Restore }
+if ($Preview) { Preview-Diff $Timestamp }
+elseif ($Restore -ne "" -and $null -ne $Restore) { Do-Restore $Restore }
 else { List-Backups }

@@ -1,3 +1,7 @@
+---
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
+---
+
 # 来源与参考 — 唤醒记忆系统
 
 > 外迁自 SKILL.md §来源与参考（2026-07-10 P4.5 行数瘦身）

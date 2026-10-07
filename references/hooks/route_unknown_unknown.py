@@ -19,22 +19,76 @@
 
 来源：悬置区.md §1.6 schema + SOUL.md v3.10 【🕳️】段（T5 路由）
 
-注：本脚本随布洛陀安装包装载。默认路径含 `[记忆共享中心]` 占位符，
+注：本脚本随布洛陀安装包装载。默认路径含 `~/个人AI档案` 占位符，
     由安装步骤（step6-hook-install）在执行机替换为用户真实记忆中心路径。
     也可用环境变量 UU_TARGET / UU_STATE / UU_HEARTBEAT 重定向（便于隔离测试）。
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys
 import os
 import re
 import json
 import hashlib
+import time
 from datetime import datetime
 
-DEFAULT_TARGET = "[记忆共享中心]/未知未知/悬置区.md"
+# 跨平台文件锁:Unix 原生有 fcntl;Windows 无此模块→用原子锁文件(无第三方依赖)。
+# 根因:原顶层 `import fcntl` 在 Win 直接 ImportError 崩脚本。改为按平台选锁实现,
+# 临界区互斥在两端都生效(不让 Win 端退化成无锁竞态)。
+try:
+    import fcntl
+    _HAVE_FCNTL = True
+except ImportError:
+    _HAVE_FCNTL = False
+
+
+def with_lock(lock_path, func):
+    """跨平台互斥执行 func。失败默认放行(绝不阻塞对话)。
+    - Unix: fcntl.flock 整文件排他锁(行为与原实现一致)。
+    - Windows: 原子创建 O_EXCL 锁文件做互斥,带超时重试兜底。
+    """
+    if _HAVE_FCNTL:
+        lf = open(lock_path, "w")
+        try:
+            fcntl.flock(lf, fcntl.LOCK_EX)
+            return func()
+        finally:
+            try:
+                fcntl.flock(lf, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            lf.close()
+    else:
+        deadline = time.time() + 10
+        while True:
+            try:
+                fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                break
+            except FileExistsError:
+                if time.time() > deadline:
+                    return func()  # 超时放行,不阻塞对话
+                time.sleep(0.1)
+        try:
+            return func()
+        finally:
+            try:
+                os.close(fd)
+            except Exception:
+                pass
+            try:
+                os.remove(lock_path)
+            except Exception:
+                pass
+
+
+DEFAULT_TARGET = os.path.expanduser("[记忆共享中心]/未知未知/悬置区.md")
 TARGET = os.environ.get("UU_TARGET", DEFAULT_TARGET)  # 测试可重定向
-DEFAULT_STATE = "[记忆共享中心]/未知未知/.route_state.json"
+DEFAULT_STATE = os.path.expanduser("[记忆共享中心]/未知未知/.route_state.json")
 STATE_PATH = os.environ.get("UU_STATE", DEFAULT_STATE)  # 测试可重定向
-DEFAULT_HEARTBEAT = "[记忆共享中心]/未知未知/.route_heartbeat.json"
+DEFAULT_HEARTBEAT = os.path.expanduser("[记忆共享中心]/未知未知/.route_heartbeat.json")
 HEARTBEAT_PATH = os.environ.get("UU_HEARTBEAT", DEFAULT_HEARTBEAT)  # 调度心跳·测试可重定向
 
 MARKER_RE = re.compile(r'【🕳️\s*我的未知未知】\s*\n?([\s\S]*?)(?=\n【|\n\[|$)')
@@ -178,7 +232,7 @@ def mark_heartbeat():
 def main() -> int:
     mark_heartbeat()  # 调度即记心跳（与任何结果解耦）
     try:
-        raw = sys.stdin.read()
+        raw = sys.stdin.buffer.read().decode('utf-8', errors='replace')
         if not raw.strip():
             return 0
         payload = json.loads(raw)
@@ -213,29 +267,30 @@ def main() -> int:
     if not blind:
         return 0
 
-    # 去重检查
-    try:
-        with open(TARGET, "r", encoding="utf-8") as f:
-            target_text = f.read()
-    except Exception:
+    # 去重检查 + 写入（跨平台互斥临界区 · 防多端并发覆盖/编号撞车）
+    lock_path = TARGET + ".lock"
+
+    def _route_critical():
+        try:
+            with open(TARGET, "r", encoding="utf-8") as f:
+                target_text = f.read()
+        except Exception:
+            return 0
+        if already_routed(blind, target_text):
+            return 0
+        idx = next_index(target_text)
+        date = datetime.now().strftime("%Y-%m-%d")
+        entry = build_entry(idx, date, blind)
+        new_text = insert_entry(target_text, entry)
+        try:
+            with open(TARGET, "w", encoding="utf-8") as f:
+                f.write(new_text)
+        except Exception:
+            return 0
+        mark_routed(blind)
         return 0
 
-    if already_routed(blind, target_text):
-        return 0
-
-    idx = next_index(target_text)
-    date = datetime.now().strftime("%Y-%m-%d")
-    entry = build_entry(idx, date, blind)
-    new_text = insert_entry(target_text, entry)
-
-    try:
-        with open(TARGET, "w", encoding="utf-8") as f:
-            f.write(new_text)
-    except Exception:
-        return 0
-
-    mark_routed(blind)
-    return 0
+    return with_lock(lock_path, _route_critical)
 
 
 if __name__ == "__main__":

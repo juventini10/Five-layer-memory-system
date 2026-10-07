@@ -1,0 +1,152 @@
+# LobsterAI 能力矩阵（v2.0 合并包读取·install_scripts.py Step0 据此分支）
+platform: lobsterai
+config_root: "~/Library/Application Support/LobsterAI/openclaw/state"
+display_name: "LobsterAI"
+emoji: "🧭"
+capabilities:
+  rules_inject: false        # 无独立 rules/ 目录（OpenClaw 引擎·bootstrap 文件制）
+  agents_full_inject: true   # workspace AGENTS.md 每会话全文加载（单文件 20000 字符·截断保头·2026-09-22 实测）
+  hooks_event: false         # ⚠️ 非 settings.json 形态（本端配置=openclaw.json·state 下无 settings.json）→ 走 hooks_alternative 委派，⛔不走标准 19 钩子注册（条文 8）
+  hooks_alternative: true    # 有 hook 能力·但载体=OpenClaw 第三方插件（openclaw.plugin.json → openclaw.json plugins.entries）
+  hooks_mechanism: "OpenClaw third-party plugin (third-party-extensions/<id>/openclaw.plugin.json)"
+  hook_stdout_inject: false  # 无 CC 式 stdout 注入面
+  settings_json: false       # 配置走 openclaw.json（非 settings.json schema）
+  awareness: false
+  skill_symlink: true        # ~/Library/Application Support/LobsterAI/SKILLs/ 软链直挂（权威源=记忆中心/技能配置/）
+  custom_directive: true     # 执行准则走 AGENTS.md 头部段（本端等价通道·2026-09-22 融入·载体=workspace-main/AGENTS.md）
+install_entry: "setup.sh"  # 条文 13·非标准 hook 端安装入口单一真源（install_scripts.py 读本字段委派·⛔不硬编码猜名）
+
+# ─── 安装后喊话（节点17·2026-10-06 补·装后唯一出口=install_scripts.py 打印本字段）───
+post_install_message: |
+  ✅ LobsterAI 端适配完成。四插件（童灵/路由/脚本体系/知识库）已注册进 openclaw.json，AGENTS.md 头部段每会话恒注入——新开会话即生效。
+  ⏭️ 待你手动一步：数字分身「人格内核」需自行造芯——照 数字分身/onboarding/ 模板：答题（HEXACO 100 + 33 题）→ 填模板 → 跑 k2-slice-generator 生成切片。
+  ⚠️ 切片落位：persona（L1–L6）写入 SOUL.md，⛔不要写 USER.md（本端 USER.md 独立 4,000 字符预算·超限不注入且无告警）。
+  🔁 若插件未在当前会话生效，重开 LobsterAI（或 /plugins 重载）后新开会话。
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hooks_alternative: optional   # 非标准钩子机制（extensions/launchd/cli）·非本端形态即缺
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+memory_root: "workspace-main/MEMORY.md"  # 导航仪（非经验积累器）
+
+# ─── 钩子路由（SSOT 指向·不复制矩阵内容·防双本账漂移）───
+hooks_ssot: "[记忆共享中心]/记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/01-脚本架构设计通用规范.md#二·七"
+hooks_validator: "install_scripts.py --verify --platform lobsterai"
+# 实盘接入面：route_lobsterai_patrol.sh（crontab 拉式）+ plugins.allow（lobsterai-route-inject/kb-inject/doenglingz）+ state/hooks 目录
+# 端专属：lobsterai_session_anomaly_guard（附加守卫·不在 13-Hook 分母内）
+
+# ─── 安装状态（诚实标注）───
+install_status: "adapter-v1-delegated"  # --platform lobsterai → 委派本目录 setup.sh（AGENTS.md 头部段注入 + skills 软链 + 童灵插件装/注册）
+
+# ─── 钩子注册面（插件承载型端·2026-10-03·非 cli/config.json / settings.json / launchd）───
+# install_scripts.py --verify 按本字段分派注册面——⛔按 zcode_form 核 cli/config.json=端注册面恒空⇒假红
+hooks_registration_face: "openclaw_plugins"   # 真源=宿主 openclaw.json 的 plugins.entries/allow
+hooks_plugins:                                # 承载插件 id（须在 plugins.entries + allow）
+  - lobsterai-doenglingz
+  - lobsterai-route-inject
+  - lobsterai-kb-inject
+  - lobsterai-buluotuo-hooks
+# ── 第二承载面（2026-10-05 实盘补登·先前双本账漏登记）──
+# 形态≠A 面：state/hooks/<id>/{handler.js,HOOK.md}（非 openclaw.plugin.json 插件形态），
+# 是宿主自带的 hook 目录承载面，⛔ 不在 plugins.entries/allow（那是 A 面专用注册表）。
+# ⚠️ 这 2 个 handler 是**实盘在跑**的（state/hooks/ 目录实扫），不登记 = 条文33「没声明=没人知道」。
+hooks_secondary_face:                         # 第二承载面·目录型 handler
+  face: "state_hooks_dir"
+  base: "state/hooks/"
+  handlers:
+    - {id: lobsterai-stop-audit, desc: "Stop 侧审计 handler（形态 B·目录型）"}
+    - {id: lobsterai-miss-feeder, desc: "路由未命中喂料 handler（形态 B·目录型）"}
+hooks_surface:
+  delivered:                                  # 4 插件按事件类承载·装机即得（2026-10-03 实盘核对）
+    - {script: rule_fragment_inject.py,     event: UserPromptSubmit, src: references/scripts}
+    - {script: secret_key_guard.py,         event: UserPromptSubmit, src: references/scripts}
+    - {script: ttl_expiry_guard.py,         event: UserPromptSubmit, src: references/scripts}
+    - {script: session_tail_inject.py,      event: UserPromptSubmit, src: references/scripts}
+    - {script: route_inject_prompt.py,      event: UserPromptSubmit, src: references/scripts}
+    - {script: kb_inject_prompt.py,         event: UserPromptSubmit, src: references/scripts}
+    - {script: route_unknown_unknown.py,    event: Stop,             src: references/scripts}
+    - {script: rule_three_layer_guard.py,   event: Stop,             src: references/scripts}
+    - {script: systemlog_stophook_check.py, event: Stop,             src: references/scripts}
+    - {script: reply_tail_guard.py,         event: Stop,             src: references/scripts}
+    - {script: post_change_guard.py,        event: Stop,             src: references/scripts}
+    - {script: delivery_boundary_guard.py,  event: Stop,             src: references/scripts}
+    - {script: twin_verdict_ledger.py,      event: Stop,             src: digital-twin/devtools, component: twin}
+    - {script: twin_changelog_guard.py,     event: Stop,             src: digital-twin/devtools, component: twin}
+    - {script: edit_heading_guard.py,       event: PreToolUse,       src: references/scripts}
+    - {script: skill_write_gate_guard.py,   event: PreToolUse,       src: references/scripts}
+    - {script: skill_spec_read_guard.py,    event: PreToolUse,       src: references/scripts}
+    - {script: grep_sandbox_guard.py,       event: PreToolUse,       src: references/scripts}
+    - {script: crossend_guard.py,           event: SessionStart,     src: references/scripts}
+    - {script: doenglingz_inject_prompt.py, event: UserPromptSubmit, src: digital-twin/devtools, component: twin}
+    # ── 2026-10-06 LobsterAI 端独占机制面新增登记（⛔此前只改代码未登记·真装会按本表重注册致漏装）
+    # 依据：探针实证本端真派发（见 端接入记录/接入记录-LobsterAI.md）+ 各面实跑留痕
+    - {script: agent_turn_prepare 面·kb_inject 提层,  event: AgentTurnPrepare, src: digital-twin/devtools, component: twin, note: "知识检索确定性在场专属位·主层"}
+    - {script: delivery_boundary_sending_guard.py,  event: MessageSending,   src: references/scripts, note: "外发边界声明·端独占面·WB无对应面"}
+    - {script: tsl_closeout_guard.py,               event: Stop,             src: digital-twin/devtools, component: twin, note: "TSL收尾守卫·L5痕账本生产者·10-06补挂"}
+    - {script: (注入面·before_agent_finalize),        event: AgentFinalize,    src: digital-twin/devtools, component: twin, note: "A通道·末段修正型(Stop档从只看升级为能纪)"}
+  gaps:                                    # W1/W3 注入·红区闸·五查台账由 lobsterai-doenglingz 插件内联承载（非独立脚本）
+    - before_agent_run 阻断（**⛔刻意不启用**·v1.40 登记：误判即吞用户原话·不可逆 + 官方明写⛔依赖 embedded/CLI runner·本端形态未证 ⇒ 风险不对等·排序后置）
+    - agent_end 事件面（**⛔平台边界**·官方明写 webchat 路径下该面在本端不发射·实际派发面=before_prompt_build/agent_turn_prepare）
+    - resolve_exec_env（**本端已挂**·注 BULUOTUO_MC/STATE_DIR/SCRIPTS 三键·非 hook 面·不计入 ROSTER 分母）
+
+# ─── 五系统文件落点（端级验收 §1.5 / 面A·2026-10-03 补）───
+# 本端形态：SOUL/IDENTITY/USER/MEMORY = workspace-main/ 下独立文件（OpenClaw 每会话加载）；
+# 自定义指令 = AGENTS.md 头部段（本端等价通道）。路径基准 = 本端 config_root（=state/）。
+system_file_paths:
+  # key 必须与 install_scripts.py 的 SYS_FILE_NAMES 逐字一致才能被 system_file_targets() 命中：
+  #   ("SOUL.md","IDENTITY.md","USER.md","MEMORY.md","customPrompt.md")
+  # ⛔ 旧写法「自定义指令」= 自造 key·永不命中 ⇒ 第五件回落成 <config_root>/customPrompt.md（该文件本端不存在）
+  SOUL.md: "workspace-main/SOUL.md"
+  IDENTITY.md: "workspace-main/IDENTITY.md"
+  USER.md: "workspace-main/USER.md"
+  MEMORY.md: "workspace-main/MEMORY.md"
+  # 本端第5件载体 = AGENTS.md（OpenClaw 官方 how to behave 位·无 customPrompt 字段），
+  # 但 key 仍用标准名 customPrompt.md —— key 是协议，value 是端形态。
+  customPrompt.md: "workspace-main/AGENTS.md"
+
+# 断章段 id（宪法 C1）：第5件走**头部段增量**·⛔ 不覆盖 AGENTS.md 的 App 托管段
+# ⚠️ 一经发布不可改：改了找不到旧段 ⇒ 追加半截段
+system_file_segments:
+  SOUL.md: "sys.soul"
+  IDENTITY.md: "sys.identity"
+  USER.md: "sys.user"
+  MEMORY.md: "sys.memory"
+  customPrompt.md: "sys.customprompt.lobsterai.agentsheader"
+
+# ─── 数字分身功能面映射（twin_surface·可选组件但「可选≠缺声明」·条文16 降级不阻塞）───
+twin_surface:
+  injection:
+    - {what: W1 上岗自证 + W3 域切片路由, hook: doenglingz_inject_prompt.py, carrier: "插件 before_prompt_build → appendContext 注入"}
+    - {what: K2 core_slice+L6 常驻, carrier: "AGENTS.md / USER.md 童灵节"}
+  guards:
+    - {what: 分身守护五查, hook: "lobsterai-doenglingz 插件 agent_end 内联", note: 观察型·落台账}
+    - {what: 红区审批闸, hook: "lobsterai-doenglingz 插件 before_tool_call 内联"}
+    - {what: 运行期裁决台账, hook: twin_verdict_ledger.py}
+    - {what: 规格书↔CHANGELOG 漂移守卫, hook: twin_changelog_guard.py}
+  ledger:
+    - {what: 运行期裁决台账, hook: twin_verdict_ledger.py}
+  gaps:
+    - {what: K2 造芯管线/答题链, note: 走 INSTALL §数字分身完整版单装（三阶段）}

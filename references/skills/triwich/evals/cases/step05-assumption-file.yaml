@@ -1,0 +1,16 @@
+id: step05-assumption-file
+title: Step0.5隐含假设判定文件落盘
+description: 防跳步锁：Step0产出steps/step0-determination-{ts}.md且含隐含假设段（Fail-Closed）
+input:
+  prompt: |
+    为什么我们的API响应时间总是不稳定？从底层拆一下原因。
+expect:
+  files_exist:
+    - "steps"
+  must_contain:
+    - "三明智 L1"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

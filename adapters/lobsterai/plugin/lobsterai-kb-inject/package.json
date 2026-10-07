@@ -1,0 +1,7 @@
+{
+  "name": "lobsterai-kb-inject",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "布洛陀知识库注入（LobsterAI）·before_prompt_build 转发公共注入器 kb_inject_prompt（config 驱动）"
+}

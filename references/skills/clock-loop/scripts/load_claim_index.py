@@ -24,6 +24,10 @@
 用法：
   python3 load_claim_index.py [--ledger PATH]
 """
+# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+try:
+    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys as _sys
 try:
     _sys.stdout.reconfigure(encoding="utf-8")
@@ -37,7 +41,7 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_LEDGER = "~/个人AI档案/未知未知/断言台账.md"
+DEFAULT_LEDGER = "~/[记忆共享中心]/未知未知/断言台账.md"
 
 
 def resolve_path(p: str) -> Path:
@@ -52,7 +56,7 @@ def load_topics(ledger_path: Path) -> dict:
     text = ledger_path.read_text(encoding="utf-8")
 
     # 匹配 ### 断言#{n} · DATE 块
-    claim_blocks = re.split(r'(?m)^###\s+断言#\d+', text)
+    # v3.50.1（#49）：删除死代码行 claim_blocks=re.split(...)——赋值后全文未使用，实际解析用下方 re.findall
     topics = []
     active_count = 0
 
@@ -92,7 +96,7 @@ def main():
     parser.add_argument(
         "--ledger",
         default=DEFAULT_LEDGER,
-        help="断言台账.md路径（默认：~/个人AI档案/未知未知/断言台账.md）",
+        help="断言台账.md路径（默认：~/[记忆共享中心]/未知未知/断言台账.md）",
     )
     args = parser.parse_args()
 

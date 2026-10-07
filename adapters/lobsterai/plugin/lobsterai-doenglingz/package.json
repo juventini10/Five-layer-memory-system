@@ -1,0 +1,7 @@
+{
+  "name": "lobsterai-doenglingz",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "数字分身（童灵）LobsterAI 端接入·W1+W3 注入 + agent_end 守护五查（config 驱动）"
+}

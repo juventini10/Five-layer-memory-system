@@ -1,0 +1,15 @@
+# 运行时态不入版本库（v4.4.10 建·v4.4.13 R5-N3 锁改通配——手抄枚举=第三把锁必漏网）
+scripts/seal.log
+scripts/followup_ledger.log
+**/*.lock
+**/__pycache__/
+# v1.5.6（T1 根治）契约漂移指纹台账·运行时态·换机重跑即重建（对齐 seal.log/followup_ledger.log 策略）
+.seal_fingerprint
+
+# v4.4.15 收口·静默落盘锁基线（运行时态·换机重跑即重建）
+.landing_baseline
+.landing_baseline.*
+
+# v4.5.1 Loop批：两轮落账pending + 简报基线(运行时态·换机重跑即重建)
+.seal_fingerprint.pending
+.briefing_baseline*

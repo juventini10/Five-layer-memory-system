@@ -1,0 +1,20 @@
+name: buluotuo-tsl-hook
+version: 1.0.0
+description: >-
+  布洛陀 TSL 三件套 · Hermes 端承载（作者 2026-10-02 授权接入）。TSL = 会话级 L0-L7 执行验证
+  清单，回答「这回合到底做没做、凭什么说做了」。三件分工：**产出与呈现都不经 AI 意志**——
+  ①tsl_tree_hook（post_llm_call·等价 Stop）读 stamps.log 取窗口 → 跑 tsl_verify --full → 树写文件
+  （把 TSL 从「AI 手动跑」变「机制机械产」）；②tsl_echo_hook（pre_llm_call·等价 UPS）读树·未消费
+  则注入 additionalContext 强制 relay + 写 .consumed（闭环末环·同 stamp 只注一次）；
+  ③tsl_closeout_guard 反向校验「说了要树是否真跑」·手绘/自填会被留痕。
+  **⛔ 内置档位门控 session_d_tier（v1.2·ZCode 端先例）——树义务仅 D3**（童灵 08 §七）·
+  非 D3 ⛔ 不产文件＝「AI 不该 relay」从判据升级为**物理不可达**（09-30 作者质证的机制级根治）。
+  端隔离：TSL_TREE_OUT/TSL_INJECT_STATE env 指向 ~/.hermes/doenglingz/·⛔不写 ~/.workbuddy。
+  ⚠️ 门控前提已补：本轮改 doenglingz-twin 走 stdin 载荷·使注入台账 session_id 真落
+  （此前 argv 传参致 _PAYLOAD={}·门控退化为全局最新行=跨会话串台）·⛔未改公共注入器本体。
+  失败放行·恒不阻断。
+author: Hermes
+type: user
+provides_hooks:
+  - pre_llm_call
+  - post_llm_call

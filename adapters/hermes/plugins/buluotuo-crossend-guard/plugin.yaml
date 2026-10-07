@@ -1,0 +1,17 @@
+name: buluotuo-crossend-guard
+version: 1.0.0
+description: >-
+  布洛陀跨端泄漏守卫（Hermes 端适配 · crossend_guard.py 的 Hermes 端承载）。
+  2026-10-01 裁决产物——SSOT 旧记 Hermes「无 SessionStart 事件·平台边界」，
+  但实测否决了"直接挂原版"两个理由：①on_session_start 在 VALID_HOOKS 内但主链路
+  零调用点（plugins_dispatch.py:45 是超时策略分类非调用点）挂上永不执行；
+  ②原版扫 ~ 根找 Qoder 系特征名，设计前提是多工具共居家目录，而 ~/.hermes 是独立根，
+  照搬即"为填分母而装守卫"。但 Hermes 端有**成因相反**的真实泄漏面：共脚本
+  doenglingz_guard.py L117/L118 写死 ~/.workbuddy（不读 env）⇒ 实测产出
+  doenglingz_w1_watermark_qodercn.bak-*-hermes-leak。本插件在**端适配层**做探测+
+  端隔离兜底（quarantine 移出·⛔ 只 backup 不 delete·双条件锁定不误伤他端数据），
+  ⛔ 不改公共脚本本体（多端共用·越列归属）。只记录不拦截·恒 exit 0·台账 ~/.hermes/。
+author: Hermes
+type: user
+provides_hooks:
+  - on_session_end

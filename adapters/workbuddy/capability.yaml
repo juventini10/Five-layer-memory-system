@@ -1,0 +1,200 @@
+# WorkBuddy 能力矩阵（v2.0 合并包·2026-09-23 补声明·发布面地基对称）
+# 背景：WB=install_scripts.py 默认分支（无 --platform 即本端），历史上无声明文件
+# → T17 误列"待迁入"。本 yaml 补对称，能力值全部取自本包实证（行号=install_scripts.py）。
+platform: workbuddy
+display_name: "WorkBuddy"
+emoji: "⚡"
+config_root: "~/.workbuddy"
+capabilities:
+  rules_inject: true         # .mdc rules alwaysApply 常驻（计划文档§三架构图 workbuddy 行）
+  agents_full_inject: true   # CAPABILITY-MATRIX.md WB 列 AGENTS=✅
+  hooks_event: true          # ROSTER 19钩子·4事件全活（L51-69 实读：UPS/PreToolUse/SessionStart/Stop）
+  hook_stdout_inject: true   # UserPromptSubmit route/rule/guard 五件注册于 ROSTER 头部
+  settings_json: true        # ~/.workbuddy/settings.json 注册面（L42 SETTINGS 常量）
+  awareness: true            # settings.json hooks + awareness + .mdc rules（§三架构图原文）
+  skill_symlink: true        # ~/.workbuddy/skills/ 软链（win-verify V11 判据在管）
+  custom_directive: true     # SOUL/IDENTITY/USER 落 ~/.workbuddy/（step5 契约·V12 判据）
+  # 2026-10-03 实测（隔离干净机 verdict=failed 定案）：本端 <cfg_root>/plugins/ 是
+  #   **端应用自建**目录（cache · marketplaces · installed_plugins.json），
+  #   ⛔ 本包安装器从不装它 ⇒ 回执不得要求它存在（否则新用户装完即判 failed）
+  plugins_delivered: false
+hooks_ssot: "[记忆共享中心]/记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/01-脚本架构设计通用规范.md#二·七"
+
+# ─── 条文33扩展 · 装机基线对称（2026-10-06 你令"按符合愿景的最优解处理"裁决落地）──
+# guard_baseline_seed=py → 安装器 write_guard_baseline 装机期按 deploy_hooks 全量推导
+# 写 hook_baseline.json（期望事件面="该装什么"·非注册回声·GIGO闸保证包缺件时不写）。
+# 此前未声明=端用户装机无自检基线（QCN/lobsterai 等端有）⇒ 对称性补齐：
+# 端用户装完即可机械对账 settings.json 实挂 vs 期望面，闭环不依赖人记得。
+guard_baseline_seed: py
+
+# ─── 条文32 · 五系统文件端自适配声明（2026-10-03 补·口径=五件逐件有本端载体）──
+# 五件口径（SSOT=WorkBuddy布洛陀设计哲学/02-三层分离与系统文件映射规范 §六）：
+#   SOUL / IDENTITY / USER / MEMORY / 自定义指令（customPrompt 等价物）·⛔SHADOW 不算（L5 投影进 USER.md 的段）
+#
+# 本端形态（2026-10-03 实测·非凭印象）：
+#   四件 md 落配置根（扁平结构）；自定义指令⛔不是独立文件——
+#   是 WorkBuddy 设置框的 JSON 字段 ⇒ 用「路径::字段」形态声明（verify §1.5 支持该形态走字段级核验）。
+#   ⚠️ 别端别形态（对照）：zcode 五件全并入 AGENTS.md（单通道合一）· doubaowork 落 ~/.doubaowork-config/ 靠粘贴。
+#   ⇒ 五件是五件，**各端按自身特性适配**，⛔ 不共用一套落点。
+system_file_paths:
+  SOUL: "SOUL.md"                                    # → ~/.workbuddy/SOUL.md（实测 6662 bytes）
+  IDENTITY: "IDENTITY.md"                            # → ~/.workbuddy/IDENTITY.md（实测 452 bytes）
+  USER: "USER.md"                                    # → ~/.workbuddy/USER.md（实测 16673 bytes）
+  MEMORY: "MEMORY.md"                                # → ~/.workbuddy/MEMORY.md（实测 6520 bytes）
+  customPrompt: "app/app-config.json::personalization.customPrompt"   # 设置框字段（实测 1338 chars·⛔非 md）
+
+# 五件模板来源（2026-10-03）：**公共模板 + 端名注入**——不是没做端适配
+#   本端是扁平配置根（~/.workbuddy/），五件原样用 references/templates/ 公共模板，
+#   合成时按本文件 display_name=WorkBuddy / emoji=⚡ 注入端名与署名格式
+#   （落点见 step5-file-synthesis.md「端名注入（G2-2 走查缺陷修·ID-5）」）。
+#   ⛔ 不另建 adapters/workbuddy/templates/ 复制一份——那是第二本账·端名注入做同一件事。
+system_file_tpl_mode: shared
+
+# ─── 条文33 · 端侧功能面映射声明（2026-10-03 补）──
+# 三态判据：delivered=机械交付（装完即得）｜endogenous=端自带｜gap=实盘在挂而包无承载。
+hooks_surface:
+  delivered:                    # 装完即得（链 A ROSTER 19 条 + 数字分身 3 条）
+    - {script: route_inject_prompt.py,       event: UserPromptSubmit, src: references/scripts, note: 路由命中 Skill/铁律即预注入}
+    - {script: rule_fragment_inject.py,      event: UserPromptSubmit, src: references/scripts, note: 铁律硬墙}
+    - {script: secret_key_guard.py,          event: UserPromptSubmit, src: references/scripts}
+    - {script: ttl_expiry_guard.py,          event: UserPromptSubmit, src: references/scripts}
+    - {script: session_tail_inject.py,       event: UserPromptSubmit, src: references/scripts}
+    - {script: edit_heading_guard.py,        event: PreToolUse,       src: references/scripts}
+    - {script: skill_write_gate_guard.py,    event: PreToolUse,       src: references/scripts}
+    - {script: skill_spec_read_guard.py,     event: PreToolUse,       src: references/scripts}
+    - {script: grep_sandbox_guard.py,        event: PreToolUse,       src: references/scripts}
+    - {script: crossend_guard.py,            event: SessionStart,     src: references/scripts}
+    - {script: workbuddy_inject_chain_guard.py,  event: Stop,     src: references/scripts, note: 本端注入链自检}
+    - {script: workbuddy_skill_health_guard.py,  event: Stop,     src: references/scripts, note: 本端 Skill 健康自检}
+    - {script: kb_inject_prompt.py,     event: UserPromptSubmit, src: references/scripts, note: 知识库预注入}
+    - {script: route_miss_feeder.py,    event: UserPromptSubmit, src: references/scripts}
+    - {script: change_reflux_guard.py, event: PreToolUse,   src: references/scripts}
+    - {script: audit_search_kb.py,     event: Stop,         src: references/scripts}
+    - {script: card_id_guard.py,       event: Stop,         src: references/scripts}
+    - {script: change_closedloop_guard.py, event: Stop,      src: references/scripts}
+    - {script: design_family_guard.py, event: Stop,         src: references/scripts}
+    - {script: feedback_detect.py,     event: Stop,         src: references/scripts}
+    - {script: guard_doc_consistency.py, event: Stop,        src: references/scripts}
+    - {script: guard_heartbeat_check.py, event: Stop,        src: references/scripts}
+    - {script: record_card_trigger.py, event: Stop,         src: references/scripts}
+    - {script: route_audit.py,         event: Stop,         src: references/scripts}
+    - {script: route_guard_audit.py,   event: Stop,         src: references/scripts}
+    - {script: triwich_closeout_guard.py, event: Stop,      src: references/scripts}
+    - {script: vision_gate.py,         event: Stop,         src: references/scripts}
+    - {script: skill_version_guard.sh, event: Stop,         src: digital-twin/guards, note: Skill 版本↔CHANGELOG 对账（端中立化·2026-10-03）}
+    - {script: session_title_namer.py, event: UserPromptSubmit, src: references/scripts, note: 对话标题自动命名}
+    - {script: route_unknown_unknown.py,     event: Stop,             src: references/hooks,    note: 未知未知兜底}
+    - {script: rule_three_layer_guard.py,    event: Stop,             src: references/scripts, note: 回复格式契约三项}
+    - {script: systemlog_stophook_check.py,  event: Stop,             src: references/scripts}
+    - {script: reply_tail_guard.py,          event: Stop,             src: references/scripts}
+    - {script: post_change_guard.py,         event: Stop,             src: references/scripts}
+    - {script: delivery_boundary_guard.py,   event: Stop,             src: references/scripts}
+  gaps:                          # 实盘在挂·包无承载（⚠️如实可见·不判 FAIL·逐条写明为什么不进包）
+    - {script: guard_registry_check.py,      note: 比对「守卫编写规范 §四注册表」（**作者侧文档**·端用户机没有）⇒ 前提不成立}
+    - {script: panel_snapshot.py,            note: 读多端 settings.json 写作者侧 logs/runtime（**面板快照**·作者侧运营件）}
+    - {script: platform_adaptation_check.py,  note: 发版门禁（**发包时用**·端用户机不打包）}
+    - {script: changelog_guard.sh,           note: 检查记忆规则三层的 CHANGELOG——**该文件不在包内**（源侧有·未纳入镜像）⇒ 端用户机无对象可守}
+    - {script: manifest_registrar.py,        note: 管「脚本入册」——**装完后的作者侧维护动作**·端用户无需再登记脚本}
+twin_surface:
+  injection:                     # 人格注入
+    - {what: K2 core_slice+L6 常驻,  carrier: USER.md 数字分身·童灵节}
+    - {what: W1/W3 上岗+域切片注入,  hook: doenglingz_inject_prompt.py, carrier: UserPromptSubmit}
+  guards:                        # 守卫
+    - {what: 规格书↔CHANGELOG 漂移,  hook: twin_changelog_guard.py}
+  ledger:                        # 治理台账
+    - {what: 运行期裁决台账,      hook: twin_verdict_ledger.py}
+  tsl:                           # TSL 三件
+    - {what: 产树,  hook: tsl_tree_hook.py}
+    - {what: 树回执, hook: tsl_echo_hook.py}
+    - {what: 逐行比对, hook: tsl_closeout_guard.py}
+  reach:                         # 触达
+    - {what: 岗位3触达, hook: position3_notify.py}
+    - {what: 档位声明守卫, hook: doenglingz_level_declare_guard.py}
+  gaps:                          # 分身域已知缺口
+    - {what: 3 件只读守卫,  note: 依赖作者侧设施·端用户无对象·不随包（作者侧夹具白名单已裁决）}
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+
+# ─── 安装后喊话（2026-10-03·自定义指令呈现·你定「贴出来让用户自行判断要不要粘」）──
+# ⚠️ 本段**呈现文案 + 待粘贴正文**一体：呈现文案在终端（不受 1500 限制）·
+#    正文是要粘进设置框的内容（受 1500 限制）——两者别混。
+# ⛔ 正文来源 = 包内**端中立通用版**（`execution-guidelines.md` 剥 frontmatter·多端共用同一份·零个人信息）。
+# ⛔ ⓪ 不新建 adapters/workbuddy/rules/ 副本——复用即单一真源·复制即第二本账。
+post_install_message: |
+  ════════════════════════════════════════════════════════════
+  📋 自定义指令 · 布洛陀五件系统文件的第 5 件
+
+  【它是什么】
+  WorkBuddy 里你能自己改的、最强的一组指令。
+
+  四个系统文件各管一层：
+    MEMORY          管「记得什么」
+    SOUL / IDENTITY 管「是什么性格、是谁」
+    USER            管「用户是谁」
+    自定义指令       管「做事时必须守什么规矩」
+
+  两句话记住它：
+    · 开机就加载，不用触发，每次都在
+    · 优先级在所有项目规则之上 —— 不是建议，是指令
+
+  【为什么给你】
+  布洛陀的九条规定装在这里。粘上，AI 每次动手前都会先过一遍
+  「先看清 / 最小方案 / 不越界 / 实事求是」这些底线。
+
+  【要粘吗】
+  要粘就粘，不粘也能用 —— 不粘时布洛陀少了这层约束，其他四件照常。
+  已经有内容了？那就只取你想要的段落，别整段盖掉你写的。
+
+  【在哪粘】
+  WorkBuddy → 设置 → 个性化 → 自定义指令
+  全选复制下面这段 → 粘进去 → 保存。
+
+  ⚠️ 这个框上限 1500 字。下面这段 1267 字，还剩 233 字给你自己加。
+  ════════════════════════════════════════════════════════════
+  # 执行准则 · 顶层指令
+
+  SOUL=你是谁 · 铁律版=底线清单 · 本准则=动手前检查清单
+  权衡：严谨>速度；简单任务自判。
+
+  1. 退一步再动：先说假设，不确定就问；多理解全列出不默选；有更简方案/该反驳就说。首条回复须证你理解了问题。任务理解四问对齐见第 8 条。
+  2. 最小方案：最少代码/字/复杂度。不加未要求功能，不建抽象，不为不可能场景防御。规则化→脚本；灵活判断→模型。"删一半还能达标吗？"
+  3. 精准不过界：只动必须的；先读再改；不顺手改旁边；原好不重构；匹配风格；改 SOUL/IDENTITY/铁律版/USER 须告知用户。改后自检：改了啥文件？跨 SSOT 同步？版本号？记系统日志？清孤立代码。
+  4. 结果闭环：先定义"做完"样；分析→结论+证据+置信度；改→定位行→改→自验；做→结构→做→自验收→告哪看。多步先列计划。不把"应该没问题"当交付。
+  5. 实事求是：未验标⚠️；不知说不知；引用先验真；自批优先(编了/迎合/锚定)。被纠停听不辩不盲认。
+  6. 压缩态铁律(最高优先级·不可删·与铁律版同源)：001先看清=增删改移/批量前 Read/Grep→分析→呈现→确认→执行；002实事求是=数字/行/版先计数再写+写记忆前三问(可追溯/观推混/可纠)；005删除防护=trash非rm·软链先readlink·批量5+先commit·不可逆先备份。写记忆前查容量上限，超限指针化。
+
+  7. 反绕过：⛔禁止改述/换词/分段规避规则（如把"删"说成"整理"）；规则字面+意图皆不可绕，被识破=最高层违规。
+  8. 任务前对齐（执行默认·提问例外）：收到任务先退一步，按四问自检——①用户真要解决啥？②最终交付啥？③哪些限制必守？④怎样算真完成？
+     - 自查优先：信息不足先判能否从上下文/文件/工具查明，能查清的不反问用户。
+     - 提问例外：仅当缺失信息会改方向/致明显返工/涉不可逆操作/属个人偏好时才问；一次集中问并说明影响；⛔DO NOT 一问一答反复打断。
+     - 简报不闸门：复杂任务执行前简要输出「目标/交付物/限制/验收/假设」五要素，是透明简报非确认闸门，用户未叫停即继续。
+     - 小歧义从稳：不影响核心结果的小歧义，走最稳妥·最小·可撤销方案并明说假设。
+     - 纠正即重定：用户一纠正，立刻以最新要求全量重扫任务范围，弃用失效理解不沿用旧基准。
+     - 简单任务直执行：需求明确的简单任务直接动手，⛔DO NOT 为守流程机械提问。
+  9. 表格优先·结构化呈现：凡对比/分类/参数/多维度等结构化信息，默认表格而非文字堆砌。表格须保持**可读控宽**：列数控制在信息表达所需最少；每格内容过长时用换行折行或改缩进分点，⛔不许压成单行长句硬撑——宽表要往右拉=不合格。具体列数/字数上限为**用户个人偏好**，由各端本地规则层按用户既有规范覆盖（不随通用包强绑）。
+  ⚠️ 回复格式：每条=【意图分类】→问题本质→已知事实→方案→验证→产出签名。漏任一项=不完整。

@@ -1,0 +1,43 @@
+# 通用评估模式库 - v1.0 (2026-09-02)
+# 用途: clock-loop 阶段2 对非 Skill 对象(A审核/B生成/C分析/D修复)的多维评分依据
+# 来源: 补链loop独立审查 P1#1 根治——原 general_evaluation 降级落点为空,非Skill对象无机检可走
+# 权重对齐: current_weights.yaml 的 general 段(content_quality 0.35/structure_clarity 0.25/actionability 0.25/philosophical 0.15)
+
+general_evaluation:
+  type_detection:
+    rules:
+      - type: "content"
+        signal: "对象为文案/文章/报告/文档等非SKILL.md产物"
+      - type: "analysis"
+        signal: "对象为数据/结论/方案等分析产出"
+      - type: "fix"
+        signal: "对象为代码/配置修复结果"
+
+  dimensions:
+    - name: "内容质量"
+      weight: 0.35
+      check_items:
+        - item: "核心诉求全覆盖（对照阶段1确认的checklist逐项）"
+        - item: "事实性内容有来源或标注⚠️未验证"
+        - item: "无自相矛盾表述"
+        - item: "无占位符/模板残留"
+    - name: "结构清晰度"
+      weight: 0.25
+      check_items:
+        - item: "结构服务读者（结论先行/层级分明）"
+        - item: "标题与内容一致"
+        - item: "无信息断层（跳步/悬空引用）"
+    - name: "可操作性"
+      weight: 0.25
+      check_items:
+        - item: "产出可直接使用（文件落盘/结论可执行）"
+        - item: "下一步行动明确"
+        - item: "异常路径有说明"
+    - name: "哲学评估"
+      weight: 0.15
+      check_items:
+        - item: "价值对齐（不损害使用者利益）"
+        - item: "认知边界（不确定性已标注）"
+        - item: "意义完整性（为什么做可追溯）"
+
+  scoring_notes: "每维度得分=通过项/总项；哲学≥85%按及格/不及格二值计入（对齐skill路径口径）；审查/封口/收尾门禁流程与skill路径同构"

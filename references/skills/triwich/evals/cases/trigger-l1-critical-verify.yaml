@@ -1,0 +1,15 @@
+id: trigger-l1-critical-verify
+title: 触发词"靠谱吗"命中L1批判验证路径
+description: 验证批判验证触发词路由正确
+input:
+  prompt: |
+    有人说"微服务一定比单体好"，这个说法靠谱吗？
+expect:
+  must_contain:
+    - "三明智 L1"
+    - "批判验证"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

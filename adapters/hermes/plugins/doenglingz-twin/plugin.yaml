@@ -1,0 +1,12 @@
+name: doenglingz-twin
+version: 1.0.0
+description: >-
+  童灵（Doenglingz）· Hermes 端接入插件。三条装载通道：①register_system_prompt_section
+  恒驻核（每新会话）②pre_llm_call → 共脚本 doenglingz_inject_prompt.py（W1 上岗契约 +
+  W3 域切片按需·每轮）③post_llm_call → 共脚本 doenglingz_guard.py（守护三查 + W1 兑现对账）。
+  端自主适配：零复制共脚本，台账落 ~/.hermes/doenglingz/（端隔离），⛔不引用不写入任何他端目录。
+author: Hermes
+type: user
+provides_hooks:
+  - pre_llm_call
+  - post_llm_call

@@ -1,0 +1,14 @@
+id: trigger-negative-code-op
+title: 反例·宾语为代码不触发
+description: 语境限定规则："分析"宾语是代码→不触发三明智（SKILL.md §语境限定规则）
+input:
+  prompt: |
+    分析这段代码的性能瓶颈在哪。
+expect:
+  must_not_contain:
+    - "三明智"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

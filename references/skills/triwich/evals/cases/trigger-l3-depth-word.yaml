@@ -1,0 +1,15 @@
+id: trigger-l3-depth-word
+title: 深度词命中L3路径声明
+description: 验证"全面/深度"升L3·只断言路径声明（完整双Agent依赖子Agent工具·沙箱内不强制）
+input:
+  prompt: |
+    全面评估一下把团队周报从自由格式改成模板化填写这个方案。
+expect:
+  must_contain:
+    - "三明智 L3"
+    - "深度模式"
+judge:
+  type: rule_based
+  rules:
+    - field: output
+      operator: not_empty

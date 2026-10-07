@@ -1,0 +1,211 @@
+# Hermes 能力矩阵（v1.1 · 2026-10-01 童灵端自主适配后校正）
+# 平台底座：Hermes（Agent desktop / plugins.yaml 注入）·配置根 = ~/.hermes/
+platform: hermes
+display_name: "Hermes"
+emoji: "🪶"
+config_root: "~/.hermes"
+# ── 端系统文件落点映射（2026-10-02 增量宪法配套 · W5-W8 的唯一真源）
+#
+# 为什么要这张表：step5 原写「4 个系统文件 → `[配置根]/`」，对 WorkBuddy /
+# Qoder 等**扁平配置根**的端是对的，但 Hermes 是**混合结构**——
+#   SOUL.md   在配置根（唯一恒定加载位）
+#   USER.md   在 memories/ 子目录（源码硬编码·非我推断）
+#   MEMORY.md 同上
+#   IDENTITY.md 在 Hermes **没有载体** ⇒ 必须并入 SOUL.md
+#
+# ⚠️ 落点依据是 Hermes **源码常量**（不是文档）：
+#   hermes_cli/doctor_state.py:234-238 → memories/ 目录 + MEMORY.md/USER.md
+#   hermes_cli/profiles.py:197       → SOUL.md / MEMORY.md / USER.md 名单
+#   agent/system_prompt.py:545-550   → load_soul_md 读 SOUL.md 为恒定层
+# 表里写的每一条都应能对上其中之一；对不上就是这张表错了（⛔ 不许"看着像"）。
+system_file_paths:
+  SOUL.md: "SOUL.md"                 # 恒定加载位·可并入 IDENTITY
+  USER.md: "memories/USER.md"
+  MEMORY.md: "memories/MEMORY.md"
+  IDENTITY.md: null               # 无独立载体→由安装器并入 SOUL.md
+  自定义指令: null                # 五件口径（2026-10-03·02规范§六）：本端等价载体=并入 SOUL.md 恒定层
+                                  # （custom_directive 注释同口径·register_system_prompt_section 承载）
+
+# 段 id 映射（断章增量用·宪法 C1）——⚠️ 一经发布不可改，改了找不到旧段会追加半截段
+system_file_segments:
+  SOUL.md: "soul.persona"
+  USER.md: "user.profile"
+  MEMORY.md: "memory.notes"
+  IDENTITY.md: "soul.identity"
+
+# 落点校验锚（verify 用·防"表写错但没人发现"）——值 = 必须在源码里存在的常量形态
+system_file_anchors:
+  memories_dir_const: "memories_dir"   # doctor_state.py 的局部变量名
+
+# ── 运行路径语义键声明（2026-10-02 · 插件/脚本的唯一取路径入口）────────
+#
+# 为什么需要：16 个插件各自硬编码**作者侧开发工具路径**（实测 16/16）。
+# 包若照抄 ⇒ 其他用户装完全静默 fail-open。解法＝安装器把本机真实落点写进
+# `<配置根>/doenglingz/runtime_paths.json`，插件只调 `rp("<键>")` 取值。
+#
+# ⚠️ **键名与目录名解耦**：键表达的是**职责**，落点由安装器填。
+#    所以用户的记忆中心叫什么都行，改的只是这一处的值。
+#
+# required=true 的键缺失 ⇒ `rp()` **抛错**（⛔ 不静默回落——回落正是恒真判据的制造机）
+runtime_path_keys:
+  - {key: archive_root,  required: true,  desc: "档案根·所有子目录的父"}
+  - {key: devtools,       required: true,  desc: "开发工具脚本面"}
+  - {key: worklog,        required: true,  desc: "工作日志"}
+  - {key: twin,           required: true,  desc: "数字分身（童灵）"}
+  - {key: blueprint,      required: false, desc: "记忆蓝图（设计哲学）·作者侧重·用户侧可缺"}
+  - {key: skills,         required: true,  desc: "技能配置真源（软链源）"}
+  - {key: kb_engine,      required: false, desc: "知识联邦引擎脚本面"}
+  - {key: knowledge,      required: false, desc: "知识库（卡池）"}
+  - {key: k2_slices,      required: false, desc: "K2 切片蒸馏目录"}
+  - {key: twin_slices,    required: false, desc: "分身人格切片（插件读它注人格）"}
+  - {key: twin_spec,      required: false, desc: "分身人格规格书"}
+  - {key: custom_route,   required: false, desc: "路由家族脚本"}
+  - {key: script_center,  required: false, desc: "脚本中心（软链/索引真源）"}
+  - {key: memory_amber,   required: false, desc: "记忆琥珀（engine 落点）"}
+  # ⚠️ memory/user_profile 字符上限（2026-10-02·作者侧实证·端用户态按需调）
+  #   默认 memory_char_limit=2200 / user_char_limit=1375（hermes_cli/config_defaults.py:1321-1322）
+  #   实测：装完若 USER.md 承载「认知风格+行为画像+路径+边界」全量画像，必然超限。
+  #   超限语义 = 只 WARN 不截断（tools/memory_tool_store.py:159-162），
+  #   但**后续 memory 工具的 add/replace 会被拒** ⇒ 画像层须留余量，别卡死在上限。
+  #   端用户可按画像体量在 ~/.hermes/config.yaml 的 memory 段自行放宽（⛔ 改后需重启 Hermes）。
+
+capabilities:
+  install_entry: setup.sh   # 端部署入口（插件+声明+覆盖层+挂载+三关复验）
+  rules_inject: true         # SOUL.md 恒定加载（~/.hermes/SOUL.md）· 执行准则已自适配 1-9·签名 Hermès 🪶
+  agents_full_inject: true   # user_profile / AGENTS.md / CLAUDE.md 本地配置树可投影（按需）
+  hooks_event: true          # plugins.yaml provides_hooks 机制（非 settings.json；参考 01-注入通道规范.md §一·Hook 行）
+  hook_stdout_inject: true   # ✅ 2026-10-01 校正：pre_llm_call 钩子返回值**注入用户消息（逐轮）**
+                            #   实盘依据 agent/turn_context.py:754-777 _collect_pre_llm_call_context
+                            #   （旧版误记 false·把'无 settings.json 形态'错推为'无逐轮注入'）
+  system_prompt_section: true # ✅ register_system_prompt_section·position=after_memory·每新会话恒驻注入
+                            #   实盘依据 hermes_cli/plugins.py:998（恒驻核承载通道）
+  settings_json: false       # 无 settings.json 形态（Hermes 用 plugin.yaml provides_hooks·⛔此为形态差异非能力缺失）
+  launchd_patrol_note: true  # 无 launchd；Hermes 侧定时能力走内置 cronjob（与 launchd 不同源）
+  awareness: true            # session_memory + memory 工具 + session_search 持久支点已存在
+  skill_symlink: true        # ~/.hermes/skills/ 软链 → <记忆中心>/技能配置/
+  custom_directive: true     # 执行准则并入 SOUL.md 恒定层（非独立 rules/ 文件；已完成自适配）
+  parity_guard: true          # ✅ 2026-10-02：五系统文件「100% 适配」有机械判据
+                            #   语义项清单 × 校验器（rc=0 ⇔ GAP=0），⛔ 不再以「机制存在」代替「内容等价」
+                            #   作者侧本体 = 记忆蓝图 06-100%复刻源文件清单.md + 脚本中心/hermes_wb_parity_check.py
+                            #   端用户态：本 adapter 不分发清单本体（作者资产），声明此键仅为语义登记
+  twin_section_split: true    # ✅ 2026-10-02：童灵恒驻核拆两段注册 doenglingz.core + doenglingz.l1
+                            #   实盘依据：register_system_prompt_section 的 max_chars 硬上限 4000
+                            #   （hermes_cli/plugins_dispatch.py:69-70）·core_slice 全文 4344 单段装不下
+                            #   ⛔ 旧版单段只取 head ⇒ L1 身份骨架静默丢弃（假绿根因）
+  launchd_patrol: false      # Hermes 无 launchd（守卫走插件钩子 + cronjob + 按需检索）
+  twin_core: true             # ✅ 2026-10-04 新增：数字分身「造芯」状态可判·回执能区分三态
+  transform_tool_result: true # ✅ 2026-10-04：工具结果入对话前可改写
+                            #   官方 VALID_HOOKS（hermes_cli/plugins.py:109-112）
+                            #   承载：buluotuo-transform-gate 插件 → hermes_transform_gate.py
+                            #   收益：作者路径/测试临时目录在进对话前一道洗掉
+  transform_llm_output: true    # ✅ 2026-10-04：AI 回复投递前可改写
+                            #   ⛔ 只剥测试路径噪声·绝不动语义（判据在脚本本体）
+                            #   真源判定 = install_receipt._classify（唯一真源·⛔ 别处不另判）
+                            #   探针依据 = install_scripts.py L227 _detect_existing_twin()
+                            #     人格规格书 + 切片在位 ⇒ core_built（已造芯·跳过造芯分支）
+                            #     套件在位但规格书/切片缺失 ⇒ kit_only（已装件未造芯）
+                            #     套件缺失 ⇒ absent
+                            #   ⛔ 与 twin_section_split 区别：那个判「恒驻核怎么注册」（端能力）
+                            #     这个判「用户自己的芯造了没」（用户状态）
+
+# ─── 钩子路由（SSOT 指向·不复制矩阵内容·防双本账漂移）───
+
+# ── 端功能面映射（条文33·2026-10-03 补齐）────────────────────────────────
+#
+# ⚠️ **本端载体形态 ≠ zcode**：zcode 走单一 config.json 注册面；Hermes 走
+#    **插件目录 + plugin.yaml 的 provides_hooks 声明**（`~/.hermes/plugins/<name>/`，
+#    由 Hermes 运行时加载，见 capability.yaml 首部 hooks_event 注）。
+#    故本段按 **plugin + events** 登记（不是 script 列表）——照抄 zcode 的 script 形态
+#    = 用一个端的格式冒充另一个端，属声明造假。verify 侧注册面读取已按 plat 分发。
+#
+# 判据三查（verify §1.6）：①端注册面有引用 ②磁盘落盘可达 ③包内有源
+hooks_surface:
+  # ⚠️ 插件名 = `~/.hermes/plugins/` 与包内 `adapters/hermes/plugins/` 的**目录实名**
+  #    （首版曾去掉 buluotuo- 前缀 + 凭空造 crossend_check ⇒ 被 verify「插件未安装」当场逮出——
+  #      声明不跑一遍就是想象出来的，这是本段的教训）
+  delivered:                  # 已装且带 provides_hooks 的插件（端实盘 16/16·非推断）
+    - {plugin: route-inject-prompt-hook,     events: [UserPromptSubmit]}
+    - {plugin: route-audit-hook,             events: [Stop]}
+    - {plugin: skills-relink-hook,           events: [UserPromptSubmit]}
+    - {plugin: doenglingz-twin,              events: [pre_llm_call, post_llm_call], note: "分身插件·恒驻核+注入+守护三通道"}
+    - {plugin: buluotuo-session-title-hook,  events: [UserPromptSubmit]}
+    - {plugin: buluotuo-crossend-guard,      events: [Stop]}
+    - {plugin: buluotuo-skill-health-guard,  events: [Stop]}
+    - {plugin: hermes-plugin-health,         events: [Stop]}
+    - {plugin: guard-scheduler-hook,         events: [Stop], note: "守卫调度器"}
+    - {plugin: buluotuo-closeout-guards,     events: [Stop], note: "收尾族"}
+    - {plugin: buluotuo-readonly-guards,     events: [Stop], note: "只读守卫族"}
+    - {plugin: buluotuo-pretool-guards,      events: [pre_tool_call], note: "pre_tool_call 面·三道门"}
+    - {plugin: buluotuo-prompt-inject-hook,  events: [UserPromptSubmit]}
+    - {plugin: buluotuo-tsl-hook,            events: [UserPromptSubmit], note: "TSL 树/回执"}
+    - {plugin: buluotuo-stop-hook,           events: [Stop]}
+    - {plugin: release-guard-hook,           events: [Stop], note: "发布门禁"}
+  gaps:
+    - {note: "本端注册面=插件目录·不设 gaps；插件缺失由 plugin-health 守卫显形，不在此重复声明"}
+
+# ─── 数字分身功能面映射（twin_surface·可选组件但"可选≠缺声明"）───
+twin_surface:
+  injection:                  # 人格注入
+    - {what: 恒驻核 doenglingz.core,        carrier: register_system_prompt_section}
+    - {what: 恒驻核 doenglingz.l1,          carrier: register_system_prompt_section, note: "L1 身份骨架·因 max_chars 4000 硬上限拆两段"}
+    - {what: 域切片按需注入,                 hook: doenglingz_inject_prompt.py, carrier: pre_llm_call}
+  guards:                     # 守卫
+    - {what: 守护三查 + W1 兑现对账,         hook: doenglingz_guard.py, carrier: post_llm_call}
+    - {what: D档位声明守卫（06§1.6）,        hook: doenglingz_level_declare_guard.py, carrier: Stop}
+  reach:                      # 触达
+    - {what: 岗位3触达,                      hook: position3_notify.py}
+  gaps:                       # 分身域已知缺口
+    - {what: "twin_verdict_ledger.py / twin_changelog_guard.py（ROSTER 分身 2 件）", note: "插件化形态下未单独注册·如需承载须新起插件（非 script 直挂）·待你裁"}
+
+
+# ── 缺失语义（2026-10-02 · install_receipt.py 的唯一输入）────────────
+#
+# 为什么必须有这张表（交接书 §3.1 硬缺口①）：
+#   改前全包 14 个能力键、8 个端，`missing_semantics` **一处都没有**
+#   ⇒ 端 AI 读到某键缺失时，**分不清是"不支持/没测过/与本端无关"**
+#   ⇒ 只能一律当"不支持"，或一律当"该报红"——两种都是猜。
+#
+# 三个取值的判据（唯一口径）：
+#   required —— 缺了=端用户用不了布洛陀本体，必须报红
+#   optional —— 缺了=少一块功能，属正常态，须提示但不可报红
+#   n_a      —— 本端形态上压根不涉及，提示它是噪音
+#
+# ⚠️ 语义按**键**声明，不是按端·同一键在不同端可能不同义
+#    （例：`awareness` 在 Hermes 是既有支点，在 doubaowork 是能力缺口）。
+#    故本段按端逐份维护，⛔ 不做跨端模板。
+# ⚠️ 漏声明的键 ⇒ install_receipt.py **按 required 处理**（fail-closed），
+#    宁可误报红也不静默放过（交接书 §六·约束3）。
+missing_semantics:
+  rules_inject: required   # 执行准则/人格注入是布洛陀本体·缺=装了个空壳
+  agents_full_inject: optional   # AGENTS/CLAUDE 配置树投影·按需
+  hooks_event: optional   # 无标准 hook 事件面时由 hooks_alternative 顶替
+  hook_stdout_inject: optional   # 钩子返回值注入用户消息·部分端机制不支持
+  system_prompt_section: optional   # 系统提示分段注入·非所有端有此通道
+  settings_json: optional   # settings.json 形态·部分端用 plugin.yaml 等价机制
+  launchd_patrol_note: optional   # launchd 巡逻说明位·声明为真即本端涉及
+  awareness: optional   # 会话记忆/检索支点·缺=端 AI 少一块记忆
+  skill_symlink: optional   # Skill 软链通道·缺=Skill 需手工放
+  custom_directive: required   # 自定义执行准则·与 rules_inject 同属人格层
+  launchd_patrol: optional   # 定时巡逻·部分端用内置 cron 替代
+  parity_guard: optional      # 100% 适配判据·作者侧资产·端用户态不强制
+  twin_section_split: optional # 恒驻核分段·仅童灵接入端涉及
+hooks_ssot: "[记忆共享中心]/记忆蓝图/02_设计理念/02-平台端适配类/Hermes布洛陀设计哲学/01-注入通道规范.md#二·七"
+hooks_validator: "install_scripts.py --verify --platform hermes"
+# install 时: hooks_event=true → 读取 plugins.yaml 提供 hooks; 安装包不写入硬编码 hook 配置，
+#   由 Hermes 运行时从 ~/.hermes/plugins/ 加载（参考 01-注入通道规范.md 三段式·新会话加载)
+
+# ─── 自适配状态（2026-09-22）───
+# 自适配已完成：~/.hermes/SOUL.md 包含执行准则 1-9（含 8+9 补），签名 Hermès 🪶
+# 本 adapter 仅登记参考路径；规则内容已在本地 SOUL.md，不在 adapter 内重复（防双本账）
+# 脱敏评估：~/<记忆中心>/发布库/五层记忆系统/布洛陀-全平台安装包/execution-guidelines-脱敏评估.md
+
+post_install_message: |
+  ═══════════════════════════════════════════════════════════════
+  Hermès 端部署完成：插件 + 路径声明 + 覆盖层 + 挂载 + 三关复验（setup.sh 已由安装器委派执行）。
+
+  落点：~/.hermes/plugins/（插件）· ~/.hermes/doenglingz/（声明 + 覆盖层）
+  人格注入：执行准则并合入端上 SOUL.md 恒定层——Hermès 无独立 rules/ 注入机制，
+  包内 adapters/hermes/rules/ 仅为装机参考承载件（端 AI 合成系统文件时对齐其执行规则）。
+  个人表格控偏好由端上 SOUL.md 本地覆盖（通用版不写死参数）。
+  验证：新开会话问「你必须遵守哪几条执行准则」→ 答出 9 条即生效。
+  ═══════════════════════════════════════════════════════════════

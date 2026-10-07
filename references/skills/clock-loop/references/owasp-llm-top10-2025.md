@@ -2,22 +2,23 @@
 title: OWASP Top 10 for LLM Applications 2025
 type: reference
 status: active
-version: "2025"
+version: "2025.1"
 date: 2026-07-17
 summary: OWASP官方LLM应用十大安全风险2025版——T5防御声明的外部权威锚点
 source: https://genai.owasp.org/llm-top-10/
 source_nature: external
-complies_with: 文件格式规范 v1.0.2
+complies_with: 文件格式规范（⛔本处不写版本号·以源 frontmatter 为唯一真相源＝#142·2026-09-05批5清零#214⑧滞后：曾写v1.0.2）
 author: OWASP
 cached_at: 2026-07-17
 related:
-  - [记忆共享中心]/技能配置/clock-loop/SKILL.md
-  - [记忆共享中心]/记忆蓝图/02_设计理念/反方向的钟设计哲学.md
+  - ~/[记忆共享中心]/技能配置/clock-loop/SKILL.md
+  - ~/[记忆共享中心]/记忆蓝图/02_设计理念/01-核心Skill类/反方向的钟设计哲学/（目录·2026-09-05 A24修正死路径＝#170①·原§3.6外部权威标准源＝现行v2.0「主线6·外部审计打破自循环」）
+normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # OWASP Top 10 for LLM Applications 2025 — 外部权威锚点
 
-> **本文件是OWASP官方文档的自包含副本**，拷贝至clock-loop的references/内部，作为T5防御声明检查的外部权威锚点。来源：https://genai.owasp.org/llm-top-10/ [$TRAE_REF](https://genai.owasp.org/llm-top-10/)
+> **本文件是OWASP官方文档的自包含副本**，拷贝至clock-loop的references/内部，作为T5防御声明检查的外部权威锚点。来源：https://genai.owasp.org/llm-top-10/（2026-09-05批6d清除$TRAE_REF他端痕迹×3＝#170②）
 >
 > **引入目的**：打破clock-loop的4个同源固化引用（triwich/meta-aletheia/skill-arch-standard/instruction-standard全是皮叔自著）构成的自循环。OWASP作为国际安全组织，提供异源客观性锚点。详见反方向的钟设计哲学§3.6外部权威标准源+§九#4同源标准伪装外部。
 
@@ -42,7 +43,7 @@ related:
 
 ## 与clock-loop T5防御声明的映射
 
-clock-loop的T5防御声明（SKILL.md §T5，11条）已锚定OWASP LLM01/06/09。引入本官方文档后，T5声明的"权威源"从"皮叔自著的T5定义"变为"OWASP官方标准"。
+clock-loop的T5防御声明（SKILL.md §T5，11条）已锚定OWASP LLM01/06/10（2026-09-05批6d勘误＝#169：原文"09"与本文件下方映射表（唯一事实源·锚LLM01/06/10）不一致·LLM09 Misinformation属输出质量维度T5不覆盖为合理分工＝#240）。引入本官方文档后，T5声明的"权威源"从"皮叔自著的T5定义"变为"OWASP官方标准"。
 
 | clock-loop T5声明 | 对应OWASP风险 | 锚定关系 |
 |:-----|:-----|:-----|
@@ -57,8 +58,9 @@ clock-loop的T5防御声明（SKILL.md §T5，11条）已锚定OWASP LLM01/06/09
 | T5-09 工具滥用 | LLM06:2025 Excessive Agency | 直接对应 |
 | T5-10 循环调用 | —（clock-loop特有，非OWASP） | 自定义 |
 | T5-11 渐进侵蚀 | LLM01:2025 Prompt Injection（变体） | 间接对应 |
+| T5-12 记忆投毒（可选） | LLM04:2025 Data and Model Poisoning（变体） | 间接对应 |
 
-**映射结论**：clock-loop的11条T5声明中，9条有OWASP锚点（直接或间接），2条是clock-loop特有的自定义（T5-06旧格式变体/T5-10循环调用）。引入OWASP后，T5声明的客观性基础从"皮叔自著"升级为"OWASP官方+皮叔自定义补充"。
+**映射结论**：clock-loop的11条T5声明（映射表另列可选T5-12记忆投毒=本Skill未实装·实体仅§1-§11，v4.12.2消同文件自相矛盾）中，9条有OWASP锚点（直接或间接），2条是clock-loop特有的自定义（T5-06旧格式变体/T5-10循环调用）。引入OWASP后，T5声明的客观性基础从"皮叔自著"升级为"OWASP官方+皮叔自定义补充"。
 
 ---
 
@@ -83,9 +85,9 @@ OWASP是通用LLM安全标准，不覆盖clock-loop特有的两个场景：
 
 ## 参考来源
 
-- OWASP Top 10 for LLM Applications 2025 官方页面 [$TRAE_REF](https://genai.owasp.org/llm-top-10/)
-- OWASP GenAI Security Project 主页 [$TRAE_REF](https://genai.owasp.org/)
-- 反方向的钟设计哲学§3.6外部权威标准源+§九#4同源标准伪装外部（内部文件）
+- OWASP Top 10 for LLM Applications 2025 官方页面
+- OWASP GenAI Security Project 主页
+- 反方向的钟设计哲学「主线6·外部审计打破自循环」+§四反模式（原§3.6/§九编号·设计哲学v2.0改版后位置：`记忆蓝图/02_设计理念/01-核心Skill类/反方向的钟设计哲学/01-反方向的钟设计通用规范.md`·2026-09-05 A24修正＝#170①）
 - 2026-07-17双盲+人类锚独立审计报告（内部文件，B4发现）
 
 ---
