@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# version: v1.0.0
+# version: v1.1.0
 """change_reflux_guard.py — 改前回流指路守卫（PreToolUse Hook·advisory 不阻断）
 
 职责：检测到即将 Edit/Write 一个"触发件"（Skill / 脚本 / 安装包 / 哲学 / 铁律 …）时，
@@ -25,8 +25,9 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import json
 import os
 import re
@@ -40,7 +41,7 @@ RULES = [
      "改 Skill", "Skill架构规范 + 指令编写规范 + 该Skill references/CHANGELOG.md"),
     (r"/skills/[^/]+/(SKILL\.md|scripts/|references/)",
      "改 Skill", "Skill架构规范 + 指令编写规范 + 该Skill references/CHANGELOG.md"),
-    (r"/(开发工具|changelog-guard)/[^/]+\.(py|sh)$",
+    (r"/(开发工具|changelog-guard)/.+\.(py|sh)$",  # v1.1: [^/]+→.+ 嵌套子目录脚本不再漏指路（跨家族联动·10-11 你令机制化）
      "改布洛陀脚本", "布洛陀脚本架构设计哲学 + 对应家族设计哲学"),
     (r"/发布库/.*布洛陀-安装包/",
      "改安装包", "安装包设计哲学(01通用规范+03进度看板) + 发布包编写规范"),
@@ -59,7 +60,7 @@ RULES = [
 ]
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:
@@ -71,6 +72,7 @@ except ImportError:
 
 def main():
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip().startswith("{") else {}
     except Exception:
@@ -105,7 +107,30 @@ def main():
     print("\n".join(lines))
 
 
+def _selftest():
+    """v1.1 双向夹具：一条路径变更应命中全部在册行（跨家族联动=并集非单选）。"""
+    cases = [
+        ("/Users/x/[记忆共享中心]/脚本中心/知识联邦引擎/scripts/scan_stale_l1.py", 2,
+         "嵌套知识库脚本=脚本族+知识库族双命中（联动主证）"),
+        ("/Users/x/[记忆共享中心]/脚本中心/foo_guard.py", 1, "单层脚本命中脚本行"),
+        ("/Users/x/[记忆共享中心]/记忆琥珀/开发工具/x.py.bak", 0, "琥珀备份树不误报"),
+    ]
+    ok = total = 0
+    for fp, want, note in cases:
+        got = sum(1 for pat, _l, _t in RULES if re.search(pat, fp))
+        total += 1
+        if got == want:
+            ok += 1
+            print(f"  PASS {note} got={got}")
+        else:
+            print(f"  FAIL {note} want={want} got={got}")
+    print(f"reflux self-test {ok}/{total} " + ("PASS" if ok == total else "FAIL"))
+    return 0 if ok == total else 1
+
+
 if __name__ == "__main__":
+    if "--self-test" in sys.argv:
+        sys.exit(_selftest())
     try:
         main()
     except Exception:

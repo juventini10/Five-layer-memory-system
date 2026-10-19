@@ -13,7 +13,7 @@ import sys
 import re
 from pathlib import Path
 
-AI_LIB_PATH = Path.home() / "~/个人AI档案/知识库/AI学习库/"
+AI_LIB_PATH = Path.home() / "[日记仓库]/2-知识库/09-AI学习库"  # 2026-10-13 C''波次2迁移后路径同步（原2026-10-09 bugfix路径已随迁移失效）
 THRESHOLD = 3  # ≥3张则非新领域
 
 def count_cards_by_topic(topic_keyword):
@@ -64,7 +64,18 @@ def main():
         print("      python3 count_card_topic.py 数字分身")
         sys.exit(1)
     
-    topic_keyword = sys.argv[1]
+    # 2026-10-12 兼容修复（你令做完·GGS v1.1.12 CHANGELOG⑧挂账销）：SKILL.md 教义传
+    # `--topic <kw>` 而原实现把 argv[1] 当关键词——照文档执行会把 "--topic" 本身当主题词，
+    # 静默得 count=0/is_new_domain=true 假读数（第十例坏探针形态·已知真值校准抓获）。
+    # 修法=兼容两种调用（--topic 取下一值），位置参数行为不变=向既有消费者向后兼容。
+    _a = sys.argv[1:]
+    if _a[0] == "--topic":
+        if len(_a) < 2:
+            print("用法错误：--topic 需要主题关键词参数", file=sys.stderr)
+            sys.exit(2)
+        topic_keyword = _a[1]
+    else:
+        topic_keyword = _a[0]
     count, matched_cards = count_cards_by_topic(topic_keyword)
     
     is_new_domain = count < THRESHOLD

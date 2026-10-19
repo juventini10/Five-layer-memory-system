@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """shadow_ssot_guard.py v1.0 — SHADOW.md 唯一真源守卫（防 SSOT 分叉复发）
 
 背景（根因，非"又有人忘了"）：
@@ -28,6 +24,10 @@ except Exception: pass
   1 = 检测到软链/副本分叉（打印违规清单+修复建议）
   2 = 真源本身缺失或损坏（严重·阻断）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import hashlib
 import os
 import sys
@@ -35,12 +35,19 @@ import sys
 SSOT = os.path.expanduser("[记忆共享中心]/潜意识层/SHADOW.md")
 
 # 全盘扫描根（排除自身与归档/备份区——那些是历史快照与分发模板，不是活体分叉）
+# 2026-10-11 扫描域收窄（内部台账·你授裁·S299"环境跑不到的验证不得升档"）：
+#   原 SCAN_ROOTS=[~] 全家目录 walk 实测 90s+ 挂死（Library 无界+ZCode 沙箱 stat 挂起）
+#   =守卫不可用形同虚设（S099 物理锁失效）。收窄为两个"分叉合理落点域"：
+#   ①真源所在根（多端装配/历史分叉全在此域）②Obsidian 工作区（笔记侧复制/软链最可能落点）。
+#   换机代价：新域若出现分叉手法可加回 SCAN_ROOTS——每根秒级，加根不回挂死态。
 SCAN_ROOTS = [
-    os.path.expanduser("~"),
+    os.path.expanduser("[记忆共享中心]"),
+    os.path.expanduser("~/[日记仓库]"),
 ]
 EXCLUDE_DIR_PARTS = [
     ".git", "发布库", "记忆琥珀", "重要备份", "记忆规则/归档",
     "skills", ".venv", "缓存", "cache", "node_modules", "Trash",
+    "Library", ".zcode", ".cache",  # 2026-10-11 防御位：防未来改回 [~] 时重入挂死
 ]
 
 

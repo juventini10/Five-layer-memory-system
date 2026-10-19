@@ -1,4 +1,5 @@
 # 步骤6.5：记忆琥珀安装（物理级文件哨兵）
+> 🔊 收口播报（P31/P22）：本站收口 MUST 播 INSTALL.md〈段间播报表〉对应行（8/8 口径）；非 T9 终点站⛔禁说"完成/装好了"，只说"这站就位"；进度数字读 .install/stepN-done.md。
 
 📦 **产出物**：记忆琥珀物理级文件监听备份系统已安装并运行
 
@@ -9,7 +10,7 @@
 ---
 
 > **⚡ 步骤锁定协议**
-> ① 导航锁：每次回复首行输出 `步骤6.5/7`
+> ① 导航锁：每次回复首行输出 `步骤6.5/8`
 > ② 偏离锁：用户问无关问题 → 记到待办列表，继续安装
 > ③ 检查点前置依赖：Read `[记忆共享中心]/.install/step6-done.md` — 不存在则阻塞
 > ④ 检查点写入：末尾 Write `[记忆共享中心]/.install/step6.5-done.md`
@@ -84,9 +85,13 @@ chmod +x [记忆共享中心]/记忆琥珀/engine/amber_pin.sh [记忆共享中�
 
 # 🔌 G2-2 走查缺陷修（A-6.5）：5 个 .sh 内部同样带 [记忆共享中心] 占位符——
 # 复制后必须就地替换，否则脚本字面运行会 mkdir 出假目录且静默失败（其 fail-loud 守卫会拦，但正确姿势是装好它）：
-for s in amber_backup.sh amber_fswatch_wrapper.sh amber_pin.sh amber_checkup.sh amber_weekly_popup.sh; do
+for s in amber_backup.sh amber_pin.sh amber_checkup.sh amber_weekly_popup.sh; do
   sed -i.bak "s#\[记忆共享中心\]#[用户确认的记忆共享中心绝对路径]#g" "[记忆共享中心]/记忆琥珀/engine/$s" && rm -f "[记忆共享中心]/记忆琥珀/engine/$s.bak"
 done
+# F6b 根治（2026-10-17）：amber_fswatch_wrapper.sh **不在此列**——其 MC 行已改脚本自定位
+#   （V2.2.1·$(dirname)/../.. 三级上跳），无 [记忆共享中心] 占位符可换；旧版对它跑全局 sed
+#   会把「$HOMEDIR/[记忆共享中心]」（相对目录名占位符）拼成 $HOMEDIR//绝对路径 幽灵路径，
+#   叠加 plist 不传 AMBER_MC ⇒ launchd 崩溃循环。plist 的 EnvironmentVariables 已补 AMBER_MC。
 ```
 
 ### 6.5c. 生成白名单（替换占位符）
@@ -98,8 +103,14 @@ done
 | 占位符 | 替换为 |
 |:-------|:------|
 | `[记忆共享中心]` | 步骤3确认的记忆共享中心路径 |
-| `~/.workbuddy` | `~/.workbuddy`（或用户自定义的 WorkBuddy 目录；非WB端取其配置根，如 Qoder CN=`~/.qoder-cn`·见 step3-done CONFIG_ROOT） |
+| `[日记仓库]` | 步骤3 用户确认的日记/笔记 vault 根绝对路径（F6 归正：⛔写成 MC 子目录伪路径——日记本体在 vault 不在 MC） |
+| `[端配置根]` | ⛔ 不必人肉换根推文件名（P13·2026-10-19）：模板四件已是 `[端配置根]/X` token，备份引擎按 step3-done CONFIG_ROOT + 端 rules/core-*.md 映射自动解析落点——本行照抄落盘即可；WB 端解析结果=原 `~/.workbuddy` 扁平位，行为不变 |
 替换后写入 `[记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt`。
+
+> ⛔ **白名单里禁止保留字面 `~` 开头路径落盘**（2026-10-14 E2E 实测：`amber_backup.sh` 读白名单用
+> `[ -f "$line" ]`，引号内 `~` 不展开 → 四件端系统文件每次备份都记成「文件不存在」，守护面谎报）。
+> 脚本侧已加 `~` 归一兜底（双保险），**但装机规范仍要求落绝对路径**——兜底是防错，不是让用户配置错。
+> 替换动作可用：`sed -i.bak "s#^~#$HOME#g" <白名单文件>`（跑完删 .bak）。
 
 ### 6.5d. 更新监听目录路径
 
@@ -109,16 +120,16 @@ done
 
 读取 `com.memoryamber.backup.plist.template`，替换占位符：
 - `[记忆共享中心]` → 记忆共享中心绝对路径（如 `/Users/xxx/[记忆共享中心]`）
-- `{USER_HOME}` → 用户 home 目录绝对路径
+- `{USER_HOME}` → 用户 home 目录绝对路径（P13#3·2026-10-19：EnvironmentVariables.HOME 亦用本占位符——launchd ⛔不展开 `$HOME` 字面量，必须渲染成绝对路径，否则 wrapper 在 launchd 语境上跳猜根=真库泄监）
 
 写入 `~/Library/LaunchAgents/com.memoryamber.backup.plist`。
 
 ```bash
-# 加载服务
-launchctl load ~/Library/LaunchAgents/com.memoryamber.backup.plist
+# 加载服务（P13#2·2026-10-19：现代 API——legacy load 实测报 5: I/O error 却半残显示，语义混淆）
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.memoryamber.backup.plist 2>&1 || echo "（bootstrap 非零=已加载或域限制，看下方 print 实态）"
 
-# 确认服务在跑（读真实退出状态，而非只看命令有无输出）
-if launchctl list | grep -q memoryamber; then
+# 确认服务在跑（读真实状态：print 实读，⛔不看 list 的半残回声）
+if launchctl print gui/$(id -u)/com.memoryamber.backup >/dev/null 2>&1; then
   echo "✅ 记忆琥珀守护已注册并运行"
 else
   echo "⚠️ launchctl 未能在【当前会话】确认守护在跑，见下方沙箱兜底"
@@ -131,8 +142,8 @@ fi
 > **load 后验证 + 失败兜底（load 未生效时必做）**：
 > 1. 在**真实终端**（系统「终端」app / iTerm，非 AI 工具内嵌 Bash）补跑一次：
 >    ```bash
->    launchctl load ~/Library/LaunchAgents/com.memoryamber.backup.plist
->    launchctl list | grep memoryamber   # 应能看到 com.memoryamber.backup
+>    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.memoryamber.backup.plist
+>    launchctl print gui/$(id -u)/com.memoryamber.backup | head -5   # state = running 才算数（P13#2）
 >    ```
 > 2. 或直接**注销并重新登录**——plist 已设 `RunAtLoad=true` + `KeepAlive=true`，登录时自动拉起、崩溃后自动重启。
 > 3. 真机验证：`ps aux | grep -i[ ]fswatch` 应能看到监听进程在跑。
@@ -189,7 +200,10 @@ Write-Host "✅ 白名单占位符已全部替换" -ForegroundColor Green
 
 ```bash
 # 给某文件加一个空行触发变化
-echo "" >> [记忆共享中心]/核心层/SOUL.md
+# F14 根治（2026-10-17）：旧文打 核心层/SOUL.md——step5 把 SOUL.md 放**配置根**，新用户核心层
+#   没这文件 ⇒ 命令建出 stray 空文件且不在白名单 ⇒ 触发不了备份（测试假过）。
+#   改打白名单内真实存在的 CORE.md（step5 5d-4 产物·铁定在位）。
+echo "" >> [记忆共享中心]/核心层/CORE.md
 
 # 等 5 秒让 fswatch 触发
 sleep 5
@@ -254,7 +268,27 @@ New-Item -ItemType Directory -Path [记忆共享中心]/记忆琥珀/engine/logs
 
 # 复制脚本
 Copy-Item {包根目录}\references\记忆琥珀\scripts\amber-backup.ps1 [记忆共享中心]/记忆琥珀/engine/
-Copy-Item {包根目录}\references\记忆琥珀\scripts\amber-watch.ps1 [记忆共享中心]/记忆琥珀/engine/
+# ── amber-watch.ps1 覆盖保护（2026-10-08 加·防覆盖用户机修复版）──
+# 病根：升级/重装时无条件 Copy-Item 会盖掉用户机上更新过的 amber-watch.ps1
+# （实证：目录级旧版覆盖修复版 → 「每15s触发备份+日志膨胀」重现）。
+# 判据：目标已存在且含版本标识（$AmberWatchVersion 或 # V7.x 注释）且与源不同
+# → 跳过覆盖并打印双版本号交人工裁决；无标识（更早旧版）→ 按原流程覆盖。
+function Get-AmberWatchTag([string]$Path) {
+  if (-not (Test-Path $Path)) { return $null }
+  $t = Get-Content $Path -Raw
+  if ($t -match 'AmberWatchVersion\s*=\s*"([^"]+)"') { return $Matches[1] }
+  if ($t -match '(?m)^#.*\b[Vv](\d+\.\d+)') { return "v$($Matches[1])" }
+  return $null
+}
+$src = "{包根目录}\references\记忆琥珀\scripts\amber-watch.ps1"
+$dst = "[记忆共享中心]/记忆琥珀/engine/amber-watch.ps1"
+$srcTag = Get-AmberWatchTag $src
+$dstTag = Get-AmberWatchTag $dst
+if ($dstTag -and $srcTag -and $dstTag -ne $srcTag) {
+  Write-Host "⚠️ 覆盖保护触发：目标 amber-watch.ps1 版本=$dstTag ≠ 包内=$srcTag，已跳过覆盖·请人工裁决" -ForegroundColor Yellow
+} else {
+  Copy-Item $src $dst -Force
+}
 Copy-Item {包根目录}\references\记忆琥珀\scripts\amber-install-task.ps1 [记忆共享中心]/记忆琥珀/engine/
 Copy-Item {包根目录}\references\记忆琥珀\scripts\amber-install-service.ps1 [记忆共享中心]/记忆琥珀/engine/
 Copy-Item {包根目录}\references\记忆琥珀\scripts\amber-install.ps1 [记忆共享中心]/记忆琥珀/engine/
@@ -405,10 +439,15 @@ Get-Content [记忆共享中心]/记忆琥珀/engine/amber-status.txt -Tail 1
 ──────────────────────────────
 🍯 它会替你做这四件事（全自动，你一件都不用记）：
 
-1️⃣ 自动备份
-   你每次修改重要文件，它都悄悄存一份。
-   备份文件都以 .bak 结尾，存在「记忆琥珀」文件夹里。
-   这些临时备份只保留 7 天，之后自动清掉，不占地方。
+1️⃣ 自动备份（范围划清·P16）
+   它只守护一份透明名单上的文件——你每次改这些文件，它悄悄存一份完整拷贝（.bak 结尾，存在「记忆琥珀」里，同一天只留一份，普通拷贝 7 天自动轮换）。
+   默认守护面（完整名单随时可看：记忆琥珀/engine/amber-whitelist.txt）：
+     · 系统核心与状态：画像、动态快照、隐私层
+     · 三层行为规则 + 系统文件（SOUL/IDENTITY/USER/MEMORY）
+     · 成就数据 + 十个记忆 Skill 的定义文件
+     · 你的日记仓库与知识库目录（作者 2026-10-18 裁决新入默认面）
+   名单外的文件它不碰——不在名单上=不在守护面，它不谎称包办一切。
+   想让某个文件也纳入守护？对 AI 说「把 XX 文件加进琥珀白名单」，AI 帮你追加路径，加完即开始守护。
    改崩了想回到几天前的版本？告诉 AI 就能还原。
 
 2️⃣ 永久收藏（想永远留住的东西放这里）

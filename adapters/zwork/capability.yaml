@@ -1,0 +1,84 @@
+# Zwork 能力矩阵（v0.1·install_scripts.py --platform zwork 读取）
+# 平台底座：AutoClaw 新客户端（系统名 AutoClaw·运行时 zwork）·平台托管型软约束端（06-跨端适配规范第四型）
+# ⛔ 端分立铁律（作者 2026-09-24 声明）：本端 ≠ adapters/autoclaw/（旧客户端 ~/.openclaw-autoclaw·OpenClaw gateway）
+#    两端相互独立——本目录专属 Zwork；探测双命中（~/.openclaw-autoclaw 亦存在）须 fail-loud 问询
+platform: zwork
+config_root: "~/Library/Application Support/AutoClaw-official"
+display_name: "Zwork（AutoClaw 新客户端）"
+emoji: "🧠"
+capabilities:
+  rules_inject: false         # 无 rules/ 目录·无 alwaysApply 机制（平台托管·档案层实体+自觉加载替代）
+  agents_full_inject: false   # 工作区 AGENTS.md 平台不自动装配（09-24+10-01 两轮 M1 定性·⛔按 WB 口径假绿）
+  hooks_event: false          # 无 hook 注册面（平台边界·无用户可挂回调位）
+  hook_stdout_inject: false   # 无逐轮 prompt 事件
+  settings_json: false        # 无 settings.json 面
+  awareness: true             # 平台 Memory=机制级跨会话记忆（Run 级 zwork_memory 注入·mode=all 枚举召回）
+  skill_symlink: false        # 技能面板=平台托管分发·非文件系统软链通道
+  hooks_alternative: false    # 无插件/无 cron 本端专属面（crontab 路由家族=跨端公共资产·不占）
+  memory_inject: true         # 本端第一性：唯一机制级注入位=平台 Memory Run 块（恒驻指针卡+准则要点双写）
+  k2_marked_region: true      # K2 恒驻核=档案层 AGENTS.md 标记对区段（W2 doenglingz_slice_watch 自动同步）
+  exec_fallback: true         # file tools 限工作区+exec 全盘不对称——档案层读写走 exec+python（锚点断言+tmp+mv）
+  custom_directive: true      # 执行准则走 K2 AGENTS.md 标记节 buluotuo:execution-guidelines-v1（成对标记在位）
+  launchd_patrol: false
+  install_entry: "setup.sh"   # 对账吸收模式：端是 SSOT 包是投影——校验+补缺，⛔覆盖端实体
+  # 🔴 端专属 Skill（2026-10-08 D3 验收轮补·条文32 第5条「无hook端须端专属Skill承载」同判）：
+  # 豆包/Trae Work 先例——无钩子端用 Skill 承载 W1/W3/守护。⛔ 不链本端以外任何端。
+  skills: "doenglingz-slice-nav-zwork, doenglingz-guard-zwork"
+  twin_surface: "active"      # 数字分身=已点火态（童灵第 19 端·K2 终态）——M7 对账⛔重复造芯
+post_install_message: |
+  ═══════════════════════════════════════════════════════════════
+  Zwork 端（平台托管型·对账吸收模式）
+
+  本端无盘上规则注入面：五系统文件等价物=端自有实体
+    · SOUL/宪法   → [记忆共享中心]/AutoClaw/（SOUL.md + AGENTS.md 标记节）
+    · 记忆        → 平台 Memory（Run 级注入·机制级）
+    · K2 恒驻核   → AGENTS.md 童灵节标记对区段（W2 自动同步）
+
+  本脚本只做对账（实体在场性+标记对+卡号纪律 grep），⛔覆盖端实体。
+  验证：Memory 召回「童灵是什么/执行准则要点」可答 + AGENTS.md 标记对成对 + W2 心跳。
+  ───────────────────────────────────────────────────────────────
+
+# ── 缺失语义（install_receipt.py 唯一输入·按 zwork 端特性逐键声明）────────
+missing_semantics:
+  rules_inject: optional      # 平台托管型=无此面属正常态·档案层实体+Memory 双写等价承载
+  agents_full_inject: optional   # 工作区装配失效已定性·双写降级=本端设计而非缺口
+  hooks_event: optional
+  hook_stdout_inject: optional
+  settings_json: optional
+  awareness: required         # 平台 Memory=本端第一性·缺=装了个空壳
+  skill_symlink: optional     # 面板托管·缺=正常态
+  hooks_alternative: optional
+  custom_directive: required  # K2 标记节=人格层本体
+  launchd_patrol: optional
+
+# ─── 条文32·五系统文件端自适配声明律（2026-10-08 补·面A）───
+# Zwork 五系统文件等价物=端自有实体（条文48 端自持有律原生成立）——档案层 AutoClaw/ 两件
+# + 平台 Memory 两面 + K2 恒驻核；⛔包不落这些文件（对账吸收模式），声明=映射真值非装机路径
+system_file_paths:
+  # C29 键名归一（2026-10-15）：裸名→条文32 五键。⚠️ 值含「个人AI档案」=本端档案树实体路径（作者侧树名
+  #   随包字面·端用户机无此目录属预存欠账，登记见修包卡集 C29 状态段·⛔本卡不动值语义）
+  SOUL.md: "~/个人AI档案/AutoClaw/SOUL.md"
+  IDENTITY.md: "~/个人AI档案/AutoClaw/AGENTS.md"     # 端身份节承载（K2 恒驻核同体）
+  USER.md: "platform://memory/user-cards"            # 平台 Memory 用户卡（Run 级注入·装机器判 platform 托管）
+  MEMORY.md: "platform://memory/run-inject"          # 平台 Memory 记忆层（机制级跨会话）
+  自定义指令: "~/个人AI档案/AutoClaw/AGENTS.md" # 自定义指令件（执行准则=K2 标记节 buluotuo:execution-guidelines-v1）
+
+# ─── 条文33·端侧功能面映射声明律（2026-10-08 补·面B）───
+# 平台托管型：无 hook 事件面=平台边界（第四型·06 规范 §2.7.2.1）
+hooks_surface:
+  delivered: []                # 零钩子件——无注册面即无交付件（诚实空集·非缺口）
+  gaps: ["无Stop/UserPromptSubmit钩子=平台托管型边界，非执行缺口"]
+  endogenous:                  # 守卫功能内生等价承载
+    - "平台 Memory Run 级注入（机制级·恒驻指针卡+准则要点双写）"
+    - "W2 doenglingz_slice_watch MARKED_HOMES 机械腿（标记对区段部署自愈·基线 10 端）"
+    - "M1-M3 登记态观察（装配自检/Memory 巡检/W1 对账·软约束平台边界型达标）"
+
+# ─── 条文16·数字分身面（2026-10-08 补·面C·已点火态）───
+twin_surface:
+  delivered:
+    - "K2 恒驻核：~/个人AI档案/AutoClaw/AGENTS.md 童灵节（core_slice+L6 标记对区段·W2 自动同步）"
+    - "平台 Memory 恒驻指针卡（scope=user·每 Run 注入·2026-10-01 双写实证）"
+    - "K2 域切片库：~/个人AI档案/数字分身/K2切片蒸馏/slices/（8 件+manifest）"
+  injection: "memory_pointer_card+k2_marked_region"
+  guards: "M1-M3 观察态+W2 机械腿+state_bus in_sync（12/12）"
+  status: "active"             # 已点火态——M7 对账模式 ⛔ 重复造芯

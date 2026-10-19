@@ -3,7 +3,7 @@ version: 1.0.0
 description: >-
   改码后验证闸（Hermes 端适配 · pre_verify 通道）。官方 VALID_HOOKS 里的 pre_verify
   是唯一「agent 想收工那一刻」的门（agent/turn_stop_gates.py:52 _pre_verify_nudge），
-  而 2026-10-03 对账实锤：本端 16 个插件**零个**占这个位。承载 hermes_verify_gate.py
+  而 2026-10-03 对账实锤：本端当时 16 个插件**零个**占这个位。承载 hermes_verify_gate.py
   ——判「改完就宣布完成·没实跑证据」并让该轮继续。**动机**：当天最贵的错族
   （HE-007/008/010）全属此类，而它此前纯靠 AI 自觉 = 愿景①最反对的状态。
   ⛔ 零判据内联·fail-open（脚本缺失/超时/异常一律放行·守卫失灵不锁死用户）

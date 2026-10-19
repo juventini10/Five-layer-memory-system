@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 # skill_write_gate_guard.py — Skill管辖目录写入门卫（铁律-017物理拦截层）
 # Disease: PAT-014家族新实例（2026-09-20实证）——AI知道要记成长箱，却直接Bash手写
@@ -18,7 +18,10 @@ except Exception: pass
 #     -> block exit 2 (physical), ok exit 0
 # Scope: 成长箱/ 技能配置/ 数字分身/ 发布库/ ~/.workbuddy/ （个人AI档案下前四者）
 # Exempt: guard自身 / append_log_entry.py / growth-box scripts/（Skill自有引擎）
-# version: v0.9（2026-10-05 Qoder CN端·软链根治+hint花括号修+v0.8回归合并收口；v0.2判据绝对前缀/v0.3畸形放行/v0.4动作分级/v0.4.1剔无害重定向/v0.5剥双引号/v0.6评估通道，沿革见下）：
+# version: v0.10（2026-10-17 Qoder CN端·包面写门禁：写 布洛陀-全平台安装包/ 需锁周期认领·FREE硬拦引导acquire·release目睹清账·--claim-package-lock·负例夹具8/8·LRN-20261017-01机制化）
+#   原 v0.9.1（2026-10-10 Qoder CN端·heredoc 假红根治：WRITE_FEATURES 剔 `<<`——
+#   `<<` 喂 stdin 不落盘，误列硬拦形⇒只读分析被 exit2；间接写归 unknown 只提示（v0.4 分级同界·不扩大）。
+#   原 v0.9（2026-10-05 Qoder CN端·软链根治+hint花括号修+v0.8回归合并收口；v0.2判据绝对前缀/v0.3畸形放行/v0.4动作分级/v0.4.1剔无害重定向/v0.5剥双引号/v0.6评估通道，沿革见下）：
 #   v0.2 判据 子串→绝对路径前缀 ｜ v0.3 畸形输入失败放行
 #   v0.4 Bash 动作分级：read→放行 ／ write(明确写)→硬拦exit2 ／ unknown→仅提示不打断
 #   v0.4.1 剔无害重定向（2>/dev/null、2>&1）再判动作——防只读命令被 `>` 误判为写（WB端实测自锁）
@@ -44,16 +47,57 @@ HOME = os.path.expanduser("~")
 # 把项目级 `WorkBuddy/开发/.workbuddy/` 误伤（WB 端实测：记忆写入被拦）。
 # 判据目标 = 「路径**归属**」非「子串**出现**」→ 改绝对路径前缀匹配。
 SCOPES = [
-    (os.path.join(os.path.expanduser("~"), "~/个人AI档案", "成长箱"),  "growthbox"),
-    (os.path.join(os.path.expanduser("~"), "~/个人AI档案", "技能配置"), "skillforge"),
-    (os.path.join(os.path.expanduser("~"), "~/个人AI档案", "数字分身"), "digitaltwin"),
-    (os.path.join(os.path.expanduser("~"), "~/个人AI档案", "发布库"),  "release"),
+    (os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "成长箱"),  "growthbox"),
+    (os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "技能配置"), "skillforge"),
+    (os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "数字分身"), "digitaltwin"),
+    (os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "发布库"),  "release"),
     (os.path.join(HOME, ".workbuddy"),          "workbuddy"),
 ]
 MARKER_DIR = os.path.expanduser("~/.cache/skill_gate/")
 MARKER_TTL = 4 * 3600  # 4h
 EXEMPT = ("skill_write_gate_guard.py", "append_log_entry.py",
           "/growth-box/scripts/", "/数字分身/scripts/")
+
+# ── v0.10 包面写门禁（2026-10-17·LRN-20261017-01 机制化·小卡=待完成工作/包面写门禁-session认领机制）──
+# 病根：release marker 全局共享（touch 一次 4h 内任何同端窗可写包）——10:44 撞锁案的机制面缺口。
+# 判据：写 布洛陀-全平台安装包/ 必须「锁周期认领」——当前 holder ts ∈ claimed 账本。
+# 认领=python3 <本件> --claim-package-lock（FREE 拒绝并转述 acquire 引导；同端二次 acquire=REFUSED→闯入窗物理劝退·排队）。
+# release 被目睹→清账（锁周期闭合下轮重认领）。acquire/release 命令本身恒放行（⛔不拦锁操作防自锁）。
+PKG_ROOT = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "发布库", "五层记忆系统", "布洛陀-全平台安装包")
+PKG_HOLDER = os.path.join(PKG_ROOT, ".package-lock", "holder")
+PKG_CLAIMED = os.path.join(MARKER_DIR, "pkg_lock_claimed.json")
+
+def _pkg_holder():
+    try:
+        parts = open(PKG_HOLDER, encoding="utf-8").read().strip().split("\t")
+        if len(parts) >= 3 and parts[2].strip().isdigit():
+            return parts[0], parts[2].strip()
+    except OSError:
+        pass
+    return None
+
+def _pkg_claimed():
+    try:
+        v = json.load(open(PKG_CLAIMED, encoding="utf-8"))
+        return set(v) if isinstance(v, list) else set()
+    except Exception:
+        return set()
+
+def _pkg_claim():
+    h = _pkg_holder()
+    if not h:
+        print("FREE（当前无持锁）：先 `bash \"%s/package_lock.sh\" acquire <端名>` 获取锁再认领；"
+              "若 REFUSED=他窗持锁（含同端另一窗）——写入需排队，⛔绕行硬写" % PKG_ROOT, file=sys.stderr)
+        return 1
+    who, ts = h
+    try:
+        os.makedirs(MARKER_DIR, exist_ok=True)
+        cur = _pkg_claimed(); cur.add(ts)
+        json.dump(sorted(cur)[-32:], open(PKG_CLAIMED, "w", encoding="utf-8"))
+    except OSError as e:
+        print("CLAIM FAILED: %r" % e, file=sys.stderr); return 1
+    print("CLAIMED: 持锁者=%s ts=%s——本锁周期内包面写入放行（release 后自动失效）" % (who, ts))
+    return 0
 
 def extract_event(obj):
     tool = obj.get("toolName") or obj.get("tool_name") or ""
@@ -67,7 +111,9 @@ def extract_event(obj):
 READ_CMDS = {"ls", "find", "grep", "rg", "cat", "head", "tail", "wc", "stat", "file",
              "du", "df", "diff", "which", "type", "tree", "realpath", "basename",
              "dirname", "echo", "printf", "env", "pwd", "sort", "uniq", "cut", "jq"}
-WRITE_FEATURES = re.compile(r">>?|<<|-delete\b|-exec\b|\s-i\b|--in-place\b|\|\s*tee\b|truncate")
+# v0.9.1（2026-10-10）：剔除 `<<` ——heredoc 是喂 stdin 不落盘，原列"明确写"特征致
+# 纯只读 `python3 - <<EOF` 分析被 exit2 硬拦（假红·当日实证2次）；间接写面归 unknown 只提示。
+WRITE_FEATURES = re.compile(r">>?|-delete\b|-exec\b|\s-i\b|--in-place\b|\|\s*tee\b|truncate")
 
 
 def _strip_double_quoted(cmd):
@@ -206,6 +252,8 @@ def marker_fresh(domain):
 def main():
     if os.environ.get("SKILL_GATE_BYPASS") == GUARD_NAME:
         return  # guard自身写入豁免（防自锁）
+    if "--claim-package-lock" in sys.argv:
+        sys.exit(_pkg_claim())
     try:
         obj = json.load(sys.stdin)
     except Exception:
@@ -214,6 +262,15 @@ def main():
         return
     tool, inp = extract_event(obj)
     if tool not in ("Write", "Edit", "Bash", "MultiEdit", "NotebookEdit"):
+        return
+    # v0.10：锁操作命令本身恒放行；release 目睹=清认领账（锁周期闭合）
+    _cmd0 = str(inp.get("command", ""))
+    if tool == "Bash" and "package_lock.sh" in _cmd0:
+        if "release" in _cmd0:
+            try:
+                os.remove(PKG_CLAIMED)
+            except OSError:
+                pass
         return
     # 豁免检查用完整原文（command/file_path）——match短串查不到豁免件（v0.1 bug修正）
     full_text = str(inp.get("command", "")) + " " + str(inp.get("file_path", ""))
@@ -232,6 +289,28 @@ def main():
         d = hit_scope(p)
         if d and not marker_fresh(d):
             blocked.add(d)
+    # v0.10 包面锁账本判据（严于 release marker·同端窗互盲的补强）：命中安装包路径的写，
+    # 当前 holder ts 未被认领 ⇒ 硬拦（soft 仅提示·力度分级沿用）；release marker 旧制对包外发布库件不变。
+    pkg_hit = [p for p in targets
+               if hit_scope(p) == "release" and os.path.realpath(p).startswith(os.path.realpath(PKG_ROOT))]
+    if pkg_hit:
+        _h = _pkg_holder()
+        if _h is None:
+            _pkg_msg = ("包面未持锁（FREE）——写安装包必须先持锁：`bash \"%s/package_lock.sh\" acquire <端名>`，"
+                        "获取成功后执行 `python3 \"%s\" --claim-package-lock` 认领留痕" % (PKG_ROOT, os.path.abspath(__file__)))
+            if severity == "hard":
+                print("⛔ 包面写门禁：" + _pkg_msg, file=sys.stderr); sys.exit(2)
+            print("ℹ️ 包面写门禁（提示·不阻断）：" + _pkg_msg, file=sys.stderr)
+            return
+        if _h[1] not in _pkg_claimed():
+            _pkg_msg = ("包面锁现由「%s」持有（ts=%s）——若贵窗正是持锁窗：认领一次全锁期通行 "
+                        "`python3 \"%s\" --claim-package-lock`；若贵窗不是持锁窗：`acquire` 会 REFUSED，"
+                        "写入必须排队，⛔绕行硬写（本判据=LRN-20261017-01 机制化·release 后认领账自动失效）"
+                        % (_h[0], _h[1], os.path.abspath(__file__)))
+            if severity == "hard":
+                print("⛔ 包面写门禁：" + _pkg_msg, file=sys.stderr); sys.exit(2)
+            print("ℹ️ 包面写门禁（提示·不阻断）：" + _pkg_msg, file=sys.stderr)
+            return
     if not blocked:
         return
     names = {"growthbox": "growth-box（成长箱）", "skillforge": "相关Skill（skill-forge）",

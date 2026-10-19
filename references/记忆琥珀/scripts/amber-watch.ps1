@@ -19,6 +19,9 @@
 [CmdletBinding()]
 param()
 
+# @amber-version 7.18.0-pkg（2026-10-08 loop 安装包账实轮：加版本常量·供安装覆盖保护比对）
+$AmberWatchVersion = "7.18.0-pkg"
+
 # 故障因 B 对策：单文件/单轮异常绝不掀翻整个循环
 $ErrorActionPreference = 'Continue'
 
@@ -90,8 +93,31 @@ function Resolve-PwshPath {
 }
 $PwshPath = Resolve-PwshPath
 
-# ─── 监听目录列表（与 amber-whitelist.txt 覆盖目录一致） ───
+# ─── 监听对象解析（2026-10-08 文件级升级·7.18.0-pkg） ───
+# 病根：旧版「目录列表＋全树递归」扫描——目录内任何文件（含与备份无关的
+#   高频写入件）变化都触发备份 → 「每15s触发备份＋日志膨胀」（你反馈实证）。
+# 修法：优先读 amber-whitelist.txt（文件级清单：每行一个具体文件；目录行
+#   保留递归语义兼容）→ 精确文件级监听；whitelist 缺失/空表 → 回退旧目录级
+#   （失败安全·不漏备）。运行时替换 [记忆共享中心] 与 ~ 前缀（⛔不依赖
+#   安装期替换是否完成）。
 function Get-WatchPaths {
+    $wl = Join-Path $EngineDir 'amber-whitelist.txt'
+    if (Test-Path $wl) {
+        $items = @()
+        foreach ($line in (Get-Content $wl -Encoding UTF8 -ErrorAction SilentlyContinue)) {
+            $t = "$line".Trim()
+            if (-not $t) { continue }
+            if ($t.StartsWith('#')) { continue }
+            if ($t.StartsWith('~')) {
+                $t = Join-Path $HomeDir $t.Substring(1).TrimStart('/', '\')
+            }
+            $t = $t.Replace('[记忆共享中心]', $MC)
+            if ($IsMacOS -or $IsLinux) { $t = $t -replace '\\','/' }
+            $items += $t
+        }
+        if ($items.Count -gt 0) { return $items }
+    }
+    # ── 回退：目录级（旧语义·whitelist 不可用时的安全网）──
     $rel = @(
         '核心层','QClaw记忆','潜意识层','情境层','记忆规则',
         '成就系统\scripts',
@@ -117,6 +143,12 @@ function Get-Snapshot {
         if (-not (Test-Path $p)) { continue }
         try {
             Get-ChildItem -Path $p -Recurse -File -Force -ErrorAction SilentlyContinue |
+                Where-Object {
+                    # 2026-10-08 噪声排除：日志/临时/缓存变化不构成「要备份的变化」
+                    # （病根实证：高频写入文件每 15s 触发一次备份 + 输出日志膨胀）
+                    $_.FullName -notmatch '__pycache__' -and
+                    $_.Name -notmatch '\.(log|tmp|ds_store)$'
+                } |
                 ForEach-Object {
                     $snap[$_.FullName] = "$($_.LastWriteTimeUtc.Ticks):$($_.Length)"
                 }
@@ -127,15 +159,19 @@ function Get-Snapshot {
     return $snap
 }
 
-function Test-SnapshotChanged {
+function Get-ChangedFiles {
     param([hashtable]$Old, [hashtable]$New)
-    if ($null -eq $Old) { return $false }   # 首轮建基线，不触发
-    if ($Old.Count -ne $New.Count) { return $true }
+    # 2026-10-08：bool 判定升级为明细清单（触发即证据·防日志膨胀看不到原因）
+    if ($null -eq $Old) { return @() }   # 首轮建基线，不触发
+    $changed = @()
     foreach ($k in $New.Keys) {
-        if (-not $Old.ContainsKey($k)) { return $true }
-        if ($Old[$k] -ne $New[$k])     { return $true }
+        if (-not $Old.ContainsKey($k)) { $changed += $k; continue }
+        if ($Old[$k] -ne $New[$k])     { $changed += $k }
     }
-    return $false
+    foreach ($k in $Old.Keys) {
+        if (-not $New.ContainsKey($k)) { $changed += $k }
+    }
+    return $changed
 }
 
 function Invoke-BackupOnce {
@@ -155,7 +191,7 @@ function Invoke-BackupOnce {
 # ─── 主循环 ───
 $watchPaths = Get-WatchPaths
 $existing = $watchPaths | Where-Object { Test-Path $_ }
-Write-WatchLog "=== 记忆琥珀监听启动（轮询模式 interval=${IntervalSec}s，$($existing.Count)/$($watchPaths.Count) 个目录存在）==="
+Write-WatchLog "=== 记忆琥珀监听启动（轮询模式 interval=${IntervalSec}s，$($existing.Count)/$($watchPaths.Count) 个监听对象存在）==="
 Write-WatchLog "pwsh 路径: $PwshPath"
 
 $startTime = Get-Date
@@ -166,8 +202,11 @@ try {
         # 每轮包 try-catch：任何异常只记录，不退出循环（故障因 B 对策）
         try {
             $snap = Get-Snapshot -Paths $watchPaths
-            if (Test-SnapshotChanged -Old $prevSnap -New $snap) {
-                Write-WatchLog "检测到变化，触发备份"
+            $changed = Get-ChangedFiles -Old $prevSnap -New $snap
+            if ($changed.Count -gt 0) {
+                $names = ($changed | ForEach-Object { Split-Path $_ -Leaf } |
+                          Select-Object -First 3) -join ', '
+                Write-WatchLog "检测到 $($changed.Count) 个文件变化（例：$names），触发备份"
                 Invoke-BackupOnce
             }
             $prevSnap = $snap

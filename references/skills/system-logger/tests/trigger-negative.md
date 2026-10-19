@@ -1,4 +1,4 @@
-# 触发测试 — 系统日志 system-logger v3.14.1（不应触发）
+# 触发测试 — 系统日志 system-logger v3.17.6（不应触发）
 
 > 对齐 SKILL.md 不应该触发段。
 

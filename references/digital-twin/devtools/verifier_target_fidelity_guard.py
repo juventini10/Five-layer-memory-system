@@ -49,7 +49,7 @@ r"""verifier_target_fidelity_guard.py — 验证器保真度守卫（Hermes 端 
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -78,6 +78,8 @@ TARGET_SCRIPTS = (
 )
 # 允许硬编码的目录角色：日志/账本落点（不是被测脚本）
 NON_TARGET_DIRS = ("logs", "log", "账本", "ledger", "heartbeat", "changelog-guard")
+# 发布态占位符：出现即视为「未写死作者机路径」的正确形态（2026-10-08 立）
+MC_PLACEHOLDER = "[记忆共享中心]"
 # 档位判据的关键否定语境（判据③用）
 NEGATION_PROBES = (
     "我没有启动童灵",              # 10-01 用户质证原判例
@@ -171,9 +173,17 @@ def main() -> int:
         t_scan = t[:_cut]
 
         hard = []
-        for m in RE_ANY_PY_PATH.finditer(t_scan):
+        # 注释剥离（2026-10-08）：注释里的路径不参与运行，⛔不该判「硬编码」
+        #   （实证：qodercn_config_guard.py 用注释说明「原式硬编码 X ⇒ 已改」，反被当硬编码）
+        _code = re.sub(r"(?m)^\s*#.*$", "", t_scan)
+        for m in RE_ANY_PY_PATH.finditer(_code):
             seg = m.group(1)
             if any(k in seg for k in NON_TARGET_DIRS):
+                continue
+            # 发布态占位符豁免（2026-10-08）：`[记忆共享中心]/…` 是**发布期标记**，
+            #   恰是「不写死作者机路径」的正确形态（安装器再展开）——⛔判它硬编码=惩罚正解。
+            #   实证：ups_aggregator.py 修完「靠巧合在跑」后反被本判据报红。
+            if MC_PLACEHOLDER in seg:
                 continue
             hard.append(seg)
         if hard:

@@ -8,7 +8,7 @@ growth_signal_collector.py — 成长箱感知层采集器（Phase 1 感知自�
   每日扫描已有基础设施的输出（零新建信号源），按高门槛白名单生成候选学习项，
   写入候选暂存区 CANDIDATES.md，由人/童灵审核（终审保留·愿景红线）。
 
-信号源（v1.0 接入两源·S825 最小闭环）：
+信号源（v1.0 接入两源·S825 最小闭环；现行为四源 S2+S6+S1+S3，v4.0.1 起·见 SKILL.md 启动自检段，本行为历史注）：
   S2 免疫复发记录.md —— 某坑复发 = 规则未生效/新问题（近24h产出·7天同信号≥门槛才立候选）
   S6 changelog_guard.sh --check JSON —— 版本漂移/漏记 = 流程执行缺口（候选数≥3=严重度高立候选，1-2需7天复现）
 
@@ -59,11 +59,13 @@ def _first_existing(*cands):
     return cands[0]
 
 GUARD = _first_existing(
+    os.path.join(BASE, "脚本中心", "守卫", "changelog-guard", "changelog_guard.sh"),
     os.path.join(BASE, "脚本中心", "changelog_guard.sh"),
     os.path.join(BASE, "技能配置", "growth-box", "scripts", "changelog_guard.sh"),
     os.path.join(BASE, "开发工具", "changelog-guard", "changelog_guard.sh"),
 )
 GUARD_SELFTEST = _first_existing(
+    os.path.join(BASE, "脚本中心", "守卫", "guard_selftest_check.py"),
     os.path.join(BASE, "脚本中心", "guard_selftest_check.py"),
     os.path.join(BASE, "技能配置", "growth-box", "scripts", "guard_selftest_check.py"),
     os.path.join(BASE, "开发工具", "guard_selftest_check.py"),
@@ -343,7 +345,7 @@ def collect(today=None, verbose=False):
     else:
         try:
             r = subprocess.run(["python3", GUARD_SELFTEST, "--strict"],
-                               capture_output=True, text=True, timeout=300)
+                               capture_output=True, text=True, timeout=900)  # v-s7 2026-10-10: 聚合器v0.3.2扩容后全量5:27>300s，防超时降级成新静默失效
             red = r.returncode != 0
             sources_health["S1"] = "ok strict_rc=%d（0=全绿·1=有红项）" % r.returncode
             if red:

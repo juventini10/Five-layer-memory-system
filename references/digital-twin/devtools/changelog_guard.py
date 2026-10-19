@@ -16,7 +16,48 @@ import sys
 import os
 import re
 
-CHANGELOG_PATH = os.path.expanduser("~/变更日志.md")
+def _probe_mc_root():
+    """记忆中心根探测：按结构指纹在家目录下扫一层目录，⛔不认目录名。
+
+    判据源=platform_compat 检查⑫「共享中心目录名硬编码」＋条文47「运行期根决定权唯一源」：
+    不同用户的记忆中心根目录叫法各不相同（本端 / 端用户机 / 记忆中心 等），写死任一个
+    ＝其他用户直接错根。结构指纹取「记忆规则/用户基本规则-铁律版.md」——布洛陀实装机的
+    必要产物，缺它就不是布洛陀环境，探测自然返回 None 走家目录兜底。
+    （⛔本文不引门禁扫描词字面量·条文18⑥「门禁词自伤」）
+    """
+    _home = os.path.expanduser("~")
+    _mark = os.path.join("记忆规则", "用户基本规则-铁律版.md")
+    try:
+        for _e in os.scandir(_home):
+            if _e.is_dir() and os.path.isfile(os.path.join(_e.path, _mark)):
+                return _e.path
+    except OSError:
+        pass
+    return None
+
+
+def _changelog_path():
+    """变更日志落点 = <记忆中心根>/变更日志.md（B4 根治·2026-10-10 刚叔 V2.1.0 提请单）。
+
+    病根：原 `expanduser("~/变更日志.md")` 把"记忆中心根"当"家目录"——作者机 mac 解析到
+    ~/变更日志.md（不存在）、端用户 Windows 解析到 C:/Users/<user>/变更日志.md（也不存在），
+    两端都指空文件；真身在 <记忆中心根>/变更日志.md（本端实测 1.3MB 在盘·每日在写）。
+    根解析序：env 声明（BULUOTUO_MC/MEMORY_CENTER）→ 结构指纹探测（家目录扫一层）→ HOME。
+    ⛔不写死单一目录名（条文47 运行期根唯一源 + platform_compat 检查⑫ 同源）。
+    """
+    for _k in ("BULUOTUO_MC", "MEMORY_CENTER", "DOENGLINGZ_MC"):
+        _v = os.environ.get(_k)
+        if _v:
+            _p = os.path.expanduser(_v)
+            if os.path.isdir(_p):
+                return os.path.join(_p, "变更日志.md")
+    _ar = _probe_mc_root()
+    if _ar:
+        return os.path.join(_ar, "变更日志.md")
+    return os.path.join(os.path.expanduser("~"), "变更日志.md")
+
+
+CHANGELOG_PATH = _changelog_path()
 
 # excluded_types 的关键词组定义
 # 每个类型含多个关键词，任一匹配即判定属于该类型

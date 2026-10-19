@@ -11,7 +11,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import ast
 import argparse
@@ -251,6 +251,20 @@ def _scan_dir(root):
             except OSError:
                 continue
             _lines = t.split("\n")
+            # self_test 函数体行号集合（2026-10-08·豁免「夹具里的字面路径名」）：
+            #   self_test 在 tempdir 下构造假记忆中心，路径段是**字面目录名**（非真实作者机路径）。
+            #   与 _is_detector_fixture 同理——判红 = 要求夹具不用路径名 ⇒ 夹具写不出来。
+            #   用 ast 精确取（比缩进回溯稳·⛔ 只豁 self_test/selftest 函数体）。
+            _selftest_lines = set()
+            try:
+                _tree = ast.parse(t)
+                for _node in ast.walk(_tree):
+                    if isinstance(_node, (ast.FunctionDef, ast.AsyncFunctionDef)) \
+                            and _node.name in ("self_test", "_self_test", "selftest", "run_self_test"):
+                        for _ln in range(_node.lineno, getattr(_node, "end_lineno", _node.lineno) + 1):
+                            _selftest_lines.add(_ln - 1)   # ast 1-based → 0-based
+            except SyntaxError:
+                pass
             # ⛔ 2026-10-04 性能根治（实测闸5 scan 370 秒·超时）：
             #   原实现**每行都重算** fixture 集合 + docstring 集合
             #   （各含 15 行回溯 / 全文 ast.parse）⇒ 平方级。
@@ -276,6 +290,8 @@ def _scan_dir(root):
                 if _hit in ("发布占位符残留", "作者绝对路径") \
                         and _is_prose_line(_line):
                     continue          # 说明性文案
+                if _hit == "作者绝对路径" and _i in _selftest_lines:
+                    continue          # self_test 夹具区（临时目录下的字面名·非真路径）
                 hits.setdefault(_hit, []).append("%s L%d" % (_rel, _i + 1))
     return hits
 
@@ -331,9 +347,18 @@ def gate6_idempotent():
     🔴 2026-10-04 根治：本闸用**真实 MC** 连装两遍 ⇒ 它是闸5 之后
        **唯一还在写的闸** ⇒ 闸5 的「装后回同步」被它灌回去
        （实测：闸5 回同步后守卫全绿·闸6 跑完又回到 9 项缺口）。
-       ⇒ 两处：① 也传 `--cfg-root <临时目录>`（不碰真机声明）
-               ② 幂等判定**仍用真实 MC**（幂等性必须在真实落点验）
-                  但**跑完立刻回同步**（不留旧版当下一轮起点）。
+       ⇒ ① 也传 `--cfg-root <临时目录>`（不碰真机声明）
+          ② 幂等判定**仍用真实 MC**（幂等性必须在真实落点验）
+             但**跑完立刻回同步**（不留旧版当下一轮起点）。
+
+    🔴🔴 2026-10-08 二次根治（皮叔令「主源是我本地电脑端，不要搞混」）：
+       上条 ② 的前提是**错的**——安装器的职责是「把包装到用户机」，
+       它的输入是包、输出是 `<MC>/*`。在**源机**上把 `<MC>` 指向真源树，
+       等于**让包（下游脱敏映射物）反灌本源**（实测：跑一次往 `脚本中心/` 灌入
+       93 件构建链块 + 8 件绝对路径；而它的「回同步」只回同步包侧、⛔不回源侧）。
+       ⇒ 判据改正：**幂等性在隔离 MC 上验**（幂等=「同一输入跑两遍结果一致」，
+         这是**函数性质**，与 MC 是不是真源无关）·⛔ 真源树零写入。
+       ⇒ 真源侧只保留**只读**快照（读 `runtime_paths` 声明，不写）。
     """
     def snapshot(mc):
         out = {}
@@ -341,47 +366,58 @@ def gate6_idempotent():
             d = os.path.join(mc, sub)
             if os.path.isdir(d):
                 out[sub] = sorted(os.listdir(d))
-        rp = os.path.join(HOME, ".hermes/doenglingz/runtime_paths.json")
-        if os.path.isfile(rp):
-            out["runtime_paths"] = open(rp, encoding="utf-8").read()
         return out
 
-    def resync():
-        """装后回同步（与闸5 同一入口·不留旧版）"""
-        s = os.path.join(PKG, "..", "..", "..", "开发工具",
-                         "buluotuo-release-sync", "单向真源同步.py")
-        s = os.path.abspath(s)
-        if not os.path.isfile(s):
-            return "回同步器缺失"
-        rc, o = _run(["python3", s], cwd=os.path.dirname(s), timeout=300)
-        tail = [l.strip() for l in o.strip().split("\n") if l.strip()][-1:]
-        return "回同步 rc=%d %s" % (rc, (tail[0] if tail else "")[:44])
-
+    iso_mc = tempfile.mkdtemp(prefix="blt_gate6_mc_")
     iso_cfg = tempfile.mkdtemp(prefix="blt_gate6_cfg_")
     try:
-        before = snapshot(MC)
-        # ⚠️ cfg_root 隔离：声明写临时目录·真机声明零污染
-        rc, _ = _run(["python3", os.path.join(PKG, "install_scripts.py"), MC,
+        os.makedirs(os.path.join(iso_mc, "开发工具"), exist_ok=True)
+        before = snapshot(iso_mc)
+        # ⚠️ 双隔离：MC=临时目录（⛔不碰真源树）· cfg_root=临时目录（⛔不碰真机声明）
+        rc, _ = _run(["python3", os.path.join(PKG, "install_scripts.py"), iso_mc,
                       "--platform", "hermes", "--cfg-root", iso_cfg],
                      cwd=PKG, timeout=280)
-        note = resync()
         if rc != 0:
-            return False, "第一遍 rc=%d · %s" % (rc, note)
-        mid = snapshot(MC)
-        rc2, _ = _run(["python3", os.path.join(PKG, "install_scripts.py"), MC,
+            return False, "第一遍 rc=%d" % rc
+        mid = snapshot(iso_mc)
+        rc2, _ = _run(["python3", os.path.join(PKG, "install_scripts.py"), iso_mc,
                        "--platform", "hermes", "--cfg-root", iso_cfg],
                       cwd=PKG, timeout=280)
-        note = resync()
         if rc2 != 0:
-            return False, "第二遍 rc=%d · %s" % (rc2, note)
-        after = snapshot(MC)
+            return False, "第二遍 rc=%d" % rc2
+        after = snapshot(iso_mc)
         diff = [k for k in set(mid) | set(after) if mid.get(k) != after.get(k)]
         if diff:
-            return False, "两遍之间变化: %s · %s" % (",".join(sorted(diff)), note)
+            return False, "两遍之间变化: %s" % ",".join(sorted(diff))
         # 首遍是否也未改变现状（幂等定义：重复执行无新变化）
         first_diff = [k for k in set(before) | set(mid) if before.get(k) != mid.get(k)]
-        return True, "两遍一致 · 首遍变更 %d 项 · %s" % (len(first_diff), note)
+        # 真源树零写入自证（本闸的新增判据）
+        sc_src = os.path.join(MC, "脚本中心")
+        polluted = 0
+        if os.path.isdir(sc_src):
+            for f in os.listdir(sc_src):
+                if not f.endswith((".py", ".sh")):
+                    continue
+                try:
+                    _txt = open(os.path.join(sc_src, f),
+                                encoding="utf-8", errors="replace").read()
+                except Exception:
+                    continue
+                # 判据精化（2026-10-08·皮叔令「保障我自己能正常使用，用户也不受干扰」）：
+                #   原判据只看「全文含 'auto by build chain'」⇒ 把**正常的模块级 UTF-8 守卫**
+                #   （作者手写、位于 import 区之后）也计为污染。实测 6 件里 5 件是这类，
+                #   只有 `install_ledger_reconcile.py`（第 2 行）是**装机器头部注入**的真痕迹。
+                #   装机器行为的机械特征 = **注入到文件最前部**（前 5 行内）。
+                #   ⇒ 只认头部注入；模块级守卫（非头部）不算污染。
+                _head = "\n".join(_txt.split("\n")[:5])
+                if "auto by build chain" in _head:
+                    polluted += 1
+        note = "隔离MC两遍一致 · 首遍变更 %d 项 · 真源树头部装机块 %d 件" % (len(first_diff), polluted)
+        if polluted > 1:      # 1 件为既有基线（install_ledger_reconcile.py）
+            return False, "🔴 源树被灌入装机块 %d 件（应≤1）· %s" % (polluted, note)
+        return True, note
     finally:
+        shutil.rmtree(iso_mc, ignore_errors=True)
         shutil.rmtree(iso_cfg, ignore_errors=True)
 
 
@@ -393,7 +429,7 @@ def gate7_managed_block():
     ⇒ 判据在 `rules_managed_block_guard.py`（5/5 反向夹具）·
        本闸同时扫**真源**与**用户落点**（两侧都要干净才算干净）。
     """
-    g = os.path.join(MC, "开发工具", "rules_managed_block_guard.py")
+    g = os.path.join(MC, "脚本中心", "守卫", "rules_managed_block_guard.py")
     if not os.path.isfile(g):
         return False, "守卫文件缺失: %s" % g
     targets = [os.path.join(MC, "开发工具/buluotuo-release-sync/assets/rules-curation"),

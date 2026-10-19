@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>自建 HEXACO 100 题 · 分身版 · 答题页 v1</title>
 <style>
-  :root{--ink:#1E1A2E;--paper:#F6F0EB;--purple:#7A6CA8;--teal:#4A8A8A;--line:#D8CFE0;}
+  :root{--ink:#1E1A2E;--paper:#F6F0EB;--purple:#7A6CA8;--teal:#4A8A8A;--line:#D8CFE0;--warn:#B3541E;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;padding:24px 16px 120px;}
   .wrap{max-width:760px;margin:0 auto;}
@@ -13,7 +13,8 @@
   .sub{color:#666;font-size:13px;margin-bottom:18px;}
   .guide{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px;margin-bottom:20px;}
   .guide b{color:var(--purple);}
-  .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9;}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;z-index:9;}
+  .bar .miss{width:100%;text-align:center;color:var(--warn);font-size:13px;}
   .bar .prog{font-size:13px;color:#666;min-width:90px;}
   button{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:15px;cursor:pointer;}
   button:disabled{background:#bbb;cursor:not-allowed;}
@@ -43,14 +44,14 @@
   <h1>自建 HEXACO 100 题 · 分身版</h1>
   <div class="sub">v1.0 · 你的作答将用于生成<b>你自己</b>的人格基底 · 全程本地计算，不联网</div>
   <div class="guide">
-    <b>答题指导</b>：下面的描述是关于人们日常行为与想法的。请按你<b>真实的样子</b>作答（不是理想中的自己），每题填一个数字代表同意程度。<b>答案没有对错，请勿漏答。</b>大约需要 15–20 分钟，建议一次性答完。
+    <b>答题指导</b>：下面的描述是关于人们日常行为与想法的。请按你<b>真实的样子</b>作答（不是理想中的自己），每题填一个数字代表同意程度。<b>答案没有对错，请勿漏答。</b><b>透明说明</b>：卷内含 V1/V3/V4 三道认真度校验题（未按指令作答本次作废须重测）；V2 测的是自陈倾向、仅做读数标注不作废——按实话答即可。大约需要 15–20 分钟，建议一次性答完。
   </div>
   <div class="legend"><span>1 = 极不同意</span><span>2 = 不大同意</span><span>3 = 没意见</span><span>4 = 基本同意</span><span>5 = 非常同意</span></div>
   <div id="form"></div>
   <div id="result">
     <h3>✅ 作答完成 · 结果数据</h3>
     <div class="warn" id="valwarn" style="display:none"></div>
-    <p style="font-size:13px;margin-bottom:8px">点「复制结果」，把剪贴板内容<b>整段粘贴给 WorkBuddy</b>（或点「下载文件」把文件放到桌面后告诉 AI 文件名）。AI 将据此计分并与官方金标准做效度锚定。</p>
+    <p style="font-size:13px;margin-bottom:8px">点「复制结果」，把剪贴板内容<b>整段粘贴给当前工具的 AI</b>（或点「下载文件」把文件放到桌面后告诉 AI 文件名）。AI 将据此计分并与官方金标准做效度锚定。</p>
     <textarea id="json" readonly></textarea>
     <div style="margin-top:10px;display:flex;gap:10px">
       <button id="copy">复制结果</button>
@@ -61,8 +62,13 @@
 <div class="bar">
   <span class="prog" id="prog">已答 0 / 100</span>
   <button id="submit" disabled>生成结果</button>
+  <span class="miss" id="misshint"></span>
 </div>
 <script>
+var _T0=Date.now();  // C26：页面加载即计时（旧导出 duration_note 是「见浏览器会话」无实现占位）
+function _pad(n){return String(n).padStart(2,"0");}
+function _todayLocal(){const d=new Date();return d.getFullYear()+"-"+_pad(d.getMonth()+1)+"-"+_pad(d.getDate());}
+function _nowLocalISO(){const d=new Date();return _todayLocal()+"T"+_pad(d.getHours())+":"+_pad(d.getMinutes())+":"+_pad(d.getSeconds());}
 const Q=[
 [1,"H",0,"我帮别人是真心想帮，不是为了让对方欠我人情。","真诚"],
 [2,"H",1,"如果能稳赚一笔且绝不会被发现，我愿意做点不太诚实的事。","真诚"],
@@ -75,7 +81,7 @@ const Q=[
 [9,"H",0,"真白给我一大笔钱，我会先怀疑附加条件是什么。","戒贪"],
 [10,"H",1,"看到别人晒高端设备，我会忍不住想换同款。","戒贪"],
 [11,"H",1,"身份和排场对我有实实在在的吸引力。","戒贪"],
-[12,"H",0,"有了钱我会先改善必要的生活，而不是撑场面。","戒贪"],
+[12,"H",0,"有钱了我会先改善必要的生活，而不是撑场面。","戒贪"],
 [13,"H",0,"我觉得自己的成绩里，运气占了不少成分。","谦逊"],
 [14,"H",1,"看到有人靠关系拿到本该凭本事的位置，我会直接说出来。","谦逊"],
 [15,"H",0,"被人当专家对待时，我会先讲清自己懂什么、不懂什么。","谦逊"],
@@ -180,21 +186,32 @@ Q.forEach(q=>{
 });
 document.getElementById("form").addEventListener("change",updProg);
 function answered(){return Q.filter(q=>document.querySelector(`input[name="q${q[0]}"]:checked`)).length;}
-function updProg(){const n=answered();document.getElementById("prog").textContent=`已答 ${n} / 100`;document.getElementById("submit").disabled=n<100;}
+function missingList(){const m=[];Q.forEach(q=>{if(!document.querySelector(`input[name="q${q[0]}"]:checked`))m.push(q[0]);});return m;}
+function fmtRun(nums){let out=[],s=nums[0],p=nums[0];for(let i=1;i<=nums.length;i++){const n=nums[i];if(n===p+1){p=n;continue;}out.push(s===p?String(s):s+"-"+p);s=n;p=n;}return out.join(", ");}
+function updProg(){const n=answered();document.getElementById("prog").textContent=`已答 ${n} / 100`;
+  const m=missingList(),mm=m.filter(x=>typeof x==="number").sort((a,b)=>a-b),vv=m.filter(x=>typeof x!=="number");
+  const parts=[];if(mm.length)parts.push("Q"+fmtRun(mm));if(vv.length)parts.push(vv.join(", "));
+  document.getElementById("misshint").textContent=m.length?`还有 ${m.length} 题未答：${parts.join("、")}`:"";
+  document.getElementById("submit").disabled=n<100;}
 document.getElementById("submit").addEventListener("click",()=>{
   if(answered()<100)return;
   const answers={};Q.forEach(q=>{const c=document.querySelector(`input[name="q${q[0]}"]:checked`);answers[q[0]]=parseInt(c.value);});
-  // 效度校验
-  const warns=[];
-  if(answers["V1"]!==3)warns.push("V1 未按指令作答");
-  if(answers["V2"]===5)warns.push("V2 异常（\"从未说谎\"选了非常同意）");
-  if(answers["V3"]<4)warns.push("V3 自评未达\"基本同意\"");
-  if(answers["V4"]!==2)warns.push("V4 未按指令作答");
-  const payload={instrument:"selfbuild-hexaco-100-v1",answered_at:new Date().toISOString(),
-    duration_note:"见浏览器会话",
+  // 效度校验（P29 2026-10-19：告警如实+硬V阻断确认；P30：V2 降标注制不拦提交）
+  const warns=[],hardV=[];
+  if(answers["V1"]!==3){warns.push("V1 未按指令作答");hardV.push("V1");}
+  if(answers["V2"]===5)warns.push("V2 自评偏完美（标注制·不影响计分·P30）");
+  if(answers["V3"]<4){warns.push("V3 自评未达\"基本同意\"");hardV.push("V3");}
+  if(answers["V4"]!==2){warns.push("V4 未按指令作答");hardV.push("V4");}
+  if(hardV.length && !confirm("效度题未过："+hardV.join("、")+"——本次读数将被计分器作废（rc=2）须重测。仍要现在导出吗？")){return;}
+  const facet_groups={};Q.forEach(q=>{if(q[1]==="VAL")return;const g=facet_groups[q[1]]=(facet_groups[q[1]]||{});(g[q[4]]=(g[q[4]]||[])).push(q[0]);});
+  const payload={instrument:"selfbuild-hexaco-100-v1",answered_at:_nowLocalISO(),  // C10：本机墙钟（E2E 实测旧值 08:04Z vs 本机 16:04）
+    duration_sec:Math.round((Date.now()-_T0)/1000),
+    duration_note:"本次作答耗时约 "+Math.round((Date.now()-_T0)/60000)+" 分钟（页面加载→提交；中途重载只计重载后段）",
     reverse_items:[2,4,6,8,10,11,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96],
     dims:{H:[1,16],E:[17,32],X:[33,48],A:[49,64],C:[65,80],O:[81,96]},
-    validity:{V1:3,V2_not5:true,V3_ge4:true,V4:2},
+    form:"BLT-SELF-BUILD-v1", // P28 来源指纹：scorer 校验不符即拒收（错页防线）
+    validity:{V1:answers["V1"],V2_not5:answers["V2"]!==5,V3_ge4:answers["V3"]>=4,V4:answers["V4"]}, // P29：真实答案计算，⛔硬编码
+    facet_groups:facet_groups,
     answers:answers};
   document.getElementById("json").value=JSON.stringify(payload,null,1);
   const w=document.getElementById("valwarn");
@@ -209,8 +226,21 @@ document.getElementById("copy").addEventListener("click",function(){
 document.getElementById("dl").addEventListener("click",function(){
   const blob=new Blob([document.getElementById("json").value],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download="hexaco-selfbuild-answers-"+new Date().toISOString().slice(0,10)+".json";a.click();
+  a.download="hexaco-selfbuild-answers-"+_todayLocal()+".json";a.click();
 });
+// 清理区⑥→本卡落（2026-10-15 用户令清理）：续答能力——每答一题即存 localStorage，重载自动回填
+// （旧病：中途关页面答案全丢，33题页有自动暂存、本卷此前没有）
+const LSKEY="hexaco100_answers_v2_"+location.pathname.replace(/[^\w]/g,"_").slice(-48); // P07/P28(2026-10-19)：路径+版本隔离键，跨包不互灌（顶层声明：写读两侧共用）
+document.addEventListener("change",function(e){if(!e.target||e.target.type!=="radio")return;
+  const a={};Q.forEach(q=>{const c=document.querySelector(`input[name="q${q[0]}"]:checked`);if(c)a[q[0]]=c.value});
+  try{localStorage.setItem(LSKEY,JSON.stringify(a))}catch(_){}
+});
+try{const s=localStorage.getItem(LSKEY);if(s){const a=JSON.parse(s);let n=0;
+  Q.forEach(q=>{const v=a[q[0]];if(v!=null){const el=document.querySelector(`input[name="q${q[0]}"][value="${v}"]`);if(el){el.checked=true;n++}}});
+  if(n){const tip=document.createElement("div");tip.style.cssText="text-align:center;padding:6px;color:#3a7d5c";
+    tip.textContent=`已从本浏览器恢复你之前未提交的作答：${n} 题（提交导出后建议自行清空浏览器本站存储）`;
+    document.body.insertBefore(tip,document.body.firstChild)}
+}}catch(_){}
 updProg();
 </script>
 </body>

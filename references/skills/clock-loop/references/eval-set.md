@@ -57,7 +57,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 39 | YAML upstream/path 声明指向不存在文件（v3.35.0） | eval_declared_existence 警告（非计分）——声明-事实核对·模板占位符{ }过滤防误报 |
 | 40 | 固化文件正文「来源：skill vX」与源版本不一致（v3.35.1） | check_cured_snapshot scan_current_version_lines → exit 1（头部 version 一致≠正文一致） |
 | 41 | 发布包/加强包任一核心 FAIL（v3.35.2） | 发布判定三态 → ❌不可发布——⛔禁止宣称可发布 |
-| 42 | dependencies 条目无 path 字段（v3.36.0） | 按 `~/[记忆共享中心]/技能配置/{name}/` 约定路径解析核验——不存在→核验失败（不再整条漏检） |
+| 42 | dependencies 条目无 path 字段（v3.36.0） | 按 `[记忆共享中心]/技能配置/{name}/` 约定路径解析核验——不存在→核验失败（不再整条漏检） |
 | 43 | G路径标准清单缺「专项分析表单」强制区块（v3.37.0） | 门禁——表单四栏非空+专项项逐项有结果（⛔只展示通用清单=不达标） |
 | 44 | G路径报告缺子Agent独立审查段（v3.38.0） | pkg_report_check 六项校验 exit 非零拒交付——对齐 E/F 路径硬门禁 |
 | 45 | 无效目标调用 skill_eval.py（v3.39.0） | exit 2 不写归档JSON——⛔不落盘假评估（原被当 target 误触发全量评估） |

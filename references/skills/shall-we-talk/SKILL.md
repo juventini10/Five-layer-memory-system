@@ -7,7 +7,7 @@ compatibility: workbuddy, qclaw, trae, trae-work, wukong, qoderwork
 allowed-tools: [Read, Write, Bash, Glob, Grep]
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/shall-we-talk/
+upstream: [记忆共享中心]/技能配置/shall-we-talk/
 modifiable: true
 license: Proprietary
 version: "1.6.2"

@@ -74,7 +74,7 @@ DRAFT_DIR = os.environ.get(
 )
 LEDGER = os.path.join(DRAFT_DIR, "审批台账.md")
 CHECK_SH = os.path.join(os.path.expanduser("[记忆共享中心]"), "技能配置/growth-box/scripts/growth_box_check.sh")
-SKILL_VER_GUARD = os.path.join(HOME, "[记忆共享中心]/脚本中心/skill_version_guard.sh")
+SKILL_VER_GUARD = os.path.join(HOME, "[记忆共享中心]/脚本中心/changelog-guard/skill_version_guard.sh")
 
 # 三态修法来源：authority=权威源（可派生）；note=为什么不是纯派生
 SOURCE_CLASS = {
@@ -347,7 +347,7 @@ def build_draft(wid, real, diag, probe):
             d["class"] = "no_source"
             d["class_reason"] = "仪器两口径互斥，修法方向本身待定"
         else:
-            items = ["- 目标：`~/[记忆共享中心]/技能配置/%s/references/CHANGELOG.md`（PREPEND 新条目）"
+            items = ["- 目标：`[记忆共享中心]/技能配置/%s/references/CHANGELOG.md`（PREPEND 新条目）"
                      % x["skill"] for x in diag["report_leads"]]
             d["verdict"] = "真坑：%d 个 Skill 版本领先于自身 CHANGELOG" % len(diag["report_leads"])
             d["proposal"] = _fence("\n".join(items) if items else "（无实例）", "markdown")
@@ -752,8 +752,8 @@ CLAIM_CLEAN = ("[记忆共享中心]/知识库/AI学习库/立场卡#fake.md",
                "本卡结论：你已质证\n- 置信度: 🟢 · 自述\n- 碰撞来源: 你原话\n")
 
 POSITIVE = {
-    "W4": (lambda r: _mk(r, "[记忆共享中心]/脚本中心/skill_version_guard.sh", FAKE_GUARD_LEAD),
-           lambda r: _mk(r, "[记忆共享中心]/脚本中心/skill_version_guard.sh", FAKE_GUARD_CLEAN)),
+    "W4": (lambda r: _mk(r, "[记忆共享中心]/脚本中心/changelog-guard/skill_version_guard.sh", FAKE_GUARD_LEAD),
+           lambda r: _mk(r, "[记忆共享中心]/脚本中心/changelog-guard/skill_version_guard.sh", FAKE_GUARD_CLEAN)),
     "W5": (_both(UPS_PIT, UPS_INDEX_PIT), _both(UPS_PIT, UPS_INDEX_CLEAN)),
     "W6": (lambda r: _mk(r, LOG_TODAY[0], LOG_TODAY[1]),
            lambda r: (_mk(r, LOG_TODAY[0], LOG_TODAY[1]),

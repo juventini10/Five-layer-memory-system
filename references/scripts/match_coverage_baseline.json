@@ -1,0 +1,18 @@
+{
+ "generated_by": "match_coverage_check.py v1.1",
+ "total": 38,
+ "deficit": [
+  "025",
+  "026",
+  "027",
+  "028",
+  "030",
+  "031",
+  "032",
+  "034"
+ ],
+ "placeholder_exempt": [
+  "008",
+  "009"
+ ]
+}

@@ -35,6 +35,9 @@ import re
 import os
 import shutil
 import stat
+import pathlib
+import datetime
+import hashlib
 import sys
 # Windows 控制台默认 cp1252/cp936，强制 stdout/stderr UTF-8（同包 data_contamination_check.py 先例）
 try:
@@ -45,8 +48,14 @@ except Exception:
 
 PKG = os.path.dirname(os.path.abspath(__file__))
 PLACEHOLDER = "[记忆共享中心]"
+# 2026-10-10 十一轮：畸形前缀归一化（双拼病防御）——旧模板/已发布包可能残留
+# 波浪号斜杠紧贴占位符的形态（deident tilde 化 + relocate 裸形态规则残留前缀），
+# 纯 replace 后变 `~//Users/...`（Mac）/ `~/C:/Users/...`（Win）⇒ expanduser 静默失效。
+# 替换前统一剥前缀，重装旧包也治愈存量。
+TILDE_PREFIXED = "~/" + PLACEHOLDER
 # 路径变量（--platform 覆盖·默认 WorkBuddy 兼容）
 HOOKS_ROOT = os.path.join(os.path.expanduser("~"), ".workbuddy", "hooks")
+_LANDED_INDEX = None  # P12 根治：deploy_hooks 全量落地件索引 [(rel, srcdir)]·写侧保护与指纹建档共用
 # v2.0.1 多端：注册期已知端与配置根（默认 workbuddy=旧行为；--platform 分支覆盖）
 _PLATFORM_ID = "workbuddy"
 _CFG_ROOT_ABS = os.path.join(os.path.expanduser("~"), ".workbuddy")
@@ -107,7 +116,8 @@ ROSTER = [
 
     # —— 守卫族自动体检入口（2026-10-03 补·落 <MC>/数字分身/guards/）——
     # ⚠️ 跑的是「脚本中心 + guards/ 目录」下全部 *guard.sh（文件系统即真相源·新增守卫零配置接入）
-    ("Stop", ".", "references/scripts", "run_registry_guards.sh", []),
+    # deps=部署但不注册（Windows 承载孪生件·2026-10-11 批次6）：注册哪条由 _hook_command 按平台选
+    ("Stop", ".", "references/scripts", "run_registry_guards.sh", ["run_registry_guards.ps1"]),
 
     # —— 数字分身（随分身启用；未部署分身者钩子会安全空转）——
     ("UserPromptSubmit", ".", "references/digital-twin/devtools", "doenglingz_inject_prompt.py", []),
@@ -115,7 +125,23 @@ ROSTER = [
     ("Stop", ".", "references/digital-twin/devtools", "twin_changelog_guard.py", []),
 ]
 
-TEXT_EXT = (".py", ".sh", ".yaml", ".yml", ".json", ".md")
+TEXT_EXT = (".py", ".sh", ".yaml", ".yml", ".json", ".md",
+            ".ps1", ".plist", ".template", "")  # 2026-10-11 批次6：A2/E3 根治——原白名单漏这几类，
+                                               # 其中占位符永不本地化（Win 侧必错根·真机 T16 报 12 件）
+
+# ─── R1 转义地雷根治（2026-10-11 _fill转义地雷根治卡）───────────────────
+# 病根：Win 的 mc 含反斜杠，裸 replace 填进"会二次解析反斜杠"的格式面就吃字面——
+#   .py 串内 \a→BEL（真机 WinError 123 实证）、C:\Users 的 \U→SyntaxError 编译即死；
+#   .json 串内 \U→loads 崩、\b\f\n\r\t→静默变控制符；.yaml 双引号 scalar 同毒。
+# 修法：仅对转义敏感面填入前把 mc 换正斜杠（Win32 API/Python/JSON/YAML/shell 全域接受），
+#   .ps1/.plist/.md/.sh/conffiles 等展示与字面语义面保留反斜杠原样（不改变显示）。
+# 本体先例：L925/955/959/969 hooks 命令串早已用 .replace("\\", "/") 同型解法。
+SLASH_FILL_EXT = (".py", ".json", ".yaml", ".yml", ".template")
+_FILL_REPORT = []  # R2 门禁原料：本轮被填写盘的 (path, ext)
+
+def _mc_for(ext, mc):
+    """按目标扩展名选 mc 变体：转义敏感面→正斜杠；其余→原样。"""
+    return mc.replace("\\", "/") if ext in SLASH_FILL_EXT else mc
 
 # ─────────────────────────────────────────────────────────────────────────
 # 数字分身套件（2026-09-30 补部署契约·根治「入包了不活」）
@@ -173,12 +199,24 @@ DT_SUITE = {
     #   读作者侧 日记仓库+AI学习库）→ ⛔不入包（条文 1 端用户侧前提）。
     "k2-slice-generator": ("k2_slice_generator.py", "hexaco_slice_generator.py",
                            "k2_slice_probe.py"),
-    # 人格测评答题件（2026-09-30 补·养成链一级点火入口·判定标准「用户更好体验」）
+    # 人格测评答题件（2026-09-30 补·养成链第一步入职入口·判定标准「用户更好体验」）
     #   判据＝养成链第一步「答题」必须有装机态入口：AI 安装完成后直接 open 答题页，
-    #   用户零找路。⛔只装测评四件（答题页×2+题库+官方答题卡）——hexaco/ 目录其余件
-    #   （跨模型互照报告/评测 json/探针题库）＝作者侧运营产物 → 不进部署面。
+    #   用户零找路。⛔只装测评白名单件（题库+自建答题页+官方答题卡+官方计分键PDF）——
+    #   2026-10-10 收敛：hexaco/ 包内终态=这五件本体（作者侧回流的互照套件×3/探针题库
+    #   （含本体读数H4.75·脱敏红线回归）/60简版/runner 六件已移出至
+    #   数字分身/HEXACO测评/包内移出-20261010/；verify §3.8 hexaco终态穷举断言在岗防再回流。）
+    #   2026-10-15 C27 增量：`hexaco_selfbuild_scorer.py`（自建 100 题自动计分器）入部署面——
+    #   题库 §八 第4条自陈待办「写入 scorer → 随包」此前从未落地，D2 计分实际由 AI 手算 96 个数
+    #   （E2E 实测首轮手抄错 2 题）。⛔只装不引导=死件，同轮把 INSTALL/step8/入门指南的 D2 口径
+    #   从「粘贴给 AI 算」改为「跑本脚本」，并在 verify §3.8 加在位断言（缺件即红·防再次漂移）。
+    #   2026-10-15 C34 增量：官方卷计分链入部署面——`hexaco_official_scorer.py`＋键表投影
+    #   `hexaco_official_keytable-100.json`（PDF 机器投影·头含 sha 溯源）＋`HEXACO-100-HTML答题页.html`
+    #   （此前官方页在包不部署：答题卡/PDF 已部署而答题入口缺失=官方链断点，本卡补全）。
+    #   ⛔只装不引导=死件：同轮改答题卡口径＋INSTALL D2 官方命令行＋verify §3.8 清单/引导断言。
     "hexaco": ("自建100题-分身版-题库-v1.md", "自建100题-答题页-v1.html",
-               "HEXACO-100-HTML答题页.html", "HEXACO-100完整版-官方中文-答题卡.md"),
+               "HEXACO-100完整版-官方中文-答题卡.md",
+               "ScoringKeys_100.pdf", "hexaco_selfbuild_scorer.py",
+               "hexaco_official_scorer.py", "hexaco_official_keytable-100.json"),  # P28作者裁决2026-10-18：官方壳页移出包面（答题页物理单源=自建版；官方参照物保留）
     # 装机日引导三件（2026-09-30 补·全端统一造芯流程）：
     #   人格向量空模板 / 规格书骨架模板 / 通用入门指南。装机日 AI 从本目录复制模板到
     #   「数字分身/」根、改名、陪用户填，再跑 k2-slice-generator 造切片。
@@ -220,6 +258,109 @@ def deploy_digital_twin(mc, dry=False):
                 if name.endswith(TEXT_EXT):
                     _fill(os.path.join(root, name), mc)
     return n
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# 装机态运行落点自举（2026-10-13 根治·封包前置·包宪法命题二「防误 > 防错」）
+#   判据＝凡被 Skill 以运行形态引用、且首跑即 sys.exit(1)/exit(2) 的落点文件，
+#   装机态必须物理可达（条文 17 腿A：不装＝端用户死引用）。
+#   实跑定位的硬隐患集（源=references/digital-twin/scripts 逐脚本读 exit 绑定）：
+#     · job_probation_check.py load_ledger  缺台账            → exit(1)
+#     · job_probation_check.py record       缺岗位定义          → exit(1)
+#     · batch_auto_pass.py                  缺 step3 初审台账   → exit(1)
+#     · job_audit_check.py                  缺台账              → exit(2)
+#   （概念碰撞成就.md 属成就系统，随 references/成就系统 整目录复制路由投递，本函数不重复；
+#    step3-blocked-cards.md 由 job_probation_check 的「首张发生时创建 + 不存在跳过」优雅处理，
+#    step3-handover-protocol.md 无脚本硬 exit → 均不入自举，守「精准不过界」）。
+#   ⛔ 不补造历史数据：只写「空骨架」（零决策/零记录），与「不补造」纪律正交。
+#   幂等律（硬边界①可观测 + 存量机保护）：目标已存在＝用户数据，⛔绝不覆盖，仅报 skipped。
+# ─────────────────────────────────────────────────────────────────────────
+def _ledger_skeleton(mc):
+    """岗位台账空骨架：三在岗岗位以 probation 起步、零决策。
+    JOB-002 蒸馏调度岗不设推翻率台账（编号非断档·见 ledger_scope_note）。"""
+    today = datetime.date.today()
+    end = today + datetime.timedelta(days=30)          # 试用期 1 个月
+    iso = lambda d: d.strftime("%Y-%m-%d")
+
+    def job(name, system, level):
+        return {"job_name": name, "system": system,
+                "probation_start": iso(today), "probation_end": iso(end),
+                "status": "probation", "authorization_level": level,
+                "decisions": [],
+                "stats": {"total": 0, "approved": 0, "rejected": 0,
+                          "modified": 0, "questioned": 0, "self_corrected": 0,
+                          "rejection_rate": 0.0}}
+
+    return {
+        "version": "1.0", "last_updated": iso(today),
+        "description": ("童灵岗位试用期推翻率台账——自动记录童灵每次决策后你的响应，"
+                        "试用期结束时自动统计推翻率，输出转正评估报告。"
+                        "符合愿景①全自动化（不需要人工统计）。"),
+        "ledger_path": os.path.join(mc, "数字分身", "job_probation_ledger.json"),
+        "check_script": os.path.join(mc, "数字分身", "scripts", "job_probation_check.py"),
+        "response_types": {"approved": "✅你确认通过", "rejected": "❌你拒绝",
+                           "modified": "🔄你要求修改",
+                           "questioned": "❓你质疑评估角度/方式方法"},
+        "conversion_criteria": {
+            "time": "试用期满1个月（从上岗日期起算）",
+            "quality": "试用期内推翻率<15%",
+            "confirmation": "你确认转正（你可凭实战背景直接拍板转正，不受15%阈值限制）",
+            "post_conversion": ("🟡试用期→🟢在岗，授权等级可按演进路径申请升级"
+                               "（L1→L2→L3→L4，每级升级需重新试用期验证），"
+                               "推翻率持续监控但不需每月复测"),
+            "failure_handling": ("推翻率≥15%或你主动决定不转正：①延长试用期1个月"
+                                "（回炉复测）②降级授权等级（如L3→L2）③收回岗位"
+                                "（🔴已收回，岗位编号保留不删除）。具体处理方式由你决定")},
+        "ledger_scope_note": ("JOB-002蒸馏调度岗不设推翻率台账（其运转检验=蒸馏中心按账核），"
+                              "编号非断档"),
+        "jobs": {
+            "JOB-001": job("立场卡价值预筛岗",
+                           "good-good-study (知识库立场卡)", "L1预筛（价值过滤）"),
+            "JOB-003": job("成长箱审核岗", "growth-box", "L1审核"),
+            "JOB-004": job("技能卡审核岗（七闸）",
+                           "good-good-study (AI学习库技能卡)", "L1七闸审核"),
+        },
+    }
+
+
+def _first_review_skeleton():
+    """step3 初审台账 0 态骨架：表头就绪、零数据行（batch_auto_pass 正则扫到 0 行
+    返回空 dict、job_audit_check 日志ID数=台账 0 决策=齐，均不崩）。"""
+    return (
+        "# Step 3 · 分身初审台账（童灵上岗记录）\n\n"
+        "> **路由**：good-good-study SKILL.md ④入库（A线动作）+ AI学习库 INDEX.md\n"
+        "> **硬格式**：层级归属 / 置信度 / 裁决+边界 / 依据 / 升级声明 / 可回溯理由\n"
+        "> **决策ID规则**：JOB-{编号}-{YYYYMMDD}-{NNN}（岗位-日期-当日序号）\n"
+        "> **下游**：你推翻 → 台账 response 更新；月度汇总 → 规格书迭代\n\n"
+        "## 📋 初审记录\n\n"
+        "| 序号 | 日期 | 卡ID | 层级归属 | 置信度 | 裁决+边界 | 依据 | 升级声明 | 你复核 |\n"
+        "|:---|:---|:---|:---|:---|:---|:---|:---|:---|\n"
+        "<!-- 首张初审卡由岗1预筛时按 record 动作追加于本表；装机初始为空 -->\n"
+    )
+
+
+def bootstrap_runtime_state(mc, dry=False):
+    """缺才建、有则绝不覆盖（存量机用户数据保护）。返回逐项落点清单供打印。"""
+    dt_root = os.path.join(mc, "数字分身")
+    targets = (
+        (os.path.join(dt_root, "job_probation_ledger.json"),
+         lambda: json.dumps(_ledger_skeleton(mc), ensure_ascii=False, indent=2) + "\n"),
+        (os.path.join(dt_root, "steps", "step3-first-review-log.md"),
+         _first_review_skeleton),
+    )
+    report = []
+    for path, gen in targets:
+        rel = os.path.relpath(path, mc)
+        if os.path.exists(path):
+            report.append("skipped·存量保留 %s" % rel)
+            continue
+        if not dry:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(gen())
+        report.append("created %s" % rel)
+    return report
+
 
 
 def _detect_existing_twin(mc):
@@ -290,11 +431,27 @@ def pre_install_health_check(mc, platform_id, cap=None, cfg_root=None, dry=False
         )
     assets["Skill"] = skill_count > 0
     assets["_skill_count"] = skill_count
-    # 五系统文件（在配置根或MC根）
-    sys_root = cfg_root or mc
+    # 五系统文件在位（2026-10-15 C29 根治·两分支合一到声明解析）：
+    # 旧 zwork 特判锚表键名「自定义指令.md」与名单失配（静默少计=本卡键名漂移的又一处实例）；
+    # 旧扁平分支把名单键当文件名（WB 字段型恒判缺失、声明了 memories/ 子目录的端也判缺失）——
+    # 判据面与落点面不相交。现=system_file_targets() 按端声明解析三形态（~/、::、platform://），
+    # 端自有实体经声明值表达 ⇒ platform_id=="zwork" 特判退役（端中立+1）。
+    # 行为差如实注：zwork 在位计数 4→5（第五件 AGENTS.md 实体在位·旧因键名失配漏计）；
+    # 其余端计数只增不减（字段型/子目录型从恒缺失变为按声明判）。
+    _cap = cap or {}
+    if not _cap.get("system_file_paths") and platform_id:
+        _cp = os.path.join(PKG, "adapters", platform_id, "capability.yaml")
+        if os.path.isfile(_cp):
+            _cap = load_capability(_cp)
+    targets = system_file_targets(cfg_root or mc, _cap)
     sys_present = []
-    for name in SYS_FILE_NAMES:
-        if os.path.isfile(os.path.join(sys_root, name)):
+    for name, v in targets.items():
+        if isinstance(v, dict):
+            ok = True if "platform" in v else os.path.isfile(v.get("file", ""))
+            # platform://=端自有托管面（verify 同口径判信任源）；字段级=宿主文件在位即计
+        else:
+            ok = bool(v) and os.path.isfile(v) and os.path.getsize(v) > 0
+        if ok:
             sys_present.append(name)
     assets["五系统文件"] = len(sys_present)
     assets["_sys_files"] = sys_present
@@ -302,7 +459,17 @@ def pre_install_health_check(mc, platform_id, cap=None, cfg_root=None, dry=False
     # ── 2. 判定用户身份 ──
     public_assets = ["脚本中心", "数字分身套件", "记忆规则", "Skill"]
     public_present = sum(1 for k in public_assets if assets.get(k))
-    if public_present == 0 and assets["五系统文件"] == 0:
+    # F10 根治（2026-10-17）：资产存在 ≠ 老用户——全新用户走完 step5 后，五系统文件/
+    # 规则/Skill 已由步骤文档预生成，旧判据（public_present>=2 ⇒ 老用户）把**在装的新用户**
+    # 误报"老用户"+建议"增量升级"，与 INSTALL Step -0.6 播报 B「机器上没有旧版本」矛盾。
+    # 正源=安装完成标记（.install/version·step7 7c 写；或 step7-done.md）——
+    # 无标记=首次安装进行中（现有资产是步骤5 产物·非旧版遗留）。
+    _ever_installed = (os.path.isfile(os.path.join(mc, ".install", "version"))
+                       or os.path.isfile(os.path.join(mc, ".install", "step7-done.md")))
+    if not _ever_installed:
+        user_type = "新用户（首次安装进行中·现有资产为步骤5 预生成·非旧版遗留）"
+        suggestion = "完整安装（继续走完 step6-7·⛔ 不按老用户跳过问卷等前置）"
+    elif public_present == 0 and assets["五系统文件"] == 0:
         user_type = "新用户"
         suggestion = "完整安装（全部资产从零部署）"
     elif assets["数字分身·已造芯"] and public_present >= 3:
@@ -374,17 +541,51 @@ def _status(path):
     return os.path.isfile(path)
 
 
-def _fill_text(txt, mc):
+def _fill_text(txt, mc, ext=None, paths=None):
     """占位符替换（**纯函数版**·⛔ 不写盘）。
 
     拆出来的原因：断章增量要求「先在内存里替换好，再整块写进段里」，
     否则会出现「包模板已填、用户文件已填」两份不同占位符 ⇒ 冲突判定误报。
+    ext=目标文件扩展名（R1·2026-10-11）：转义敏感面自动斜杠化 mc；不传=原样（.md 文档面）。
+    paths=F4 根治（2026-10-17）：{MEMORY_CENTER/DIARY_REPO/KNOWLEDGE_BASE/DIARY_SUBDIR}
+      —— 旧版只换 [记忆共享中心]，[日记仓库]/[知识库]/[日记子目录] 安装器零管辖
+      ⇒ 走完主路径+step6 文档 glob（漏 .py）后技能 .py 仍残留 16 处字面量，
+      日记采集/成就追踪脚本路径全错（10-14「12 件残留」的变形复发）。括号+花括号双形态都换。
     """
-    return (txt or "").replace(PLACEHOLDER, mc)
+    t = (txt or "").replace(TILDE_PREFIXED, PLACEHOLDER)
+    t = t.replace(PLACEHOLDER, _mc_for(ext or "", mc))
+    t = t.replace("{" + PLACEHOLDER[1:-1] + "}", _mc_for(ext or "", mc))
+    if paths:
+        for _key, _ph in (("DIARY_REPO", "日记仓库"), ("KNOWLEDGE_BASE", "知识库"),
+                          ("DIARY_SUBDIR", "日记子目录")):
+            _v = (paths or {}).get(_key)
+            if _v:
+                t = t.replace("[" + _ph + "]", _v).replace("{" + _ph + "}", _v)
+    return t
+
+
+def _read_install_paths(mc):
+    """F4（2026-10-17）：从 <mc>/.install/step3-done.md 读路径变量，喂 _fill_text。
+
+    缺 DIARY_SUBDIR（step3-done 模板无此键·日记子目录在 step6 才定）时回落
+    包内通行约定 1-每日计划/01-日记（step6-skill-install 步骤1 示例值）。
+    """
+    out = {"DIARY_SUBDIR": "1-每日计划/01-日记"}
+    p = os.path.join(mc, ".install", "step3-done.md")
+    if os.path.isfile(p):
+        try:
+            for line in open(p, encoding="utf-8"):
+                m = re.match(r"^(MEMORY_CENTER|DIARY_REPO|KNOWLEDGE_BASE|DIARY_SUBDIR)=(.+)$",
+                             line.strip())
+                if m:
+                    out[m.group(1)] = m.group(2).strip()
+        except OSError:
+            pass
+    return out
 
 
 def _fill(path, mc, dry=False):
-    """占位符替换：<记忆共享中心> → 实际绝对路径（仅文本类文件）。"""
+    """占位符替换：<记忆共享中心> → 实际绝对路径（仅文本类文件·R1 按扩展名转义适配）。"""
     if not path.endswith(TEXT_EXT):
         return 0
     try:
@@ -394,11 +595,37 @@ def _fill(path, mc, dry=False):
         return 0
     if PLACEHOLDER not in txt:
         return 0
+    txt = txt.replace(TILDE_PREFIXED, PLACEHOLDER)  # 十一轮：畸形前缀归一化
     n = txt.count(PLACEHOLDER)
     if not dry:
+        ext = os.path.splitext(path)[1]
         with open(path, "w", encoding="utf-8") as f:
-            f.write(txt.replace(PLACEHOLDER, mc))
+            f.write(txt.replace(PLACEHOLDER, _mc_for(ext, mc)))
+        if ext in (".py", ".json"):
+            _FILL_REPORT.append(path)  # R2 门禁原料（仅语法可判面登记）
     return n
+
+
+def fill_syntax_guard():
+    """R2 填后语法门禁（2026-10-11 根治卡）：本轮被填 .py 必过 compile、.json 必过 loads。
+
+    病名：语法雷靠真机运行时才炸=用户侧首触即死；本门禁把检出左移到装机当轮。
+    ⛔不吞不静默——失败件由调用方并入 bad 列表（rc=1 阻断+进回执原料）。
+    返回 bad 字符串列表（空=全绿）。
+    """
+    import json as _json
+    bad = []
+    for p in _FILL_REPORT:
+        try:
+            # utf-8-sig：BOM 开头 .py 在 import 层合法，直读 utf-8 会假报（2026-10-11 全机扫首跑逮到）
+            src = open(p, encoding="utf-8-sig").read()
+            if p.endswith(".py"):
+                compile(src, p, "exec")
+            else:
+                _json.loads(src)
+        except Exception as e:
+            bad.append("填后语法雷:%s(%s)" % (p, str(e)[:100]))
+    return bad
 
 
 def _copy(src, dst, dry=False):
@@ -411,6 +638,196 @@ def _copy(src, dst, dry=False):
     except OSError:
         pass
     return True
+
+
+def _md5(p):
+    try:
+        return hashlib.md5(p.read_bytes()).hexdigest()
+    except Exception:
+        return "-"
+
+
+def _sha8(path):
+    """P12 内容指纹（2026-10-19）：sha256 前8位，读不了返回 '-'。"""
+    try:
+        return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()[:8]
+    except Exception:
+        return "-"  # 注意：⛔在此吞 NameError 类编程错——改动本函数后必跑沙箱装实测（P12 自测逮过本病）
+
+
+def _hook_fingerprints_path():
+    return os.path.join(os.path.dirname(SETTINGS), "hook_fingerprints.json")
+
+
+def write_hook_fingerprints(deployed, dry=False):
+    """P12 升级第三层判定基线：逐钩子记录 {sub: {pkg_sha8, installed_sha8, srcdir}}。
+    旧基线只有事件→basename 清单（存在性两层），差异不可见——本件补内容指纹参照系。"""
+    if dry:
+        return False
+    fp = _hook_fingerprints_path()
+    data = {}
+    if os.path.isfile(fp):
+        try:
+            with open(fp, encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    index = globals().get("_LANDED_INDEX")
+    if index:
+        # P12 根治：全量落地件（主件+依赖）逐件建档，写侧保护与三态呈报同一参照系
+        for rel, srcdir in index:
+            landing = os.path.join(HOOKS_ROOT, rel)
+            src = os.path.join(PKG, srcdir, os.path.basename(rel))
+            data[rel] = {"pkg_sha8": _sha8(src), "installed_sha8": _sha8(landing),
+                         "srcdir": srcdir}
+    else:
+        for ev, subpath, srcdir, _m in deployed:
+            bname = os.path.basename(subpath)
+            landing = os.path.join(HOOKS_ROOT, subpath)
+            src = os.path.join(PKG, srcdir, bname)
+            data[subpath] = {"pkg_sha8": _sha8(src), "installed_sha8": _sha8(landing),
+                             "srcdir": srcdir}
+    tmp = fp + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, fp)
+    print("🧭 钩子内容指纹基线已写：%d 件（升级三态判定的参照系·P12）→ %s" % (len(data), fp))
+    return True
+
+
+def report_hook_three_state():
+    """P12 三态呈报（核验/升级窗口只读）：同 / 本机已改 / 包侧更新 / 双边已改。
+    判据=装时基线（installed_sha8）分别与「盘上现状」「包内现状」比差。"""
+    fp = _hook_fingerprints_path()
+    if not os.path.isfile(fp):
+        print("ℹ️ 钩子内容指纹基线不存在（旧装机）——下次 --deploy/安装 自动生成（P12）")
+        return
+    try:
+        with open(fp, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        print("⚠️ 指纹基线不可读（不阻断核验）")
+        return
+    same = mine = theirs = both = 0
+    names = {"mine": [], "theirs": [], "both": []}
+    for subpath, rec in sorted(data.items()):
+        landing = os.path.join(HOOKS_ROOT, subpath)
+        src = os.path.join(PKG, rec.get("srcdir", "references/scripts"), os.path.basename(subpath))
+        cur_l, cur_p = _sha8(landing), _sha8(src)
+        base_i, base_p = rec.get("installed_sha8", "-"), rec.get("pkg_sha8", "-")
+        # ⛔不用 cur_l==cur_p 判「同」：landing 经 _fill 占位符本地化，与包内原文恒差
+        #    （P12 沙箱实测 32 件假报「包侧更新」的病根）。判据=各自 vs 装时基线的位移。
+        l_moved = cur_l != base_i
+        p_moved = cur_p != base_p
+        if not l_moved and not p_moved:
+            same += 1
+            continue
+        if l_moved and p_moved:
+            both += 1; names["both"].append(subpath)
+        elif l_moved:
+            mine += 1; names["mine"].append(subpath)
+        else:
+            theirs += 1; names["theirs"].append(subpath)
+    print("钩子内容三态（vs 装时基线·P12）：状态未变 %d ｜ 本机已改 %d ｜ 包侧更新可达 %d ｜ 双边已改 %d"
+          % (same, mine, theirs, both))
+    for k, lab in (("mine", "本机已改（重装⛔不覆盖你的件·要收包侧新修须手工合并）"),
+                   ("theirs", "包侧更新（盘上仍是装时态·重装即到达新版）"),
+                   ("both", "双边已改（须人判合并）")):
+        if names[k]:
+            show = ", ".join(names[k][:8]) + ("…" if len(names[k]) > 8 else "")
+            print("   · %s：%d 件：%s" % (lab, len(names[k]), show))
+
+
+def deploy_skills(mc, dry=False, only=None):
+    """Skill 面程序化部署腿（2026-10-11 批次8·T16 根因 + D1 收编三件之二）。
+
+    病根：安装器原先对 Skill 面**只数不装**（detect_assets 里 skill_count），真正落盘
+    靠 INSTALL/steps 里的 `cp -r` + 手工 perl 替换 ⇒ 745 处占位符的本地化交给人/端 AI
+    逐次执行。真机 Windows 演练（verify.sh 检装后产物）实测 12 件残留未替换 =
+    端用户拿到死链。这是"人工步骤被当成机制"的典型：它不是失败得响亮，而是漏得安静。
+
+    本腿做三件事（一次落地 D1 提的『留存/损失清单/探针』里的前两件）：
+      ①逐件复制 references/skills/<name> → <MC>/技能配置/<name>，复制后对每个落盘件
+        跑 _fill（含 .ps1/.plist/.template——TEXT_EXT 已扩，见 A2/E3 根治）；
+      ②覆盖前逐件比对：目标已存在且 md5 不同 ⇒ 记入 `.install/upgrade-losses.md`
+        （路径+双方 md5+备份去向），终端显形条数；⛔不阻断（升级授权在用户），但必须留痕；
+      ③被覆盖件先备份进 <MC>/记忆琥珀/升级前备份_<ts>/<skill>/（命名与 rollback 的
+        BACKUP_KINDS 对齐由 rollback 腿负责，本处只写不吞）。
+    幂等：内容与包内件一致且无占位符残留 ⇒ 计入"跳过"，不重写不刷 mtime。
+    """
+    src_root = os.path.join(PKG, "references", "skills")
+    dst_root = os.path.join(mc, "技能配置")
+    if not os.path.isdir(src_root):
+        print("!! 包内 references/skills 缺失（应报发布缺陷）：%s" % src_root)
+        return 0, 0, 0
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_root = os.path.join(mc, "记忆琥珀", "升级前备份_" + ts)
+    losses, n_deploy, n_skip = [], 0, 0
+    _PATHS_CACHE = _read_install_paths(mc)  # F4：一次读取·全程复用
+    names = sorted(os.listdir(src_root))
+    if only:
+        names = [n for n in names if n in only]
+    for name in names:
+        s_dir = os.path.join(src_root, name)
+        if not os.path.isdir(s_dir) or not os.path.isfile(os.path.join(s_dir, "SKILL.md")):
+            continue
+        d_dir = os.path.join(dst_root, name)
+        for cur, _dirs, files in os.walk(s_dir):
+            rel = os.path.relpath(cur, s_dir)
+            for fn in files:
+                sp = os.path.join(cur, fn)
+                rp = os.path.normpath(os.path.join(name, rel, fn)) if rel != "." else os.path.join(name, fn)
+                dp = os.path.join(dst_root, rp)
+                body = None
+                try:
+                    with open(sp, "r", encoding="utf-8") as f:
+                        body = _fill_text(f.read(), mc, os.path.splitext(fn)[1], _PATHS_CACHE)
+                except (UnicodeDecodeError, OSError):
+                    body = None                      # 二进制件：原样复制
+                if os.path.isfile(dp):
+                    same = False
+                    if body is not None:
+                        try:
+                            same = hashlib.md5(body.encode("utf-8")).hexdigest() == _md5(pathlib.Path(dp))
+                        except Exception:
+                            same = False
+                    else:
+                        same = _md5(pathlib.Path(sp)) == _md5(pathlib.Path(dp))
+                    if same:
+                        n_skip += 1
+                        continue
+                    losses.append(rp)
+                    if not dry:
+                        bp = os.path.join(backup_root, rp)
+                        os.makedirs(os.path.dirname(bp), exist_ok=True)
+                        try:
+                            shutil.copy2(dp, bp)
+                        except OSError:
+                            pass
+                if dry:
+                    n_deploy += 1
+                    continue
+                os.makedirs(os.path.dirname(dp), exist_ok=True)
+                if body is None:
+                    shutil.copy2(sp, dp)
+                else:
+                    tmp = dp + ".tmp-deployskills"
+                    with open(tmp, "w", encoding="utf-8") as f:
+                        f.write(body)
+                    os.replace(tmp, dp)
+                n_deploy += 1
+    if not dry and losses:
+        os.makedirs(os.path.join(mc, ".install"), exist_ok=True)
+        lp = os.path.join(mc, ".install", "upgrade-losses.md")
+        with open(lp, "w", encoding="utf-8") as f:
+            f.write("# 升级将被覆盖的本机改动件（程序化部署腿生成·⛔静默覆盖）\n\n"
+                    "备份去向：`%s`\n\n| 件 | 本机 md5 | 包内 md5 |\n|---|---|---|\n" % backup_root)
+            for rp in losses:
+                f.write("| %s | %s | %s |\n" % (rp, _md5(pathlib.Path(os.path.join(dst_root, rp))),
+                                                 "-（见备份）"))
+        print("⚠️ [损失清单] 本机改动件 %d 件将被包内版覆盖：.install/upgrade-losses.md（备份 %s）"
+              % (len(losses), backup_root))
+    return n_deploy, n_skip, len(losses)
 
 
 def deploy_script_center(mc, dry=False):
@@ -506,8 +923,10 @@ def deploy_script_center(mc, dry=False):
                   "端用户装到未声明的版本比装不上更坏。" % len(_conflicts))
             raise SystemExit(1)
     # ③ 知识联邦引擎-min（卡生产引擎·真源独立部署 → <MC>/知识联邦引擎/·2026-10-03 从脚本中心下独立）
-    #    边界确认：min版=端用户运行必需的最小集（9个核心脚本：向量构建/概念提取/碰撞扫描/
-    #    阅读状态推导/索引重建/源哈希/卡片元数据同步+2个环境/路径助手）；
+    #    边界确认：min版=端用户运行必需的最小集（2026-10-10 腿F案后 16 件·计数以目录实盘为准：
+    #    原9件=向量构建/概念提取/碰撞扫描/阅读状态推导/索引重建/源哈希/卡片元数据同步+2环境路径助手；
+    #    补收7件=SKILL.md 引用却未随包的碰撞闭环承诺资产（sync_collision_queue/lint_collision_card/
+    #    concept_projection/scan_card_citations/cross_type_collision_scan/scan_citation_candidates/concept_coverage_stats）；
     #    （2026-10-07 你裁决：模型压缩件 quantize_export 撤出对外包·作者自用；量化识别逻辑保留在 build/search 内·仅产物存在时生效）
     #    完整版含作者侧运营数据（cache/logs/vectors/calibration/route_table等）→ ⛔不入包。
     kb_dst = os.path.join(mc, "知识联邦引擎")
@@ -536,14 +955,21 @@ def deploy_script_center(mc, dry=False):
     return n
 
 
-RULE_DATA = ["rule_triggers.yaml", "rule_conflict_signals.yaml"]
+RULE_DATA = ["rule_triggers.yaml", "rule_conflict_signals.yaml", "match_coverage_baseline.json"]  # v2.1.3 腿F清账轮+匹配面存量账（match_coverage_check.py --check 消费·装机即有豁免基线，缺则 fail-closed exit2）
 """规则层运行时数据：铁律硬墙（rule_fragment_inject / rule_three_layer_guard）
 从 `<MC>/记忆规则/` 读这些文件——缺则硬墙**静默零注入**（实测：rc=0、无输出、无报错）
 或缺冲突信号（退化为内置默认组）。包内源在 references/scripts/，安装时必须落到 `<MC>/记忆规则/`。"""
 
 
 def install_rule_data(mc, dry=False):
-    """把规则层运行时数据装到 <MC>/记忆规则/（幂等覆盖，与三层规则文件同惯例）。"""
+    """把规则层运行时数据装到 <MC>/记忆规则/。
+
+    ⚠️ 2026-10-09 缺陷②根治（布洛陀2.1.0上游反馈·本机端=唯一主源，安装包=下游映射）：
+    原语义＝无条件幂等覆盖，会把终端**手工维护**的 rule_triggers.yaml 真源
+    冲成包内编译产物（实证：40 条→30 条，032-040 触发规格全丢＝预注入硬墙缺位）。
+    新语义：覆盖前查目标文件头（前 8 行）的外部维护声明——命中「本机不引入 / 手工维护+⛔」
+    任一标记 ⇒ [SKIP] 保留用户版并显形告警，⛔不静默覆盖；未命中 ⇒ 维持幂等覆盖（标准流）。
+    （配套：rule_triggers.yaml / rule_conflict_signals.yaml 已入 conffiles 三路比较册。）"""
     done = []
     for name in RULE_DATA:
         src = os.path.join(PKG, "references/scripts", name)
@@ -553,6 +979,19 @@ def install_rule_data(mc, dry=False):
         if not dry:
             os.makedirs(dst_dir, exist_ok=True)
         dst = os.path.join(dst_dir, name)
+        # 缺陷②根治：外部维护声明检测（标记判据取自用户文件头，如
+        #   「# ⛔ 本机不引入 gen_rule_triggers.py 编译器」/「手工维护」）
+        _maint = False
+        if os.path.isfile(dst):
+            try:
+                _head = "\n".join(open(dst, encoding="utf-8").read(4096).splitlines()[:8])
+                _maint = ("本机不引入" in _head) or ("手工维护" in _head and "⛔" in _head)
+            except Exception:
+                _maint = False
+        if _maint:
+            print("     └ [SKIP] %s：目标文件头声明外部/手工维护——保留你的版本，不覆盖（缺陷②根治·本机=主源）" % name)
+            done.append(name + "(SKIP·保留本机版)")
+            continue
         _copy(src, dst, dry)
         if not dry:
             _fill(dst, mc)
@@ -561,6 +1000,9 @@ def install_rule_data(mc, dry=False):
 
 
 RULE_FILES = ["用户基本规则-铁律版.md", "用户基本规则-摘要版.md", "用户基本规则-详解存档版.md"]
+# C14（2026-10-15）：摘要版三表的 [Qn·答案待注入]/[Qn·规则待派生] 是 step5 注入位，
+# 装后必然 ≠模板——重跑链A 不得判"用户手改"。模式与模板占位格同源（C08 定稿格式）。
+_SUMMARY_FILL_RX = r"\[Q\d+·(?:答案待注入|规则待派生)\]"
 """三层规则文件：铁律硬墙的**注入源**（rule_fragment_inject 读铁律版做预注入；
 rule_three_layer_guard 读三层做版本一致性 + 冲突路由校验）。
 
@@ -614,6 +1056,66 @@ def _rule_version(text):
     return m.group(1) if m else None
 
 
+_TIELU_HEAD_RE = re.compile(r"^###\s*铁律-(\d{3})", re.M)
+_HEAD_STOP_RE = re.compile(r"^#{2,3}\s", re.M)
+
+
+def _norm_cmp(s):
+    """条目正文归一（与断章引擎 _cmp_norm 同口径：删纯空行·rstrip·不动缩进）。"""
+    return "\n".join(l.rstrip() for l in (s or "").splitlines() if l.strip())
+
+
+def _rule_items(text):
+    """全文解析为 {编号: 归一正文}。条目= `^### 铁律-NNN` 行至下一个 ##/### 标题行。"""
+    items = {}
+    for m in _TIELU_HEAD_RE.finditer(text):
+        nxt = _HEAD_STOP_RE.search(text, m.end())
+        end = nxt.start() if nxt else len(text)
+        items[int(m.group(1))] = _norm_cmp(text[m.end():end])
+    return items
+
+
+def _tielu_precheck(cur_text, new_body):
+    """缺陷①根治（2026-10-09·布洛陀2.1.0上游反馈）：铁律版无标记段时的号位/等价预检。
+
+    病根：断章引擎 C5「文件已存在且无段⇒追加文末」是盲写——终端铁律版若还是
+    幂等覆盖时代的 plain 文件（内容≈上游但编号/裁剪不同），首升断章包必然整file
+    双份（号位错开者出现「铁律-013 两次且语义冲突」级事故；标准用户同号双份同样坏）。
+    判据（本机=唯一主源，包是下游映射，⛔包侧不抢写主源号位空间）：
+      上游条 vs 本机条 → 同号等值 / 换号等价 / 同号异文(冲突) / 本机没有(新增)。
+    除「任一侧无铁律结构(本判据不适用)」外，任何非全等价 ⇒ 不写、只显形
+    （与 C7 报告不裁决哲学同构；上游新增条目的归属由主源侧裁决，⛔不自动追加到本机上界之后）。
+    返回 (verdict, lines)：verdict ∈ SAFE / EQUIV / CONFLICT
+    """
+    cur_items = _rule_items(cur_text)
+    new_items = _rule_items(new_body)
+    if not new_items or not cur_items:
+        return "SAFE", []                      # 任一侧无铁律结构 ⇒ 交引擎常规路径
+    norm2num = {}
+    for k, v in cur_items.items():
+        norm2num.setdefault(v, k)
+    n_equiv = n_conflict = n_new = 0
+    lines = []
+    for num in sorted(new_items):
+        if num in cur_items and new_items[num] == cur_items[num]:
+            n_equiv += 1
+            lines.append("铁律-%03d：同号等值（重复注入将双份）" % num)
+        elif new_items[num] in norm2num:
+            n_equiv += 1
+            lines.append("铁律-%03d ↔ 本机铁律-%03d：换号等价（内容已在·跳过）" % (num, norm2num[new_items[num]]))
+        elif num in cur_items:
+            n_conflict += 1
+            lines.append("铁律-%03d：同号异文（号位冲突·须人工裁决）⚠️" % num)
+        else:
+            n_new += 1
+            lines.append("铁律-%03d：上游新增·本机没有（归主源侧裁决是否吸收，包不代写）" % num)
+    if n_conflict or n_new:
+        return "CONFLICT", lines
+    if n_equiv == len(new_items):
+        return "EQUIV", lines
+    return "CONFLICT", lines
+
+
 def install_rule_files(mc, dry=False):
     """把三层规则文件装到 <MC>/记忆规则/（**断章增量**·⛔ 不覆盖用户改动）。
 
@@ -649,10 +1151,36 @@ def install_rule_files(mc, dry=False):
         _vtag = ""
         if _v_new and _v_old:
             _vtag = "版本 %s→%s" % (_v_old, _v_new) if _v_new != _v_old else "版本一致 %s" % _v_new
+        # ── 缺陷①根治（2026-10-09）：铁律版·无标记段·已有铁律结构 ⇒ 追加前必过号位/等价预检 ──
+        if sid == "rules.tielu" and os.path.isfile(dst):
+            _cur0 = open(dst, encoding="utf-8").read()
+            if bm.BEGIN_TMPL.format(sid=sid) not in _cur0:
+                _pv, _plines = _tielu_precheck(_cur0, body)
+                if _pv != "SAFE":
+                    for _l in _plines:
+                        print("     ├ [号位预检] %s" % _l)
+                    _pmsg = ("上游条目与本机全等价——本机已有全部内容，⛔不重复注入（缺陷①预检）"
+                             if _pv == "EQUIV" else
+                             "存在号位冲突或上游新增——⛔未写入你的文件（本机=主源·包不代写·请人工裁决）")
+                    done.append((name, "PRECHECK_SKIP", _pmsg + ("·" + _vtag if _vtag else "")))
+                    continue
+        # ── F5 根治（2026-10-17·10-14 D3 复发）：用户盘若是 5d-8 裸拷（占位符未本地化），
+        #    旧逻辑拿「填充后的模板 tpl」比「裸拷的用户文件」⇒ **字节完全相同也报
+        #    "已被用户修改"**（沙箱实测：铁律版 md5 双侧一致仍判 CONFLICT）。
+        #    纯占位符差异 = 良性本地化修复：就地填充，⛔不判冲突，⛔不当用户改动。
+        if os.path.isfile(dst) and not dry:
+            _cur = open(dst, encoding="utf-8").read()
+            if _cur != tpl and _fill_text(_cur, mc) == tpl:
+                with open(dst, "w", encoding="utf-8") as _wf:
+                    _wf.write(tpl)
+                done.append((name, "LOCALIZED",
+                             "裸拷占位符未本地化·已就地填充（良性修复·非用户改动·不判冲突）"))
+                continue
         try:
             ok, st, msg = bm.upsert_file_body(
                 dst, sid, body,
                 template_full=tpl,
+                inject_exempt_re=(_SUMMARY_FILL_RX if name == "用户基本规则-摘要版.md" else None),
                 do_backup=not dry,
                 backup_dir=backup_dir,
                 dry=dry,
@@ -664,12 +1192,36 @@ def install_rule_files(mc, dry=False):
             done.append((name, st, (msg + "·" + _vtag) if _vtag else msg))
             continue
         done.append((name, st, (msg + "·" + _vtag) if _vtag else msg))
+    # ── 缺陷③根治（2026-10-09）：详解存档旧名/权威名双名并存显形（改名迁移不静默）──
+    _old_nm = os.path.join(dst_dir, "用户基本规则-详解存档.md")
+    _new_nm = os.path.join(dst_dir, "用户基本规则-详解存档版.md")
+    if os.path.isfile(_old_nm) and os.path.isfile(_new_nm):
+        print("   ⚠️ [双名并存] 记忆规则/ 下「用户基本规则-详解存档.md」(旧名)与「用户基本规则-详解存档版.md」(权威名)同时存在："
+              "守卫/注入以权威名为准；旧名若含权威名没有的增量，请先并入权威名，再把旧名移入 记忆琥珀/ 归档（⛔不静默处置）")
     return done
 
 
 def deploy_hooks(dry=False):
-    """②部署钩子副本：ROSTER 表驱动（主件 + 同目录依赖）。"""
-    deployed, missing = [], []
+    """②部署钩子副本：ROSTER 表驱动（主件 + 同目录依赖）。
+    P12 根治（作者 2026-10-19 指令·愿景最优解）：覆盖腿写侧保护——
+    盘上件 ≠ 装时基线（=本机被人工动过）⇒ ⛔静默覆写，跳过并显形呈报；
+    包侧新修且盘上件仍是装时态 ⇒ 照常到达（升级通道不关闭）；
+    无基线（首装/历史装机）⇒ 按旧行为落件并建档。裁决入口=--verify 三态呈报。"""
+    deployed, missing, protected = [], [], []
+    fp = _hook_fingerprints_path()
+    base = {}
+    if os.path.isfile(fp):
+        try:
+            with open(fp, encoding="utf-8") as f:
+                base = json.load(f)
+        except Exception as e:
+            try:
+                shutil.copy2(fp, fp + ".bad")
+            except OSError:
+                pass
+            print("⚠️ hook_fingerprints.json 存在但不可解析(%s)——本轮回退无基线行为（全量落件·改件无保护），坏基线已存证 %s.bad（F2）" % (e, fp))
+            base = {}
+    landed = []  # (rel, srcdir)：全量落地件（主件+依赖），供指纹基线建档
     for ev, loc, srcdir, main, deps in ROSTER:
         dst_dir = HOOKS_ROOT if loc == "." else os.path.join(HOOKS_ROOT, loc)
         for fname in [main] + list(deps):
@@ -677,23 +1229,69 @@ def deploy_hooks(dry=False):
             if not _status(src):
                 missing.append("%s/%s" % (srcdir, fname))
                 continue
-            _copy(src, os.path.join(dst_dir, fname), dry)
+            rel = "%s/%s" % (loc, fname) if loc != "." else fname
+            dst = os.path.join(dst_dir, fname)
+            rec = base.get(rel) if base else None
+            if rec and os.path.isfile(dst) and not dry:
+                cur = _sha8(dst)
+                if cur not in (rec.get("installed_sha8"), rec.get("pkg_sha8"), "-"):
+                    protected.append(rel)
+                    continue  # 本机已改：保护不覆写，且⛔进本轮基线重写清单（F1：否则盘上改后哈希污染参照系，二次重装失去保护+三态谎报"未变"）
+            _copy(src, dst, dry)
             if not dry:
                 _fill(os.path.join(dst_dir, fname), MC_PATH)
+            landed.append((rel, srcdir))
         deployed.append((ev, "%s/%s" % (loc, main) if loc != "." else main, srcdir, main))
+    global _LANDED_INDEX
+    _LANDED_INDEX = landed
+    if protected:
+        print("🛡️ 本机改动保护（P12 写侧根治）：%d 件未被包版覆盖：%s" % (
+            len(protected), ", ".join(protected[:8]) + ("…" if len(protected) > 8 else "")))
+        print("   要收包侧新版：手工合并，或删除该件后重装即回包版；差异明细见 --verify 三态呈报。")
     return deployed, missing
 
 
+def _pyexe_nt():
+    """Windows 侧 python 实体（原逻辑不变，抽出供 _hook_command 与迁移比对共用）。"""
+    cands = glob.glob(os.path.join(
+        os.path.expanduser("~"), ".workbuddy", "binaries", "python",
+        "versions", "*", "python.exe"))
+    return cands[0].replace("\\", "/") if cands else "python"
+
+
+def _interp_for(subpath):
+    """按扩展名选解释器（A3 根治·2026-10-10 刚叔 V2.1.0 提请单）。
+
+    病根：原 `_hook_command` 无条件把钩子件交给 python——Windows 拼成
+    `python.exe run_registry_guards.sh`、mac/Linux 拼成 `python3 同一件`，两者都是
+    SyntaxError，Stop 守卫链入口装机即哑（ROSTER 51 件 .py + 1 件 .sh，.sh 必死）。
+    判据=凡注册命令一律按扩展名分派；未知扩展名回落 bash（⛔不回落 python——
+    python 能跑的件由 .py 显式表达，回落 python 等于把"不知道"当"能跑"）。
+    """
+    ext = subpath.rsplit(".", 1)[-1].lower() if "." in subpath.rsplit("/", 1)[-1] else ""
+    # Windows 优先走同名 .ps1 承载（2026-10-11 批次6 根治）：.sh 交给 bash 属"环境推断"，
+    # 包内 step6 明文禁止该推断（Git Bash 的 $ 展开与原生 bash 不同）。故只要 HOOKS_ROOT
+    # 下存在同名 .ps1，Windows 就用 powershell 跑它——把"能不能跑"从假设换成有承载。
+    if os.name == "nt" and ext == "sh":
+        twin = os.path.join(HOOKS_ROOT, subpath.rsplit("/", 1)[-1][:-3] + ".ps1")
+        if os.path.isfile(twin):
+            return ("powershell -NoProfile -ExecutionPolicy Bypass -File")
+    if ext == "py":
+        return '"%s"' % _pyexe_nt() if os.name == "nt" else "python3"
+    if ext == "ps1":
+        return ("powershell -NoProfile -ExecutionPolicy Bypass -File" if os.name == "nt"
+                else "pwsh -NoProfile -ExecutionPolicy Bypass -File")
+    return "bash"
+
+
 def _hook_command(subpath):
-    """构造 settings.json 里要写的命令行（按平台）。"""
+    """构造 settings.json 里要写的命令行（按平台 × 按脚本类型双维分派）。"""
     p = os.path.join(HOOKS_ROOT, subpath).replace("\\", "/")
+    interp = _interp_for(subpath)
     if os.name == "nt":
-        cands = glob.glob(os.path.join(
-            os.path.expanduser("~"), ".workbuddy", "binaries", "python",
-            "versions", "*", "python.exe"))
-        pyexe = cands[0].replace("\\", "/") if cands else "python"
-        return ('BULUOTUO_RUNTIME_PATHS="%s" MSYS_NO_PATHCONV=1 "%s" "%s"' % ((os.path.join(_CFG_ROOT_ABS, "doenglingz", "runtime_paths.json")).replace("\\", "/"), pyexe, p))
-    cmd = "python3 " + p
+        return ('BULUOTUO_RUNTIME_PATHS="%s" MSYS_NO_PATHCONV=1 %s "%s"'
+                % ((os.path.join(_CFG_ROOT_ABS, "doenglingz", "runtime_paths.json")).replace("\\", "/"), interp, p))
+    cmd = "%s %s" % (interp, p)
     # v2.0.1 多端（2026-09-30 L3审计根治）：非WB端注册分身运行时钩子时注入配置根 env——
     # 缺省回 ~/.workbuddy=state/采样台账落点错位；DOENGLINGZ_CONFIG_DIR 由本命令显式给定。
     if _PLATFORM_ID not in ("", "workbuddy") and os.path.basename(subpath).startswith(("doenglingz_", "twin_")):
@@ -741,35 +1339,50 @@ def register_hooks(deployed, dry=False):
                 data = json.load(f)
         except (OSError, ValueError) as e:
             print("!! settings.json 解析失败（未改动）：%s" % e)
-            return 0, 0
+            return -1, -1, -1  # P08：注册面不可用哨兵（三元组契约保持·F9）——调用侧据 [0]==-1 判非零
     hooks = data.setdefault("hooks", {})
 
-    def has(lst, basename):
+    def find_hook(lst, basename):
+        """返回首个命令体含 basename 的 hook dict（无则 None）——存在性判定与迁移共用。"""
         for grp in lst:
             if not isinstance(grp, dict):
                 continue
             for h in grp.get("hooks", []):
                 if isinstance(h, dict) and basename in h.get("command", ""):
-                    return True
-        return False
+                    return h
+        return None
 
-    added = skipped = 0
+    added = skipped = migrated = 0
     for ev, sub, _sd, _m in deployed:
         arr = hooks.setdefault(ev, [])
         base = os.path.basename(sub)
-        if has(arr, base):
-            skipped += 1
+        exist = find_hook(arr, base)
+        # 2026-10-10 十一轮修复：want 上提到公共前段——原只在 exist 分支赋值，
+        #   新钩子分支引用未定义变量 ⇒ 全新机首装必崩（UnboundLocalError 实锤）。
+        want = _hook_command(sub)
+        if exist is not None:
+            # 旧命令定向迁移（A3 根治二腿）：幂等键原为 basename，命令体一旦写错
+            # （如 .sh 交给 python）就永久锁死——重装只"跳过"不"纠正"。现比对命令体，
+            # 不一致即就地改写。⛔不动命令体不含该 basename 的用户自造条目。
+            if exist.get("command") == want:
+                skipped += 1
+                continue
+            if not dry:
+                exist["command"] = want
+            migrated += 1
             continue
         if not dry:
-            arr.append({"hooks": [{"type": "command", "command": _hook_command(sub)}]})
+            arr.append({"hooks": [{"type": "command", "command": want}]})
         added += 1
 
-    if not dry and added:
+    if not dry and (added or migrated):
         if os.path.isfile(SETTINGS):
             shutil.copy2(SETTINGS, SETTINGS + ".bak-installscripts")
         with open(SETTINGS, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-    return added, skipped
+    if migrated:
+        print("🔁 旧命令定向迁移：%d 条解释器/参数形态按类型纠正（升级不再锁死历史错写）" % migrated)
+    return added, migrated, skipped
 
 
 def _landing_bases(mc_):
@@ -787,13 +1400,44 @@ def _landing_bases(mc_):
             os.path.join(mc_ or "", "数字分身", "guards")]
 
 
-def verify_deployed(mc=None):
+def verify_deployed(mc=None, hooks_root=None, settings_path=None):
+
+
     """核对已装态：ROSTER 里每个钩子①文件是否落盘 ②settings.json 是否已注册；
     若给了记忆中心路径，再核 ③规则层运行时数据（铁律硬墙的数据源）是否就位。
 
-    与部署共用同一份 ROSTER/RULE_DATA —— 核查口径不可能与安装口径脱节。
-    返回 0=全过；1=有缺失（明细打印到 stdout）。
+    🔴 2026-10-09 作用域根治（闸6 第一遍 rc=1 的跨端真因）：
+       原签名只收 `mc`，钩子落点读**全局** `HOOKS_ROOT`（L49 写死 `~/.workbuddy/hooks`）。
+       `main()` 在 L1928 对 `HOOKS_ROOT` 的重新赋值是**函数局部变量**（Python 无 global 声明）
+       ⇒ 非 WB 端（Hermes/Qoder CN/ZCode…）传 `--cfg-root` 时，本函数仍去查 **WB 的 hooks 目录**
+       ⇒ 钩子明明装到了端自己的配置根，却报「未落盘/未注册」⇒ 假红 ⇒ 闸6 判「第一遍 rc=1」。
+       修法＝把端实际的 hooks_root / settings_path **显式传参**（⛔不靠全局·作用域不跨函数传递）。
+       调用方不传时回落全局（WB 旧行为不变·向后兼容）。
     """
+
+    # ── B-min·包版本驱动 diff 自查（v3·2026-10-13·import版·提示层⛔不阻断）──
+    # 治「新件入包→老端查不出缺」·基线：.install/versions.json vs component-versions.json
+    # v3改用import调用(version_diff.run_diff)·不依赖subprocess(v2根因=安装器没import它)
+    # ⛔不改 verify 的 rc 判定(diff落后≠装失败)·mc为空跳过·异常静默不阻断
+    try:
+        if mc:
+            _vd_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "references", "scripts")
+            if _vd_dir not in sys.path:
+                sys.path.insert(0, _vd_dir)
+            import version_diff as _vd
+            _rep = _vd.run_diff(mc)
+            if _rep and _rep.strip():
+                print(_rep.rstrip())
+    except Exception as _e:
+        print("ℹ️ 版本 diff 自查跳过（提示层·不阻断）：%s" % _e)
+
+    _hr = hooks_root if hooks_root else HOOKS_ROOT
+    _st = settings_path if settings_path else SETTINGS
+    report_hook_three_state()  # P12：核验即呈报差异三态（只读·不影响 rc 判定）
+    # 与部署共用同一份 ROSTER/RULE_DATA —— 核查口径不可能与安装口径脱节。
+    # 返回 0=全过；1=有缺失（明细打印到 stdout）。
+
     # ── 端SSOT 声明完整性自检（2026-10-06 新增·防同类复发机械拦）────────────────
     #   病根实证（本日两连击）：①autoclaw capability 缺 hooks_registration_face
     #     ⇒ 插件制端被判成 settings 面 ⇒ 去核不存在的 cli/config.json ⇒ 38 件全假红；
@@ -1008,9 +1652,9 @@ def verify_deployed(mc=None):
               % (" · 规则层就位" if mc else ""))
         return 0
     data = {}
-    if os.path.isfile(SETTINGS):
+    if os.path.isfile(_st):
         try:
-            with open(SETTINGS, "r", encoding="utf-8") as f:
+            with open(_st, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except (OSError, ValueError):
             data = {}
@@ -1033,10 +1677,54 @@ def verify_deployed(mc=None):
     _deliv = _cap_surf.get("delivered") or []
     if _PLATFORM_ID not in (None, "", "workbuddy") and _deliv:
         _bases = _landing_bases(mc)
+        # ── 交付面条目双形态（2026-10-10 hermes 假绿根治）──────────────────
+        # 病根实证：本节只取 `script`/`event` 两个键，而 hermes 的 delivered 是
+        #   `{plugin: 名字, events: [E1,E2]}` 形态 ⇒ _fn 恒空 ⇒ 16 条全部
+        #   `continue` ⇒ miss_file/miss_reg 恒空 ⇒ 打印「16/16 已落盘并注册」
+        #   **一件都没检过**。这正是「判据只认一种端形态 = 对别的端恒假绿」。
+        # ⇒ 按声明真实形态分别取值 + 分别核验，⛔ 不放宽成不检（必须真检）：
+        #     plugin 形态：① 端注册面 ~/.hermes/plugins/<名>/plugin.yaml 存在
+        #                   ② 其 provides_hooks **含声明事件**（⛔不再只对插件名）
+        #                   ③ 包内有源 adapters/<端>/plugins/<名>/
+        #     script 形态：维持原判据（落盘 + registered）
+        _plug_reg = os.path.expanduser("~/.hermes/plugins")
         for _e in _deliv:
             # 2026-10-06 防御：端SSOT 条目若为裸字符串（capability 用了非受控子集写法
             # 或 _mini_yaml 未能还原行内 dict），按「只有文件名、无事件」降级处理，
             # ⛔不再让 .get() 抛 AttributeError 把整条 verify 打断（v1.89 口径崩过一版）。
+            if isinstance(_e, dict) and _e.get("plugin"):
+                _pn = str(_e.get("plugin", "")).strip()
+                _pevs = _e.get("events") or []
+                if isinstance(_pevs, str):
+                    # ⚠️ _mini_yaml 不解析行内 list ⇒ `events: [a, b]` 会成一个
+                    #   带方括号的整串（实测"[pre_llm_call, post_llm_call]"）。
+                    #   ⛔ 不剥方括号 ⇒ 拆出 "[pre_llm_call" 恒不等于真事件名
+                    #   ⇒ 每个多事件插件必报假红（2026-10-10 实测 3 件 6 处）。
+                    _pevs = _pevs.strip().lstrip("[").rstrip("]")
+                    _pevs = [x.strip().strip("\"'") for x in _pevs.split(",") if x.strip()]
+                elif isinstance(_pevs, (list, tuple)):
+                    _pevs = [str(x).strip().strip("\"'").lstrip("[").rstrip("]")
+                             for x in _pevs if str(x).strip()]
+                if not _pn:
+                    continue
+                _pyaml = os.path.join(_plug_reg, _pn, "plugin.yaml")
+                if not os.path.isfile(_pyaml):
+                    miss_reg.append("%s（插件未安装：~/.hermes/plugins/%s/plugin.yaml 不在）" % (_pn, _pn))
+                    continue
+                try:
+                    _ptxt = open(_pyaml, encoding="utf-8").read()
+                except OSError:
+                    miss_reg.append("%s（plugin.yaml 不可读）" % _pn)
+                    continue
+                _tail = _ptxt.split("provides_hooks:")[1] if "provides_hooks:" in _ptxt else ""
+                _declared_evs = re.findall(r"^\s*-\s*([a-z_]+)\s*$", _tail, re.M)
+                for _ev in _pevs:
+                    if _ev and _ev not in _declared_evs:
+                        miss_reg.append("%s（声明事件 %s 不在其 provides_hooks %s 中）"
+                                        % (_pn, _ev, _declared_evs or "[]"))
+                if not os.path.isdir(os.path.join(PKG, "adapters", _PLATFORM_ID, "plugins", _pn)):
+                    miss_file.append("%s（包内 adapters/%s/plugins/ 无源）" % (_pn, _PLATFORM_ID))
+                continue
             if isinstance(_e, dict):
                 _fn, _evn = _e.get("script", ""), _e.get("event", "")
             else:
@@ -1047,6 +1735,11 @@ def verify_deployed(mc=None):
                 miss_file.append(_fn)
             if _evn and not registered(_evn, _fn):
                 miss_reg.append(_fn)
+            if not _evn:
+                # P08 假绿钩子根治（2026-10-19）：deliv 条目丢 event（_mini_yaml 降级/声明漂移）
+                # 原 `if _evn and` 短路=注册面整件免检——恒真判据正是本卡警告的病。
+                # 现 fail-loud：声明降级=判据失效，显式判红而不是放行。
+                miss_reg.append("%s（deliv 条目无 event 声明·注册面不可核·⛔不静默放行）" % _fn)
         if mc:
             for _name in RULE_DATA + RULE_FILES:
                 if not os.path.isfile(os.path.join(mc, "记忆规则", _name)):
@@ -1067,7 +1760,7 @@ def verify_deployed(mc=None):
 
     n_files = 0
     for ev, loc, _sd, main_f, deps in ROSTER:
-        dst_dir = HOOKS_ROOT if loc == "." else os.path.join(HOOKS_ROOT, loc)
+        dst_dir = _hr if loc == "." else os.path.join(_hr, loc)
         _bs = _landing_bases(mc)
         for fname in [main_f] + list(deps):
             n_files += 1
@@ -1090,6 +1783,7 @@ def verify_deployed(mc=None):
         print("!! 规则数据缺失 %d 件（铁律硬墙会静默零注入）：%s" % (len(miss_rd), ", ".join(miss_rd)))
     if miss_file or miss_reg or miss_rd:
         return 1
+
     print("✅ %d/%d 钩子已落盘并注册%s"
           % (len(ROSTER), len(ROSTER), " · 规则层就位" if mc else ""))
     return 0
@@ -1098,21 +1792,59 @@ def verify_deployed(mc=None):
 def gate_check(platform_id):
     """发版前置门禁（用户令·2026-10-03·全端通用）：端适配 100% 才放行打包该端。
 
-    把「自身 100% 才许映射」从单端点状修补升级为全端发版门禁——任一端未达 100% →
-    exit 1（拒绝打包）。判据本体=platform_adaptation_check.py（三面：五系统文件/
-    钩子面/数字分身面·与 verify.sh §1.5/§1.6 同源），本函数只做同解释器委派。"""
-    pac = os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_adaptation_check.py")
-    if not os.path.isfile(pac):
-        print("❌ 发版门禁脚本缺失: %s（打包前须随包分发）" % pac)
-        return 2
+    把「自身 100% 才许映射」从单端点状修补升级为全端发版门禁——任一端未达 100% → 拒绝打包。
+
+    🔴 2026-10-10 死链根治（9/9 端恒 rc=2·git 考古 --gate 从未在 pac 里存在过）：
+       旧实现委派给 `platform_adaptation_check.py --gate --pkg-root`，而 pac 的 argparse
+       只有 `--src/--fix/--absorb/--absorb-selftest` ⇒ subprocess 拿到 argparse 的
+       rc=2（**参数拒绝·非业务判红**），上游把 2 当「门禁拒绝」而**错误信息已被吞**。
+       ⇒ 该门禁自 2026-10-03 引入起**一次都没跑通过**，却一直在宣称"放行"。
+    根因不是 pac 坏，是**委派目标选错**：
+       · pac = 「接入率漂移校验」（文档 vs 实盘·check_hermes 等），无三面判据；
+       · 三面判据（面A 五系统文件 / 面B 钩子面 / 面C 数字分身面）**只在 verify.sh**
+         （§1.5/§1.6/twin_surface·L648/650：PASS 全过 exit 0，有 FAIL exit 1）。
+    ⇒ 本函数改为**委派 verify.sh**（判据真源），pac 退为附加漂移检查并如实标注其语义。
+    """
     import subprocess
-    r = subprocess.run(
-        [sys.executable, pac, "--src", platform_id, "--gate", "--pkg-root",
-         os.path.dirname(os.path.abspath(__file__))],
-        capture_output=True, text=True)
+    _pkg_dir = os.path.dirname(os.path.abspath(__file__))
+    verify = os.path.join(_pkg_dir, "verify.sh")
+    if not os.path.isfile(verify):
+        print("❌ 发版门禁脚本缺失: %s（三面判据真源·打包前须随包分发）" % verify)
+        return 2
+
+    print("─" * 60)
+    print("🔒 发版前置门禁：端适配三面判据（verify.sh §1.5 系统文件 / §1.6 钩子面 / twin_surface）")
+    r = subprocess.run(["bash", verify, "--platform", platform_id],
+                       capture_output=True, text=True, errors="replace")
     sys.stdout.write(r.stdout)
     sys.stderr.write(r.stderr)
-    return r.returncode
+    if r.returncode != 0:
+        print("❌ 发版门禁未过：三面有 FAIL ⇒ 拒绝打包/发版该端（明细见上）")
+        return r.returncode
+    print("✅ 发版门禁通过：三面判据全过（verify.sh rc=0）")
+
+    # ── 附加：接入率漂移（pac·语义=文档 vs 实盘·⛔ 不是三面门禁·失败只提示不拦）──
+    pac = os.path.join(_pkg_dir, "platform_adaptation_check.py")
+    if os.path.isfile(pac):
+        # ⚠️ 源机自指噪声（2026-10-10）：包内那份 pac 的 LOG 是占位符形态
+        #   `[记忆共享中心]/脚本中心/logs/…`（deident 规则4 所致·装机时才替换成用户真实路径）。
+        #   在**源机**上跑它 ⇒ 占位符不被替换 ⇒ 真在包内造出
+        #   `[记忆共享中心]/脚本中心/logs/platform_adaptation_check.log` ⇒ 随后被
+        #   pkg_cleanliness_check 当「运行时日志 *.log」报 FAIL（门禁自己污染自己·第二类自指）。
+        #   ⇒ 跑后清理该占位目录（用户机上此路径本就该指向记忆中心·不涉及真实资产）。
+        _self_ref = os.path.join(_pkg_dir, PLACEHOLDER)
+        p = subprocess.run([sys.executable, pac, "--src", platform_id],
+                           capture_output=True, text=True, errors="replace")
+        if os.path.isdir(_self_ref):
+            shutil.rmtree(_self_ref, ignore_errors=True)
+        if p.returncode == 0:
+            print("✅ 附加检查：接入率无漂移（platform_adaptation_check.py --src %s）" % platform_id)
+        else:
+            print("⚠️ 附加检查：接入率漂移（platform_adaptation_check.py rc=%d）——"
+                  "不影响放行，但发布前应核对" % p.returncode)
+            if p.stdout:
+                sys.stdout.write(p.stdout)
+    return 0
 
 
 def write_user_versions(mc, dry=False):
@@ -1352,6 +2084,9 @@ _ARCHROOT_FULL = _re.compile(r"""["'](?:个人AI档案|\[记忆共享中心\]|~)
 _ARCHROOT_BARE = _re.compile(r"""["'](?:个人AI档案|\[记忆共享中心\])/?["']""")
 _TILDE_BARE = _re.compile(r"""["']~["']""")
 _HOMEPLUS = _re.compile(r"""expanduser\(\s*HOME\s*\+\s*["'][^"']*["']\s*\)""")
+# 2026-10-12 根治假红：shell ${VAR} 与 $VAR 语义等价（沙箱 R1 要求 .sh 一律花括号），
+#   归一为 $VAR，与 pkg_conflict_audit.normalize 同律——缺此条会把等价写法误判同名冲突。
+_BRACE = _re.compile(r'\$\{([A-Za-z_][A-Za-z0-9_]*)\}')
 
 
 def _deident_norm(text):
@@ -1374,6 +2109,7 @@ def _deident_norm(text):
         t = _ARCHROOT_FULL.sub('"ARCHROOT"', t)
         t = _ARCHROOT_BARE.sub('"ARCHROOT"', t)
         t = _TILDE_BARE.sub('"ARCHROOT"', t)
+        t = _BRACE.sub(r'$\1', t)
         out.append(_re.sub(r"\s+", " ", t).strip())
     return "\n".join(out)
 
@@ -1447,8 +2183,13 @@ def write_runtime_paths(archive_root, cap=None, cfg_root=None, dry=False):
     return data, written
 
 
-SYS_FILE_NAMES = ("SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md", "customPrompt.md")
-"""端系统文件的标准名单（step5 合成 / 落点解析 / 段 id 解析 共用单一真源）。五件：SOUL品格/IDENTITY身份/USER画像+童灵/MEMORY导航/customPrompt执行准则。"""
+SYS_FILE_NAMES = ("SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md", "自定义指令")
+"""端系统文件的标准名单（step5 合成 / 落点解析 / 段 id 解析 共用单一真源）。
+五件=条文32 权威口径（SSOT=01-安装包设计通用规范 条文32＋WB设计哲学02§六）：
+SOUL品格/IDENTITY身份/USER画像+童灵/MEMORY导航/自定义指令（执行准则）。
+C29 根治（2026-10-15）：第五件旧协议名 customPrompt.md≠条文32 的「自定义指令」，
+三个读者（verify.sh／capability 声明／本名单）三套解读=键名漂移病灶；归一后段 id
+经 system_file_segments 的 slug 映射保持旧派生值（⛔断章锚点漂移）。"""
 
 # ── 路径覆盖目标：常量名 → 覆盖策略 ─────────────────────────────────
 # ⚠️ 端名**只出现在这张表里**（端差异的唯一声明处·cross-platform 单一真源）。
@@ -1534,8 +2275,14 @@ def system_file_targets(cfg_root, cap=None):
     无载体。写错 ⇒ 文件在盘上但端根本不读，而 verify 只查"文件在不在"
     ⇒ **恒真判据（假绿）**。
 
-    返回 {文件名: 绝对路径 或 None}；None = 该端**无载体**（⛔ 不许写配置根
-    ⇒ 会成永远不被加载的孤儿文件，须由调用方并入主载体）。
+    返回 {文件名: 绝对路径 / None / 结构化目标}：
+      · None = 该端**无载体**（⛔ 不许写配置根 ⇒ 会成永远不被加载的孤儿文件，
+        须由调用方并入主载体）
+      · {"file": …, "field": …} = 字段级目标（条文32 形态 `宿主文件::a.b.c`，
+        如 WB 设置框字段——⛔ 按普通 md 整写会毁用户配置，调用方须走端设置通道）
+      · {"platform": …} = 平台原生载体（`platform://…`，按平台机制信任，无文件目标可写）
+    形态解析（C29·2026-10-15）：`~/` 开头=绝对路径声明（expanduser·⛔不拼 config_root）；
+    其余相对值=拼 config_root（扁平端向后兼容）。
     端中立性：cap 为 None 或未声明 ⇒ 全部落配置根（**向后兼容**·扁平端行为不变）。
     ⛔ 本函数**不含任何端名特判**：端差异只经 capability 声明进入（见
     `system_file_paths`）。这是端中立性的机械保证——判据见
@@ -1545,16 +2292,34 @@ def system_file_targets(cfg_root, cap=None):
     out = {}
     for name in SYS_FILE_NAMES:
         rel = paths.get(name, name)          # 未声明 ⇒ 默认配置根（扁平端）
-        out[name] = None if rel is None else os.path.join(cfg_root, rel)
+        if rel is None:
+            out[name] = None                 # 无载体·调用方并入主载体
+            continue
+        rel = str(rel)
+        if rel.startswith("platform://"):
+            out[name] = {"platform": rel}    # 平台托管≠文件目标（verify 侧同口径判信任源）
+            continue
+        if "::" in rel:                      # 字段级目标：宿主文件 + 字段路径
+            fpart, jpart = rel.split("::", 1)
+            fpath = os.path.expanduser(fpart) if fpart.startswith("~") \
+                else os.path.join(cfg_root, fpart)
+            out[name] = {"file": fpath, "field": jpart}
+            continue
+        out[name] = os.path.expanduser(rel) if rel.startswith("~") \
+            else os.path.join(cfg_root, rel)
     return out
 
 
 def system_file_segments(cap=None):
     """系统文件的断章段 id（宪法 C1）。未声明 ⇒ 按文件名派生稳定 id。"""
     segs = (cap or {}).get("system_file_segments") or {}
+    # C29·段 id 防漂移：键名归一只改协议层，未声明时的派生 slug 保持旧值
+    # （sys.customprompt 一经断章不可改——改了找不到旧段=半截段事故，见声明该段的端 yaml 段注）
+    _SEG_SLUG = {"自定义指令": "customprompt"}
     out = {}
     for name in SYS_FILE_NAMES:
-        out[name] = segs.get(name) or "sys." + name.replace(".md", "").lower()
+        out[name] = segs.get(name) or "sys." + _SEG_SLUG.get(
+            name, name.replace(".md", "").lower())
     return out
 
 
@@ -1651,13 +2416,13 @@ def print_install_summary(cfg_root, platform, health=None):
 
     # ── 顶部：一句话结论 ──
     if verdict == "ok":
-        conclusion = "✅ 安装完成：全部资产通过"
+        conclusion = "✅ 底座全部通过：资产就位（分身未入职前，整个安装未完成）"
     elif verdict == "degraded":
-        conclusion = "⚠️ 安装完成（降级）：核心资产通过，%d项待收尾" % len(degraded + pending)
+        conclusion = "🟡 底座就绪（降级）：核心资产通过，%d项待收尾；分身未入职=安装未完成" % len(degraded + pending)
     else:
-        conclusion = "❌ 安装未完成：%d项必需能力缺失" % counts.get("required_missing", 0)
+        conclusion = "❌ 安装未完成：%d项必需能力缺失（含分身件时同样适用「没装他=没装完」）" % counts.get("required_missing", 0)
     print()
-    print("━━━━━━━━ 📋 安装完成汇总 ━━━━━━━━")
+    print("━━━━━━━━ 📋 安装报告（底座）━━━━━━━━")
     print(conclusion)
     print()
 
@@ -1740,7 +2505,9 @@ def print_install_summary(cfg_root, platform, health=None):
         print("  造出你的数字分身（答题→填模板→跑生成器），详见数字分身/onboarding/入门指南-通用版.md")
     # 记忆琥珀双轨 + 知识联邦（2026-10-03 补·原 step6.5/INSTALL 有话术但装完总账里没有）
     print("  记忆琥珀已就位：每天自动备份只留 7 天；想永久留住的，说「帮我永久保存某某文件」")
-    print("  知识联邦引擎（抽卡/撞卡）已装核心 9 件：完整版大半是运行数据缓存，对你没用还占地方，故只装核心")
+    _kb_min_n = len([f for f in os.listdir(os.path.join(PKG, "references", "知识联邦引擎-min", "scripts"))
+                    if f.endswith(".py")])
+    print("  知识联邦引擎（抽卡/撞卡）已装核心 %d 件：完整版大半是运行数据缓存，对你没用还占地方，故只装核心" % _kb_min_n)
     if platform == "doubaowork":
         print("  豆包办公端：将 ~/.doubaowork-config/doubaowork-paste.md 粘贴到「设置→工作模式任务设置→工作任务偏好指令」并保存（该框上限10000字符，paste.md约4700字，剩余空间充足）")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -1760,6 +2527,8 @@ def main():
     _plat_ap.add_argument("--cfg-root", default=None,
                           help="覆盖端配置根（隔离装/夹具用·⛔ 不传则读 capability.yaml）")
     _platform_explicit = any(a == "--platform" for a in sys.argv)  # G2-2·显式/缺省分轨（while 清除前判定）
+    # F3/F21（2026-10-17）：查询模式（--list/--verify）不需要端上下文——ROSTER 是全局数据。
+    _QUERY_MODE = ("--list" in sys.argv) or ("--verify" in sys.argv)
     _plat_args, _ = _plat_ap.parse_known_args()
     # 从 argv 中清除 --platform 避免主 parser 报 unrecognized
     while "--platform" in __import__("sys").argv:
@@ -1773,7 +2542,13 @@ def main():
     # ─── G2-2 根治·缺省不再静默回落 workbuddy：环境自证 + fail-loud 转人 ───
     _env_hits = _detect_platform_from_env()
     if not _platform_explicit:
-        if len(_env_hits) == 1:
+        # F21（2026-10-17）：--list 是只读查询（ROSTER 全局·不依赖端），旧逻辑在多端机
+        # 被 fail-loud 拦住 ⇒ 用户连钩子总表都查不了。查询模式跳过判定（--verify 仍需端
+        # 上下文·保持 fail-loud）。
+        if _QUERY_MODE and "--verify" not in sys.argv and len(_env_hits) != 1:
+            _plat_args.platform = "workbuddy"
+            print("ℹ️ 查询模式（--list）：跳过平台判定（钩子总表为全局数据·不依赖端上下文）")
+        elif len(_env_hits) == 1:
             _plat_args.platform = _env_hits[0][0]
             print("🔌 平台自动判定：%s（依据：盘上唯一命中 config_root %s）" % _env_hits[0])
         elif len(_env_hits) == 0:
@@ -1846,6 +2621,18 @@ def main():
                 mc_arg = sys.argv[-1] if sys.argv[-1] and not sys.argv[-1].startswith("-") else ""
                 _sp_cmd = ["bash", alt_setup]
                 _env = dict(os.environ)
+                # 🔴 2026-10-11 沙箱实测逮到的真污染：本委派从不传 cfg_root ⇒ setup.sh 回落
+                #   它自己的默认值 `$HOME/.hermes` ⇒ 隔离验证时插件/备份/三关闸门全落在
+                #   **真机运行面**（实测：真机 plugins 被包内投影覆写、doenglingz/backups 多出
+                #   一份、__pycache__ 重生）。铁律「会写运行面的闸须带隔离 cfg_root」的**委派侧**
+                #   欠账——闸自身有 --cfg-root，委派时没透传 = 隔离链断在中间。
+                #   setup.sh 的取值入口 = DOENGLINGZ_CONFIG_DIR（其 L17·缺省 $HOME/.hermes）。
+                if _CFG_ROOT_ABS:
+                    _env["DOENGLINGZ_CONFIG_DIR"] = _CFG_ROOT_ABS
+                # C30（2026-10-15）：装机链自证标志——安装器自己知道「此刻 MC 本就该是空的/未成型」
+                # （INSTALL 主命令场景：新手先建空文件夹再跑）。端 setup 见此标志把空/未成型 MC
+                # 判 ⏳ 中途态继续落端件；⛔ 非空且无指纹仍硬拒（人直跑 setup.sh 无此标志=原守卫完整）。
+                _env["BLT_INSTALL_CHAIN"] = "1"
                 if "--dry-run" in sys.argv:
                     # dry-run 双通道穿透：DRY=1 环境变量（traework/qodercn 等读环境变量）+
                     # --dry-run 位置参数（doubaowork/hermes 读参数）——⛔不许"看着像演练、实际写盘"
@@ -1872,12 +2659,19 @@ def main():
                         "%s 端 %s：退出码 %d·端接入未完成（公共资产继续部署·请在 %s 端真机复核）"
                         % (_plat_args.platform, entry, rc, _plat_args.platform))
                     print(f"   ❌ 端 setup({entry}) 退出码 {rc}·端接入未完成（降级不阻塞·公共资产继续部署·需在 {_plat_args.platform} 端复核）")
+                    # C30遗留③裁决(2026-10-16·用户令按愿景最优解)：维持"解耦部署"设计（公共资产
+                    #   与端接入正交·部分成功优于全失败），强化出口告知——误指目录的用户须看得见撤回路。
+                    print(f"   ↳ 若本目录系误指：公共资产已落在 {mc_arg or '<MC>'}，可用包根 rollback.sh 撤回本次写入后重跑（端拒≠MC合法，两问分开核）")
                 # 委派成功 ≠ 全装完——继续走下面的公共资产部署（①/①a/①b）
             else:
                 print(f"⚠️ 本端({_plat_args.platform})未找到端部署入口 {entry}，且 capability 未声明 setup_dispatch: manual——端适配面不完整，请核对该端 adapter")
 
         else:
-            print("ℹ️ 查询模式（--verify/--list）——跳过端 setup 委派与安装后喊话")
+            # F3（2026-10-17）：本 else 配对的是「platform != workbuddy」——是 **WB 分支**
+            # （WB 无独立 setup 入口·能力内建安装器本体），原文案"查询模式"在真实 WB 安装时
+            # 也打印=误导。查询模式的判定在下方 _QUERY_MODE。
+            if not _QUERY_MODE:
+                print("ℹ️ WorkBuddy 端：无独立 setup 入口（端能力内建安装器本体·直接部署）")
     # ── 端自定义安装后喊话（2026-10-03·修：原挂在 `platform != "workbuddy"` 分支内
     #    ⇒ **WorkBuddy 端永远走不到这里·自己的 post_install_message 永远不打印**。
     #    根因：当日把喊话从 hooks_event 分支移出时，落点连同整个块一起留在了非 WB 分支内。
@@ -1886,7 +2680,7 @@ def main():
     _cap_for_msg = cap if _plat_args.platform != "workbuddy" else load_capability(
         os.path.join(PKG, "adapters", "workbuddy", "capability.yaml"))
     _msg = _cap_for_msg.get("post_install_message")
-    if _msg:
+    if _msg and not _QUERY_MODE:  # F3：--list/--verify 只读查询真跳过喊话（旧版无条件打印）
         print()
         print(_msg)
     # ─── 以下为 WorkBuddy/有hook端的原有逻辑（HOOKS_ROOT/SETTINGS 已按需覆盖）───
@@ -1895,13 +2689,37 @@ def main():
     ap.add_argument("mc", nargs="?", help="记忆共享中心绝对路径")
     ap.add_argument("--dry-run", action="store_true", help="只报告不写盘")
     ap.add_argument("--list", action="store_true", help="只打印钩子总表")
+    ap.add_argument("--deploy-skills", action="store_true",
+                  help="程序化部署 Skill 面（逐件复制+占位符本地化+覆盖前损失清单）·2026-10-11 批次8")
     ap.add_argument("--verify", action="store_true", help="核对已装态（文件落盘 + 已注册；带 MC 路径时再核规则数据）")
     ap.add_argument("--gate", action="store_true",
                     help="发版前置门禁（用户令·2026-10-03）：端适配 100%% 才放行打包——调 platform_adaptation_check.py --gate")
     a = ap.parse_args()
+    if getattr(a, "deploy_skills", False):
+        _mc0 = a.mc or MC_PATH
+        _d, _s, _l = deploy_skills(os.path.expanduser(str(_mc0)), dry=a.dry_run)
+        print("④ Skill 面程序化部署：落位 %d 件 · 幂等跳过 %d 件 · 本机改动待覆盖 %d 件" % (_d, _s, _l))
+        # P11 根治（2026-10-19）：端 setup.sh 委派的 [4/5] 建链跑在④落位之前（时序倒置恒 0/10 却 rc=0）
+        # ⇒ 落位后对有 setup.sh 的端触发 --relink-skills 复链巡检；不足 10 判非零，⛔ rc=0 收场
+        if not a.dry_run and _plat_args.platform not in (None, "", "workbuddy"):
+            _sh = os.path.join(PKG, "adapters", str(_plat_args.platform), "setup.sh")
+            if os.path.isfile(_sh):
+                import subprocess as _sp2
+                # F5（审查 2026-10-19）：委派三件套=expanduser + 隔离 cfg_root env + 链内标志，
+                # 与 L2618 沙箱污染铁律同口径；缺 BLT_INSTALL_CHAIN 会把合法中途态误判硬拒。
+                _env2 = dict(os.environ)
+                _env2["BLT_INSTALL_CHAIN"] = "1"
+                if _CFG_ROOT_ABS:
+                    _env2["QODERCN_HOME"] = _CFG_ROOT_ABS
+                _rr = _sp2.run(["bash", _sh, os.path.expanduser(str(_mc0)), "--relink-skills"], env=_env2)
+                if _rr.returncode != 0:
+                    print("!! Skill 复链巡检失败（rc=%d）：落位后软链必须 10/10 在位（P11）" % _rr.returncode)
+                    sys.exit(1)
+                print("✅ Skill 复链巡检通过（落位后 [4/5] 重跑·10 链在位）")
+        sys.exit(0)
 
     if a.verify:
-        return verify_deployed(a.mc)
+        return verify_deployed(a.mc, hooks_root=HOOKS_ROOT, settings_path=SETTINGS)
 
     if a.gate:
         return gate_check(_plat_args.platform)
@@ -1930,10 +2748,14 @@ def main():
     # ─── 🔴 安装前端体检报告（2026-10-03·条文20/21）：检测端之后、部署之前 ───
     # 扫描已有资产→输出新/老/跨端用户身份+缺失清单+端能力+建议操作
     # 查询模式（--verify/--list）跳过体检（那是查询面不是安装面）
+    # 2026-10-08 zwork 形态修正（D3 验收轮）：平台托管型五系统文件=端自有实体（条文48），
+    # ⛔按 _CFG_ROOT_ABS（WB 落点）拼检=判据面与落点面不相交（沙盒实测 0/4 假红·verdict 仍 ok
+    # 但【已有资产】四红误导端 AI 判用户身份）。传 None→函数内回落 mc+platform 锚点通道。
+    _health_cfg_root = None if _plat_args.platform == "zwork" else _CFG_ROOT_ABS
     _health = pre_install_health_check(
         MC_PATH, _plat_args.platform,
         cap=locals().get("cap"),
-        cfg_root=_CFG_ROOT_ABS,
+        cfg_root=_health_cfg_root,
         dry=a.dry_run,
     )
 
@@ -1943,8 +2765,10 @@ def main():
     if not a.dry_run:
         os.makedirs(os.path.join(MC_PATH, "知识库"), exist_ok=True)
     n_center = deploy_script_center(MC_PATH, a.dry_run)
-    print("%s① 脚本中心：%d 件 → %s/脚本中心/（知识联邦引擎独立部署 → %s/知识联邦引擎/）"
-          % (tag, n_center, MC_PATH, MC_PATH))
+    _sc_dst = os.path.join(MC_PATH, "脚本中心")
+    _sc_landed = sum(len(fs) for _r, _d, fs in os.walk(_sc_dst)) if os.path.isdir(_sc_dst) else 0
+    print("%s① 脚本中心：清单 %d 条·落盘 %d 件 → %s/脚本中心/（知识联邦引擎独立部署 → %s/知识联邦引擎/）"
+          % (tag, n_center, _sc_landed, MC_PATH, MC_PATH))
     # 2026-10-07 冲突显形化收口：deploy_script_center 检测到同名异内容时写 _PKG_CONFLICTS，
     #   此处决定是否中止安装。
     #   ⚠️ 本轮**只报告不阻断**——理由：现包存量 52 处冲突（27 处 scripts 侧受 manifest 管、
@@ -1970,11 +2794,14 @@ def main():
     n_dt = deploy_digital_twin(MC_PATH, a.dry_run)
     print("%s①a 数字分身套件：%d 件 → %s/数字分身/{%s}/"
           % (tag, n_dt, MC_PATH, ",".join(DT_SUITE.keys())))
+    for _bs in bootstrap_runtime_state(MC_PATH, a.dry_run):
+        print("   %s①a+ 运行落点自举：%s" % (tag, _bs))
 
     rd = install_rule_data(MC_PATH, a.dry_run)
     rf = install_rule_files(MC_PATH, a.dry_run)
     _st = {"CREATED": "新建", "UPDATED": "更新", "UNCHANGED": "无变化",
-           "CONFLICT": "⚠️冲突", "MERGE_ERROR": "❌硬失败"}
+           "CONFLICT": "⚠️冲突", "MERGE_ERROR": "❌硬失败",
+           "PRECHECK_SKIP": "⚠️号位预检·未写"}
     n_conflict = n_err = 0
     # ── 运行路径声明（插件/脚本的唯一取路径入口）──────────────────
     # 🔴 **cap 必须在这里可及**（2026-10-02 dry-run 抓出）：
@@ -2012,7 +2839,8 @@ def main():
         n_err += 1
     # 断章增量状态逐项排印（C7：冲突/硬失败必须让用户看见，⛔ 不静默吞）
     _st = {"CREATED": "新建", "UPDATED": "更新", "UNCHANGED": "无变化",
-           "CONFLICT": "⚠️冲突", "MERGE_ERROR": "❌硬失败"}
+           "CONFLICT": "⚠️冲突", "MERGE_ERROR": "❌硬失败",
+           "PRECHECK_SKIP": "⚠️号位预检·未写"}
     n_conflict = n_err = 0
     for _name, _stt, _msg in rf:
         print("   · %s：%s" % (_name, _st.get(_stt, _stt)))
@@ -2022,11 +2850,14 @@ def main():
         elif _stt == "MERGE_ERROR":
             n_err += 1
             print("     └ %s" % _msg)
+        elif _stt == "PRECHECK_SKIP":
+            n_conflict += 1
+            print("     └ %s（你的文件未被改动）" % _msg)
     print("%s①b 规则层：触发规格 %s + 三层规则文件 %d 件 → %s/记忆规则/（断章增量·⛔不覆盖你的改动）"
           % (tag, ", ".join(rd) if rd else "（包内无）", len(rf), MC_PATH))
     if n_conflict or n_err:
-        print("   ⚠️ 规则层：%d 项冲突 · %d 项硬失败 —— 用户文件均未被覆盖，"
-              "备份见 <记忆中心>/记忆琥珀/安装前备份/" % (n_conflict, n_err))
+        print("   ⚠️ 规则层：%d 项冲突 · %d 项硬失败 —— 用户文件均未被覆盖（写入件才有备份："
+              "记忆琥珀/安装前备份/；纯冲突=零写入·原文即在盘上）" % (n_conflict, n_err))
 
     if _skip_hooks:
         print("%s②③ 钩子部署/注册：跳过（本端无 hook 事件·端适配承载非标准机制·公共资产已装）" % tag)
@@ -2036,12 +2867,17 @@ def main():
         if missing:
             print("   !! 包内缺失（应报缺陷）：%s" % ", ".join(missing))
 
-        added, skipped = register_hooks(deployed, a.dry_run)
+        _rh = register_hooks(deployed, a.dry_run)
+        if _rh[0] == -1:
+            print("!! ③ 注册失败：settings.json 不可用（上方报错）——钩子面未注册，rc 判红（P08 假绿根治）")
+            return 1
+        added, migrated, skipped = _rh
         if not missing:
             write_guard_baseline(deployed, a.dry_run)
+            write_hook_fingerprints(deployed, a.dry_run)  # P12：内容指纹第三层基线
         else:
             print("!! 包内缺失在列 → 跳过基线写入（装机器缺陷不算到用户头上·C4-D GIGO闸）")
-        print("%s③ 钩子注册：新增 %d · 已存在跳过 %d → %s" % (tag, added, skipped, SETTINGS))
+        print("%s③ 钩子注册：新增 %d · 迁移纠正 %d · 已存在跳过 %d → %s" % (tag, added, migrated, skipped, SETTINGS))
 
     # 写版本快照（供升级时组件级对比）— dry-run 也打印，不写盘
     write_user_versions(MC_PATH, a.dry_run)
@@ -2073,8 +2909,10 @@ def main():
     for name in RULE_DATA + RULE_FILES:
         if not os.path.isfile(os.path.join(MC_PATH, "记忆规则", name)):
             bad.append("记忆规则/%s" % name)
+    # R2 填后语法门禁（2026-10-11 _fill 转义雷根治卡）：被填 .py/.json 编译级复检
+    bad.extend(fill_syntax_guard())
     if bad:
-        print("!! 部署后自检发现缺失 %d 件：%s" % (len(bad), ", ".join(sorted(set(bad)))))
+        print("!! 部署后自检发现缺失/语法雷 %d 件：%s" % (len(bad), ", ".join(sorted(set(bad)))))
         return 1
     if _skip_hooks:
         print("✅ 部署后自检：脚本中心 + 数字分身套件 + 规则数据全部落盘"
@@ -2124,6 +2962,10 @@ def main():
         print("━━━━━━━━ 下一步：造出你自己的数字分身 ━━━━━━━━")
         print("文件已装齐，但分身的「人格」得你自己造（不套用任何人的现成答案）。全端同一套流程：")
         print("  1) 答题：HEXACO 100 题（性情）+ 33 题 CORE（身份 / 愿景）")
+        print("  1b) 计分：把答题页导出的 JSON 交给随包脚本跑（⛔AI 不心算 96 个数·手算必漂）：")
+        print("       python3 \"%s\" \"<答题页导出的.json>\""
+              % os.path.join(dt_root, "hexaco", "hexaco_selfbuild_scorer.py"))
+        print("       （同目录先跑 --selftest 可验计分器完好；退出码 0=可进下一步，1=有直线作答告警，2=作答作废须重测）")
         print("  2) 复制模板→改名→填（模板是「空壳」，生成器只读改名后的正式文件·不认模板名）：")
         print("       源：%s" % os.path.join(ob, "童灵·人格向量-空模板.json"))
         print("       为：%s" % os.path.join(dt_root, "童灵·人格向量.json"))

@@ -30,7 +30,7 @@ import argparse
 import hashlib
 from pathlib import Path
 
-BASE = str("[记忆共享中心]")
+BASE = Path('[记忆共享中心]')  # v3 2026-10-14 A8 根治：v2 误套 str() 使下一行 `BASE / "…"` 顶层 TypeError（本件自 2026-10-10 起恒不可导入·与本次搬家无关，独立验证器顶层探针抓出）；恢复 Path 语义——下游 .exists/.parent.mkdir/.read_text/.write_text 全按 Path API 使用
 # 唯一真源：蒸馏日志（git 跟踪·不受 k2_slice_generator 覆盖管辖）
 DISTILL_LOG = BASE / "数字分身/distillation_log.md"
 

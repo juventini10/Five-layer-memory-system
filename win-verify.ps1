@@ -1,4 +1,4 @@
-﻿﻿# ============================================================
+﻿# ============================================================
 # win-verify.ps1 — 布洛陀·全平台安装包 v2.0 Windows 真机 harness (windows-latest)
 # 母本: v1.7.2 win-verify.ps1（2026-09-23 E2 派生·derive_win_harness_v2.py 机械改造，⛔手抄双本账）
 # 正例 T1-T18: 包内 Windows 资产真实可用性 + v2 平台矩阵（T17/T18=capability 驱动 dry-run/fail-loud）
@@ -38,7 +38,7 @@ if ($py) { info "python: $py ($(& $py --version 2>&1))" } else { info "python: �
 
 # ---------- 准备模拟记忆中心 ----------
 info "准备模拟记忆中心..."
-foreach ($d in @("核心层","情境层","潜意识层","记忆规则","技能配置","成就系统","记忆琥珀")) {
+foreach ($d in @("核心层","情境层","潜意识层","记忆规则","技能配置","成就系统","记忆琥珀","记忆蓝图","最伟大的我","未知未知")) {
   New-Item -ItemType Directory -Path (Join-Path $MC $d) -Force | Out-Null
 }
 Set-Content -Path (Join-Path $MC "核心层/CORE.md") -Value "# CORE" -Encoding UTF8
@@ -87,14 +87,14 @@ $env:USERPROFILE = $HOME_SIM
 $env:HOME = $HOME_SIM
 & $PSH -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PKG "verify.ps1") *> (Join-Path $SB "t2.log")
 $t2Exit = $LASTEXITCODE
-$t2txt = Get-Content (Join-Path $SB "t2.log") -Raw -ErrorAction SilentlyContinue
+$t2txt = Get-Content -Encoding UTF8 (Join-Path $SB "t2.log") -Raw -ErrorAction SilentlyContinue
 $t2HasStruct = ($t2txt -match "接入自检") -and ($t2txt -match "记忆Skill") -and ($t2txt -match "自检")
 if ($t2HasStruct) { ok "T2 verify.ps1 真机可跑 + 输出结构完整（退出码=$t2Exit）" } else {
   no "T2 verify.ps1 真机执行异常（退出码=$t2Exit）"
-  Get-Content (Join-Path $SB "t2.log") | Select-Object -Last 12 | ForEach-Object { Write-Host "    T2LOG: $_" }
+  Get-Content -Encoding UTF8 (Join-Path $SB "t2.log") | Select-Object -Last 12 | ForEach-Object { Write-Host "    T2LOG: $_" }
 }
 if ($t2Exit -ne 0) {
-  Get-Content (Join-Path $SB "t2.log") | Where-Object { $_ -match "\[FAIL\]" } | Select-Object -First 10 | ForEach-Object { Write-Host "    T2FAIL项: $_" }
+  Get-Content -Encoding UTF8 (Join-Path $SB "t2.log") | Where-Object { $_ -match "\[FAIL\]" } | Select-Object -First 10 | ForEach-Object { Write-Host "    T2FAIL项: $_" }
 }
 
 # ---------- T3: verify.ps1 空记忆中心 → fail-loud ----------
@@ -109,14 +109,14 @@ info "T4: rollback.ps1 -Preview -Timestamp <ts>..."
 $env:MEMORY_CENTER = $MC
 & $PSH -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PKG "rollback.ps1") -Preview -Timestamp $BAKTS *> (Join-Path $SB "t4.log")
 $t4Exit = $LASTEXITCODE
-$t4txt = Get-Content (Join-Path $SB "t4.log") -Raw
+$t4txt = Get-Content -Encoding UTF8 (Join-Path $SB "t4.log") -Raw
 if ($t4Exit -eq 0 -and $t4txt -match "预览备份") { ok "T4 -Preview -Timestamp <ts> exit=0 + 输出预览" } else { no "T4 -Preview 异常(exit=$t4Exit)" }
 
 # ---------- T4b: rollback.ps1 裸用 -Preview（无参）必须可用 ----------
 info "T4b: rollback.ps1 裸用 -Preview..."
 & $PSH -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PKG "rollback.ps1") -Preview *> (Join-Path $SB "t4b.log")
 $t4bExit = $LASTEXITCODE
-$t4btxt = Get-Content (Join-Path $SB "t4b.log") -Raw -ErrorAction SilentlyContinue
+$t4btxt = Get-Content -Encoding UTF8 (Join-Path $SB "t4b.log") -Raw -ErrorAction SilentlyContinue
 if (($t4bExit -eq 0) -and ($t4btxt -notmatch "Missing an argument|缺少参数")) { ok "T4b 裸用 -Preview exit=0（switch 参数契约正确）" }
 else { no "T4b 裸用 -Preview 异常(exit=$t4bExit)" }
 
@@ -167,7 +167,7 @@ if ($py) {
   $fp = Join-Path $PKG "references/integrity-fingerprints.json"
   & $py (Join-Path $PKG "data_contamination_check.py") --memory-root $MC --fingerprints $fp --template-root (Join-Path $PKG "references") *> (Join-Path $SB "t9.log")
   $t9Exit = $LASTEXITCODE
-  if ($t9Exit -eq 0) { ok "T9 污染检测 dry-run exit=0" } else { no "T9 污染检测 exit=$t9Exit"; Get-Content (Join-Path $SB "t9.log") | Select-Object -Last 5 | ForEach-Object { Write-Host "    T9LOG: $_" } }
+  if ($t9Exit -eq 0) { ok "T9 污染检测 dry-run exit=0" } else { no "T9 污染检测 exit=$t9Exit"; Get-Content -Encoding UTF8 (Join-Path $SB "t9.log") | Select-Object -Last 5 | ForEach-Object { Write-Host "    T9LOG: $_" } }
 } else { info "T9 跳过: 无 python" }
 
 # ---------- T10: pkg_cleanliness_check.py ----------
@@ -175,7 +175,7 @@ info "T10: pkg_cleanliness_check.py..."
 if ($py) {
   & $py (Join-Path $PKG "references/scripts/pkg_cleanliness_check.py") --pkg-root $PKG *> (Join-Path $SB "t10.log")
   $t10Exit = $LASTEXITCODE
-  if ($t10Exit -eq 0) { ok "T10 发布卫生检查 exit=0" } else { no "T10 发布卫生 exit=$t10Exit"; Get-Content (Join-Path $SB "t10.log") | Select-Object -First 8 | ForEach-Object { Write-Host "    T10LOG: $_" } }
+  if ($t10Exit -eq 0) { ok "T10 发布卫生检查 exit=0" } else { no "T10 发布卫生 exit=$t10Exit"; Get-Content -Encoding UTF8 (Join-Path $SB "t10.log") | Select-Object -First 8 | ForEach-Object { Write-Host "    T10LOG: $_" } }
 } else { info "T10 跳过: 无 python" }
 
 # ---------- T11: platform_compat.py 全维 ----------
@@ -183,7 +183,7 @@ info "T11: platform_compat.py 全维..."
 if ($py) {
   & $py (Join-Path $PKG "references/scripts/platform_compat.py") $PKG *> (Join-Path $SB "t11.log")
   $t11Exit = $LASTEXITCODE
-  if ($t11Exit -eq 0) { ok "T11 跨平台兼容检查 exit=0" } else { no "T11 跨平台 exit=$t11Exit"; Get-Content (Join-Path $SB "t11.log") | Where-Object { $_ -match "缺陷" } | Select-Object -First 8 | ForEach-Object { Write-Host "    T11LOG: $_" } }
+  if ($t11Exit -eq 0) { ok "T11 跨平台兼容检查 exit=0" } else { no "T11 跨平台 exit=$t11Exit"; Get-Content -Encoding UTF8 (Join-Path $SB "t11.log") | Where-Object { $_ -match "缺陷" } | Select-Object -First 8 | ForEach-Object { Write-Host "    T11LOG: $_" } }
 } else { info "T11 跳过: 无 python" }
 
 # ---------- T12: smoke_test.py ----------
@@ -191,7 +191,7 @@ info "T12: smoke_test.py..."
 if ($py) {
   & $py (Join-Path $PKG "references/scripts/smoke_test.py") $PKG *> (Join-Path $SB "t12.log")
   $t12Exit = $LASTEXITCODE
-  if ($t12Exit -eq 0) { ok "T12 结构完整性 exit=0" } else { no "T12 结构完整性 exit=$t12Exit"; Get-Content (Join-Path $SB "t12.log") | Select-Object -Last 8 | ForEach-Object { Write-Host "    T12LOG: $_" } }
+  if ($t12Exit -eq 0) { ok "T12 结构完整性 exit=0" } else { no "T12 结构完整性 exit=$t12Exit"; Get-Content -Encoding UTF8 (Join-Path $SB "t12.log") | Select-Object -Last 8 | ForEach-Object { Write-Host "    T12LOG: $_" } }
 } else { info "T12 跳过: 无 python" }
 
 # ---------- T13: 未知未知钩子真机跑（无 🕳️ 段 → 放行不崩）----------
@@ -206,10 +206,10 @@ if ($py) {
   $t13Exit = $LASTEXITCODE
   Clear-Env "UU_TARGET"
   Clear-Env "UU_STATE"
-  $t13txt = Get-Content (Join-Path $SB "t13.log") -Raw -ErrorAction SilentlyContinue
+  $t13txt = Get-Content -Encoding UTF8 (Join-Path $SB "t13.log") -Raw -ErrorAction SilentlyContinue
   $fcntlCrash = $t13txt -match "fcntl|ImportError|Traceback"
   if ($t13Exit -eq 0 -and -not $fcntlCrash) { ok "T13 钩子 Windows 实跑 exit=0（无 fcntl 崩溃）" }
-  else { no "T13 钩子异常(exit=$t13Exit fcntl崩=$fcntlCrash)"; Get-Content (Join-Path $SB "t13.log") | Select-Object -Last 6 | ForEach-Object { Write-Host "    T13LOG: $_" } }
+  else { no "T13 钩子异常(exit=$t13Exit fcntl崩=$fcntlCrash)"; Get-Content -Encoding UTF8 (Join-Path $SB "t13.log") | Select-Object -Last 6 | ForEach-Object { Write-Host "    T13LOG: $_" } }
 } else { info "T13 跳过: 无 python" }
 
 # ---------- T14: 铁律硬墙钩子 Windows 实跑 ----------
@@ -218,7 +218,7 @@ if ($py) {
   '{"prompt":"今天天气不错"}' | & $py (Join-Path $PKG "references/scripts/rule_fragment_inject.py") *> (Join-Path $SB "t14.log")
   $t14Exit = $LASTEXITCODE
   if ($t14Exit -eq 0) { ok "T14 铁律硬墙钩子实跑 exit=0（失败默认放行）" }
-  else { no "T14 硬墙钩子 exit=$t14Exit"; Get-Content (Join-Path $SB "t14.log") | Select-Object -Last 6 | ForEach-Object { Write-Host "    T14LOG: $_" } }
+  else { no "T14 硬墙钩子 exit=$t14Exit"; Get-Content -Encoding UTF8 (Join-Path $SB "t14.log") | Select-Object -Last 6 | ForEach-Object { Write-Host "    T14LOG: $_" } }
 } else { info "T14 跳过: 无 python" }
 
 # ============================================================
@@ -265,7 +265,7 @@ else { no "V2 INSTALL.md powershell 块含 bash 专属语法 $($psHits.Count) �
 # ---------- V3: 版本字样三方一致 ----------
 # 2026-10-07 CI真机反哺修：原『version.md全文剔非数字』把注释里2026-09-01/§1/5全并入 ⇒ 输出
 # 2.1.01202609014.1..752.0.0. 恒≠INSTALL标题=V3永红空转（CI run 37626430079:147实拍）。改为精准提取 version 行。
-$vmRaw = Get-Content (Join-Path $PKG "version.md") -Raw
+$vmRaw = Get-Content -Encoding UTF8 (Join-Path $PKG "version.md") -Raw
 $mVM = [regex]::Match($vmRaw, '(?m)^\s*version:\s*"([0-9][0-9.]*)"')
 $vm = if ($mVM.Success) { $mVM.Groups[1].Value } else { "" }
 $installTitle = ""
@@ -298,9 +298,9 @@ if ($usesMC.Success -and -not $usesWB.Success) {
 
 # ---------- V13: 双端支持 --platform/-Platform 配置根路由（v2.0.1·2026-09-30 L3审计根治）----------
 $sh13 = Get-Content (Join-Path $PKG "verify.sh") -Raw -Encoding UTF8
-$pSH = ([regex]::IsMatch($sh13, '--platform') -and [regex]::IsMatch($sh13, 'config_root:'))
+$v13Sh = ([regex]::IsMatch($sh13, '--platform') -and [regex]::IsMatch($sh13, 'config_root:'))  # ⚠️改名防碰撞：原 $pSH 与全局 $PSH 同名（PS变量大小写不敏感）——T19取证轮揪出，覆盖后全部 PowerShell 调用腿变 & $true
 $pPS = ([regex]::IsMatch((Get-Content (Join-Path $PKG "verify.ps1") -Raw -Encoding UTF8), '\$Platform') -and [regex]::IsMatch((Get-Content (Join-Path $PKG "verify.ps1") -Raw -Encoding UTF8), 'config_root:'))
-if ($pSH -and $pPS) { ok "V13 双端支持 --platform/-Platform（按端 capability.yaml config_root 路由落点检查）" } else { no "V13 多端配置根路由缺失（verify 不覆盖非 WB 端落点=2026-09-30 审计病根复发）" }
+if ($v13Sh -and $pPS) { ok "V13 双端支持 --platform/-Platform（按端 capability.yaml config_root 路由落点检查）" } else { no "V13 多端配置根路由缺失（verify 不覆盖非 WB 端落点=2026-09-30 审计病根复发）" }
 
 # ---------- V6: 脚本数量声称 vs 实际（真语义：cp scripts/* 后再 cp hooks/* 同名覆盖）----------
 $scDir = Join-Path $PKG "references/scripts"
@@ -334,7 +334,7 @@ else { no "V6 脚本数量声称不符: $claimMsg" }
 # ---------- V7: rollback.ps1 按自身文档裸用 -Preview 必须可用 ----------
 $env:MEMORY_CENTER = $MC
 & $PSH -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PKG "rollback.ps1") -Preview *> (Join-Path $SB "v7.log")
-$v7txt = Get-Content (Join-Path $SB "v7.log") -Raw -ErrorAction SilentlyContinue
+$v7txt = Get-Content -Encoding UTF8 (Join-Path $SB "v7.log") -Raw -ErrorAction SilentlyContinue
 if ($v7txt -match "Missing an argument|缺少参数") { no "V7 rollback.ps1 按自身文档裸用 -Preview 即报错（[string] 应为 [switch]）" }
 else { ok "V7 rollback.ps1 裸 -Preview 可用" }
 
@@ -431,28 +431,45 @@ $E2E_MC = Join-Path $E2E "记忆共享中心"
 $E2E_HOME = Join-Path $E2E "home"
 if (Test-Path $E2E) { Remove-Item -Recurse -Force $E2E -ErrorAction SilentlyContinue }
 # 1) 记忆中心骨架（step3 契约）
-foreach ($d in @("核心层","情境层","潜意识层","记忆规则","技能配置","成就系统","记忆琥珀")) {
+foreach ($d in @("核心层","情境层","潜意识层","记忆规则","技能配置","成就系统","记忆琥珀","记忆蓝图","最伟大的我","未知未知")) {
   New-Item -ItemType Directory -Path (Join-Path $E2E_MC $d) -Force | Out-Null
 }
 Copy-Item (Join-Path $PKG "references/templates/CORE.md") (Join-Path $E2E_MC "核心层/CORE.md") -Force -ErrorAction SilentlyContinue
 if (-not (Test-Path (Join-Path $E2E_MC "核心层/CORE.md"))) { Set-Content (Join-Path $E2E_MC "核心层/CORE.md") "# CORE" -Encoding UTF8 }
-# 2) 规则三层（step2 自 references/templates 或记忆规则源）
-$ruleSrc = Join-Path $PKG "references/templates"
-foreach ($rn in @("用户基本规则-铁律版.md","用户基本规则-摘要版.md","用户基本规则-详解存档版.md")) {
-  $cand = Join-Path $ruleSrc $rn
-  if (Test-Path $cand) { Copy-Item $cand (Join-Path $E2E_MC "记忆规则/$rn") -Force }
-  else { Set-Content (Join-Path $E2E_MC "记忆规则/$rn") "# $rn" -Encoding UTF8 }
-}
-# 3) 9 Skill 目录（step6）+ 软链接（~/.workbuddy/skills）
+# 2) 规则三层+规则层数据：走安装器真函数（批次9 §4-2 二抓·⛔裸拷模板）
+#    病根：上轮抓到"手工拷 SKILL.md 存根"同构病——产品路径 install_rule_files 对模板跑
+#    _fill_text（占位符本地化），夹具裸拷 ⇒ 装后产物带 [记忆共享中心] 假残留（铁律版/详解存档版 2 件）。
+#    夹具必须走产品同一扇门，测的才是产品。
+$oldH2 = $env:HOME; $oldU2 = $env:USERPROFILE
+$env:HOME = $E2E_HOME; $env:USERPROFILE = $E2E_HOME
+Push-Location $PKG
+& $py -c "import install_scripts as I, sys; mc=sys.argv[1]; I.install_rule_files(mc); I.install_rule_data(mc)" $E2E_MC *> (Join-Path $SB "t15_rules.log")
+$rulesExit = $LASTEXITCODE
+Pop-Location
+$env:HOME = $oldH2; $env:USERPROFILE = $oldU2
+$rulesLog = Get-Content -Encoding UTF8 (Join-Path $SB "t15_rules.log") -Raw -ErrorAction SilentlyContinue
+if (-not $rulesLog) { $rulesLog = "" }
+Write-Host "    DIAG-T15 rules-leg rc=$rulesExit : $((($rulesLog -split "`n" | Where-Object { $_.Trim() }) | Select-Object -Last 3) -join ' | ')"
+if ($rulesExit -ne 0) { no "T15 规则层安装腿（install_rule_files/install_rule_data）非零退出 rc=$rulesExit" }
+else { ok "T15 规则层走安装器真函数 rc=0（占位符本地化经 _fill_text·同产品路径）" }
+# 3) Skill 面：真走 --deploy-skills 安装腿（批次9 §4-2·T16 根治复验）
+#    原这里手工拷 SKILL.md 存根 = 用夹具粉饰现场：占位符本地化根本没跑，
+#    verify.sh 的"装后产物无占位符残留"检查测的是空气（12 件残留就是这么漏的）。
 New-Item -ItemType Directory -Path (Join-Path $E2E_HOME ".workbuddy\skills") -Force | Out-Null
+$oldH3 = $env:HOME; $oldU3 = $env:USERPROFILE
+$env:HOME = $E2E_HOME; $env:USERPROFILE = $E2E_HOME
+& $py (Join-Path $PKG "install_scripts.py") --deploy-skills $E2E_MC *> (Join-Path $SB "t15_deploy_skills.log")
+$dsExit = $LASTEXITCODE
+$env:HOME = $oldH3; $env:USERPROFILE = $oldU3
+$dsLog = Get-Content -Encoding UTF8 (Join-Path $SB "t15_deploy_skills.log") -Raw -ErrorAction SilentlyContinue
+if (-not $dsLog) { $dsLog = "" }
+Write-Host "    DIAG-T15 deploy-skills rc=$dsExit : $(($dsLog -split "`n" | Where-Object { $_.Trim() }) -join ' | ')"
+if ($dsExit -ne 0) { no "T15 --deploy-skills 非零退出 rc=$dsExit（安装腿本身挂了，后面不用验）" }
+else { ok "T15 --deploy-skills 实跑 rc=0" }
+# 软链接（无权限时复制降级——与 step6 护栏同语义；链路事实独立于部署腿）
 foreach ($s in $skillNames) {
-  $sd = Join-Path $E2E_MC "技能配置/$s"
-  New-Item -ItemType Directory -Path $sd -Force | Out-Null
-  $ssrc = Join-Path $PKG "references/skills/$s/SKILL.md"
-  if (Test-Path $ssrc) { Copy-Item $ssrc (Join-Path $sd "SKILL.md") -Force } else { Set-Content (Join-Path $sd "SKILL.md") "# $s" -Encoding UTF8 }
-  # 软链接（无权限时复制降级——与 step6 护栏同语义）
-  try { New-Item -ItemType SymbolicLink -Path (Join-Path $E2E_HOME ".workbuddy\skills\$s") -Target $sd -Force | Out-Null }
-  catch { New-Item -ItemType Directory -Path (Join-Path $E2E_HOME ".workbuddy\skills\$s") -Force | Out-Null; Set-Content (Join-Path $E2E_HOME ".workbuddy\skills\$s\SKILL.md") "# $s" -Encoding UTF8 }
+  try { New-Item -ItemType SymbolicLink -Path (Join-Path $E2E_HOME ".workbuddy\skills\$s") -Target (Join-Path $E2E_MC "技能配置/$s") -Force | Out-Null }
+  catch { New-Item -ItemType Directory -Path (Join-Path $E2E_HOME ".workbuddy\skills\$s") -Force | Out-Null; Copy-Item (Join-Path $E2E_MC "技能配置/$s/SKILL.md") (Join-Path $E2E_HOME ".workbuddy\skills\$s\SKILL.md") -Force -ErrorAction SilentlyContinue }
 }
 # 4) 平台系统文件（step5 契约落点）
 foreach ($f in @("SOUL.md","IDENTITY.md","USER.md","MEMORY.md")) {
@@ -463,6 +480,19 @@ foreach ($f in @("SOUL.md","IDENTITY.md","USER.md","MEMORY.md")) {
 # 5) 成就系统（step 契约：需 .py）
 New-Item -ItemType Directory -Path (Join-Path $E2E_MC "成就系统/scripts") -Force | Out-Null
 Set-Content (Join-Path $E2E_MC "成就系统/scripts/tracker.py") "# tracker" -Encoding UTF8
+# 5b) 目录型骨架非空（verify §4.6 存在∧非空判据·2026-10-18 Loop轮·作者指令「做到完整」）：
+#     建目录≠有文件——琥珀/蓝图/最伟大的我/未知未知 补装后最小真实态种子
+Set-Content (Join-Path $E2E_MC "记忆琥珀/seed.md") "# amber seed" -Encoding UTF8
+Set-Content (Join-Path $E2E_MC "记忆蓝图/seed.md") "# blueprint seed" -Encoding UTF8
+Set-Content (Join-Path $E2E_MC "最伟大的我/seed.md") "# me seed" -Encoding UTF8
+Set-Content (Join-Path $E2E_MC "未知未知/seed.md") "# uu seed" -Encoding UTF8
+# 5c) 摘要版三表合成（模拟用户完成 step5 逐格替换·⛔夹具装"没装完的人"=判据假红）
+$sumPath = Join-Path $E2E_MC "记忆规则/用户基本规则-摘要版.md"
+if (-not $py) { no "T15 摘要版合成: python 未找到（$py 空·⛔不拿陈旧 LASTEXITCODE 假绿）" }
+elseif (Test-Path $sumPath) {
+  & $py -c "import re,sys; p=sys.argv[1]; s=open(p,encoding='utf-8').read(); s=re.sub(r'\[Q(\d+)·答案待注入\]', lambda m: '示例答案Q'+m.group(1), s); s=re.sub(r'\[Q(\d+)·规则待派生\]', lambda m: '示例规则Q'+m.group(1), s); open(p,'w',encoding='utf-8').write(s); print('SYNTH OK', len(s))" $sumPath *> (Join-Path $SB "t15_synth.log")
+  if ($LASTEXITCODE -ne 0) { no "T15 摘要版合成腿 rc=$LASTEXITCODE（见 t15_synth.log）" } else { ok "T15 摘要版三表合成完成（38 格示例值·演练装后终态）" }
+} else { no "T15 摘要版合成: 装后文件缺失 $sumPath" }
 
 if (-not $PSH) { info "T15 跳过: 无 powershell" } else {
   $oldH = $env:HOME; $oldU = $env:USERPROFILE
@@ -472,7 +502,7 @@ if (-not $PSH) { info "T15 跳过: 无 powershell" } else {
   $t15Exit = $LASTEXITCODE
   $env:HOME = $oldH; $env:USERPROFILE = $oldU
   Clear-Env "MEMORY_CENTER"
-  $log = Get-Content (Join-Path $SB "t15.log") -Raw -ErrorAction SilentlyContinue
+  $log = Get-Content -Encoding UTF8 (Join-Path $SB "t15.log") -Raw -ErrorAction SilentlyContinue
   if (-not $log) { $log = "" }
   $t15Fail = ([regex]::Matches($log, '\[FAIL\]')).Count
   if ($t15Exit -eq 0) { ok "T15 正确安装后 verify.ps1 exit=0（$t15Fail 个 FAIL）" }
@@ -493,11 +523,15 @@ if (-not $bash -or -not (Test-Path $E2E_MC)) { info "T16 跳过: 无 bash 或沙
   $t16Exit = $LASTEXITCODE
   $env:HOME = $oldH; $env:USERPROFILE = $oldU
   Clear-Env "MEMORY_CENTER"
-  $log16 = Get-Content (Join-Path $SB "t16.log") -Raw -ErrorAction SilentlyContinue
+  $log16 = Get-Content -Encoding UTF8 (Join-Path $SB "t16.log") -Raw -ErrorAction SilentlyContinue
   if (-not $log16) { $log16 = "" }
   $t16Fail = ([regex]::Matches($log16, '\[FAIL\]')).Count
   if ($t16Exit -eq 0) { ok "T16 正确安装后 verify.sh exit=0（$t16Fail 个 FAIL）" }
-  else { no "T16 正确安装后 verify.sh exit=$t16Exit（$t16Fail 个 FAIL）"; ($log16 -split "`n") | Where-Object { $_ -match '\[FAIL\]' } | Select-Object -First 8 | ForEach-Object { Write-Host "    T16FAIL: $($_.Trim())" } }
+  else {
+    no "T16 正确安装后 verify.sh exit=$t16Exit（$t16Fail 个 FAIL）"
+    # 取证腿自带现场：验点只报计数不报明细=逼人猜（真机实证：残留 2 件但哪 2 件被管道吞了）
+    ($log16 -split "`n") | Where-Object { $_ -match 'FAIL|双拼|占位|残留|^\s+- |SCC-DETAIL' } | Select-Object -First 30 | ForEach-Object { Write-Host "    T16DETAIL: $($_.Trim())" }
+  }
 }
 
 # ---------- T17: v2.0 平台矩阵逐端 dry-run（capability 驱动·每端 adapter 可装）----------
@@ -515,7 +549,7 @@ if ($py) {
   }
   if ($platDirs.Count -ge 4 -and $t17fail.Count -eq 0) { ok "T17 平台矩阵 $($platDirs.Count) 已发布端 dry-run 全 exit=0" }
   elseif ($platDirs.Count -lt 4) { no "T17 已发布端仅 $($platDirs.Count)（<4·枚举或包结构异常）" }
-  else { no "T17 平台 dry-run 失败: $($t17fail -join ',')"; Get-Content (Join-Path $SB ("t17_" + ($t17fail[0] -replace '\(exit=.*',''))) -ErrorAction SilentlyContinue | Select-Object -Last 5 | ForEach-Object { Write-Host "    T17LOG: $_" } }
+  else { no "T17 平台 dry-run 失败: $($t17fail -join ',')"; Get-Content -Encoding UTF8 (Join-Path $SB ("t17_" + ($t17fail[0] -replace '\(exit=.*',''))) -ErrorAction SilentlyContinue | Select-Object -Last 5 | ForEach-Object { Write-Host "    T17LOG: $_" } }
 } else { info "T17 跳过: 无 python" }
 
 # ---------- T18: 未知平台必须 fail-loud（exit≠0·防静默装错端）----------
@@ -524,6 +558,93 @@ if ($py) {
   & $py (Join-Path $PKG "install_scripts.py") --platform no-such-platform-zz --dry-run $MC *> (Join-Path $SB "t18.log")
   if ($LASTEXITCODE -ne 0) { ok "T18 未知平台→拒绝 (exit=$LASTEXITCODE)" } else { no "T18 未知平台被静默放行 (exit=0)" }
 } else { info "T18 跳过: 无 python" }
+
+# ---------- T19: systemlog 写时守护 Win 真机腿（2026-10-11 Win对等任务卡 DoD-5）----------
+# 判据：⛔不停在"任务注册+exit 0"——须实证 触发后归一真发生（违例 ## 头被引擎实际清洗）。
+# 链路全程走产品路径：两 .ps1 由 T15 --deploy-skills 落盘（引擎占位符已本地化到沙盒）→
+#   install-task 注册 SystemLogWatch（S4U+IgnoreNew）→ watch 按脚本落点推导监听目录→
+#   心跳现身(=基线轮完成)后再放违例夹具→等归一。卸载腿收尾防污染 runner。
+info "T19: systemlog 看守 Win 真机（注册+触发+归一真发生）..."
+$SL_SCRIPTS = Join-Path $E2E_MC "技能配置\system-logger\scripts"
+$SL_DIR     = Join-Path $E2E_MC "工作日志\系统日志"
+$SL_INSTALL = Join-Path $SL_SCRIPTS "systemlog-install-task.ps1"
+$SL_TASK    = 'SystemLogWatch'
+if (-not (Test-Path $SL_INSTALL)) {
+  no "T19 deploy_skills 未落盘 systemlog Win 守护件（缺 $SL_INSTALL）"
+} elseif (-not $PSH) { info "T19 跳过: 无 pwsh/powershell" } else {
+  # 0) pwsh 自身可用性探针（分层取证：区分"pwsh 起不来"与"脚本没执行"两坑位）
+  & $PSH -NoProfile -Command "exit 7"; $probeRc = $LASTEXITCODE
+  if ($probeRc -ne 7) { no "T19 pwsh 探针异常 rc=$probeRc (期望7) PSH=$PSH" } else {
+  # 1) 注册 + 启动（-Command 形态＝T15 实证可出日志的调用形；⛔-File 形态首轮 rc=0+空日志+任务缺席，待排中文路径/启动坑）
+  & $PSH -NoProfile -ExecutionPolicy Bypass -Command "& '$SL_INSTALL'" *> (Join-Path $SB "t19_install.log")
+  $t19rc = $LASTEXITCODE
+  $task19 = Get-ScheduledTask -TaskName $SL_TASK -ErrorAction SilentlyContinue
+  if ($t19rc -ne 0 -or -not $task19) {
+    no "T19 注册失败 rc=$t19rc task=$(if ($task19) {'在位'} else {'缺席'})"
+    $tl = Get-Content -Encoding UTF8 (Join-Path $SB "t19_install.log") -ErrorAction SilentlyContinue
+    if (-not $tl) { Write-Host "    T19LOG: （t19_install.log 空——子 pwsh 零输出，查 -File/-Command/中文路径层）PSH=$PSH INSTALL=$SL_INSTALL" }
+    else { $tl | Select-Object -First 30 | ForEach-Object { Write-Host "    T19LOG: $_" } }
+  } else {
+    ok "T19 $SL_TASK 已注册（state=$($task19.State)·schtasks 实读）"
+    # 2) 等心跳现身=watch 进程活且基线轮已建（先建基线后放夹具，防夹具被当基线永不触发）
+    $hb = Join-Path $SL_DIR ".watch-ps.heartbeat"
+    $deadline = (Get-Date).AddSeconds(60); $hbSeen = $false
+    while ((Get-Date) -lt $deadline) { Start-Sleep -Seconds 3; if (Test-Path $hb) { $hbSeen = $true; break } }
+    if (-not $hbSeen) { no "T19 心跳60s未现身——watch 进程未起或监听目录推导错（$SL_DIR）" }
+    else {
+      ok "T19 心跳现身（watch 进程活·基线轮完成·路径推导实证）"
+      # 3) 放违例夹具（结构同 Mac 沙盒实证过的形态）
+      $fx = Join-Path $SL_DIR "系统日志_2020-01-02.md"
+      Set-Content -Path $fx -Encoding UTF8 -Value @'
+# 系统日志 2020-01-02
+
+## 概览
+
+- **任务总数**：2 条
+
+## 📝 今日任务随手记（描述式违例头）
+
+### 任务甲
+- **完成**：10:00
+- **工具**：WorkBuddy
+- **类型**：验证
+- **涉及文件**：ci-fixture
+- **对话摘要**：T19夹具条目甲
+- **结论**：夹具
+- **来源**：🟢验证
+- **置信度**：🟢A
+
+### 任务乙
+- **完成**：10:05
+- **工具**：Qoder CN
+- **类型**：验证
+- **涉及文件**：ci-fixture
+- **对话摘要**：T19夹具条目乙
+- **结论**：夹具
+- **来源**：🟢验证
+- **置信度**：🟢A
+'@
+      # 4) 等归一真发生：违例 ## 头消失（interval=15s+防抖2s，窗口60s）
+      $deadline2 = (Get-Date).AddSeconds(60); $normalized = $false
+      while ((Get-Date) -lt $deadline2) {
+        Start-Sleep -Seconds 5
+        $head = Get-Content $fx -Encoding UTF8 -ErrorAction SilentlyContinue
+        if ($head -and @(($head | Where-Object { $_ -match '^## 📝' })).Count -eq 0) { $normalized = $true; break }
+      }
+      if ($normalized) {
+        ok "T19 触发后归一真发生：违例头<90s内被引擎实际清洗（非仅 exit 0）"
+      } else {
+        no "T19 超时60s违例头仍在——守护已注册但归一未实际发生"
+        Get-Content -Encoding UTF8 (Join-Path $SL_DIR ".watch-ps.log") -ErrorAction SilentlyContinue | Select-Object -Last 8 | ForEach-Object { Write-Host "    T19WLOG: $_" }
+      }
+      # 5) 卸载腿（幂等清理，防任务残留污染 runner / 复跑冲突）
+      & $PSH -NoProfile -ExecutionPolicy Bypass -Command "& '$SL_INSTALL' -Uninstall" *> (Join-Path $SB "t19_uninstall.log")
+      if (-not (Get-ScheduledTask -TaskName $SL_TASK -ErrorAction SilentlyContinue)) { ok "T19 -Uninstall 卸载干净" }
+      else { no "T19 卸载失败（$SL_TASK 仍在）——手动清: Unregister-ScheduledTask -TaskName $SL_TASK -Confirm:0" }
+    }
+  }
+  }
+}
 
 # ---------- 收尾 ----------
 $env:USERPROFILE = $oldHome

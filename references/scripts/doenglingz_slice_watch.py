@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 doenglingz_slice_watch.py — 童灵切片新鲜度守望（W2 质变版·事件驱动）
 
@@ -23,6 +19,10 @@ doenglingz_slice_watch.py — 童灵切片新鲜度守望（W2 质变版·事件
 纪律：只读规格书；只写 slices 产物目录与注册端恒驻文件（写前 .bak 一份）；
      异常 exit 0（绝不制造 launchd 噪音）；无变化 stdout 为空 + 不写日志（静默）；有动作才留痕。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import hashlib
 import json
 import os
@@ -38,11 +38,22 @@ TWIN_HOME = os.environ.get("DIGITALTWIN_HOME") or os.path.join(BASE, "数字分�
 STATE_BUS = os.path.join(TWIN_HOME, "state_bus.json")
 SPEC = os.path.join(TWIN_HOME, "童灵·人格规格书.md")
 SLICES_DIR = os.path.join(TWIN_HOME, "K2切片蒸馏/slices")
-GENERATOR = os.path.join(TWIN_HOME, "K2切片蒸馏/k2_slice_generator.py")
+
+# 生成器取件两态自适应（发现18修复·2026-10-18）：作者侧布局 K2切片蒸馏/（软链视图·A3/A4 留链）先命中；
+# 装机态生成器真身在 k2-slice-generator/，K2切片蒸馏/ 只有 slices 数据 ⇒ 旧单路径悬空（rc=2 静默不干活）。
+# 候选序固定：isfile 不中才下一候选；两候选全不中返回空串——调用方必须出声（⛔静默 return·PAT-023 病形零容忍）。
+def _resolve_twin_gen(fname):
+    for d in ("K2切片蒸馏", "k2-slice-generator"):
+        p = os.path.join(TWIN_HOME, d, fname)
+        if os.path.isfile(p):
+            return p
+    return ""
+
+GENERATOR = _resolve_twin_gen("k2_slice_generator.py")
 MANIFEST = os.path.join(SLICES_DIR, "manifest.json")
 # PERSONA-BASE（人格基座·HEXACO）再生链 —— 2026-09-13 段四
 PERSONA_VEC = os.path.join(TWIN_HOME, "童灵·人格向量.json")
-PERSONA_GEN = os.path.join(TWIN_HOME, "K2切片蒸馏/hexaco_slice_generator.py")
+PERSONA_GEN = _resolve_twin_gen("hexaco_slice_generator.py")
 PERSONA_CLEAN = os.path.join(SLICES_DIR, "人格基座切片-童灵-端上纯净.md")
 LOG = os.path.join(TWIN_HOME, "scripts/doenglingz_slice_watch.log")
 
@@ -70,8 +81,11 @@ MARKED_HOMES = [
     os.path.expanduser("~/.workbuddy/USER.md"),
     # 2026-09-09 纳端（LobsterAI 端·皮叔令「核实完就动手」）：童灵节在 workspace-main/USER.md，
     # 标记对已实测写入（core 开始/结束 + L6 开始/结束）。恒驻核随 Project Context 每轮注入。
-    os.path.expanduser("~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/USER.md"),
-    # 2026-10-02 纳端（Zwork 🧠·第 19 端·by Zwork）：恒驻核=~/个人AI档案/AutoClaw/AGENTS.md 童灵节
+    # 2026-10-11 任务1 补漏（WB端01:10收口三写对冲丢失件·本轮实跑仍报USER.md标记结构异常为证）：
+    #   LobsterAI 官方定位分家（2026-10-06）后恒驻核实体在 SOUL.md（标记对已焊入·WB端施工），
+    #   USER.md 只剩导航节无标记对——注册改指 SOUL.md（判据随对象演化），USER.md 由该端自维不入机器管辖。
+    os.path.expanduser("~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/SOUL.md"),
+    # 2026-10-02 纳端（Zwork 🧠·第 19 端·by Zwork）：恒驻核=[记忆共享中心]/AutoClaw/AGENTS.md 童灵节
     # 标记对 2026-10-02 补齐（core 开始/结束 + L6 开始/结束·格式 B 同构 ZCode AGENTS.md）。
     # 端分立：与 ~/.openclaw-autoclaw（AutoClaw 第 14 端）互不共用——本行属 Zwork 端自登。
     os.path.expanduser("[记忆共享中心]/AutoClaw/AGENTS.md"),
@@ -105,6 +119,20 @@ def sync_stamps(text, src_hash):
     for pat in STAMP_TOKENS:
         text = pat.sub(lambda m: m.group(1) + src_hash + m.group(2), text)
     return text
+
+
+def first_drop_home(path, core, l6, src_hash):
+    """首落壳（2026-10-13 恒驻核根治·任务卡-恒驻核首落壳-20261010）：
+    独立文件式 HOMES 端缺失 → 组装式首落（非空壳：frontmatter 最小形+core+L6+stamps）。
+    受益=qodercn/trae 两端装机运行时；MARKED 族缺失属 setup 域，⛔不越权建整文件只显形。"""
+    # 定位注释行确保 deploy_home 的 prefix 提取走 idx>0 正常路径（若无此行，core 首行=body 首行会落 split fallback 造成头部重复）；兼作首落来源标识
+    body = "---\nalwaysApply: true\n---\n<!-- K2 首落壳 · slice_watch first_drop_home 组装 · 非手工空壳 -->\n" + core.strip() + "\n\n" + l6.strip() + "\n"
+    new = sync_stamps(body, src_hash)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(new)
+    log_line("W2 首落壳 | 已组装创建 %s（含身份骨架+L6·非空壳）" % path)
+    return True
 
 
 def deploy_home(path, core, l6, src_hash):
@@ -218,8 +246,11 @@ def record_baselines(spec_hash):
     index = {}
     for eid, v in (sb.get("ends") or {}).items():
         p = v.get("k2_core_path")
-        if p:
-            index.setdefault(os.path.normpath(os.path.expanduser(p)), []).append(eid)
+        # 多文件恒驻核（2026-10-06 LobsterAI 分家态·str/list 双形态）：此前 list 直入
+        # expanduser 抛 TypeError 被顶层异常放行吞掉→该日起基线登记静默中断（2026-10-11 根治）
+        for pp in (p if isinstance(p, list) else [p]):
+            if pp:
+                index.setdefault(os.path.normpath(os.path.expanduser(pp)), []).append(eid)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     touched = unregistered = 0
     for h in HOMES + MARKED_HOMES:
@@ -315,6 +346,9 @@ def persona_freshness():
             return
         if os.path.getmtime(PERSONA_VEC) <= os.path.getmtime(PERSONA_CLEAN):
             return
+        if not PERSONA_GEN:
+            log_line("🔴 PERSONA_GEN 悬空 | 两候选均不存在: %s/{K2切片蒸馏,k2-slice-generator}/hexaco_slice_generator.py —— PERSONA-BASE 无法再生，需人工处置" % TWIN_HOME)
+            return
         log_line("W2-PERSONA 触发 | 向量新于切片 → 重跑 hexaco_slice_generator")
         r = subprocess.run([sys.executable, PERSONA_GEN], capture_output=True, text=True, timeout=60)
         if r.returncode != 0:
@@ -347,16 +381,25 @@ def main():
             return
         changed = False
         for h in HOMES:
-            if os.path.exists(h) and deploy_home(h, core, l6, spec_hash):
+            if os.path.exists(h):
+                if deploy_home(h, core, l6, spec_hash):
+                    changed = True
+            elif first_drop_home(h, core, l6, spec_hash):
                 changed = True
         for h in MARKED_HOMES:
-            if os.path.exists(h) and deploy_marked(h, core, l6, spec_hash):
-                changed = True
+            if os.path.exists(h):
+                if deploy_marked(h, core, l6, spec_hash):
+                    changed = True
+            else:
+                log_line("W2 首落缺口显形 | %s 不存在（标记区族属 setup 领地·不代建·装机步骤应创建）" % h)
         if changed:
             log_line("W2 部署自愈 | spec=%s (切片已新)" % spec_hash)
         record_baselines(spec_hash)
         return
 
+    if not GENERATOR:
+        log_line("🔴 GENERATOR 悬空 | 两候选均不存在: %s/{K2切片蒸馏,k2-slice-generator}/k2_slice_generator.py —— 切片不会更新，需人工处置" % TWIN_HOME)
+        return
     log_line("W2 触发 | spec %s → 重跑生成器" % spec_hash)
     r = subprocess.run(
         [sys.executable, GENERATOR], capture_output=True, text=True, timeout=60
@@ -372,9 +415,13 @@ def main():
     for h in HOMES:
         if os.path.exists(h):
             deploy_home(h, core, l6, spec_hash)
+        else:
+            first_drop_home(h, core, l6, spec_hash)
     for h in MARKED_HOMES:
         if os.path.exists(h):
             deploy_marked(h, core, l6, spec_hash)
+        else:
+            log_line("W2 首落缺口显形 | %s 不存在（标记区族属 setup 领地·不代建）" % h)
     log_line("W2 全链刷新完成 | spec=%s" % spec_hash)
     record_baselines(spec_hash)
 

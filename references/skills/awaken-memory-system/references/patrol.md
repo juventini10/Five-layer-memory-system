@@ -10,7 +10,7 @@
 
 ### 调用方式与预检
 
-运行 `python3 ~/[记忆共享中心]/技能配置/awaken-memory-system/scripts/update_snapshot_from_diary.py`（绝对路径·cwd无关），检查 exit code：
+运行 `python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/update_snapshot_from_diary.py`（绝对路径·cwd无关），检查 exit code：
 - **调用预检**：运行前 `ls` 确认脚本文件存在——脚本不存在时 python 解释器同样 exit 2（与"无需更新"语义碰撞），不可达按 exit 1 降级处理
 
 ### exit 语义
@@ -124,7 +124,7 @@ launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunA
 **脚本**：`scripts/awaken_health_dashboard.py`（标准库 only·⛔只读不写·蒸馏三级逻辑 import 复用 §2 单一真源·⛔不硬编码蒸馏类型）。
 
 **调用方式**：
-- 完整仪表盘：macOS/Linux/Git Bash 用 `env -u PYTHONHOME -u PYTHONPATH python3 ~/[记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_health_dashboard.py`；PowerShell 无 env -u，直接 `python3 <同路径>`（v8.1.2·审查A12：Unix 专属调用形态不留 Windows 死路）（轻量结论块 3.5.3 / 全量 3b 报告·D-3 ②③入口·并入②读取轮批量 Bash·⛔不增轮次·预算声明已登记 v8.0 D-1）
+- 完整仪表盘：macOS/Linux/Git Bash 用 `env -u PYTHONHOME -u PYTHONPATH python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_health_dashboard.py`；PowerShell 无 env -u，直接 `python3 <同路径>`（v8.1.2·审查A12：Unix 专属调用形态不留 Windows 死路）（轻量结论块 3.5.3 / 全量 3b 报告·D-3 ②③入口·并入②读取轮批量 Bash·⛔不增轮次·预算声明已登记 v8.0 D-1）
 - 单行摘要：加 `--summary`（巡检弹窗·D-3 ①入口·awaken_patrol.sh 触达层自动调用·脚本缺失/失败降级=弹窗不含摘要不阻塞）
 - 趋势窗口：`--weeks N`（默认 2 周·≤0 钳为 1）
 

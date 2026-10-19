@@ -2,6 +2,15 @@
 # 平台底座：OpenClaw gateway（AutoClaw.app 分发）·配置根 = ~/.openclaw-autoclaw/
 platform: autoclaw
 config_root: "~/.openclaw-autoclaw"
+# ─── 五系统文件落点声明（条文32 五键·C29 2026-10-15 补显式缺件声明）───
+# 本端（OpenClaw 引擎）五件无独立文件落点：SOUL/IDENTITY/USER/自定义指令 并入端主提示载体、
+# MEMORY 走端原生 memory 通道——null=无独立载体（verify 判 MERGED·装机器 ⛔ 不写配置根成孤儿文件）。
+system_file_paths:
+  SOUL.md: null
+  IDENTITY.md: null
+  USER.md: null
+  MEMORY.md: null
+  自定义指令: null
 # ── 注册面形态声明（2026-10-06 补·工单 v1.90 处方「c端SSOT声明补全」·G3 六端验收实证）──
 # 病根：本端是**插件制端**（无 settings.json hook 面），但本文件缺机器可读的
 #      hooks_registration_face 字段 ⇒ install_scripts.py L772 的 plugin_form 分派判假

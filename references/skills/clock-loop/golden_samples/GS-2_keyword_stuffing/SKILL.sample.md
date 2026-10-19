@@ -12,7 +12,7 @@ allowed-tools: [Read, Write, Bash]
 dependencies:
   - name: triwich
     version: "4.2.0"
-    path: ~/[记忆共享中心]/技能配置/triwich/
+    path: [记忆共享中心]/技能配置/triwich/
     mode: reference
 upstream: self
 modifiable: true

@@ -5,10 +5,6 @@
 锚定 CHANGELOG v8.3.1 五条证据，today 钉死确定性可跑（不依赖真实台账内容）。
 运行：python3 -m unittest test_distill_core -v
 """
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 import datetime
 import importlib.util
 import unittest

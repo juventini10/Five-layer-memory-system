@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # REG: family=哲学读侧雷达 | registry=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/守卫编写规范.md§四 | board=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/03-进度看板.md
 # -*- coding: utf-8 -*-
 """
@@ -25,6 +21,10 @@ philosophy_radar.py v0.1 — 哲学读侧完整性专项 · P0 变更雷达（la
   python3 philosophy_radar.py --window-hours 168 --print   # 自验：放宽窗口 + 人读打印
   PHILO_RADAR_WINDOW_H=168 python3 philosophy_radar.py      # 环境变量亦可
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys
 import os
 import re

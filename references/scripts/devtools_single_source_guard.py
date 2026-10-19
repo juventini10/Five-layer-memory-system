@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # TRUTH_OF: 脚本中心/devtools_single_source_guard.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
-r"""devtools_single_source_guard.py — devtools 单一真相源守卫（Hermes 端 · 2026-10-03 立 · v1.1 2026-10-05 加判据①b/③b/③c · v1.2 加真源缺单元腿 · v1.3 加判据⑤ 跨树软链＋判据⑥ 幽灵波浪号目录 · v1.4（2026-10-06）对照集实盘枚举（F3））
+r"""devtools_single_source_guard.py — devtools 单一真相源守卫（2026-10-17 补判据⑧ 消费侧引用面；Hermes 端 · 2026-10-03 立 · v1.1 2026-10-05 加判据①b/③b/③c · v1.2 加真源缺单元腿 · v1.3 加判据⑤ 跨树软链＋判据⑥ 幽灵波浪号目录 · v1.4（2026-10-06）对照集实盘枚举（F3））
 
 ═══ 病根（2026-10-03 逐层取证·非推测）═══
 `runtime_paths.json` 的 `devtools` 指向 `脚本中心/`，而布洛陀脚本族历史上散落
@@ -22,7 +22,7 @@ r"""devtools_single_source_guard.py — devtools 单一真相源守卫（Hermes 
 ✅ 承认 `脚本中心/` = `runtime_paths.devtools` = **唯一真相源**（已由解析判据确立），
    据此对另一处做**只读化**判定，而不是靠自觉"记得别往那边写"。
 
-═══ 判据清单（全机械可跑·①／①b／②／③／③b／③c／④／⑤）═══
+═══ 判据清单（全机械可跑·①／①b／②／③／③b／③c／④／⑤／⑥／⑦／⑧）═══
 ① **功能完整性**：对两处同名件做**函数集合差集**——
    若「非真相源」独有函数数 > 「真相源」独有函数数 ⇒ 真相源是**降级副本**，
    ⛔ 必须换回（这是 08-03 事故的机械化检测）。
@@ -44,6 +44,16 @@ r"""devtools_single_source_guard.py — devtools 单一真相源守卫（Hermes 
    （实案：`脚本中心/~/.hermes/hermes_wb_parity_ledger.jsonl`·6 行台账从未进真位 225 行的账）。
    `path_landing_truth_guard` 治的是 `$HOME` 直系幽灵，本腿补**脚本目录直系**这一亚型。
 
+⑧ **消费侧引用面（v1.5·%s·国际版断链事故反哺）**：端钩子配置⛔不得按「已知端名单」
+   「已知文件名」「已知顶层键名」枚举——须实盘扫 `~/.<点目录>` 深度≤2 内含 command 串的
+   json（`discover_end_configs`），逐条抽脚本引用分两腿：dead=路径不存在（缺件 exit2 撞 hook
+   阻断协议→用户指令被挡在模型外·2026-10-17 实证）；bridge=档案库内、真源树外的转发链引用
+   （现在能跑·桥一拆即断→**10-19 批E 前置断言 `bridge_ref_count==0`**，默认显形·--strict 判红）。
+   ⛔ 真源树内归拢入口链与端自有 hooks 入口链不入 bridge（虚拟归拢/端装载是设计，实测各踩一次假红）。
+   病根三代实证：派单按端名单漏 `~/.workbuddy-ai`（28 断链）；盘点器按 `settings.json` 名漏
+   ZCode（`cli/config.json`·28 条哑 3 天零报警）；本判据首跑又拓出 `~/.trae-cn/hooks.json`（17 条）。
+   枚举为空 ⇒ 判红不判绿（同 ⑦「系统对『错』有判据，对『漏』没有判据」教训）。
+
 ⑦ **对照集实盘枚举**（v1.4·2026-10-06 F3·三明智 L3 盲审根治）：对照目录⛔不得写死目录名
    —— 须实盘枚举「含 ≥3 个与真源同名实体」的目录（`discover_candidate_dirs`·深度≤2·剪枝备份/派生/缓存树）。
    病根实证：写死 `[脚本中心, 开发工具]` ⇒ `gate_runner.py` 在「脚本中心 vs 数字分身/devtools」分叉
@@ -52,11 +62,13 @@ r"""devtools_single_source_guard.py — devtools 单一真相源守卫（Hermes 
 出口：rc=0 全绿 / rc=1 有缺口（逐条列出 + 修法）
 收口判据（2026-10-05 起）：**六指标同零** = fork／body_drift／shadow_tree／dup_surface／cross_tree／ghost_dir
 用法：python3 devtools_single_source_guard.py [--strict] [--json] [--self-test]
+   （--json 含 end_configs／ref_checked／dead_ref_count／bridge_ref_count 四字段，
+     dead_ref_count 供注入链健康对账，bridge_ref_count 供批E 拆链前置断言取数）
 """
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import ast
@@ -68,7 +80,7 @@ import re
 import sys
 
 HOME = os.path.expanduser("~")
-ARCHIVE = os.path.join(os.path.expanduser("~"), "~/个人AI档案")  # 2026-10-04 修：第二参被脱敏批删空 ⇒ CANDIDATE_DIRS 落到 ~/脚本中心、~/开发工具（幽灵路径）⇒ 本守卫"无对照目录"恒绿空转
+ARCHIVE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]")  # 2026-10-04 修：第二参被脱敏批删空 ⇒ CANDIDATE_DIRS 落到 ~/脚本中心、~/开发工具（幽灵路径）⇒ 本守卫"无对照目录"恒绿空转
 RUNTIME_PATHS = os.path.join(HOME, ".hermes", "doenglingz", "runtime_paths.json")
 CANDIDATE_DIRS = [os.path.join(ARCHIVE, "脚本中心"), os.path.join(ARCHIVE, "开发工具")]
 
@@ -523,8 +535,146 @@ def ghost_tilde_dirs(base: str = ARCHIVE) -> list:
     return out
 
 
+
+# ═══ 判据⑧ 消费侧引用面（v1.5·2026-10-17 WorkBuddy AI 国际版断链事故反哺）═══
+# 病根（三代实证，⛔不是推测）：
+#   · 派单按「已知端名单」扫 → ~/.workbuddy-ai 整端不在名单 → 主线拆 33 条转发链后
+#     该端 28 条引用悬空 → python 缺件 exit 2 撞 hook 阻断协议 → 用户指令被挡在模型外；
+#   · 修复当轮的临时盘点器按 ~/.*/settings.json 扫 → ZCode 的钩子文件叫 cli/config.json，
+#     整端 28 条哑 3 天零报警。**判「文件名」与判「端名」是同一个病**；
+#   · 本判据上线首跑又拓出 ~/.trae-cn/hooks.json（Trae CN 端 17 条断链）——第三形态再现。
+# 立场：真源侧再干净，只要**消费侧引用面**无人盯，拆桥就是定时炸弹。本判据的
+#   bridge 腿即 10-19 批E 拆转发链的前置断言面：`bridge_ref_count == 0`（或 --strict  rc=0）才允许拆。
+_CFG_SKIP_SUBSTR = ("cache", "sessions", "log", "artifact", "trace", "storage",
+                    "workspace", "node_modules", "memorie", "project", "backup",
+                    "history", "tmp", "snapshot", "telemetry", "extension", "sqlitetmp")
+_MAX_CFG_BYTES = 2_000_000
+_MAX_CFG_PARSE_BYTES = 600_000   # 形状试探上限（超大 json 多为缓存/目录清单，非钩子配置）
+_MAX_DIR_ENTRIES = 300           # 目录下子项过多＝缓存/产物树，不下钻（耗时主因，实测剪枝前枚举 15s）
+
+
+def discover_end_configs(home=HOME, maxdepth=3):
+    """实盘枚举端钩子配置：~/.<点目录> 深度≤maxdepth 内**含 command 串**的 .json。
+
+    ⛔ 不写死端名、⛔ 不写死文件名、⛔ 不认顶层键名——实测三种包装并存：
+      `~/.workbuddy/settings.json`、`~/.zcode/cli/config.json`、`~/.trae-cn/hooks.json`，
+      认任何一个名字都会漏掉另外两个（判据⑦ 的病在此换了一层皮）。
+    兜底：枚举为空 ⇒ 返回 None（≠ 空列表）。调用方必须据此判红，
+      ⛔ 不得把「一个配置都没找到」读成「全绿」（同 discover_candidate_dirs 静态基线先例）。
+    """
+    found = []
+    try:
+        tops = [d for d in sorted(os.listdir(home))
+                if d.startswith(".") and os.path.isdir(os.path.join(home, d))
+                and not any(s in d.lower() for s in _CFG_SKIP_SUBSTR)]
+    except OSError:
+        return None
+    for d in tops:
+        base = os.path.join(home, d)
+        try:
+            entries = sorted(os.listdir(base))
+        except OSError:
+            continue
+        queue = [(os.path.join(base, n), 1) for n in entries]
+        while queue:
+            p, depth = queue.pop(0)
+            name = os.path.basename(p)
+            if name.endswith(".json") and os.path.isfile(p):
+                found.append(p)
+            elif depth < maxdepth and os.path.isdir(p) and not _is_skip_dir(name) \
+                    and not any(s in name.lower() for s in _CFG_SKIP_SUBSTR):
+                try:
+                    _kids = sorted(os.listdir(p))
+                    # 剪枝：子项过多的树（缓存/产物）不是配置家，钻进去只烧时间不找得到东西
+                    if len(_kids) <= _MAX_DIR_ENTRIES:
+                        queue += [(os.path.join(p, n2), depth + 1) for n2 in _kids]
+                except OSError:
+                    pass
+    hit = []
+    for p in found:
+        try:
+            if os.path.getsize(p) > min(_MAX_CFG_BYTES, _MAX_CFG_PARSE_BYTES):
+                continue
+            obj = json.load(open(p, encoding="utf-8", errors="ignore"))
+        except Exception:
+            continue
+        # 形状判据：只要递归取得到 command 串就算消费面
+        if any(True for _ in _iter_commands(obj)):
+            hit.append(p)
+    return hit or None
+
+
+def _iter_commands(o):
+    """递归取所有 command 串（兼容 hooks 为 dict/list、以及各端自有嵌套形态）。"""
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == "command" and isinstance(v, str):
+                yield v
+            else:
+                for x in _iter_commands(v):
+                    yield x
+    elif isinstance(o, list):
+        for v in o:
+            for x in _iter_commands(v):
+                yield x
+
+
+def consumer_refs(configs, live=HOME, archive=ARCHIVE, home=HOME):
+    """扫端钩子配置里的脚本引用面，分两类病灶（只读·⛔不改任何配置）。
+
+    dead   = 路径不存在 ⇒ 断链（实测 python 缺件 exit 2 会撞 hook 阻断协议，挡下用户输入）
+    bridge = 路径存在但是**转发桥**：位于档案库内、真源树外、自身是软链且落点在真源树内
+             ⇒ 桥一拆即断（10-19 批E 的拆链面）。判据靠「位置+链+落点」形状，⛔不写死目录名
+             （写死「开发工具」= 把判据⑦ 批判过的病再犯一遍；桥消失后本腿自动退役）。
+    ⛔ 不入 bridge 的三种合法形态（实测各踩一次假红后收窄）：
+      · 真源树**内部**的归拢入口链（如 `脚本中心/route_audit.py`→分类目录）——虚拟归拢的既定设计；
+      · **端自有** hooks 目录里的入口链（如 `~/.hermes/hooks/x.py`→真源）——它不在档案库内，
+        且批E 拆的是档案库桥，拆不到它；
+      · 相对 token 与旧区**真体**（前者各端自有解析，后者属判据③ 双源面）。
+    """
+    dead, bridge, checked, seen = [], [], 0, set()
+    livep = os.path.realpath(live).rstrip("/") + "/"
+    arcp = os.path.realpath(archive).rstrip("/") + "/"
+    # 两侧同做 realpath：⛔ 只 realpath 一边会因 /tmp→/private/var（macOS 实测踩过）
+    #   或家目录软链造成前缀不等 ⇒ 静默漏报，属"判据失能读成全绿"同族
+    for cfg in configs or []:
+        try:
+            obj = json.load(open(cfg, encoding="utf-8", errors="ignore"))
+        except Exception:
+            continue
+        for cmd in _iter_commands(obj):
+            for tok in cmd.split():
+                t = tok.strip("'\u0022")
+                if not t.endswith((".py", ".sh", ".mjs")):
+                    continue
+                if t.startswith("$HOME"):
+                    abs_ = os.path.join(home, t[len("$HOME/"):])
+                elif t.startswith("~"):
+                    abs_ = os.path.expanduser(t)
+                elif t.startswith("/"):
+                    abs_ = t
+                else:
+                    continue  # 相对 token：各端自有解析，判了必假红
+                key = (cfg, abs_)
+                if key in seen:
+                    continue
+                seen.add(key)
+                checked += 1
+                if not os.path.exists(abs_):
+                    dead.append((cfg, abs_))
+                    continue
+                rp = os.path.realpath(abs_)          # 落点（真源树内？）
+                ap = os.path.realpath(os.path.dirname(abs_))   # 链自身所在目录
+                in_live = ap == livep.rstrip("/") or ap.startswith(livep)
+                in_arc = ap == arcp.rstrip("/") or ap.startswith(arcp)
+                if os.path.islink(abs_) and rp.startswith(livep) and not in_live and in_arc:
+                    bridge.append((cfg, abs_))
+    return {"dead": dead, "bridge": bridge, "checked": checked,
+            "configs": len(configs or [])}
+
+
 def self_test() -> int:
-    """判据①b/③b/③c/⑤/⑥ 夹具（v1.1 新增·§3.0·5 纪律①·v1.3 补判据⑤ F16-F21 与判据⑥ F22-F25）。
+    """判据①b/③b/③c/⑤/⑥/⑧ 夹具（v1.1 新增·§3.0·5 纪律①·v1.3 补判据⑤ F16-F21 与判据⑥ F22-F25·v1.5 补判据⑧ F26-F34。
 
     ⛔ 恒真自测不算自测：F1/F7 是变异正例（注入分叉必须被抓），F3 是防假红负例
     （等义改写不得报），两侧缺一半即判据不成立。"""
@@ -747,6 +897,83 @@ def self_test() -> int:
         ck("F25 记忆琥珀内的 ~ 不算活体病灶（防假红）",
            all(not r.startswith(os.path.join("记忆琥珀")) for r, _ in ghost_tilde_dirs(b5)),
            ghost_tilde_dirs(b5))
+
+
+        # ── F26-F34 判据⑧ 消费侧引用面（2026-10-17 国际版/ZCode/TraeCN 三代漏端反哺）──
+        b6 = os.path.join(tmp, "home6")
+        arc = os.path.join(b6, "档案")
+        live_dir = os.path.join(arc, "脚本中心", "守卫")
+        legacy = os.path.join(arc, "开发工具")
+        os.makedirs(live_dir)
+        os.makedirs(legacy)
+        for fp, body in ((os.path.join(legacy, "a_guard.py"), "x = 1\n"),
+                         (os.path.join(live_dir, "b_guard.py"), "y = 2\n")):
+            with open(fp, "w", encoding="utf-8") as fh:
+                fh.write(body)
+
+        def mkcfg(path, cmds):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"hooks": {"Stop": [{"hooks": [{"command": c} for c in cmds]}]}}, fh)
+            return path
+
+        # F26 断链引用 → 检出（红腿）
+        c1 = mkcfg(os.path.join(b6, ".end1", "settings.json"),
+                   ["python3 %s/b_guard.py Stop" % live_dir,
+                    "python3 %s/ghost.py" % live_dir])
+        r8 = consumer_refs([c1], live_dir, arc, home=b6)
+        ck("F26 断链引用→检出", [p for _, p in r8["dead"]] == [os.path.join(live_dir, "ghost.py")], r8)
+        ck("F27 指真源实存→不入任一红腿（绿例）",
+           r8["bridge"] == [] and r8["checked"] == 2, r8)
+        # F28 档案库内、真源树外的转发链 → bridge 必检出（拆链即断=批E 前置断言面）
+        os.symlink(os.path.join(live_dir, "b_guard.py"), os.path.join(legacy, "b_guard.py"))
+        c2 = mkcfg(os.path.join(b6, ".end2", "settings.json"),
+                   ["python3 %s" % os.path.join(legacy, "b_guard.py")])
+        r8b = consumer_refs([c2], live_dir, arc, home=b6)
+        ck("F28 档案库内转发桥引用→bridge 检出",
+           [p for _, p in r8b["bridge"]] == [os.path.join(legacy, "b_guard.py")], r8b)
+        # F29 旧区真体（非链）→ ⑧ 不抢判据③ 双源面
+        c3 = mkcfg(os.path.join(b6, ".end3", "settings.json"),
+                   ["python3 %s" % os.path.join(legacy, "a_guard.py")])
+        r8c = consumer_refs([c3], live_dir, arc, home=b6)
+        ck("F29 旧区真体（非转发链）→不报，归判据③",
+           r8c["dead"] == [] and r8c["bridge"] == [], r8c)
+        # F30 真源树内的归拢入口链 = 既定设计 → ⛔不报（实测假红第一型）
+        os.makedirs(os.path.join(arc, "脚本中心"), exist_ok=True)
+        os.symlink(os.path.join(live_dir, "b_guard.py"), os.path.join(arc, "脚本中心", "entry_link.py"))
+        c4 = mkcfg(os.path.join(b6, ".end4", "settings.json"),
+                   ["python3 %s" % os.path.join(arc, "脚本中心", "entry_link.py")])
+        r8d = consumer_refs([c4], arc + "/脚本中心", arc, home=b6)
+        ck("F30 真源树内归拢入口链→不报（虚拟归拢是设计，不是桥）",
+           r8d["dead"] == [] and r8d["bridge"] == [], r8d)
+        # F31 端自有 hooks 目录入口链（档案库外）→ ⛔不报（实测假红第二型·批E 拆不到它）
+        endhooks = os.path.join(b6, ".end5", "hooks")
+        os.makedirs(endhooks)
+        os.symlink(os.path.join(live_dir, "b_guard.py"), os.path.join(endhooks, "b_guard.py"))
+        c5 = mkcfg(os.path.join(b6, ".end5", "settings.json"),
+                   ["python3 %s" % os.path.join(endhooks, "b_guard.py")])
+        r8e = consumer_refs([c5], live_dir, arc, home=b6)
+        ck("F31 端自有 hooks 入口链→不报（不在档案库内）",
+           r8e["dead"] == [] and r8e["bridge"] == [], r8e)
+        # F32 防假红三形：引号包裹 / 环境变量段 / 相对 token
+        c6 = mkcfg(os.path.join(b6, ".end6", "cli", "config.json"),
+                   ['DOENGLINGZ_CONFIG_DIR=$HOME/.end6 python3 "%s" U'
+                    % os.path.join(live_dir, "b_guard.py"),
+                    "bash run_registry_guards.sh"])
+        r8f = consumer_refs([c6], live_dir, arc, home=b6)
+        ck("F32 引号包裹+env 段+相对 token→不误报",
+           r8f["dead"] == [] and r8f["bridge"] == [] and r8f["checked"] == 1, r8f)
+        # F33 枚举失效必须 None（⛔不得静默绿）
+        empty_home = os.path.join(tmp, "home_empty")
+        os.makedirs(empty_home)
+        ck("F33 无端配置时枚举返回 None（判据失明不得读成全绿）",
+           discover_end_configs(home=empty_home) is None, discover_end_configs(home=empty_home))
+        # F34 不含 command 串的 json 不入消费面
+        with open(os.path.join(b6, ".end1", "misc.json"), "w", encoding="utf-8") as fh:
+            json.dump({"theme": "dark"}, fh)
+        ck("F34 不含 command 串的 json 不入面",
+           all(not x.endswith("misc.json") for x in (discover_end_configs(home=b6) or [])),
+           discover_end_configs(home=b6))
 
     print("自测结果: %d/%d 通过" % (ok, ok + bad))
     return 0 if bad == 0 else 1
@@ -1038,6 +1265,46 @@ def main() -> int:
     out["dup_surface_count"] = len(dup)
     print("  ⚪ 潜在再分叉面 = %d 件（逐字同体·转软链后此数只降不升·样本：%s）"
           % (len(dup), ", ".join(sorted(dup)[:3]) + ("…" if len(dup) > 3 else "")))
+
+
+    # ── 判据⑧ 消费侧引用面（v1.5·端钩子配置实盘枚举·dead 硬红 / bridge 显形·--strict 判红）──
+    print("\n── 判据⑧ 消费侧引用面（⛔不写死端名/文件名/顶层键名·批E 拆链前置断言面）──")
+    cfgs = discover_end_configs()
+    if not cfgs:
+        print("  🔴 端配置枚举为空＝判据失明，不是全绿（须先修枚举·同 ARCHIVE 幽灵路径先例）")
+        gaps.append("判据⑧ 枚举失效（0 个端配置被读到）")
+        out["end_configs"] = 0
+        out["dead_ref_count"] = out["bridge_ref_count"] = -1
+    else:
+        cr = consumer_refs(cfgs, live, ARCHIVE)
+        out["end_configs"] = cr["configs"]
+        out["ref_checked"] = cr["checked"]
+        out["dead_ref_count"] = len(cr["dead"])
+        out["bridge_ref_count"] = len(cr["bridge"])
+        out["dead_refs"] = [{"cfg": c.replace(HOME + "/", "~"), "path": p.replace(HOME + "/", "~")}
+                            for c, p in cr["dead"]]
+        out["bridge_refs"] = [{"cfg": c.replace(HOME + "/", "~"), "path": p.replace(HOME + "/", "~")}
+                              for c, p in cr["bridge"]]
+        for cfg, p in cr["dead"]:
+            print("  🔴 断链引用 %s → %s" % (cfg.replace(HOME + "/", "~"), p.replace(HOME + "/", "~")))
+            gaps.append("断链引用：%s（缺件 exit2 撞 hook 阻断协议会挡下用户输入）"
+                        % p.replace(HOME + "/", "~"))
+        for cfg, p in cr["bridge"]:
+            print("  ⚪ 转发桥引用 %s → %s" % (cfg.replace(HOME + "/", "~"), p.replace(HOME + "/", "~")))
+        if cr["bridge"]:
+            msg = "转发桥活引用 %d 条（现在能跑·桥一拆即断；批E 前置断言 bridge_ref_count==0）" \
+                  % len(cr["bridge"])
+            print("  %s" % msg)
+            if args.strict:
+                gaps.append(msg)
+            else:
+                print("     （默认只显形不判红·--strict 判红——批E 拆链请用 --strict 或读 --json 计数）")
+        if not cr["dead"] and not cr["bridge"]:
+            print("  ✅ 端配置 %d 份·脚本引用 %d 条：断链 0 · 转发桥引用 0"
+                  % (cr["configs"], cr["checked"]))
+        else:
+            print("  读数：端配置 %d 份·引用 %d 条·断链 %d · 转发桥 %d"
+                  % (cr["configs"], cr["checked"], len(cr["dead"]), len(cr["bridge"])))
 
     # ── 判据⑤ 跨树软链（生产树 ⊥ 发布库·2026-10-05 你定边界·硬判据不受 --strict 约束）──
     gaps.extend(cross_tree_block(out))

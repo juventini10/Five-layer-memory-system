@@ -32,7 +32,7 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -59,7 +59,7 @@ def _now() -> str:
 def _pkg_root() -> str:
     """包根 = 本脚本上溯两级（references/scripts → references → 包根）。
 
-    ⛔ 不用 `~/[记忆共享中心]/发布库/...` 硬编码——那是**作者侧路径**，
+    ⛔ 不用 `[记忆共享中心]/发布库/...` 硬编码——那是**作者侧路径**，
     用户把包装在别处时全链恒真（台账 §1.1「校验器自身必须先过它要执行的校验」）。
     """
     return os.path.dirname(os.path.dirname(HERE))

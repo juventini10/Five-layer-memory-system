@@ -126,7 +126,7 @@ if [ -f "$GUARD_LOOP" ]; then
     echo "$(date '+%F %T') 快链已发起 fork（child=$!·setsid 独立会话）" >> "$SPAWNLOG"
     sleep 3   # 启动窗口：让子进程完成 bash 初始化并写下"快链启动"日志
 else
-    echo "$(date '+%F %T') ⚠️ 未找到快链脚本：$GUARD_LOOP（HOME=${HOME:-未设}）" >> "$SPAWNLOG"
+    echo "$(date '+%F %T') ⚠️ 未找到快链脚本：${GUARD_LOOP}（HOME=${HOME:-未设}）" >> "$SPAWNLOG"
 fi
 
 # ---------- 一次性命令闸：停服窗口作业（2026-09-10 新增） ----------

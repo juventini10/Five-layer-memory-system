@@ -16,7 +16,7 @@
 #     ICUBE_PEER_USER_DATA_DIRS=~/.trae   ← .trae 是 peer（本端不读）
 #
 # 纪律：纯 bash（免 PYTHONHOME/PYTHONPATH 污染）· 任何异常静默 · 恒 exit 0（不阻断对话）
-# 留痕：~/个人AI档案/Trae记忆/hooks-probe/host_identity.log（硬证据·可抽检）
+# 留痕：[记忆共享中心]/Trae记忆/hooks-probe/host_identity.log（硬证据·可抽检）
 # 回滚：从 ~/.trae-cn/hooks.json 移除本脚本条目即可（改动仅此一处）
 
 set -u
@@ -27,11 +27,10 @@ app_root="${ICUBE_APP_ROOT:-}"
 brand="${ICUBE_PRODUCT_BRAND_NAME:-}"
 user_data="${ICUBE_USER_DATA_DIR:-}"
 
-# 端判定（多重判据·命中即定；未知端不输出身份声明，只留痕）
+# 端判定（2026-10-09 你令：合并后单端——只有 Trae CN；TRAE SOLO 行退役·旧宿主不匹配=静默不声明）
 end_key="unknown"; end_name=""; end_emoji=""
 case "${app_root}${brand}" in
-  *"TRAE SOLO"*) end_key="traework"; end_name="Trae Work"; end_emoji="🤖" ;;
-  *"Trae CN"*)   end_key="traecode"; end_name="TraeCode";  end_emoji="💡" ;;
+  *"Trae CN"*)   end_key="traecode"; end_name="Trae CN";  end_emoji="💡" ;;
 esac
 
 evt="$(printf '%s' "$payload" | grep -o '"hook_event_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"

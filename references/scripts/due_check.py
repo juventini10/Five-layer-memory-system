@@ -45,7 +45,7 @@ LEDGER = os.path.join(DT, "job_probation_ledger.json")
 DRIFT_STATE = os.path.join(DT, "scripts", "drift_check_state.json")
 LAUNCH_AGENTS = os.path.join(HOME, "Library", "LaunchAgents")
 DASHBOARD = os.path.join(
-    HOME, "~/个人AI档案", "记忆蓝图", "04_系统文件设计", "数字分身设计哲学", "03-进度看板.md"
+    HOME, "[记忆共享中心]", "记忆蓝图", "04_系统文件设计", "数字分身设计哲学", "03-进度看板.md"
 )
 DRIFT_INTERVAL_DAYS = 30
 OVERDUE_LOOKBACK_DAYS = 30  # 逾期项只报近 30 天，避免历史刷屏

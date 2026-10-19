@@ -26,7 +26,11 @@ import sys, os, subprocess
 from datetime import date
 
 HOME = os.path.expanduser("~")
-SYSLOG_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "工作日志", "系统日志")
+# MC 由脚本落点向上推导（scripts→system-logger→技能配置→MC）：⛔"HOME+目录名"字面量形态
+# ——Win 装机态 _fill 会把反斜杠路径填进 .py 源码字符串，\a/\b 等被 Python 转义语义吃掉
+#（真机实证 2026-10-11：OSError WinError 123 'D:\x07'·任务卡 Win对等 T19 逮出）
+_MC = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, os.pardir))
+SYSLOG_DIR = os.path.join(_MC, "工作日志", "系统日志")
 SIZE_LIMIT = 800 * 1024  # 800KB
 # 第五查阈值取"最低合法正文量"而非当前值——瘦身是常态，绑当前值=每次瘦身都要改数字
 SKILL_MIN_LINES = 200

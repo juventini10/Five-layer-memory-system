@@ -32,6 +32,7 @@ def main() -> int:
     env["PYTHONIOENCODING"] = "utf-8"
     os.makedirs(CONFIG_ROOT, exist_ok=True)
 
+    if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     text = sys.stdin.read() if not sys.stdin.isatty() else ""
     text = text.strip() or "【手动触发·无文本输入·仅验证挂载与台账落点】"
 

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """session_title_batch_rename.py — 历史会话标题批量统一为「YYMMDD | 类型 | 主题」。
 
@@ -15,6 +11,10 @@ except Exception: pass
     python3 session_title_batch_rename.py --dry-run   # 只打印映射不写库
     python3 session_title_batch_rename.py --apply     # 落库并写台账
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import sqlite3

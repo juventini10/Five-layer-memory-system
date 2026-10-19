@@ -18,7 +18,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import os
 import re
@@ -95,6 +95,7 @@ def _state_file():
 def get_text_from_stdin():
     """读 stdin JSON，返回 (text, observed_keys)：宽容提取回复文本并记录载荷结构。"""
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read() or "{}"
         d = json.loads(raw)
     except Exception:

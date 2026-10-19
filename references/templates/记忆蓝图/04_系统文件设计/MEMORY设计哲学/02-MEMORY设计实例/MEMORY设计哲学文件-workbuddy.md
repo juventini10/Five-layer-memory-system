@@ -2,7 +2,7 @@
 title: WorkBuddy MEMORY 设计哲学（实例）
 type: explanation
 status: active
-version: v2.3-S
+version: v2.3.1-S
 date: 2026-08-29
 summary: WorkBuddy 平台 MEMORY.md 设计哲学与适配
 source: 记忆蓝图/04_系统文件设计/MEMORY设计哲学/02-MEMORY设计实例/MEMORY设计哲学文件-workbuddy.md
@@ -57,7 +57,7 @@ WorkBuddy `<user_memory>` 块注入存在 **硬上限 4000 字符**，超限**�
 | 超限行为 | 头部优先保留，尾部截断（U 型左端仍安全，但尾部内容失效） |
 | 反例 | 2026-08-10 实测：17508 字符 MEMORY 仅注入前 3990（22.8%），77.2% 内容（含协作偏好全段）不在注入范围 |
 
-**硬约束**：MEMORY.md 必须 ≤4000 字符（建议 ≤3800 留缓冲）；超出内容走指针层（完整规则移 `~/[记忆共享中心]/记忆规则/MEMORY-完整细则归档.md`，MEMORY 留"去哪找"）。
+**硬约束**：MEMORY.md 必须 ≤4000 字符（建议 ≤3800 留缓冲）；超出内容走指针层（完整规则移 `[记忆共享中心]/记忆规则/MEMORY-完整细则归档.md`，MEMORY 留"去哪找"）。
 
 **写入守卫升机械层（2026-08-28 🟢 实测倒逼）**：
 - **原态=纯自觉软约束**：MEMORY.md 开头"🔴 写入守卫"文字提醒编辑时自查字符，但**无脚本硬撑**。实测倒逼——写入 4705 字符后跑 Stop 链守卫，**零 alarm**，证伪"有机械保障"假设。
@@ -103,4 +103,4 @@ IDENTITY.md / USER.md（~/.workbuddy/）← 身份锚点 + 用户档案
 
 > **适配结论**：WorkBuddy 的 `<user_memory>` 独立通道使 MEMORY.md 排第1，是五产品中位置优势最强者。通用战略定位、两层模型、设计原则均完全适用，无平台特有偏离。
 
-> **最后更新**：2026-08-28（v2.3-S · §1.3 升机械层记录 memory-size-guard.sh）
+> **最后更新**：2026-10-17（v2.3.1-S · §1.3 路径随搬家订正：memory-size-guard.sh 实居 脚本中心/守卫/·真身盘上 find 实证）

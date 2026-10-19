@@ -111,11 +111,16 @@ try:
             import os as _o2
             return _o2.path.join(_o2.path.sep, "nonexistent",
                                  "__BULUOTUO_ABSENT__:%s" % key)
-except Exception:            # ⛔ 不静默：解析器不可达时留痕交守卫报
-    rp = None
-
-    def _cand(key, *parts):
-        return None
+except Exception as _rp_exc:   # ⛔ 解析器不可用 = 安装不完整·必须显形（2026-10-09 根治）
+    # 此前 rp=None 会让下游模块级 rp(...) 报 'NoneType' object is not callable
+    # ——完全不指向根因（session-title hook 失效排查的教训）。改为明确抛错。
+    raise RuntimeError(
+        "布洛陀运行路径解析器（runtime_paths）不可用：%s: %s\n"
+        "  ⇒ 运行路径声明（runtime_paths.json）缺失/损坏，或解析器不在探测路径。\n"
+        "     修复：运行安装器重新生成，或确认 doenglingz/runtime_paths.{py,json} 就位。\n"
+        "  ⛔ 不回落 rp=None——否则下游只报 NoneType（不指向根因·排查成本极高）。"
+        % (type(_rp_exc).__name__, _rp_exc)
+    ) from _rp_exc
 # ── /BULUOTUO-PATH-PARAM ──────────────────────────────────────
 
 
@@ -273,14 +278,48 @@ def _reuse_title_for(sid: str) -> Optional[str]:
         return None
 
 
-def _reuse_title() -> Optional[str]:
-    """非首轮：取回**我自己写的那个名**用于夺回（⛔ 不拿本轮 prompt 重起名）。
+def _first_user_text(session_id: str) -> str:
+    """从 state.db 取本会话**首条 user 消息**文本（schema 实测：messages.timestamp 排序）。"""
+    if not session_id or not os.path.isfile(_STATE_DB):
+        return ""
+    try:
+        con = sqlite3.connect(_STATE_DB, timeout=5)
+        rows = con.execute(
+            "SELECT role, content FROM messages WHERE session_id=? "
+            "ORDER BY timestamp ASC, id ASC LIMIT 30",
+            (session_id,),
+        ).fetchall()
+        con.close()
+    except Exception:
+        return ""
+    for role, content in rows:
+        if role != "user":
+            continue
+        if isinstance(content, str) and content.strip():
+            return content
+        if isinstance(content, list):
+            parts = [c.get("text", "") if isinstance(c, dict) else str(c) for c in content]
+            joined = " ".join(p for p in parts if p)
+            if joined.strip():
+                return joined
+    return ""
 
-    ⚠️ 为什么不重算：标题的「类型+主题」应以**首轮意图**为准；中途轮次的
-    prompt（"继续"/"改一下"）会算成 `探索 | 继续` 这类无信息量的名。
-    ⇒ 夺回 = 把**同一个名**重写一遍。
+
+def _reuse_title() -> Optional[str]:
+    """非首轮：优先取回**我自己写的那个名**用于夺回（⛔ 不拿本轮 prompt 重起名）。
+
+    🔴 2026-10-09 根治（非首轮死锁·本轮实盘故障）：**私有日志没有本会话的 named 行时**
+    不再返回 None 永久失命名（该会话自出生起从未被 named ⇒ 每轮都取不到 ⇒ 永远写不进）。
+    ⇒ 回落：从 state.db 取本会话**首条 user 消息**重起名（标题以首轮意图为准，与
+    首轮同源；⛔ 宁漏勿猜不变——取不到首条 user 消息就仍返回 None）。
     """
-    return _reuse_title_for(_CUR_SID)
+    mine = _reuse_title_for(_CUR_SID)
+    if mine:
+        return mine
+    first = _first_user_text(_CUR_SID)
+    if not first or not first.strip():
+        return None
+    return _make_title(first)
 
 
 def _write_title(session_id: str, title: str) -> bool:
@@ -439,7 +478,7 @@ def _post_llm_call(session_id: str = "", **_: Any) -> None:
         return None
     globals()[key] = now
     try:
-        title = _reuse_title_for(session_id)
+        title = _reuse_title_for(session_id) or _fallback_title(session_id)
         if not title:
             return None
         # 仅在被覆盖时才动（幂等：_write_title 内部已判 cur_title==title 跳过）
@@ -447,6 +486,70 @@ def _post_llm_call(session_id: str = "", **_: Any) -> None:
     except Exception as exc:
         _log(f"post reclaim fail {exc!r}")
     return None
+
+
+def _fallback_title(session_id: str) -> Optional[str]:
+    """非首轮夺回的最后兜底：用本会话首条 user 消息重起名（破死锁·见 _reuse_title）。"""
+    first = _first_user_text(session_id)
+    if not first.strip():
+        return None
+    title = _make_title(first)
+    if title:
+        _log(f"fallback-named {session_id} -> {title}")
+    return title
+
+
+def sweep_sessions(dry: bool = True, limit: int = 200) -> dict:
+    """存量收编（C-161「存量全库统一」Hermes 转译）：把未命名/被宿主接管的历史会话
+    一次性按**各自身首条 user 消息**补名。
+
+    ⛔ 只碰 title_source 不是 user 的行（你手动命名永不覆盖·rank 最高 API 层自动拒）。
+    ⛔ 只补「当前 title 为 NULL/空」或「title 与本插件格式不符（yyMMdd | 类型 | 主题）」的会话
+        ——已是我写的规范名 ⇒ 幂等跳过。
+    默认 dry-run 只统计。
+    """
+    import re as _re
+    PAT = _re.compile(r"^\\d{6} \\| .+ \\| .+$")
+    out = {"scanned": 0, "would": 0, "named": 0, "skipped_user": 0, "skipped_subagent": 0}
+    if not os.path.isfile(_STATE_DB):
+        return out
+    try:
+        con = sqlite3.connect(_STATE_DB, timeout=5)
+        rows = con.execute(
+            "SELECT id, title, title_source, parent_session_id FROM sessions "
+            "ORDER BY started_at DESC LIMIT ?", (limit,)).fetchall()
+        con.close()
+    except Exception as exc:
+        _log(f"sweep read fail {exc!r}")
+        return out
+    for sid, title, src, parent in rows:
+        out["scanned"] += 1
+        if src == "user":
+            out["skipped_user"] += 1
+            continue
+        if parent:
+            out["skipped_subagent"] += 1
+            continue
+        if title and PAT.match(title):
+            continue                      # 已是规范名 ⇒ 幂等
+        first = _first_user_text(sid)
+        if not first.strip():
+            continue
+        global _CUR_SID
+        _prev_sid = _CUR_SID
+        _CUR_SID = sid          # ⛔ _make_title 内部按 _CUR_SID 查 started_at·不设会用上个会话的日期
+        try:
+            new = _make_title(first)
+        finally:
+            _CUR_SID = _prev_sid
+        if not new:
+            continue
+        out["would"] += 1
+        if dry:
+            continue
+        if _write_title(sid, new):
+            out["named"] += 1
+    return out
 
 
 def register(ctx) -> None:

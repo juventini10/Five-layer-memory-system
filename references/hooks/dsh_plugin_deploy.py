@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 dsh_plugin_deploy.py v1.0 — five-layer-memory 上游源 → DSH 活体 唯一上线通道（抗更新根治·2026-08-25）
 
@@ -15,6 +11,10 @@ dsh_plugin_deploy.py v1.0 — five-layer-memory 上游源 → DSH 活体 唯一�
 验证口径=行为终态（node 动态 import 实跑：模块加载/段注册/twin 在位/切片文件存在），非文件存在性。
 退出码：0=PASS，1=FAIL，2=前置缺失。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import json
 import shutil
 import subprocess

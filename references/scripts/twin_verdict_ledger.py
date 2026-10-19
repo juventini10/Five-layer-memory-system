@@ -26,7 +26,7 @@
   ⛔ 不得用 confidence_verbalized 单独充当置信度信号。
 
 契约：--check(JSON,含 alarm) / --report(markdown) / --add(json) / --selfcheck
-台账：~/[记忆共享中心]/数字分身/steps/twin-verdict-ledger.jsonl（单行 JSON·O_APPEND 原子）
+台账：[记忆共享中心]/数字分身/steps/twin-verdict-ledger.jsonl（单行 JSON·O_APPEND 原子）
 心跳：/tmp/twin_verdict_ledger.heartbeat（证明"挂了且在跑"·S014 升级条款）
 """
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
@@ -40,7 +40,7 @@ import re
 import hashlib
 from datetime import datetime
 
-LEDGER = os.path.expanduser("~/[记忆共享中心]/数字分身/steps/twin-verdict-ledger.jsonl")
+LEDGER = os.path.expanduser("[记忆共享中心]/数字分身/steps/twin-verdict-ledger.jsonl")
 HEARTBEAT = "/tmp/twin_verdict_ledger.heartbeat"
 HOST = os.environ.get("CARD_GUARD_HOST") or os.environ.get("TWIN_HOST") or "workbuddy"
 

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 script_version_backfill.py — 脚本头部版本标识补标器（存量债一次性清理·分片+dry-run）
@@ -43,6 +39,10 @@ script_version_backfill.py — 脚本头部版本标识补标器（存量债一�
   python3 script_version_backfill.py apply --limit 20 --offset 0
   python3 script_version_backfill.py --self-test
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import importlib.util
 import os

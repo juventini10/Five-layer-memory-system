@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """rules_managed_block_guard.py —— 托管块重复守卫（2026-10-04·`8b1de0f2` 副本病根治）
 
 ## 病根（git 溯源·实测）
@@ -35,6 +31,10 @@ except Exception: pass
     python3 rules_managed_block_guard.py [--self-test] [目录...]
 退出码：0 = 全绿；1 = 有红项（逐条打印）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import re
 import sys

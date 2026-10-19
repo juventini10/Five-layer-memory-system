@@ -2,6 +2,17 @@
 
 > 本文件记录当前版本之外的历史变更。当前版本信息在 SKILL.md 头部。
 
+### v4.5.4 — 2026-10-18 10:15（署名Skill Loop顺位2·版本号格式归一：v前缀废除）
+
+皮叔 2026-10-18 裁决「三明治的版本号肯定要处理」：frontmatter `version: "v4.5.3"` → `4.5.4`（去 v 前缀·《版本命名规范》§1 纯数字串口径）。归一属格式级修正，随本轮完整Loop评估升 patch（4.5.3→4.5.4·非纯镜像同步故不走 Case A 保号）。下游同步位（clock-loop dependencies + triwich-integration 固化件 Case A 链）由本批一并级联，防"主体动了、条线没跟"复刻（LRN锚=同日 clock-loop 4.18.5 轮 L3沉淀模式1）。回滚点=记忆琥珀/技能升级备份/triwich__*_preLoopTW2_261018_1020.bak ×4（⚠️诚实追记·双层根因·2026-10-18 收口复审订正）①本批 tests 两文件根本未列入改前备份清单=铁律#11 执行缺口（Agent B N8 判准）；②清单内 triwich SKILL.md/CHANGELOG.md 因扁平 basename 命名与 clock-loop 同名件互相覆盖。二者叠加致 triwich 改前态一度零备份。经 Agent B N1/N2 证伪后，由 git HEAD(fac65e558·10-17 auto-backup)导出补录×4（消歧名重建·HEAD 态 version:"v4.5.3" 已核验=改前态·逐字节对齐 git blob）。根因防治提案（N6 铁律#11 模板加前缀/N7 backup_gate 判据改造）已挂串行队列任务卡·收口批待你裁。另：本条"皮叔 2026-10-18 裁决「三明治的版本号肯定要处理」"之引述经复审独立验真，机器留痕指针=脚本中心/logs/prompts_hook.jsonl:2630（ts 2026-10-18T06:00:53·end=qodercn），旁证同流 :2642（10:12:17「收口再提，顺位2继续」授权行）。
+
+### v4.5.3 — 2026-10-17（WorkBuddy 端·锁获取 EEXIST 双形态归一·Z级脚本修复·皮叔令「阻塞性缺陷按符合愿景的最优解根治」）
+
+- **根因**：沙箱代理层（WorkBuddy `sitecustomize._brokered_os_mkdir`）把 host 侧 mkdir 的 EEXIST 重抛成 `PermissionError`，`triwich_seal.py::_acquire_path_lock` 的 `except FileExistsError` 抓不到 ⇒ 异常穿透整链 + 已持锁无人释放。2026-10-17 09:35-09:52 实证：`seal.log.lock` / `decision-room.md.lock` 双残留，`record` 从第二次起必死，手工清锁 3 轮才完成一次 FU 登记。
+- **修法**：`_acquire_path_lock` 改捕 `OSError` 后按 `FileExistsError` / `errno==17` / `"EEXIST"` 字面判存在性，非"已存在"类错误照常 `raise`（不吞真故障）；`_release_path_lock` 失败改 stderr 告警（原 `except OSError: pass` 静默吞 = 锁残留不可见）。
+- **验证**：五场景单测 5/5（含代理层 PermissionError 归一、真故障不吞、陈旧锁夺取）+ 既有回归 33/33（seal_adversarial 4 / decision_room 18 / mechanism_anchor 11）+ record 端到端零锁残留。
+- **版本判定**：4.5.2→4.5.3（Z级·脚本实现修复，SKILL.md 正文契约零改动）。
+
 ### v4.5.2 — 2026-10-07（L151输出契约双轨终结·Z级措辞层·皮叔令"按符合愿景的最优解处理"P12/L151挂账）
 
 - **根因**：四层契约"输出契约"行仍写"签名（路径声明+结论摘要+日期）"，与全文11处签名模板（结论块浓缩版口径）+v4.5.0简报块改造三线不一致；C-12自曝只声明了"版本号位"分歧，主体旧表述一直没改（R2盲审P7挂起项，皮叔2026-10-07授权清零）。
@@ -22,7 +33,7 @@
   ⑤ 简报块正文副本指针化（l1×3/full-flow 预执行块/dual-routes 路线声明+深度声明两行/eval #54 固定句副本→指针）：v4.5.0 的「逐字一致」被全角副本自伤=唯一源禁令自违反（F1/F2·🔴）；full-flow Step0 表标签 `路径声明`→`路线声明`（与 run.sh 键文件判据同源）。
   ⑥ SKILL.md §Step0 熔断器判据随键文件 7 字段同步（旧文"四行齐全"=模板/校验两处改了、熔断器与 eval #22 漏改的半提交·F3；R2复审后 eval #22 同批追正·N6）。
   ⑦ 行号锚→节标题锚：SKILL.md L55/L595 `full-flow.md L345`、full-flow.md `§路径基准 L217`（实测 L342/L238；同锚 6 天内二次漂移记录在案；G7 铁律自伤 F5·🔴）。
-  ⑧ reviewer-protocol 盲审 8 要素标度补 �� 悬置档（与 8element.md 四档同源；盲审者不得把"证据不足"强塞三档·F4）。
+  ⑧ reviewer-protocol 盲审 8 要素标度补 🔵 悬置档（与 8element.md 四档同源；盲审者不得把"证据不足"强塞三档·F4）。
   ⑨ run.sh 判绿真捕获退出码（旧 `$(...|tail -3)` 的 `$?` 是 tail 的=假捕获）+ tests/ 不可达时 SKIP 剥夺指纹台账刷新资格（SKIP≠通过·F11）。
   ⑩ 计数/戳头追正族（P10/P11）：tests/trigger-*.md 头戳 v4.4.20→v4.5.1（CHANGELOG v4.4.21 宣称"戳同步至4.4.21"与实盘双向不符）；shallow-execution-injection 41→54；mechanism_anchor docstring 六例→十一例；signature.md 死模板 `{层级}思维层` 对齐实际格式串。
   ⑪ .gitignore 补 `.seal_fingerprint.pending`/`.briefing_baseline*`（git status `??` 实证残留）。
@@ -601,7 +612,7 @@
 - **语义同步**：结论位置锁（结论块=回复最后一项）保留并内化——不止结论块在底，块内结果也贴底；定位注释"小白只看这个·结果突出"→"结果在交付终点·紧贴签名"。
 - **eval-set #41**：断言更新为新三层顺序。
 - **版本判定**：v4.2.0→v4.2.1（Z级补丁·纯呈现层顺序调整·判定机制零改动）。
-- **备份**：`~/[记忆共享中心]/记忆琥珀/2026-09-06/triwich结论块重构备份/triwich_full_backup_20260906_085944.tgz`。
+- **备份**：`[记忆共享中心]/记忆琥珀/2026-09-06/triwich结论块重构备份/triwich_full_backup_20260906_085944.tgz`。
 
 ### v1.1.1 — 2026-09-05
 
@@ -611,7 +622,7 @@
 - **跨工具实跑**：fixture(伪造含三明智签名chat-history)+`TRIWICH_HIST_DIR`/`TRIWICH_SEAL_LOG`环境变量本机实跑——**证明无需 AutoClaw 专属环境**（分析书原标"🔵 悬置·依赖AutoClaw"已过时并已改✅）。
 - **接入登记**：① SKILL.md 防跳步机制新增「封口哈希链锁(triwich_seal v1.1.1·结论块+签名后record→seal.log哈希链·篡改/删尾必拦)」；② run.sh v1.4 追加 seal 封口锁自检（fixtures/seal_signed.json → record/verify 链通+篡改拦截三检）。
 - **固化**：新增 `tests/test_triwich_seal_adversarial.py`（4场景确定性断言·不依赖mtime竞态）→ 4/4 通过。
-- **备份**：`~/[记忆共享中心]/记忆琥珀/triwich_seal_v1.1.0_对抗3漏洞前.bak.py`。
+- **备份**：`[记忆共享中心]/记忆琥珀/triwich_seal_v1.1.0_对抗3漏洞前.bak.py`。
 
 ### v4.2.0 — 2026-09-04
 
@@ -818,7 +829,7 @@ Step0 定位键唯一化（工作区级单文件 → 会话级 `{ts}` 键）—�
 
 ### v3.13.0 — 2026-08-11
 
-+ **来源**：你主导呈现层优化讨论（结论置底/表格化/术语保真·描述可懂/状态符号/两轴分离）→ 你批准"呈现优化直接长在原版，废除独立呈现层模板"（第一性原理：中间层制造同步负担，单一真相源=原版即呈现）。永久备份见 `~/[记忆共享中心]/记忆琥珀/永久收藏/2026-08-11_*_呈现层改造前备份.md`。
++ **来源**：你主导呈现层优化讨论（结论置底/表格化/术语保真·描述可懂/状态符号/两轴分离）→ 你批准"呈现优化直接长在原版，废除独立呈现层模板"（第一性原理：中间层制造同步负担，单一真相源=原版即呈现）。永久备份见 `[记忆共享中心]/记忆琥珀/永久收藏/2026-08-11_*_呈现层改造前备份.md`。
 
 **呈现层内嵌改造（机制零改动·呈现翻译变）**：
 
@@ -999,7 +1010,7 @@ L3 收口主agent为纯orchestrator（根治「主agent链外自由写反序」�
   | 主agent侧防反贴 | 角色缺失法（删步骤叙述权限接口） | 仅加更多行为禁令 | 禁令仍可绕（不带编号的反序自由文本），08:40已证可违反 |
   | | | 改名「第一性原理」→「第二性原理」 | 破坏白皮书术语一致性，治标 |
   | | | 让主agent自由文本也接触法锁 | 物理不可能（LLM本质） |
-- **eval 核验**：eval-set #1-17 全 PASS 无回归（触发词/运行时机制未动）；#18 专验主agent角色锁拦截。备份：SKILL.md + full-flow.md + eval-set.md 改动前快照存 `~/[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）。
+- **eval 核验**：eval-set #1-17 全 PASS 无回归（触发词/运行时机制未动）；#18 专验主agent角色锁拦截。备份：SKILL.md + full-flow.md + eval-set.md 改动前快照存 `[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）。
 - **合规核验**：对照 Skill架构规范 v5.9 + 指令编写规范 v4.1 全通过；版本单一来源 = YAML v3.8.4 = CHANGELOG 最新条目一致（自检清单#1）。
 - **边界**：主agent 在 L3 之外的口头对话仍可能说错（LLM本质，不可锁，超出 Skill 呈现层，可接受）。⚠️ 已知未知：WorkBuddy 加载/压缩机制是否真让主agent 只发≤2行并遵守角色，需实跑验证。
 - **版本**：triwich v3.8.3→v3.8.4
@@ -1022,7 +1033,7 @@ L3呈现骨架锁 + 禁止行为#7（根治「Step1/Step2段头反贴」设计�
   | 防顺序写反 | 设计端骨架锁（接触法）+ 检查端禁令#7 双保险 | 仅加「自检锁」让主agent执行后自查顺序 | 自检锁属事后纠错，主agent仍可先写反再"自查"，错误已产生；接触法让写反在物理上不可能 |
   | | | 仅收口权（要求必须引用白皮书段落） | 引用≠不写反，段头仍可自造；无硬绑定 |
   | | | 改名「第一性原理」→「第二性原理」消除命名陷阱 | 破坏白皮书术语一致性，牵一发动全身，成本高于锁 |
-- **eval 核验**：eval-set 16条全 PASS 无回归（触发词/运行时机制未动）；新增 #17 用例专验骨架锁拦截反贴。备份：SKILL.md + full-flow.md + eval-set.md 改动前快照存 `~/[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）。
+- **eval 核验**：eval-set 16条全 PASS 无回归（触发词/运行时机制未动）；新增 #17 用例专验骨架锁拦截反贴。备份：SKILL.md + full-flow.md + eval-set.md 改动前快照存 `[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）。
 - **合规核验**：对照 Skill架构规范 v5.9（原则1-4/反模式D1-D5/§6.4）+ 指令编写规范 v4.1（五级标注/因果链/Alternatives/§6.6 备份）全通过；版本单一来源 = YAML v3.8.3 = CHANGELOG 最新条目一致（自检清单#1）。
 - **版本**：triwich v3.8.2→v3.8.3
 
@@ -1036,7 +1047,7 @@ L3对话内联呈现硬约束（根治呈现弱于L1/L2）
 ### v3.8.1 补 —— 历史债务修复（索引表不一致 + eval-set执行）
 - 修复索引表（SKILL.md §references/目录索引）：`shared/8-elements.md`→`shared/8element.md`（拼写对齐实际文件）；删除不存在的 `shared/gate-checks.md`（门禁锁/熔断器规则已内联于§防跳步机制）；补列 `shared/anchor.md` 与 `reviewer-protocol.md`（实际存在但漏列）；自检清单#4 同步改 `8-elements`→`8element`
 - 执行 eval-set 16条用例：1-10 按触发词表+语境限定表静态执行全 PASS；11-16 按§防跳步机制/状态表/禁止行为/reviewer-protocol 机制追溯全 PASS；其中 L1/L3 运行时路径以实跑验证（见执行报告）
-- 备份：full-flow.md 改动前快照已存 `~/[记忆共享中心]/记忆琥珀/技能升级备份/triwich_full-flow_v3.8.1_20260708.bak`（合规§6.6）
+- 备份：full-flow.md 改动前快照已存 `[记忆共享中心]/记忆琥珀/技能升级备份/triwich_full-flow_v3.8.1_20260708.bak`（合规§6.6）
 
 ### v3.8.2 — 2026-07-08
 L3-Agent B 对抗性验证补丁（根治 v3.7.0 改造漏落地）
@@ -1044,7 +1055,7 @@ L3-Agent B 对抗性验证补丁（根治 v3.7.0 改造漏落地）
 - full-flow.md Agent B Step3 段点名"含⚔️对抗性验证（委派 critical-verify Step3）"，并阶段2列表补对抗行，焊死白皮书意图与执行文件一致性
 - 更正：上轮"reviewer-protocol 8要素与主8要素错配"为误判——实读 shared/8element.md 确认其8要素与 L1/L2 共用模板完全一致，无错配，故该步不执行（撤销）
 - 三层一致性：L1 原生 / L2 委派 / L3-Agent B 委派，均指向 critical-verify.md Step3 单一来源，杜绝再漂移
-- 备份：reviewer-protocol.md + full-flow.md 改动前快照存 `~/[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）
+- 备份：reviewer-protocol.md + full-flow.md 改动前快照存 `[记忆共享中心]/记忆琥珀/技能升级备份/`（合规§6.6）
 - 依据：指令编写规范（五级标注+因果链+正面建模+单一来源）+ Skill架构规范（Alternatives/防漂移）
 - 版本：triwich v3.8.1→v3.8.2
 - 合规核验：full-flow.md「🔴对话内联呈现」段对照指令编写规范 v4.1（五级标注/因果链/正面建模/Alternatives）+ Skill架构规范 v5.9（原则1-4/反模式D1-D5/Alternatives段）全通过

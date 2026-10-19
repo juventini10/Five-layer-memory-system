@@ -29,7 +29,7 @@ plugins:
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -85,7 +85,32 @@ def find_enabled_lines(lines):
 
 def mount(cfg_path: str, names, dry=False):
     if not os.path.isfile(cfg_path):
-        raise SystemExit("❌ 配置不存在：%s" % cfg_path)
+        # 🔴 2026-10-11 沙箱实测逮到（新用户必中·非沙箱特有）：
+        #    原实现 `raise SystemExit` 直接失败 ⇒ 全新机器上 Hermes 尚未生成自己的
+        #    `config.yaml`（那是宿主首次启动时才建的）⇒ 安装器跑到 [6/8] 挂载步必炸
+        #    ⇒ 插件全落盘但一个都没进 `plugins.enabled` ⇒ 「装好了但完全不生效」。
+        #    ⇒ 冷启动建**最小骨架**（只含 plugins.enabled 空块）再走正常挂载流程，
+        #      ⛔ 不覆盖已存在的配置（本分支只在文件不存在时进）。
+        os.makedirs(os.path.dirname(cfg_path) or ".", exist_ok=True)
+        if dry:
+            print("  [dry] 将新建最小配置骨架：%s" % cfg_path)
+            src = "plugins:\n  enabled: []\n"
+        else:
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                f.write("plugins:\n  enabled: []\n")
+            print("  ℹ️ 端配置不存在，已建最小骨架（仅 plugins.enabled 空块）：%s" % cfg_path)
+            src = open(cfg_path, encoding="utf-8").read()
+        lines = src.split("\n")
+        idx, items, indent = find_enabled_lines(lines)
+        if idx is None:
+            print("❌ 新建骨架后仍未找到 plugins.enabled（结构异常·请人工检查）")
+            return 2
+        have = {n for _i, n in items}
+        missing = [n for n in names if n not in have]
+        if not missing:
+            print("✅ 无需挂载（全部已在 enabled）")
+            return 0
+        return _write_enabled(cfg_path, lines, idx, items, indent, missing, dry)
     src = open(cfg_path, encoding="utf-8").read()
     lines = src.split("\n")
     idx, items, indent = find_enabled_lines(lines)
@@ -94,8 +119,18 @@ def mount(cfg_path: str, names, dry=False):
         return 2
     have = {n for _i, n in items}
     missing = [n for n in names if n not in have]
+    if not missing:
+        print("✅ 无需挂载（全部已在 enabled）")
+        return 0
+    return _write_enabled(cfg_path, lines, idx, items, indent, missing, dry)
+
+
+def _write_enabled(cfg_path, lines, idx, items, indent, missing, dry, have=None, names=None):
+    """把 missing 写进 plugins.enabled（抽出自 mount·冷启动与常规两条路径共用）。"""
     print("当前已启用 %d 个 · 本包 %d 个 · 缺 %d 个"
-          % (len(have), len(names), len(missing)))
+          % (len(have) if have is not None else len(items),
+             len(names) if names is not None else len(items) + len(missing),
+             len(missing)))
     if not missing:
         print("✅ 全部已挂载（幂等·未改任何字节）")
         return 0

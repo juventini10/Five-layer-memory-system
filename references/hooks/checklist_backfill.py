@@ -24,9 +24,9 @@ import re
 import sys
 from datetime import date
 
-POOL = os.path.expanduser("[记忆共享中心]/AI学习库")
+POOL = os.path.expanduser("~/[日记仓库]/2-知识库/09-AI学习库")  # 2026-10-13 C''波次2迁移后路径同步
 CONCEPT = os.path.expanduser("~/[日记仓库]/2-知识库")
-STATS = os.path.expanduser("~/[记忆共享中心]/数字分身/scripts/verify_checklist_gate.py")
+STATS = os.path.expanduser("[记忆共享中心]/脚本中心/verify_checklist_gate.py")
 MANDATE = "2026-08-24"
 TODAY = date.today().isoformat()
 

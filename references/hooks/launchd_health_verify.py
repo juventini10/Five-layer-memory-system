@@ -30,8 +30,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 LAUNCHD_LABEL = "com.buluotuo.launchd-health-daily"
-SYSTEM_LOG_DIR = str("[记忆共享中心]/工作日志/系统日志")
-STATE_FILE = Path.home() / "~/[记忆共享中心]/数字分身/launchd_health_verify_state.json"
+SYSTEM_LOG_DIR = str(Path.home() / "[记忆共享中心]/工作日志/系统日志")
+STATE_FILE = Path.home() / "[记忆共享中心]/数字分身/launchd_health_verify_state.json"
 SOLIDIFY_DAYS = 7
 EXPECTED_RUNS_PER_DAY = 2
 

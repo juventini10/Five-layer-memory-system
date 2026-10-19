@@ -12,6 +12,7 @@ import ast
 import os
 import re
 import sys
+import json
 from pathlib import Path
 
 # Windows 控制台 UTF-8 守卫：cp1252 代码页下 print emoji/中文 会 UnicodeEncodeError
@@ -71,9 +72,13 @@ def check_encoding_and_lineendings(pkg: Path) -> list:
 
         rel = str(f.relative_to(pkg))
 
-        # BOM 检测（.sh/.py 不应有 BOM；.ps1 带 BOM 是 PowerShell 推荐做法，跳过）
+        # BOM 检测（.sh/.py 不应有 BOM；.ps1 带 BOM 是 PowerShell 推荐做法）
+        #   多 BOM 检测（2026-10-18 Loop轮·Agent B⑪根治）：win-verify.ps1 头部双 BOM 实证
+        #   ——PS 容忍但 py/工具链敏感，且"有 BOM"判据对 ≥2 连 BOM 失明=盲区，此处收口。
         if raw.startswith(b"\xef\xbb\xbf") and suffix != ".ps1":
             issues.append(f"UTF-8 BOM 残留: {rel}")
+        if raw.startswith(b"\xef\xbb\xbf\xef\xbb\xbf"):
+            issues.append(f"多重 BOM（≥2 连）: {rel}")
 
         # .sh 文件不应有 \r\n（Mac/Linux 上会报错）
         if suffix == ".sh" and b"\r\n" in raw:
@@ -587,8 +592,198 @@ def check_script_center_reachability(pkg: Path) -> list:
     return issues
 
 
+
+DATA = Path(__file__).resolve().parent / "platform_compat_data"  # L3 棘轮基线唯一写点（人工 CLI 调用）
+
+
+def check_script_pairing_derived(pkg: Path) -> list:
+    """跨平台脚本配对·派生式（L1·2026-10-10 刚叔端上补充单 + 皮叔令「Win/mac 都要能用」）。
+
+    病根：旧 `check_paired_scripts` 的判据是一份**手写 PAIRS 清单**（只列 rollback 等几对），
+    清单外的 .sh 结构性失明——实测包内 135 件 .sh / 15 件 .ps1，严格无对应 50+ 件而检查报绿。
+    手写清单型判据的失效方式是静默的（同 manifest_coverage_check 的整目录前缀豁免假绿，同族第二例）。
+
+    新判据（扫描派生·不依赖人记得登记）：每个 .sh 必须有同名或连字符变体（a_b.sh ↔ a-b.ps1）
+    的 .ps1；否则须在 `references/platform-exemptions.json` 登记，且 reason 与 basis
+    （机械依据，如件内实测引用 launchd/plist/osascript/fswatch）两字段非空——
+    ⛔空壳豁免（只有文件名没理由）＝把假绿从清单搬进豁免册，同罪；⛔整目录前缀豁免。
+    """
+    ex_path = pkg / "references" / "platform-exemptions.json"
+    if not ex_path.exists():
+        return ["豁免册缺失：%s（先跑 --gen-exemptions 生成候选，再逐条填 scope/reason/basis）"
+                % ex_path.name]
+    try:
+        data = json.loads(ex_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return ["豁免册解析失败（不静默吞）：%s" % e]
+    ex = {r.get("file"): r for r in data.get("exemptions", []) if r.get("file")}
+    ps_stems = {p.stem for p in pkg.rglob("*.ps1") if "__pycache__" not in str(p)}
+    # 批次9 §4-3 判据演化（63 条 TEST 实证·2026-10-11）：原 blob 含"件自身同名副本"
+    # 与"注释提及"，导致任何非 mac_only 豁免必被 cross-check 假红（件名天然印在件内用法行）
+    # ⇒ 结构性悖论：真缺口判据把"不适用"逼成"必须补.ps1"。演化后 cross-check 只看
+    # **执行形引用**（bash/sh/路径调用），且排除同名副本自串；新增合法 scope：
+    #   posix_shell_carried = POSIX shell 由 Windows 承载链执行（Git Bash/钩子承载，basis 须点名承载者）
+
+    # 观察窗=运行路径引用面（2026-10-11 批次6 精化·C-205「先查仪器」）：
+    # 只有「可执行/配置面」（.py/.sh/.ps1/.yaml/.yml/.json）里的引用才代表某端会执行它；
+    # .md 文档提及不算——INSTALL/steps 里的 bash 行在 Windows 侧由 pwsh 等价段承担，
+    # 把文档提及当运行路径会把尺子撑宽成"人人都像缺口"（实测 71→63，8 件仅文档面）。
+    corpus = []          # (件, 文本) 对·执行形引用逐个排自串
+    for pat in ("*.py", "*.sh", "*.ps1", "*.yaml", "*.yml", "*.json"):
+        for f in pkg.rglob(pat):
+            if "__pycache__" in str(f) or f.name == "platform-exemptions.json":
+                continue
+            try:
+                corpus.append((f, f.read_text(encoding="utf-8", errors="ignore")))
+            except Exception:
+                pass
+    blob_all = "\n".join(t_ for _, t_ in corpus)
+    issues = []
+    for p in sorted(pkg.rglob("*.sh")):
+        if "__pycache__" in str(p):
+            continue
+        rel = str(p.relative_to(pkg))
+        if p.stem in ps_stems or p.stem.replace("_", "-") in ps_stems:
+            continue
+        rec = ex.get(rel.replace(os.sep, "/"))  # 批次9纠偏P1: Win下rel是反斜杠, 豁免册键恒正斜杠→归一才能命中(Mac os.sep=/无副作用·回归安全)
+        # 执行形引用（排除同名副本自串·判据见上批次9注）
+        import re as _re9
+        _exec_rx = _re9.compile(r"(bash\s+\S*/" + _re9.escape(p.name) + r"|sh\s+\S*/" + _re9.escape(p.name)
+                                + r"|(?<![.\w/-])\./" + _re9.escape(p.name) + r")")
+        exec_refs = [f for f, tt in corpus if f.name != p.name and _exec_rx.search(tt)]
+        onpath_strict = len(exec_refs) > 0
+        onpath_loose = p.name in blob_all
+        if not rec:
+            issues.append("无 .ps1 对应且未登记豁免：%s%s" % (rel, "（在可执行引用面上=真缺口）" if onpath_loose else "（仅文档提及）"))
+        elif not (rec.get("reason") or "").strip() or not (rec.get("basis") or "").strip():
+            issues.append("豁免登记为空壳（reason/basis 缺一）：%s" % rel)
+        elif rec.get("scope") not in ("mac_only", "win_only", "not_on_windows_path", "posix_shell_carried"):
+            issues.append("豁免 scope 非法（%s）：%s" % (rec.get("scope"), rel))
+        elif rec.get("scope") == "not_on_windows_path" and onpath_strict:
+            issues.append("豁免声明 not_on_windows_path 但可执行面仍有执行形引用：%s" % rel)
+        elif rec.get("scope") == "posix_shell_carried" and not onpath_strict:
+            issues.append("豁免声明 posix_shell_carried 但找不到承载调用（bash/sh/./形），依据存疑：%s" % rel)
+    return issues
+
+
+def check_stdin_encoding(pkg: Path) -> list:
+    """stdin 编码对等（L2·刚叔补充单 #1）。
+
+    病根：Windows 宿主按 UTF-8 传 prompt JSON，件里只 reconfigure 了 stdout/stderr，
+    `sys.stdin.read()` 走系统 ANSI（GBK）→ 中文标题乱码并写脏会话库。既有编码检查只看
+    文件字节（UTF-8 无 BOM/CRLF），看不见**运行时解码面**——判据观察窗与缺陷居住面错配（条文59）。
+    判据：凡读 stdin 的件必须有 stdin 侧 UTF-8 处理（reconfigure 或 buffer），缺即 FAIL。
+    """
+    issues = []
+    for p in sorted(pkg.rglob("*.py")):
+        if "__pycache__" in str(p):
+            continue
+        try:
+            t = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if ("sys.stdin.read(" not in t) and ("sys.stdin.readline(" not in t):
+            continue
+        if ("sys.stdin.reconfigure" in t) or ("sys.stdin.buffer" in t):
+            continue
+        issues.append("（Win 侧走 GBK 必乱码）：%s" % p.relative_to(pkg))
+    return issues
+
+
+def check_placeholder_shape_hygiene(pkg: Path) -> list:
+    """占位符路径形态卫生（L3·刚叔补充单 #3＝A2 的真根因）。
+
+    双形态两强度（⛔一刀切会把存量变新阻塞）：
+    ①双拼畸形（`~/` + 盘符，如 ~/C:/Users/...）→ 零容忍 FAIL：expanduser 对已含盘符路径
+      原样拼接的必然产物，出现即坏。
+    ②模板 `[记忆共享中心]` 前缀行 → 棘轮 baseline：登记基线数，新增即红，⛔要求一次清零。
+      baseline 下调只能人工跑 CLI（检查器自身不写，防"自己给自己发绿"）。
+
+    判据绑定结构位置（2026-10-10 自纠）：首版全文扫把**注释里的病历描述**
+    （`# 变 ~/C:/Users/... ⇒ expanduser 静默失效`）当成畸形，5 处全是假红＝门禁词自伤
+    （条文18⑥ 同族）。故只在代码行的字符串字面量上判，跳过注释行与含反引号的示例。
+    """
+    issues = []
+    dbl = re.compile(r"~/[A-Za-z]:[/\\]")
+    ph = "[记忆共享中心]"
+    n_ph = 0
+    for p in sorted(pkg.rglob("*")):
+        if not p.is_file() or "__pycache__" in str(p):
+            continue
+        if p.suffix not in (".py", ".sh", ".ps1", ".plist", ".json", ".yaml", ".yml", ".md"):
+            continue
+        try:
+            t = p.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        n_ph += t.count("~/" + ph)
+        if p.suffix in (".md", ".json", ".yaml", ".yml"):
+            continue
+        for i, line in enumerate(t.splitlines(), 1):
+            s = line.strip()
+            if s.startswith("#") or "`" in line:
+                continue
+            if ("'" in line or '"' in line) and dbl.search(line):
+                issues.append("双拼畸形（字符串字面量内 ~/ + 盘符）→ 端用户必然错根：%s:%s"
+                              % (p.relative_to(pkg), i))
+    bl = DATA / "placeholder_tilde_baseline.json"
+    if not bl.exists():
+        # L3根治(2026-10-11 愿景最优解)：②模板前缀棘轮是「作者自管存量回弹」的开发期守卫，
+        #   需基线参照；发布态(包内/CI/新用户机)无 platform_compat_data 属设计如此，非产品缺陷。
+        #   ⛔不因此判红（否则任何非作者环境都假红=把dev流程硬编码成产品门禁·分类错误）。
+        #   用户面保护不受损：①双拼畸形(伤 expanduser 的真缺陷)零容忍已在上方无条件生效。
+        #   作者侧登记后(bl.exists)走 else 严格棘轮，本机自校一点不松。
+        print("  ℹ️ L3②模板前缀棘轮：基线未随包(发布态正常)→跳过；①双拼畸形零容忍已生效")
+    else:
+        base = json.loads(bl.read_text(encoding="utf-8")).get("count")
+        if base is None:
+            issues.append("baseline 无 count 字段（空壳登记）：%s" % bl.name)
+        elif n_ph > base:
+            issues.append("占位符 ~/ 前缀形态新增：现 %d > 基线 %s（模板行⛔带 ~/ 前缀）" % (n_ph, base))
+        else:
+            print("  ℹ️ 占位符 ~/ 前缀存量 %d ≤ 基线 %s（待逐个定性收敛）" % (n_ph, base))
+    return issues
+
+
+def gen_exemptions(pkg: Path) -> int:
+    """豁免册候选生成（扫描派生·理由/依据留空由人填；空壳会被 L1 判红）。"""
+    ps = {p.stem for p in pkg.rglob("*.ps1") if "__pycache__" not in str(p)}
+    cands = [{"file": str(p.relative_to(pkg)), "scope": "", "reason": "", "basis": ""}
+             for p in sorted(pkg.rglob("*.sh"))
+             if "__pycache__" not in str(p) and p.stem not in ps and p.stem.replace("_", "-") not in ps]
+    out = pkg / "references" / "platform-exemptions.json"
+    out.write_text(json.dumps(
+        {"_readme": "L1 派生配对豁免册·scope=mac_only|win_only·reason/basis 必填(空壳=判红)·候选由扫描生成",
+         "exemptions": cands}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("✅ 豁免册候选 %d 条 → %s" % (len(cands), out.relative_to(pkg)))
+    return len(cands)
+
+
+def update_placeholder_baseline(pkg: Path) -> int:
+    """棘轮基线唯一写点（人工 CLI 调用·检查器自身绝不写自己的基线）。"""
+    ph = "[记忆共享中心]"
+    n = 0
+    for p in pkg.rglob("*"):
+        if p.is_file() and "__pycache__" not in str(p) and p.suffix in (
+                ".py", ".sh", ".ps1", ".plist", ".md", ".json", ".yaml", ".yml"):
+            n += p.read_text(encoding="utf-8", errors="ignore").count("~/" + ph)
+    DATA.mkdir(parents=True, exist_ok=True)
+    bl = DATA / "placeholder_tilde_baseline.json"
+    bl.write_text(json.dumps({"count": n, "as_of": __import__("datetime").date.today().isoformat(),
+                             "note": "L3 棘轮基线·刚叔补充单#3·下调须人工"}, ensure_ascii=False, indent=1),
+                  encoding="utf-8")
+    print("✅ 基线已登记：%d → %s" % (n, bl))
+    return n
+
+
 def main():
     only_author = "--only-author-path" in sys.argv
+    _p0 = [x for x in sys.argv[1:] if not x.startswith("--")]
+    _pkg0 = Path(_p0[0]).resolve() if _p0 else DEFAULT_PKG
+    if "--gen-exemptions" in sys.argv:
+        gen_exemptions(_pkg0); sys.exit(0)
+    if "--update-placeholder-baseline" in sys.argv:
+        update_placeholder_baseline(_pkg0); sys.exit(0)
     _pos = [a for a in sys.argv[1:] if not a.startswith("--")]
     pkg = Path(_pos[0]).resolve() if _pos else DEFAULT_PKG
     if not pkg.exists():
@@ -612,6 +807,9 @@ def main():
         ("Windows裸python调用(P1)", check_windows_bare_python(pkg)),
         ("共享中心目录名硬编码(检查⑫)", check_hardcoded_center_name(pkg)),
         ("承诺路径可达性(检查⑪-白名单)", check_script_center_reachability(pkg)),
+        ("跨平台脚本配对·派生式(L1)", check_script_pairing_derived(pkg)),
+        ("stdin编码对等(L2)", check_stdin_encoding(pkg)),
+        ("占位符路径形态卫生(L3)", check_placeholder_shape_hygiene(pkg)),
     ]
 
     if only_author:

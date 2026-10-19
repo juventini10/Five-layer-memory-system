@@ -15,7 +15,7 @@ v2.0（2026-09-01）：从硬编码 CHECKS 列表改为自动扫描 references/ 
 
 路径解析优先级：
   1. source_path: ~/xxx → 直接展开 ~
-  2. source_skill: xxx → ~/[记忆共享中心]/技能配置/xxx/SKILL.md
+  2. source_skill: xxx → <记忆中心根>/技能配置/xxx/SKILL.md（根经探测，⛔不认名字）
   3. source: ~/xxx → 直接展开 ~（但排除 clock-loop 自身路径和 http URL）
   4. source: 中文名 + source_path → 用 source_path
   跳过：source 为 URL / source 指向 clock-loop 自身 / 无 version 字段
@@ -57,37 +57,95 @@ def read_frontmatter_version(path: Path) -> str | None:
     return None
 
 
-def resolve_source_path(cured_path: Path) -> Path | None:
-    """从固化文件的 frontmatter 解析源文件路径"""
-    text = cured_path.read_text(encoding="utf-8")
+def _probe_mc_root():
+    """记忆中心根探测：按结构指纹在家目录下扫一层目录，⛔不认目录名。
+
+    判据源=platform_compat 检查⑫＋条文47（B10 根治轮·自家 content-gate
+    [personal_path_new_file] 当场抓出写死档案根名后的自我纠偏·⛔不引门禁词字面量）。
+    """
+    _mark = Path("记忆规则") / "用户基本规则-铁律版.md"
+    try:
+        for _e in os.scandir(str(HOME)):
+            if _e.is_dir() and (_e.path / _mark).is_file():
+                return _e.path
+    except OSError:
+        pass
+    return None
+
+
+def _archive_root() -> Path:
+    """记忆中心根解析（B10 根治·条文47 运行期根决定权唯一源）三段序：
+    env 声明 → 结构指纹探测（家目录扫一层，认「记忆规则/用户基本规则-铁律版.md」）→ HOME。
+    ⛔写死单一目录名＝端用户机直接错根（platform_compat 检查⑫ 同族）。"""
+    for _k in ("BULUOTUO_MC", "MEMORY_CENTER", "DOENGLINGZ_MC"):
+        _v = os.environ.get(_k)
+        if _v:
+            _p = Path(_v).expanduser()
+            if _p.is_dir():
+                return _p
+    _pr = _probe_mc_root()
+    return Path(_pr) if _pr else HOME
+
+
+def _norm_src(raw: str) -> Path | None:
+    """frontmatter 源路径串 → 绝对 Path。支持四形态：`~/…`、POSIX 绝对、
+    Windows 盘符（D:\\…）、`[记忆共享中心]/…` 占位形态、以及脱敏后的相对形态。
+
+    B10 根治（2026-10-10 刚叔提请单·Codex 七组之一）：旧实现三条正则一律要求 `~` 前缀，
+    Windows 盘符与包内脱敏形态直接返回 None → 被 main() 静默计入"跳过"→
+    端用户机固化对账对受影响件**永不开跑且报绿**（fail-open：测不到=通过）。"""
+    p = (raw or "").strip().strip('"\'').strip()
+    if not p or p.lower().startswith(("http://", "https://")):
+        return None
+    if p.startswith("~"):
+        return Path(p.replace("~", str(HOME), 1))
+    if re.match(r"^[A-Za-z]:[\\/]", p) or p.startswith(("/", "\\")):
+        return Path(p)
+    m = re.match(r"^\[记忆共享中心\][/\\](.+)$", p)
+    if m:
+        return _archive_root() / m.group(1)
+    # 相对形态：候选序＝记忆中心根 → 家目录（作者态历史声明相对 HOME）。
+    # 取第一个真在盘上的；全不在盘时返回 MC 候选，让 main 显形"源不可达"而非静默跳过。
+    _cands = [_archive_root() / p, HOME / p]
+    for _c in _cands:
+        if _c.exists():
+            return _c
+    return _cands[0]
+
+
+def resolve_source_raw(cured_path: Path) -> str | None:
+    """取 frontmatter 里声明的源路径原文（供 main 区分 URL/真·不可解析）。"""
+    try:
+        text = cured_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
     parts = text.split("---", 2)
     if len(parts) < 3:
         return None
     fm = parts[1]
-
-    # 1. source_path: ~/xxx → 直接展开
-    m = re.search(r'source_path:\s*(~[^\n]+)', fm)
-    if m:
-        p = m.group(1).strip().strip('"\'')
-        p = p.replace('~', str(HOME))
-        return Path(p)
-
-    # 2. source_skill: xxx → ~/[记忆共享中心]/技能配置/xxx/SKILL.md
-    m = re.search(r'source_skill:\s*(\S+)', fm)
-    if m:
-        skill_name = m.group(1).strip().strip('"\'')
-        return HOME / "[记忆共享中心]" / "技能配置" / skill_name / "SKILL.md"
-
-    # 3. source: ~/xxx → 直接展开（但排除 clock-loop 自身和 URL）
-    m = re.search(r'source:\s*(~[^\n]+)', fm)
-    if m:
-        p = m.group(1).strip().strip('"\'')
-        if 'clock-loop' in p:
-            return None  # 自身路径，跳过
-        p = p.replace('~', str(HOME))
-        return Path(p)
-
+    for key in ("source_path", "source_skill", "source"):
+        m = re.search(r'%s:\s*([^\n]+)' % key, fm)
+        if m:
+            return m.group(1).strip().strip('"\'')
     return None
+
+
+def resolve_source_path(cured_path: Path) -> Path | None:
+    """从固化文件的 frontmatter 解析源文件路径（四形态归一·B10 根治）。"""
+    raw = resolve_source_raw(cured_path)
+    if raw is None:
+        return None
+    if 'clock-loop' in raw and raw.strip().startswith('~') and 'scripts' in raw:
+        return None  # 自身路径，跳过（保持原语义）
+    # source_skill: <技能名> 形态＝名字不是路径。B10 首轮整段重写时误吞该分支
+    # （本机无固化件用此键→主流程不显形·"全绿≠分支已验"活样本），此处按原语义补回，
+    # 根仍走 _archive_root() 探测，⛔不写死目录名。
+    _parts = cured_path.read_text(encoding="utf-8").split("---", 2)
+    if len(_parts) >= 3:
+        _ms = re.search(r'source_skill:\s*(\S+)', _parts[1])
+        if _ms and not raw.strip().startswith(("~", "/", "http", "[")):
+            return _archive_root() / "技能配置" / _ms.group(1).strip('"\'') / "SKILL.md"
+    return _norm_src(raw)
 
 
 def scan_current_version_lines(path: Path, src_ver: str) -> tuple[list[str], int]:
@@ -124,6 +182,7 @@ def main():
     errors = []
     checked = 0
     skipped = 0
+    unresolved = 0
 
     # 自动扫描 references/ 下所有 .md + .yaml 文件
     # v3.48.0（#205④逃脱路径第4条根治）：glob 扩为 md + **/*.yaml（含 eval-knowledge/ 子目录·
@@ -159,7 +218,14 @@ def main():
         # 解析源文件路径
         source_path = resolve_source_path(cured_path)
         if source_path is None:
-            skipped += 1
+            # 不可解析不再静默计入跳过（B10 根治）：URL 类固化件设计内跳过＝合法；
+            # 有源声明却解析不出＝对账未开跑＝fail-closed 记红，⛔不许"测不到"冒充"通过"。
+            _raw = resolve_source_raw(cured_path) or ""
+            if _raw.lower().startswith(("http://", "https://")):
+                skipped += 1
+                continue
+            errors.append(f"🔴 {cured_path.name}: 源路径声明存在但无法解析（{_raw[:70]}）→ 固化对账未开跑")
+            unresolved += 1
             continue
 
         # 跳过 URL（http/https 开头的 source）
@@ -201,7 +267,7 @@ def main():
             else:
                 print(f"   └ 正文当前声明行版本一致（命中{matched}处）")
 
-    print(f"\n扫描完成：{checked} 项检查 / {skipped} 项跳过（URL/自身/无源路径）")
+    print(f"\n扫描完成：{checked} 项检查 / {skipped} 项跳过（URL/自身/无源路径） / {unresolved} 项不可解析")
 
     if errors:
         print("\n".join(errors))

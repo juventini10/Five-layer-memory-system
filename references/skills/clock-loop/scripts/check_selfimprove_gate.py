@@ -52,8 +52,8 @@ import sys
 from datetime import datetime, date
 from pathlib import Path
 
-DEFAULT_TEST_RESULTS = "~/[记忆共享中心]/评估知识库/test_results"
-DEFAULT_EVOLUTION = "~/[记忆共享中心]/评估知识库/evolution"
+DEFAULT_TEST_RESULTS = "[记忆共享中心]/评估知识库/test_results"
+DEFAULT_EVOLUTION = "[记忆共享中心]/评估知识库/evolution"
 
 
 def resolve_path(p: str) -> Path:

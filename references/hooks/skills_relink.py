@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 skills_relink.py — 技能软链接自愈器（幂等·根因治理）
 
 设计依据（你的架构哲学 / 第一性原理）：
-- 唯一真源：~/[记忆共享中心]/技能配置/ 是全部技能的权威出处
+- 唯一真源：[记忆共享中心]/技能配置/ 是全部技能的权威出处
 - 桥接方式：用软链接把真源桥到 Hermes/各工具，保证"唯一来源"+"自动最新"
 - 根因问题：历史上出现过链式指向 /tmp 临时区 → 系统清理后整批断链
          （表现为"重启后又调不出"，荒谬且复发）
@@ -24,6 +20,9 @@ skills_relink.py — 技能软链接自愈器（幂等·根因治理）
     python3 skills_relink.py --dry        # 只报告需要处理的，不改动
 可选 --dest 指向其他工具的 skills 目录（如 lobsterai/Trae/DSH 的桥接目录）
 可选 --prune-orphans 剪除孤儿链（断链/真源已无对应目录）·**默认只报告不剪**（2026-10-01 新增）
+可选 --all-ends 遍历 $HOME/.*/skills 全部端桥接窗口（v0.3·2026-10-10 第四次复发根治：
+  launchd 原只跑 ~/.hermes/skills 单端，他端 50 条链指发布库违规发现得了修不了——
+  检测端 symlink_guard v2 动态全覆盖，修复端从此同判据全端自愈·违规存活≤巡检周期）
 
 ⛔ 不删除真源、不复制技能、不创建第二份真身——只维护"窗口"链接。
 
@@ -40,6 +39,10 @@ skills_relink.py — 技能软链接自愈器（幂等·根因治理）
   ⛔ 永远不 `--move` 到真源（那等于删技能）；隔离区在 `<dest>/../cache/relink_orphans_<ts>/`。
   ⛔ 不碰隐藏目录（`.archive`/`.hub`/`.locks`/`.curator_*` 等端机制目录）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import sys
 import argparse
@@ -94,10 +97,30 @@ def main():
     ap.add_argument("--force-dir", action="store_true", help="连实目录也改成软链接（慎用）")
     ap.add_argument("--prune-orphans", action="store_true",
                     help="剪除孤儿链（断链/真源已无对应目录）·v0.2 新增·默认只报告")
+    ap.add_argument("--all-ends", action="store_true",
+                    help="遍历 $HOME/.*/skills 全部桥接窗口修复（v0.3·检测/修复同判据）")
     global ARGS
     ARGS = ap.parse_args()
 
-    dest = os.path.expanduser(ARGS.dest)
+    dests = _discover_dests() if ARGS.all_ends else [os.path.expanduser(ARGS.dest)]
+    for _d in dests:
+        # 全端模式=与检测端(symlink_guard v2)同判据：只修「已存在链指错/断链」，
+        # ⛔不为缺失项新建——第三方工具窗口(.claude/.codex 等)的桥接义务不属于本器，
+        # 建链义务仅在显式 --dest 单端模式（原桥接语义逐字保留）。
+        run_one(_d, create_missing=not ARGS.all_ends)
+    return
+
+
+def _discover_dests():
+    """端桥接窗口枚举（v0.3·2026-10-10 第四次复发根治）：检测端 symlink_guard v2
+    已动态扫 $HOME/.*/skills，修复端原只跑 --dest 单端 ⇒「发现得了、自愈不了」。
+    判据与检测端同源：$HOME/.*/skills 且为实目录。"""
+    import glob
+    return sorted(p for p in glob.glob(os.path.join(HOME, ".*", "skills"))
+                  if os.path.isdir(p))
+
+
+def run_one(dest, create_missing=True):
     if not os.path.isdir(SRC):
         print(f"❌ 真源不存在: {SRC}")
         sys.exit(1)
@@ -118,6 +141,9 @@ def main():
         need, reason = needs_fix(link, d)
         if not need:
             skipped.append((name, reason))
+            continue
+        if not create_missing and reason == "缺失(MISSING)":
+            skipped.append((name, "缺失(全端模式不新建·判据同检测端)"))
             continue
         fixed.append((name, reason))
         if not ARGS.dry:

@@ -14,8 +14,10 @@ dbenv.py — daily-buddy 环境自愈模块（第一性原理根治·Hermes 沙�
   1. Authoritative Home：HOME 唯一真相源，默认 /Users/用户名（硬编码兜底真值，
      脚本加载即修正，不依赖调用方记得设环境变量）；发布/其他机器可用环境变量
      DB_HOME 覆盖（优先级：DB_HOME > 默认值）——沙箱防线不变（默认值仍防劫持）。
-  2. Real Python：子进程一律用真实解释器（默认 /usr/local/bin/python3，可用
-     DB_PYTHON 覆盖），绝不裸 "python3"。
+  2. Real Python：子进程一律用真实解释器——**运行期动态解析**（2026-10-13 跨平台
+     根治·原写死 /usr/local/bin/python3 仅 Intel Mac 命中）：DB_PYTHON(显式) >
+     sys.executable(当前解释器) > which 候选链(python3/python/py) > 作者机兜底。
+     绝不裸 "python3"。
   3. 调用层兜底：AI 仍应经 dbbin.sh 启动（双保险），但即便被直接调，
      脚本也能自愈路径 + 拒绝假 python 子进程。
 
@@ -36,6 +38,7 @@ try:
 except Exception: pass
 import os
 import sys
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -43,10 +46,34 @@ from pathlib import Path
 AUTHORITATIVE_HOME = os.environ.get("DB_HOME", "").strip() or "~"
 
 # ─── 真实 python3（Hermes 沙箱 python3 是 /tmp/hb_fakebin 的 no-op·DB_PYTHON 可覆盖）───
-REAL_PYTHON = os.environ.get("DB_PYTHON", "").strip() or "/usr/local/bin/python3"
-
-# ─── 沙箱污染特征（用于自检告警）───
+# 沙箱污染特征（用于自检告警·定义先于解析函数使用·2026-10-13 实测裸跑 NameError 教训）
 _SANDBOX_HOME_MARKERS = ("/tmp/hb_sb", "/tmp/hb_fakebin", "/tmp/hb_")
+# 跨平台根治（2026-10-13）：兜底不再写死 /usr/local/bin/python3（Intel Mac 限定），
+# 改为运行期解析——当前解释器(sys.executable)本身就是证据，其次按候选链查。
+_FALLBACK_PYTHON = "/usr/local/bin/python3"  # 仅作者本机兜底·用户机不应依赖此项
+
+
+def _resolve_real_python() -> str:
+    """运行期解析真实 python 解释器（跨平台·无平台硬编码假设）。
+
+    优先级：DB_PYTHON(显式指定) > sys.executable(当前正在跑的解释器·
+    若不在沙箱标记路径下则可信) > shutil.which 候选链(过滤沙箱标记·防 which
+    命中 Hermes 假二进制——本模块 08-19 空跑事故同款根因) > 作者机兜底。
+    """
+    explicit = os.environ.get("DB_PYTHON", "").strip()
+    if explicit:
+        return explicit
+    cur = sys.executable or ""
+    if cur and not any(m in cur for m in _SANDBOX_HOME_MARKERS):
+        return cur
+    for cand in ("python3", "python", "py"):
+        found = shutil.which(cand) or ""
+        if found and not any(m in found for m in _SANDBOX_HOME_MARKERS):
+            return found
+    return _FALLBACK_PYTHON
+
+
+REAL_PYTHON = _resolve_real_python()
 
 
 def resolve_home() -> Path:
@@ -72,7 +99,7 @@ HOME = resolve_home()
 DIARY_DIR = HOME / "[日记仓库]/1-每日计划/01-日记"
 ACHIEVEMENT_DIR = HOME / "[记忆共享中心]/成就系统"
 SITUATION_SNAPSHOT = HOME / "[记忆共享中心]/情境层/动态状态快照.md"
-FED_DIR = HOME / "[记忆共享中心]/脚本中心/知识联邦引擎"
+FED_DIR = HOME / "[记忆共享中心]/脚本中心/知识联邦引擎"  # 2026-10-15 C：中心直址（旧址=顶层过渡软链·拆链即断）
 GREATEST_DIR = HOME / "[记忆共享中心]/最伟大的我"
 EVIDENCE_DIR = GREATEST_DIR / "成就证据"
 

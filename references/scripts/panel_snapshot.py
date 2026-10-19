@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """panel_snapshot.py v0.9.7 — 愿景看板 v3（峰终体验版·渲染器）
 
 你的定案（2026-08-21 愿景仪表盘 §10·任务交接）：
@@ -107,10 +103,16 @@ v0.7.4（2026-08-22·诚实降档根治"自动化105%"与"平台缺N"同页打�
   平台接入率   ← 各端 settings.json 实盘直读 + SSOT 兜底
   季度 OKR     ← okr_quarter.json（目标 SSOT·本季框定）+ evolution_deviation（当前值机械映射）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import os, json, glob, re, sys
 from datetime import datetime
 
 MC = os.path.expanduser("[记忆共享中心]")
+AILIB_DIR = os.path.expanduser("~/[日记仓库]/2-知识库/09-AI学习库")  # 2026-10-13 C''波次2迁移后路径同步
 SYSLOG = os.path.join(MC, "开发工具/logs/runtime")
 TS_PATH = os.path.join(SYSLOG, "panel_timeseries.jsonl")
 LIVE_HTML = os.path.join(MC, "可视化呈现/panel_live.html")
@@ -172,7 +174,7 @@ def check_registry_governance(platform_names, changelog_path=None, state_path=No
         auto = False
         try:
             import subprocess
-            append_py = os.path.join(MC, "开发工具", "changelog_append.py")
+            append_py = os.path.join(MC, "脚本中心", "守卫", "changelog_append.py")
             desc = ("平台注册表变动检测留痕（fp {}→{}·{}平台）——panel_snapshot 治理闸门自动补登·"
                     "相关端可另补变更说明或回滚".format(old_fp, fp, len(platform_names or [])))
             r = subprocess.run(
@@ -213,10 +215,15 @@ def load_kanban_rates():
     header = rate_line = None
     # 只认表格行，且必须在其上方 40 行内找到列头——否则 frontmatter 摘要里
     # 恰好同时含"接入率/分母"的散文行会被误当锚点（2026-09-26 改宽松匹配时实测踩中）
+    # 2026-10-13 二次根治（Qoder CN）：仅"行内含字样"判据不够——2026-10-04 复核新增的
+    # 签名行（行内含"接入率重估…分母12项"字样）抢中锚点且格子数 17≠表头 16，整行列错位
+    # → 10 端接入率全变"未解析"、ZCode 显示从 Hermes 签名错抢的假 11/12。
+    # 收紧判据：首格必须以"接入率"开头（真行首格=「接入率（分母=…」），签名/散文行进不来。
     for i, line in enumerate(lines):
         if not _plain(line).lstrip().startswith("|"):
             continue
-        if not ("接入率" in _plain(line) and "分母" in _plain(line)):
+        _first_cell = _plain(line).strip().strip("|").split("|")[0].strip()
+        if not _first_cell.startswith("接入率"):
             continue
         cand = None
         for j in range(i - 1, max(-1, i - 40), -1):
@@ -532,17 +539,17 @@ def load_knowledge_ladder():
     数据源：INDEX.md（L1-L4 分布·机械解析）+ 引用台账（L4 试金石）
     """
     stats = {"L1": 0, "L2": 0, "L3": 0, "L4": 0}
-    idx = os.path.join(MC, "AI学习库/INDEX.md")
+    idx = os.path.join(AILIB_DIR, "INDEX.md")
     try:
         with open(idx, encoding="utf-8") as f:
             for line in f:
-                m = re.search(r"\| 立场卡#S\d+.*?\|\s*(L[1-4])", line)
+                m = re.search(r"\| (?:立场卡#S\d+|技能卡#K\d+).*?\|\s*(L[1-4])", line)
                 if m:
                     stats[m.group(1)] += 1
     except Exception as e:
         print("[panel_snapshot][WARN] INDEX 读取失败: {}".format(e), file=sys.stderr)
     # L4 试金石：引用台账中引用≥3 的卡（含你决策引用数）
-    ledger = os.path.join(MC, "AI学习库/引用台账.md")
+    ledger = os.path.join(AILIB_DIR, "引用台账.md")
     counts = {}
     try:
         with open(ledger, encoding="utf-8") as f:
@@ -564,7 +571,7 @@ def load_knowledge_ladder():
             break
     # 技能卡候选数量（V0.2·2026-08-26新增·统计候选台账中待确认+提醒中）
     skill_candidates = 0
-    cand_ledger = os.path.join(MC, "AI学习库/技能卡候选台账.md")
+    cand_ledger = os.path.join(AILIB_DIR, "技能卡候选台账.md")
     try:
         with open(cand_ledger, encoding="utf-8") as f:
             for line in f:
@@ -964,7 +971,7 @@ LIVE_JS = """
     }
     var kp = document.getElementById("kf-pill");
     if (kp && kl.l4_probe) {
-      kp.textContent = "管道已通 · L4 待首例 · 试金石 " + kl.l4_probe.card + " 引用" + kl.l4_probe.total + "含你决策" + kl.l4_probe.ge;
+      kp.textContent = (kl.stats.L4 > 0 ? "L4 已破冰 · 已内化 " + kl.stats.L4 + " 张" : "管道已通 · L4 待首例") + " · 试金石 " + kl.l4_probe.card + " 引用" + kl.l4_probe.total + "含你决策" + kl.l4_probe.ge;
     }
   }
   var fd = d.four_dir || {};
@@ -1213,7 +1220,7 @@ def render_html(snap):
         # 2026-09-27 童灵根治：守卫状态改读数据字段（watch_active），⛔不再硬编码✅——假绿=反模式
         ('<span>防漂移校验 ✅</span><span>launchd增量监控 ✅</span>'
          if _kbv(ic, "watch_active", False)
-         else '<span style="color:var(--amber)">⚠️ 防漂移守卫未挂载（com.buluotuo.kb-index-guard.plist 缺位）</span>')
+         else '<span style="color:var(--amber)">⚠️ 防漂移守卫未挂载（kb-card-version-watch / blueprint-index-watcher 均缺位）</span>')
     )
 
 
@@ -1390,7 +1397,7 @@ def write_panel_data_js(snap):
                 coverage[name] = ("🟢", "自核签名 · 登记自 SSOT §二·七")
     SHARED13 = ["crossend_guard","route_inject_prompt","route_miss_feeder","kb_inject_prompt",
         "route_unknown_unknown","audit_search_kb","route_audit","route_guard_audit",
-        "reply_format_guard","l3_conclusion_guard","feedback_detect",
+        "reply_format_guard","feedback_detect",
         "rule_three_layer_guard","card_id_guard"]
     PLATFORM_CFG = {
         "WorkBuddy": os.path.expanduser("~/.workbuddy/settings.json"),
@@ -1405,9 +1412,9 @@ def write_panel_data_js(snap):
     # _READ_EVIDENCE_SCRIPT 实挂）——同样按"专属守卫脚本文件存在判真"计入，与 AutoClaw/LobsterAI/ZCode 记法一致
     PATROL_EXTRA_SCRIPT = {
         "AutoClaw": os.path.expanduser("[记忆共享中心]/脚本中心/autoclaw_gateway_guard.py"),
-        "LobsterAI": os.path.expanduser("[记忆共享中心]/脚本中心/lobsterai_session_anomaly_guard.py"),
-        "Trae Work": os.path.expanduser("[记忆共享中心]/脚本中心/session_memory_quality_guard.py"),
-        "ZCode": os.path.expanduser("[记忆共享中心]/脚本中心/zcode_config_guard.py"),
+        "LobsterAI": os.path.expanduser("[记忆共享中心]/脚本中心/内容创作/lobsterai_session_anomaly_guard.py"),
+        "Trae Work": os.path.expanduser("[记忆共享中心]/脚本中心/内容创作/session_memory_quality_guard.py"),
+        "ZCode": os.path.expanduser("[记忆共享中心]/脚本中心/内容创作/zcode_config_guard.py"),
         "Hermes": os.path.expanduser("[记忆共享中心]/脚本中心/hermes_read_evidence_guard.py"),
     }
     # 非守卫命令（挂在 hooks 里但不是"专属守卫"：渲染器/机械校验器）——统计专属守卫时剔除，防 +N 虚高
@@ -1573,7 +1580,7 @@ if __name__ == "__main__":
 
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

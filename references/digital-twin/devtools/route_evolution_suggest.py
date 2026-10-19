@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """route_evolution_suggest.py v0.1 — 语义路由自进化·建议生成器（引擎类·stats）
 
 控制论闭环定位：radar观测 → feedback留痕 → eval量化 → 建议生成 → 再观测。
@@ -19,7 +15,12 @@ except Exception: pass
 跨工具中立（脚本哲学 §二·五）：本脚本是公共设施，住 [记忆共享中心]/脚本中心/，
 各工具 hook 只调用不拥有。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import os
 import sys
 import json
@@ -34,7 +35,7 @@ RADAR = os.path.join(GUARD, "semantic_radar.jsonl")
 ROUTE_AUDIT = os.path.join(MC, "开发工具/Skill路由引擎/scripts/route_audit.py")
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

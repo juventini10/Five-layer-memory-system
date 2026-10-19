@@ -15,7 +15,7 @@ import re
 import sys
 from pathlib import Path
 
-LOG_PATH = Path.home() / "~/[记忆共享中心]/数字分身/steps/step3-first-review-log.md"
+LOG_PATH = Path.home() / "[记忆共享中心]/数字分身/steps/step3-first-review-log.md"
 
 def parse_reviews(log_path):
     """解析step3初审台账，返回每张卡的初审信息"""
@@ -108,7 +108,7 @@ def main():
     total = must_check + spot_check + auto_pass
     print("=" * 60)
     print(f"💡 你实际工作量：{must_check + spot_check}/{total} 张（必检{must_check}+抽检{spot_check}），自动通过{auto_pass}张")
-    print(f"   减负比例：{auto_pass/total*100:.1f}%")
+    print(f"   减负比例：{auto_pass/total*100:.1f}%" if total else "   减负比例：N/A（本次无卡·0/0）")
     print("=" * 60)
 
 if __name__ == '__main__':

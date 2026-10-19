@@ -19,8 +19,9 @@ philosophy_radar_inject.py v0.1 — 哲学读侧完整性专项 · P0 到达腿�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import os
 import json
@@ -122,6 +123,7 @@ def build_ctx(entries):
 
 def main():
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
     except Exception:
         raw = ""

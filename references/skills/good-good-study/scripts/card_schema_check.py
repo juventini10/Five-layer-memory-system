@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # REG: family=守卫 | registry=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/守卫编写规范.md§四 | board=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/03-进度看板.md
 # -*- coding: utf-8 -*-
-# version: v0.1.0（2026-10-01 Qoder CN·把 card-schema.md「缺必填字段=阻断」物理化）
+# version: v0.2.0（2026-10-09 v1.1.2批·+相关卡枚举闸T7；创建v0.1.0 2026-10-01·把card-schema「缺必填字段=阻断」物理化）
 """card_schema_check.py — 立场卡/技能卡 字段级结构闸（零依赖）
 
 为什么要有它（根因）：
@@ -40,7 +40,7 @@ FM_LI = ["card_id", "topic", "type", "领域分诊", "精细加工标记", "read
 # 2026-10-01 野测 S003 实锤）。
 BODY_LI = [
     ("主要矛盾", r"主要矛盾", "没有张力＝没找到问题"),
-    ("立场（结论）", r"立场\s*[（(]\s*结论|r" + r"立场[的]?最终", "无立场＝白学"),
+    ("立场（结论）", r"立场\s*[（(]\s*结论|立场[的]?最终", "无立场＝白学"),
     ("依据链", r"依据链|依据\s*[（(]", "无链＝空断言、不可移植"),
     ("让步合法条件", r"让步.{0,4}合法条件", "无边界＝固执或墙头草"),
     ("顶住红线", r"顶住红线|红线（规范性", "无红线＝讨好复发"),
@@ -59,6 +59,9 @@ STEELMAN_RX = r"反方最强论证|steelman"
 EVIDENCE_TOKENS = ("权威", "推理", "推测", "反例", "实践")
 COMPLEX_DOMAINS = ("复杂域", "混沌域")
 ID_RE = re.compile(r"^(立场卡#S\d+|技能卡#K\d+|示例卡#X\d+)$")
+REL_TYPES = ("主题相似", "结论一致", "依据链重叠", "视角互补", "认知工具维度一致")  # card-schema §一五枚举·v1.1.2闸验锚
+REL_REQUIRED_FROM = "2026-10-12"   # v1.1.11：本日起的新卡必填 `相关卡`（对齐 card-schema §一 v1.2.0 起强制条·闸此前未实现=双松反向变体）
+REL_EMPTY_OK = ("无直接关联",)            # §七：无关联须显式写该值——空着不算交代，写了才是交代
 
 
 def parse_fm(text):
@@ -94,7 +97,7 @@ def section_body(text, rx):
     return tail + body
 
 
-def check_card(path):
+def check_card(path, retro=False):
     """返回缺项列表 [(项目, 修法)]，空=通过。"""
     errs = []
     try:
@@ -168,6 +171,29 @@ def check_card(path):
             errs.append(("碰撞产出缺「碰撞前的做法」基线列",
                          "三件事表须含碰撞前/后对比，缺基线看不出碰撞改变了什么"))
 
+    # 8) 相关卡：关系类型枚举校验（v1.1.2·Loop R1审查实锤——「结论相关」非法值经权威示例传染8处，
+    #    闸与schema同宽=双松；本条把枚举钉进exit面，防复发同律=DESIGN-PHILOSOPHY §二焊闸）
+    rel_raw = str(fm.get("相关卡", "")).strip().strip('"() ')
+    rel = "" if rel_raw in REL_EMPTY_OK else rel_raw   # v1.1.11：显式「无直接关联」= 交代不是缺失（不送枚举校验；缺失判定看 rel_raw，防把合法交代误判成缺必填）
+    if rel and not is_example:
+        parts = [x.strip() for x in re.split(r"[;；]", rel) if x.strip()]
+        if not (1 <= len(parts) <= 5):
+            errs.append(("相关卡张数越界：%d 张" % len(parts), "card-schema §一：至少1张最多5张"))
+        for x in parts:
+            if "·" not in x:
+                errs.append(("相关卡分件缺关系类型：%s" % x, "格式为 [卡号]·[关系类型]"))
+            else:
+                typ = x.split("·", 1)[1].strip()
+                if typ not in REL_TYPES:
+                    errs.append(("相关卡关系类型非法：%s" % typ,
+                                 "合法枚举=%s" % "/".join(REL_TYPES)))
+    elif not rel_raw and not is_example and not retro:
+        # 新卡必填（v1.1.11·#43 死题根治：原闸对"键缺失"零射程→考题期望的 exit 1 永不可发生）
+        dt = str(fm.get("date") or fm.get("created") or "")
+        if dt and dt >= REL_REQUIRED_FROM:
+            errs.append(("新卡必填字段缺失：相关卡",
+                         "card-schema §一：v1.2.0 起新卡必填；无关联须显式写「无直接关联」（⛔留空，也⛔为过闸填与正文互斥的值）"))
+
     # 7) 示例件护栏：example:true 却占真实取号域 → 会污染用户卡库的取号/查重
     if is_example and (cid.startswith("立场卡#S") or cid.startswith("技能卡#K")):
         errs.append(("示例件占用了真实取号域", "example:true 的卡 card_id 须用 示例卡#XNNN"))
@@ -181,7 +207,7 @@ def run(paths, retro=False):
     """
     bad, tot = 0, len(paths)
     for p in paths:
-        errs = check_card(p)
+        errs = check_card(p, retro=retro)
         name = os.path.basename(p)
         if errs:
             bad += 1
@@ -260,7 +286,39 @@ def self_test(mutant=False):
     with open(ep, "w", encoding="utf-8") as f:
         f.write(exbad)
     ck.append(("T6 示例件占卡库命名空间被抓住", any("命名空间" in k for k, _ in check_card(ep))))
+    # T7 相关卡枚举闸(v1.1.2·R1审查8处非法值传染实锤)：合法不误报+非法被抓住
+    okrel = re.sub(r'(reading_status:[^\n]*)', r'\1\n相关卡: "S100·主题相似；S101·视角互补"', GOOD, count=1)
+    op = os.path.join(tmp, "立场卡#S006-测试主题.md")
+    with open(op, "w", encoding="utf-8") as f:
+        f.write(okrel)
+    ck.append(("T7a 相关卡合法枚举不误报", not any("相关卡" in k for k, _ in check_card(op))))
+    badrel = re.sub(r'(reading_status:[^\n]*)', r'\1\n相关卡: "S100·结论相关"', GOOD, count=1)
+    rp = os.path.join(tmp, "立场卡#S007-测试主题.md")
+    with open(rp, "w", encoding="utf-8") as f:
+        f.write(badrel)
+    ck.append(("T7b 相关卡非法枚举被抓住", any("关系类型非法" in k for k, _ in check_card(rp))))
+    # T9（v1.1.11·新卡必填双对照：只测一面就是自欺——R6 实证本会话六次坏探针）
+    _np = os.path.join(tempfile.mkdtemp(), "技能卡#K900-探针新卡.md")
+    open(_np, "w", encoding="utf-8").write(
+        "---\ncard_id: 技能卡#K900\ntopic: 探针\ntype: skill-card\n领域分诊: 繁杂域\n"
+        "reading_status: L1\ndate: 2099-01-01\n---\n\n## 核心方法\n- ①x\n- ②y\n- ③z\n\n"
+        "## 适用边界\n- ✅适用：探针\n- ⛔不适用：探针外\n\n## 反例/失败模式\n- 探针失效形态\n\n"
+        "## 依据\n- 【实践·单样本⚠️】探针自测\n\n## 关联卡片\n- 无直接关联\n\n## 写入前自检（三项）\n- [x] 证据平权\n- [x] 精细加工\n- [x] 类型匹配\n")
+    ck.append(("T9a 新卡缺 `相关卡` 被抓住（硬闸模式）",
+               any("新卡必填字段缺失" in k for k, _ in check_card(_np, retro=False))))
+    ck.append(("T9b 同一件走 --retro 只报数不判红（存量豁免面有牙）",
+               not any("新卡必填字段缺失" in k for k, _ in check_card(_np, retro=True))))
+    _op = os.path.join(os.path.dirname(_np), "技能卡#K901-探针存量.md")
+    open(_op, "w", encoding="utf-8").write(open(_np, encoding="utf-8").read().replace("date: 2099-01-01", "date: 2026-01-01"))
+    ck.append(("T9c 落地日之前的存量卡不被追溯判红（⛔假红海啸）",
+               not any("新卡必填字段缺失" in k for k, _ in check_card(_op, retro=False))))
+    open(_np, "a", encoding="utf-8")
+    with open(_np, "r+", encoding="utf-8") as _f:
+        _c = _f.read(); _f.seek(0); _f.write(_c.replace("---\n", '---\n相关卡: "无直接关联"\n', 1)); _f.truncate()
+    ck.append(("T9d 显式写「无直接关联」为合法值（不误报·也⛔留空）",
+               not any("相关卡" in k for k, _ in check_card(_np, retro=False))))
     if mutant:
+
         # 分辨条件自证：短路「正文缺段」判据后 T2 必须失能，否则 T2 是恒真用例。
         #   ⚠️ 两道护栏（2026-10-01 实测中过）：① shim==src 说明替换目标失配（变量改名后
         #   旧串再也匹配不上），此时变异体其实是被测体——必须显式判失败，不得静默绿；
@@ -268,16 +326,16 @@ def self_test(mutant=False):
         src = open(__file__, encoding="utf-8").read()
         shim = src.replace("if seg is None or len(seg.strip()) < 6:", "if False:")
         if shim == src:
-            ck.append(("T7 变异体未生效（shim==src·替换目标失配）", False))
+            ck.append(("T8 变异体未生效（shim==src·替换目标失配）", False))
         else:
             ns = {"__file__": __file__, "__name__": "mutant_probe"}
             try:
                 exec(compile(shim, "<mutant>", "exec"), ns)
                 m_errs = [k for k, _ in ns["check_card"](bad)]
-                ck.append(("T7 变异体：短路缺段判据后 T2 确实失能（用例有牙）",
+                ck.append(("T8 变异体：短路缺段判据后 T2 确实失能（用例有牙）",
                            not any("顶住红线" in x for x in m_errs)))
             except Exception as e:
-                ck.append(("T7 变异体运行失败：%s" % e, False))
+                ck.append(("T8 变异体运行失败：%s" % e, False))
     ok = 0
     for name, passed in ck:
         print(("  ✅ " if passed else "  ❌ ") + name)

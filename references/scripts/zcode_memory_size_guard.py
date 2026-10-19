@@ -62,6 +62,7 @@ def _ledger(row):
 
 def check():
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         payload = json.loads(sys.stdin.read() or "{}")
     except Exception:
         return 0  # fail-open（观测面垃圾输入不阻断正常工作）

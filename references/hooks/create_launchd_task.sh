@@ -20,7 +20,7 @@
 #   label            — launchd任务标签（如 com.buluotuo.my-task）
 #   script_path      — 要执行的脚本绝对路径
 #   interval_seconds — 运行间隔（秒），如 86400=每天, 21600=每6小时
-#   log_path         — （可选）日志文件路径，默认 ~/[记忆共享中心]/数字分身/scripts/<label>.log
+#   log_path         — （可选）日志文件路径，默认 [记忆共享中心]/数字分身/scripts/<label>.log
 #
 set -eo pipefail
 
@@ -34,7 +34,7 @@ fi
 LABEL="$1"
 SCRIPT_PATH="$2"
 INTERVAL="$3"
-LOG_PATH="${4:-~/[记忆共享中心]/数字分身/scripts/${LABEL}.log}"
+LOG_PATH="${4:-[记忆共享中心]/数字分身/scripts/${LABEL}.log}"
 ERR_LOG="${LOG_PATH%.log}_err.log"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 
@@ -145,7 +145,7 @@ if [[ "$runs" == "0" ]]; then
   exit 1
 elif [[ "$exit_code" != "0" ]]; then
   echo ""
-  echo "❌ 创建失败：首次运行异常（exit code=$exit_code）"
+  echo "❌ 创建失败：首次运行异常（exit code=${exit_code}）"
   echo "   错误日志：$ERR_LOG"
   echo "   最后10行错误："
   tail -10 "$ERR_LOG" 2>/dev/null || true
@@ -156,7 +156,7 @@ elif [[ "$log_size" -eq 0 ]]; then
   echo "   如果脚本设计为静默运行（无变更时无输出），这是正常的。"
   echo "   否则请检查脚本是否有print输出。"
   echo ""
-  echo "✅ 创建成功（exit=0，runs=$runs）"
+  echo "✅ 创建成功（exit=0，runs=${runs}）"
 else
   echo ""
   echo "✅ 创建成功！"

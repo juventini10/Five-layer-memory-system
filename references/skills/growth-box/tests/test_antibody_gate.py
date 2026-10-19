@@ -84,9 +84,9 @@ def main():
     print("\n[4] 正例（存量真实形态）")
     goods = [
         'test ! -f "[记忆共享中心]/脚本中心/content-gate.py"',
-        "! grep -q -- '/-卡片\\[' \"[记忆共享中心]/脚本中心/kb_index_guard.sh\"",
+        "! grep -q -- '/-卡片\\[' \"[记忆共享中心]/脚本中心/changelog-guard/kb_index_guard.sh\"",
         '! diff <(ls "[记忆共享中心]/A") <(ls "[记忆共享中心]/B") >/dev/null',
-        "grep -rqE '皮叔在记录|模板应用' ~/[记忆共享中心]/发布库",
+        "grep -rqE '皮叔在记录|模板应用' [记忆共享中心]/发布库",
     ]
     for cmd in goods:
         codes = [v.code for v in G.validate_cmd(cmd)]

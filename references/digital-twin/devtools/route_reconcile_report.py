@@ -170,7 +170,9 @@ def build_report():
         sd = stat_fswatch(d_lines)
         lines.append(f"| D·文件系统事件 | {SOURCES['D_fswatch_events']} | ✅ | 总 {sd['total']} ｜ changed {sd['changed']} ｜ deleted {sd['deleted']} ｜ initial {sd['initial']}（变化频率 f≈{sd['changed']} 次/观察期） |")
     else:
-        lines.append(f"| D·文件系统事件 | {SOURCES['D_fswatch_events']} | ⚠️缺数据 | — |")
+        # 2026-10-11 定性补注（内部台账·转派单②）：events.log 采集器从未部署（git 零痕迹·
+        # fswatch 基线观测为设计未落地项非烂尾）——区别于"曾存在后丢失"，扩张判定依赖 f 值时先补采集器
+        lines.append(f"| D·文件系统事件 | {SOURCES['D_fswatch_events']} | ⚠️缺数据 | 采集器从未部署（fswatch基线观测设计未落地·依赖f值判定前须先建） |")
 
     lines.append("")
     lines.append("## 二·五、E 账·巡检连续性（AutoClaw 统一接入层 patrol）")
@@ -249,12 +251,21 @@ def main():
     if not force:
         # 日期守卫：非 8/22 静默退出（crontab 年触发语义）
         if (now.year, now.month, now.day) != TARGET_DATE:
+            # 2026-10-11 消静默（内部台账·转派单①）：rc 仍 0（crontab 不告警·年度语义不变），
+            # 但手动/他端跑必须有可见输出——原 rc=0 零输出="静默失效"家族同病（无输出≠无问题）
+            print(f"⏭️ 非对账触发日（年度触发日=08-22·今天 {now:%m-%d}）·跳过对账——不产出报告；手动出报告：--force（--out 指定落点）")
             return 0
         # 幂等：报告已存在则跳过
         if os.path.isfile(REPORT_PATH):
+            print(f"⏭️ 对账报告已存在（幂等跳过）：{REPORT_PATH}；重出报告：--force --out <落点>")
             return 0
 
     report = build_report()
+    # 2026-10-11 消静默（转派单①·Qoder 验收判据"stdout 必须显式报缺源行"）：缺源信息原只进报告
+    # 文件（stdout 恒为"✅已产出"）——现同步打到 stdout，缺源一眼可见
+    missing = [ln.strip() for ln in report.splitlines() if "⚠️缺数据" in ln or "**缺数据**" in ln]
+    for ln in missing:
+        print("⚠️ 缺源行：" + ln.strip("| ").split("|")[0].strip().lstrip("- "))
     dest = out or REPORT_PATH
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with open(dest, "w", encoding="utf-8") as f:

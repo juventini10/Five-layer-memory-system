@@ -60,7 +60,7 @@ from create_skeleton import (
 )
 
 # 概念进料 log 路径改用 dbenv 解析（破除沙箱 HOME 污染）
-FED_LOG = dbenv.HOME / "[记忆共享中心]" / "开发工具" / "知识联邦引擎" / "log.md"
+FED_LOG = dbenv.HOME / "[记忆共享中心]" / "知识联邦引擎" / "log.md"  # 2026-10-10 真源指针修复：进料门禁改读写方实落的引擎侧(10-07换真源纪律延伸·10-09 write_history登记欠账)
 
 # === 常量 ===
 REQUIRED_SECTIONS = [

@@ -5,7 +5,7 @@ date: 2026-09-13
 summary: 三明智回访闭环唯一数据源——待回访登记/回访结果/偏差归因单一真相源
 source: 技能配置/triwich/references/decision-room.md
 complies_with: 文件格式规范 v2.4.0
-version: v0.4.2
+version: v0.4.3
 author: 皮叔
 tags: [三明智, 决策卡, 回访, 台账, G2]
 related: ../../自定义层/待完成工作/三明智4.0-决策卡schema定稿.md

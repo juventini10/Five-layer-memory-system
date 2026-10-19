@@ -25,6 +25,7 @@ MAX_CHECK = 15
 
 def main():
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         payload = json.loads(sys.stdin.read() or "{}")
     except Exception:
         return 0

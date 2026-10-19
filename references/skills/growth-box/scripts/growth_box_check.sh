@@ -205,9 +205,11 @@ antibody_total=0
 #   v1.8 起：提取口径 + 六项门禁判定（C1空/C2多行/C3语法/C4恒真/C5相对路径/C6重复）全部归 gate。
 GATE_PY="[记忆共享中心]/技能配置/growth-box/scripts/antibody_gate.py"
 PYBIN=""
-for c in "$(command -v python3 2>/dev/null)" /usr/bin/python3 /usr/local/bin/python3; do
+for c in "$(command -v python3 2>/dev/null)" /usr/bin/python3 /usr/local/bin/python3 /opt/homebrew/bin/python3; do
   if [ -n "$c" ] && [ -x "$c" ]; then PYBIN="$c"; break; fi
 done
+# 跨平台补齐（2026-10-13）：ARM Homebrew（/opt/homebrew）入候选链 + Windows py launcher 兜底
+[ -z "$PYBIN" ] && PYBIN="$(command -v py 2>/dev/null || true)"
 
 if [ -z "$PYBIN" ] || [ ! -f "$GATE_PY" ]; then
   echo "  ⚠️ 抗体门禁不可用（antibody_gate.py 或 python3 缺失）——跳过抗体扫描（显式降级·不静默）"

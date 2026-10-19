@@ -29,9 +29,11 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>HOME</key>
-        <string>$HOME</string>
+        <string>{USER_HOME}</string>
         <key>PATH</key>
         <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>AMBER_MC</key>
+        <string>[记忆共享中心]</string>
     </dict>
 </dict>
 </plist>

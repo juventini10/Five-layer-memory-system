@@ -21,6 +21,10 @@ v1.2（2026-10-06·Qoder CN 童灵·W1兑现对账链根治·任务卡 2026-10-0
      （SubagentStop 案已开过这条路·transcript_reader 单一真源，import 失败静默降级=保守放行）。
   ③ --self-test 夹具：串会话必被过滤/会话级 honored/跨端触发必被过滤/空载荷 transcript 兜底 负例。
   ④ v1.2.1（2026-10-06·ZCode 端 SSOT 归一轮补）：自测夹具 T 补 🔏 全件形态——同日 _d3_ritual_full_ordered 升级后原夹具（无 TSL 标记）C2/C5 必红（7/7 不可达）；判定逻辑零变更·仅测试件对齐。
+v1.2.2（2026-10-16·Qoder CN 童灵·G12-R1 钩子迁移期兼容根治）：main() else 分支由
+  usage+sys.exit(2) 改「stderr 兼容警告 + 默认 mode_check(text)」——宿主 Stop 快照跑旧命令形
+  （无 --check 带杂参）不再 exit(2)，病灶①「每轮重复不可行动真崩报警」从源头消解。
+  ⛔判定逻辑零变更（fallback 落原 --check 语义）；strict usage 只留交互式误用的纪律回流 01规范。
 ── 存量定谳（pre-fix 红=存量，消费侧 cutoff 不计新增报警·先例=qodercn_config_guard v0.14）──
 cutoff=2026-10-06T08:52（本修落盘时刻·各端以本端挂载适配完成时刻为各自 cutoff）
 逐端红存量与真假机械分类（取数脚本 qoder-cn-work/steps/w1_stock_adjud/sample3_20261006）：
@@ -38,6 +42,7 @@ cutoff=2026-10-06T08:52（本修落盘时刻·各端以本端挂载适配完成�
 try:
     import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import json
 import re
@@ -184,7 +189,7 @@ W1_PROOF = "童灵上岗"
 THIS_SRC = _SRC   # 端标识跟随 --src（2026-09-11 端中立参数化）
 
 
-_DLZ_SSOT_SPEC = os.path.join(os.path.expanduser("~"), "~/个人AI档案", "数字分身", "童灵·人格规格书.md")
+_DLZ_SSOT_SPEC = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "数字分身", "童灵·人格规格书.md")
 
 
 def _identity_anchors():
@@ -553,8 +558,12 @@ def main():
     elif "--check" in args or not args:
         mode_check(text)
     else:
-        print("用法: doenglingz_guard.py [--check|--report|--selfcheck|--text <text> [--sid <会话id>] [--src <端名>]]", file=sys.stderr)
-        sys.exit(2)
+        # v1.2.2（2026-10-16 G12-R1 根治）：宿主 Stop 缓存态可能以改址前旧命令形调用（带杂参、无 --check），
+        # 旧 usage sys.exit(2) 会被 config guard 判「钩子真崩」——迁移期每轮重复的不可行动报警（病灶①）。
+        # 判据：无人值守调用路径必须 fallback——stderr 兼容警告 + 默认按 --check 执行；
+        # strict usage exit 只留给交互式误用（真源=01规范 R4 回流条款）。
+        print("[doenglingz_guard] ⚠️ 兼容警告：未识别参数形态 %s —— 迁移期向后兼容，按 --check 默认执行；请更新宿主挂载命令（G12-R1）" % " ".join(args), file=sys.stderr)
+        mode_check(text)
 
 
 if __name__ == "__main__":

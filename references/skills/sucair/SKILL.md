@@ -1,7 +1,8 @@
 ---
 name: sucair
 description: >
-  读书助手——AI替你读，系统逼你学。当用户说"读这本书/帮我做笔记/帮我做读书笔记/提炼这本书/拆解这本书/这本书的精华/蒸馏这篇文章/提炼这篇文章/把这篇做成卡片/把这篇加进知识库/把这段归档/归档到知识库/蒸馏这个/知识包/读书助手/5分钟精华"时使用。
+  读书助手——蒸馏/读这本书/做笔记/提炼/拆解/精华/知识包。AI替你读，系统逼你学。
+  触发词：蒸馏这本书/蒸馏这个/蒸馏这篇文章/读这本书/帮我做笔记/帮我做读书笔记/提炼这本书/提炼这篇文章/拆解这本书/这本书的精华/把这篇做成卡片/把这篇加进知识库/把这段归档/归档到知识库/知识包/读书助手/5分钟精华。
   单线程引擎：读一本书或一篇文章→生成知识包（精华+永久卡片+题库，按来源类型分档）→写入Obsidian知识池。
   不负责执行提醒/复习/分析——消费端由日记、Shall We Talk、月报各自触发。
   NOT for 纯闲聊、纯代码编辑、写书评/读后感（那是创作）。
@@ -12,7 +13,7 @@ dependencies:
     version: "1.6.2"
     note: "前置配套——深度对话结束时同步读书成果到认知发现；钩子#11卡片质证回写；「阅读复习模式」消费 {书名}-题库.md（v4.7.0 消费边）"
   - name: daily-buddy
-    version: "3.50.0"
+    version: "3.51.6"
     note: "前置配套——读书笔记写入Obsidian知识池，由日记/月报消费端触发复习"
 python_dependencies:
   - name: markitdown
@@ -25,9 +26,9 @@ python_dependencies:
     fallback: "缺失时 URL 抓取不可用——脚本报错提示安装，改存本地文件再蒸"
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/sucair/
+upstream: [记忆共享中心]/技能配置/sucair/
 modifiable: true
-version: "4.11.0"
+version: "4.14.2"
 license: MIT
 complies_with: 文件格式规范(⛔不写版本号·以源 frontmatter 为唯一真相源=#142)
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
@@ -178,7 +179,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 | 触发词 | 场景 |
 |--------|------|
-| "读这本书" / "提炼这本书" / "帮我做读书笔记" / "帮我做笔记" / "读书助手"（直呼Skill名） | 用户提供书籍文件路径，请求生成知识包 |
+| "读这本书" / "蒸馏这本书" / "提炼这本书" / "帮我做读书笔记" / "帮我做笔记" / "读书助手"（直呼Skill名） | 用户提供书籍文件路径，请求生成知识包 |
 | "拆解这本书" / "知识包" | 用户要求将书籍拆解为知识颗粒 |
 | "这本书的精华" / "5分钟精华" | 用户请求书籍精华摘要 |
 | "蒸馏这篇文章" / "提炼这篇文章" | 用户提供文章文件路径或 URL（source_type=article-long/article-short） |
@@ -215,6 +216,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 - [ ] 每张卡片正文≤600 字（**机检真源=note_validator.CARD_BODY_MAX**·config.yaml 分档表为人类可读投影·改数两处同步·2026-09-01 清零批#8；机检兜底：check_body_length 生成自检+lint 双生效——一卡一概念一页看完）？
 - [ ] 题库由三明智涌现（题型结构：书=默写/应用/逻辑链，题数按内容密度涌现，无题数硬上限；短文/推文串不出题）？
 - [ ] 去重合并门已过（Step 2.0：ADD/MERGE/SKIP 已计数，⛔无静默SKIP）？
+- [ ] 新卡 kb_no 已入台账（--sync 后 map↔卡双向对账零缺口·Z族四位数）？
 - [ ] note_validator 机检零违规（`python scripts/note_validator.py <05-知识池>`——含 frontmatter + 卡片正文≤600 字）？
 - [ ] references/eval-set.md 全量回归通过（G2回归条款·v4.11.0 自动载体：`cd scripts && python3 -m unittest test_sucair` exit 0=11例全绿；⛔人工核不再作为G2达标形态）？
 - [ ] G 系列编号声明（2026-08-11 复审补）：G2=回归条款/G4=实体归一 已启用；G1/G3 未启用（编号保留——⛔不得无声明引用 G1/G3）？
@@ -233,13 +235,51 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 📦 **产出物**：完整加载的源内容 + source_type 判定结果
 
 🔌 熔断器
-├─ 成功条件：文件可读（或 URL 可抓取）且内容长度>0 + source_type 已判定
+├─ 成功条件：（文件可读且内容长度>0 **或** 扫描件分支完成（A 路含结构闸表+异常页复核 / B 路含抽检闸））且 source_type 已判定
 ├─ 失败处理：中止
 ├─ 可修正参数：源文件路径/URL → 检查格式(书:PDF/EPUB/TXT·文章:MD/TXT/HTML/URL)和拼写
 ├─ 重试次数：1
-└─ 降级方案：报告源不可用，建议用户检查格式；URL 抓取失败→请用户存成本地文件
+└─ 降级方案：报告源不可用，建议用户检查格式；URL 抓取失败→请用户存成本地文件；扫描件结构闸异常页 >5% 或抽检连续 2 批不过→停下报告你（⛔不硬凑）
 
 > 路径配置、质量阈值和 **source_type 分档表**见 `references/config.yaml`。启动时 Read 一次——输出路径、卡片数量、精华 per-element 结构护栏均以此为准（精华字数/题库数量由内容涌现，无总字/总题硬上限）。
+
+0. **源可读性探测（PDF 必做·2026-10-17 补）**：`pdftotext -f 1 -l 5 <源> - | wc -c`——取**前 5 页**而非 1 页，因为封面/图版页会误判。≥500 字节 → 有文本层，走第 1 步原流程；≈0 字节 → **扫描件**，走 0.1。
+
+   0.1 **扫描件分支（两条路·先探测再选路·2026-10-17 重构）**：
+
+   > 为什么分两条路：素裁本体是纯 markdown 说明书，**不含任何 OCR 依赖**。分享给别人时对方不装 RapidOCR 也能跑（走 B 路，慢），装了就走 A 路（快约 20 倍）。硬依赖会让 Skill 在别人机器上直接瘫。
+
+   **0.1.0 能力探测（必做·先探再选）**：`python3 scripts/ocr_scan.py --probe`
+   ├─ 输出 `OCR_ENGINE=rapidocr` → 走 **A 路**（快路·推荐）
+   └─ 输出 `OCR_ENGINE=none` → 走 **B 路**（视觉转写·零依赖）
+   ⛔DO NOT 不探测就默认 A——用户端未装时会在第一批静默失败。
+
+   > **A 路依赖（可选·不装则自动走 B 路）**：`pip install rapidocr-onnxruntime`（模型内置在 wheel 里，不用另下模型，约 80MB）。已装在独立环境的用环境变量指过去：`export SUCAIR_OCR_PYTHON=<该环境>/bin/python`。脚本会自己切解释器，不用改代码。
+
+   **A 路（快路·需 RapidOCR）**
+   a1. `python3 scripts/ocr_scan.py --pdf <源> --out {书名}-OCR全文.txt`（默认 300dpi；脚本内部完成：转图→OCR→行序还原→括号/破折号/圈码归一→专名纠错→写 `[页 N]`→出结构闸表）
+   a2. **关键参数 `use_cls=False`（脚本已写死·⛔别改）**——这是 p22 整行漏检的**真凶，不是 DPI**。同一张 200dpi 图：`use_cls=True` 漏掉（26 框），`use_cls=False` 读到（27 框）。最初误判成"200dpi 漏行"，是把方向分类器阶段的干扰算到了 DPI 头上（v4.14.0 内已纠正，CHANGELOG 有记录）。
+   a3. **DPI 300（默认）/ 200（省磁盘）**——7 页实测 CER：200dpi 1.45% / 300dpi 1.51%，**相当**。300 是给其他书更小字号留余量；`--dpi 200` 省约 30% 磁盘。
+   a4. **结构闸**：同目录 `{书名}-OCR全文-结构闸.md`
+      - **阻断**（必须复核后才入 C1）：空页 / 双跑差异非空
+      - **△ 提示**（看一眼即可）：缺页码 / 缺页眉 / 几何少行——半页（章节尾）天然缺页码，不是错
+      - ⛔DO NOT 用"行数偏离中位数 30%"当判据：v1.0.0 实测在 7 页样本上误报 6 页，且单行漏检只造成 4.5% 偏离、根本抓不到。该判据已废。
+   a5. **闸表抓不到什么（如实标注）**：单字识别错误——「陈赓」被读成「陈赛」，同一模型两次跑都错一样，双跑抓不到。那类只能靠 `references/ocr-corrections.json` 纠错表 + 抽检 3 页硬项。
+   a6. **阻断页处置**：用 B 路视觉转写复核该页并回填。双跑差异行**不代表哪边对**，必须回原图裁决。
+      - 裁决方法（实测有效）：`pdftoppm -r 500` 重渲染该页 → PIL 按字位裁剪 → 放大 4-8 倍。**200dpi 下形近字（迂/迁、赓/赛）根本分不出来，500dpi 才看得清右半是「于」还是「千」**。
+      - 绕开 Read 图片按内容哈希去重：裁剪出新图即新内容；同一张图换路径重读会被判「unchanged」。
+      - 确认后的错字**沉淀进 `references/ocr-corrections.json`**，下本书自动生效——这是 OCR 路线比视觉转写多出来的复利。
+
+   **B 路（兜底·零依赖）**
+   b1. `pdftoppm -r 300 -png <源> <输出前缀>` 转图（300 为默认；200 实测 CER 相当，300 只是给更小字号留余量——**别再把"200dpi 漏行"当理由，那是把 `use_cls` 的锅算到 DPI 头上，v4.14.0 已纠正**）
+   b2. 分批视觉转写 → 落盘，保留 `[页 N]` 分页标记
+
+   **0.1.9 共用收尾（两路都必做）**
+   - **抽检闸**：随机抽 3 页与原图逐字对照，硬项=人名/地名/数字/年份 + `references/ocr-corrections.json` 的 `proper_nouns_watch` 清单——硬项全对→通过；有实质错字→该批重做；连续 2 批失败→停下报告你
+   - **溯源锚**一律用 PDF 页码；书内印刷页码 = PDF 页码 − 偏移量（偏移量由目录页实测确定，写进 C1 清单首部）
+
+   0.2 **降级路径（A/B 两路都不可用时才启用）**：无多模态读图能力 **且** 无 OCR 引擎时，才用 `tesseract <图> <输出> -l chi_sim` 或人工誊抄 → **必须留痕**：卡片 frontmatter 加 `ocr_quality: degraded`，精华摘要顶部加一行降级声明。⛔DO NOT 降级后不标——降级不是错，假装没降级才是。
+   > **环境实测（2026-10-17）**：tesseract 在 WorkBuddy 沙箱内读不了图（PNG 8-bit RGB 标准图与转 JPEG 同样报 `Image file ... cannot be read`）→ **本机此路不可用**。此处如实标注，避免把它当成"反正还有 tesseract 兜底"的假保险。
 
 1. 格式归一化：书按原格式读；URL 或非 MD 格式跑 `python3 scripts/fetch_source.py <URL或文件> [输出.md]`（crawl4ai/markitdown 本地执行，⛔不用云服务外发——隐私底线；依赖缺失时 .md/.txt 直读降级、URL 报错提示安装——见 YAML python_dependencies 声明）
 2. 字数测量（确定性·脚本或字数统计）→ 按 config.yaml 分档表判定 source_type（book/paper/article-long/article-short/thread）
@@ -258,6 +298,8 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ✅DO 穷举时按「知识三分法」给每条标注类型（R1·v4.8.0 吸收《费曼学习法》卡片14-内容留存率与知识三分法）：**生长知识**（核心概念·重点学→必产卡）/ **模块知识**（结构化工具/框架·按需调用→产卡或并入相关卡）/ **碎片知识**（孤立事实·转瞬即逝信息→⛔DO NOT 产卡，防知识池堆垃圾）。落盘清单时碎片项单列「碎片-不产卡」区，不进入 Step 2.0 写卡范围。原因：C1 求"全"（不漏概念），写卡求"精"（不堆垃圾），三分法是在二者间设的 Poka-Yoke 过滤门——与 §一1.1「先问能否设计消除错误」同源。
 
 4. ✅DO 清单落盘为独立文件——书：`05-知识池/{书名}/{书名}-C1穷举清单.md`；文章/论文/推文串：`05-知识池/文章卡片/{源标题}-C1穷举清单.md`（无 frontmatter 纯文档，note_validator 自动跳过；文章流落盘路径 2026-09-01 Loop评估#9补位）——原因是 C1 清单是 Step2.0 的物理锚点：不落盘=不可验证=与"未穷举"不可区分（2026-08-17 千面英雄蒸馏实证：清单只在对话中存在，无独立产出物）。
+5. ✅DO 清单首部强制声明「源读取方式」（2026-10-17 补·同日扩展）——四选一：`pdftotext 直读` / `RapidOCR 300dpi（结构闸 N 页 ⚠️ 已复核·抽检 3 页全过）` / `视觉转写（抽检 3 页全过）` / `tesseract 降级`。原因是让"这本书是怎么读进来的"可追溯：第四卷 C1 清单已自发写了这一行（"Vision 中文 OCR"），现升为强制项——源读取方式不可追溯 = 卡片溯源锚的可靠性无从判断。走 A 路时须连结构闸的异常页数一并写出，否则"结构闸跑过了"这句话不可验证。
+
 🔌 门禁：清单非空 + 每条约有原文依据（章节定位）。⛔DO NOT 没列清单就直接「按 N 张生成」；⛔DO NOT 凭空凑数/注水（每张卡须是 C1 枚举出的独立原子概念、100%基于原文——防注水靠 C3 验证，不靠数字上限）。
 
 > **三明智固化引用（clock-loop 范式）**：C1=第一性原理拆解 / C2=Step 2.0 抽象建模归并 / C3=批判验证自检。只取思维检查点嵌入流程关键位，不跑 triwich full-flow。
@@ -340,7 +382,7 @@ complies_with: 笔记schema v1.0.0
 
 > **设计变更（v3.2.7 · 三明智 L3 双 Agent 评估驱动）**：废除原 v3.2.6 双态设计（模式A概念理解卡 + 模式B立场依据卡）。改为 **单态渐进模型**——一张 Zettelkasten 卡 = 理解 body + **可选**立场 frontmatter 字段组。立场字段不在首次生成时填写，在后续使用中按信号加权门控逐步追加。设计依据：认识深度是连续光谱，不该用二进制状态建模。
 >
-> **frontmatter 合规**：永久卡片按《读书卡片schema v1.3.1》(type: reading-card) 填——下方模板已合规，⛔DO NOT 退回旧式裸字段。
+> **frontmatter 合规**：永久卡片按《读书卡片schema v1.3.4》(type: reading-card) 填——下方模板已合规，⛔DO NOT 退回旧式裸字段。
 
 ```markdown
 ---
@@ -361,7 +403,8 @@ source_count: 1           # MERGE 时 +1（Step 2.0）
 trigger_scene: 何时该想起来用它   # 选填·与 card_type 正交
 book: 《书名》            # source_type=book 时填（兼容别名）
 book_author: 作者         # source_type=book 时填（兼容别名）
-card_id: {source_title}-卡片{N}
+card_id: {source_title 去空白}-卡片{N}    # v1.3.3：值内禁一切空白（半角/全角）·builder 源头清洗+机检拦截
+kb_no: #Z1208            # 知识卡机器编号（Z族·写卡前 assign_kb_no.py --allocate 领号·⛔DO NOT 手编/重号·显示面不用）
 topic: [主题标签]
 card_type: 概念/方法/模式/反直觉/数据   # 现有五值枚举不动（D7拍板）
 reading_status: L1        # L1=AI已提炼/L2=你已阅读/L3=已应用/L4=已内化（详见下方 reading_status 四级表）
@@ -373,7 +416,7 @@ related: [[相关概念]]     # 选填·双链（填指引：碰撞/引用过的
                           # （YAML 把 [[ 当非法内联列表），会导致检索端解析整卡崩、丢索引。
                           # 正确做法：related 以 list 传给 build_card_frontmatter(related=[...])，
                           # 由 dump_frontmatter 序列化为合法字符串 `related: "[[A]] [[B]]"`。
-complies_with: 读书卡片schema v1.3.1
+complies_with: 读书卡片schema v1.3.4
 # ═══ 以下立场字段为可选 —— 首次生成不填，按下方信号加权追加 ═══
 # stance_main_contradiction:                 # 浅立场起点①：核心张力
 # stance_position:                           # 浅立场起点②：一句话可操作立场
@@ -421,6 +464,8 @@ complies_with: 读书卡片schema v1.3.1
 
 **关联卡片**：[[卡片00X]] [[卡片00Y]]
 ```
+
+✅DO 写卡前先领机器编号：跑 `python3 scripts/assign_kb_no.py --allocate <卡数>` 取连续 #Z 号（读台账 max+1·只读不改账），逐卡传入 build_card_frontmatter(kb_no=...)——kb_no 为 schema v1.3.2 必填，缺号=机检物理拦截。
 
 ✅DO 写入每张卡片前用 `scripts/note_validator.py::validate_card_full(fm, body)` 自检（frontmatter + **正文 ≤600 字** 双校验，不合规=物理拦截，不写脏文件）；写完后跑 `python scripts/note_validator.py <05-知识池目录>` 机检兜底（产物零违规才算交付·YAML 合法性由 `note_validator.py::_yaml_hardcheck` 以 yaml.safe_load 权威裁判）。正文超限检查为定值式防错（2026-08-17 加·2026-09-01 清零批#8 真源反转：机检真源=note_validator.CARD_BODY_MAX 常量，config.yaml 分档表=人类可读投影，改数两处同步；`check_body_length` 单源实现）——生成即自检②与产物机检③双生效，⛔DO NOT 只查 frontmatter 不看正文。校验脚本位于本 Skill 真源 `scripts/` 目录（2026-08-07 迁入），是「规则单源」——改合规规则只动 `scripts/note_validator.py` 一处。
 
@@ -532,6 +577,7 @@ question_count: N
 | YYYY-MM-DD | 文章标题 | article-long | 3 | [精华](文章卡片/{源标题}-精华.md) | AI已提炼 |
 ```
 4. 标注新旧卡片之间的双向链接
+5. 编号登记：跑 `python3 scripts/assign_kb_no.py --sync`——池内缺号卡补插 #Z 号、重跑 kb_no_map.py 刷台账、输出 map↔卡双向对账；⛔DO NOT 静默跳过（缺号=台账归一失明）
 
 ✅DO在写入完成后Read验证全部 ADD 卡片文件存在（书按 C1 枚举涌现数量·⛔不硬编码任何数字上限；非书同此原则）。☑SHOULD验证INDEX.md已更新。
 
@@ -646,10 +692,11 @@ question_count: N
 | `academic-sources.md` | 学术来源与参考映射表（7条） | 设计溯源时 |
 | scripts/note_validator.py | 合规「规则单源」：笔记/卡片 frontmatter 校验 + 卡片正文≤600字（check_body_length·2026-08-17）+ 题库校验（validate_quizbank·v4.7.0）+ 产物机检（lint）+ 条件必填（source_type 驱动）+ INDEX 一致性校验（--index-check） | 写入前自检/写后机检 |
 | scripts/dedup_recall.py | Step 2.0 确定性召回：category+tags 交集检索（G4实体归一内置） | Step2.0写卡前 |
+| scripts/assign_kb_no.py | kb_no 机器编号发号与台账同步（--allocate 领号 / --sync 补漏+刷账+对账） | Step2.2领号 / Step3写入后 |
 | scripts/fetch_source.py | Step 1 格式归一化：URL抓取(crawl4ai本地)+文件转MD(markitdown)，⛔不走云服务 | Step1源为URL/非MD格式时 |
 | tests/ | 触发词正负例用例（trigger-positive.md / trigger-negative.md·v4.2.0 建） | 触发判定验证时 |
 
-> 类型专属 schema（`笔记schema.md` / `读书卡片schema.md`）位于 `~/[记忆共享中心]/记忆蓝图/03_开发规范/schemas/`，是笔记/卡片 frontmatter 的合规权威源（层3）。`scripts/note_validator.py` 的 `NOTE_FIELDS` / `CARD_FIELDS` 是机器真源，字段集与这两份 schema 一一对应；reading_status 值域 L1-L4 由 schema 约束（全 Skill 通用互操作），业务语义以本文件「reading_status 四级」表为准（2026-08-12 你拍板统一：schema=What，Skill=What-it-means——schema 侧旧语义"未读/在读/精读"已清除）。读书卡片schema 当前版本为 v1.3.1（2026-09-01 增可选 `verified` 字段=CONFLICT 人工复核载体·清零批#11；含立场扩展层·单态渐进模型 + 源泛化：source_type 分档 book/paper/article-long/article-short/thread）。**题库 schema 权威源已落地**：`记忆蓝图/03_开发规范/schemas/题库schema.md` v1.0.0（2026-09-01 清零批#3·此前四处引用悬空）。
+> 类型专属 schema（`笔记schema.md` / `读书卡片schema.md`）位于 `[记忆共享中心]/记忆蓝图/03_开发规范/schemas/`，是笔记/卡片 frontmatter 的合规权威源（层3）。`scripts/note_validator.py` 的 `NOTE_FIELDS` / `CARD_FIELDS` 是机器真源，字段集与这两份 schema 一一对应；reading_status 值域 L1-L4 由 schema 约束（全 Skill 通用互操作），业务语义以本文件「reading_status 四级」表为准（2026-08-12 你拍板统一：schema=What，Skill=What-it-means——schema 侧旧语义"未读/在读/精读"已清除）。读书卡片schema 当前版本为 v1.3.1（2026-09-01 增可选 `verified` 字段=CONFLICT 人工复核载体·清零批#11；含立场扩展层·单态渐进模型 + 源泛化：source_type 分档 book/paper/article-long/article-short/thread）。**题库 schema 权威源已落地**：`记忆蓝图/03_开发规范/schemas/题库schema.md` v1.0.0（2026-09-01 清零批#3·此前四处引用悬空）。
 
 > 本 Skill 是 **五层记忆系统 · 布洛陀版本 v1.0** 的一部分
 > 设计者：皮叔 | 开源协议：MIT

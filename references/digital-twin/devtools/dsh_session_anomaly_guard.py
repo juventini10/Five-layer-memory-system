@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 dsh_session_anomaly_guard.py — DSH 会话层异常检测守卫（跨工具中立·Stop Hook）
@@ -35,6 +31,11 @@ dsh_session_anomaly_guard.py — DSH 会话层异常检测守卫（跨工具中�
   - 真相所有权（守卫原则1）：transcript 格式契约+DEFAULT_SECTIONS 住在插件本体（index.js），本脚本 import/解析，⛔不内联
   - 负例证据（守卫原则3）：3 类故障均配造错测试（self-test）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import argparse
 import json
 import os

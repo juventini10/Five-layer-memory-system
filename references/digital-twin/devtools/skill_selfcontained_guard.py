@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 skill_selfcontained_guard.py —— Skill 自包含守卫（跨目录引用机械体检）
 Version: 1.0.1 (2026-09-15)
@@ -14,7 +10,7 @@ Version: 1.0.1 (2026-09-15)
   人工判读不可持续（实测：初扫命中 30+ 处，其中真引用与测试样本混在一起）→ **机制化**。
 
 判据（机械·可判定）：
-  ① 越界路径引用 = 文本中出现 `[记忆共享中心]/脚本中心` / `~/[记忆共享中心]/发布库` / `技能配置/<别的Skill名>`
+  ① 越界路径引用 = 文本中出现 `[记忆共享中心]/脚本中心` / `[记忆共享中心]/发布库` / `技能配置/<别的Skill名>`
   ② **合规豁免**（四类，逐条机械可判）：
      - **声明豁免**：该 Skill 内有「依赖清单」节（标题含 依赖/自包含/发布自包含），且该路径出现在该节内
      - **样本豁免**：命中行处于测试/样本上下文（含 样本|示例|夹具|正例|负例|selftest|_test|tests/ 等标记）
@@ -31,6 +27,10 @@ Version: 1.0.1 (2026-09-15)
   python3 skill_selfcontained_guard.py --json     # 结构化
   python3 skill_selfcontained_guard.py --check    # 仅 alar m 行（供 registry_guards 契约）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import os
@@ -44,10 +44,10 @@ SKILL_ROOT = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "技�
 # v1.0.1：排除类补 `}`——shell 变量展开 `${VAR:-~/…/布洛陀-安装包}` 的闭合花括号曾被吞进路径，
 # 产生 `布洛陀-安装包}` 脏命中（把 Skill 文本改写去迁就正则瑕疵=尾巴 wagging the dog，修正则）。
 OUTSIDE_RX = re.compile(r"(?:~|\$HOME)?/?个人AI档案/(?:开发工具|发布库)[^\s`'\"|)）}]*")
-OTHER_SKILL_RX = re.compile(r"~/[记忆共享中心]/技能配置/([^/\s`'\"|)）]+)")
+OTHER_SKILL_RX = re.compile(r"[记忆共享中心]/技能配置/([^/\s`'\"|)）]+)")
 SAMPLE_RX = re.compile(r"样本|示例|夹具|正例|负例|selftest|_test|tests/|test_|实测形态|形态样本")
 # frontmatter 元数据行豁免：upstream/source/related 等字段是**描述性元数据**（说明本 Skill 的真源或关联），
-# 不是运行时路径引用——2026-09-15 实测 `upstream: ~/[记忆共享中心]/技能配置/（皮叔 Skill 真源）` 被误报（第 5 例）。
+# 不是运行时路径引用——2026-09-15 实测 `upstream: [记忆共享中心]/技能配置/（皮叔 Skill 真源）` 被误报（第 5 例）。
 FM_RX = re.compile(r"^\s*(upstream|source|related|compatibility|dependencies|modifiable|author|allowed-tools):")
 DECL_RX = re.compile(r"^#{1,4}.*(依赖|自包含)")
 
@@ -156,7 +156,7 @@ def scan_skill(name, path):
             other = [m for m in OTHER_SKILL_RX.findall(line) if m != name]
             if other:
                 for o in other:
-                    paths.append("~/[记忆共享中心]/技能配置/%s" % o)
+                    paths.append("[记忆共享中心]/技能配置/%s" % o)
             if not paths:
                 continue
             if SAMPLE_RX.search(line):

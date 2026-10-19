@@ -112,5 +112,7 @@
 
 ---
 
-- 答毕后将答案交回 ZCode：按官方计分键（ScoringKeys_100.pdf）机械算分，产出六维+facets 分数（含反向题换算）
+- **算分口径（如实说）**：本卷的官方计分键随包在同目录 `ScoringKeys_100.pdf`。⛔ 本包**目前不提供**"AI 按 PDF 手算"的保证——让模型读 PDF 再手算 100 个反向换算，与自建卷当年的病同型（E2E 实测：AI 手抄 96 个数首轮就错 2 题）。
+  - 自建 100 题（性情底色主用这份）：跑随包脚本 `hexaco_selfbuild_scorer.py`，确定性、可复算（用法见 INSTALL.md 养成链 D2 行）。
+  - 官方 100 题（校准对照用）：跑随包脚本 `hexaco_official_scorer.py "<官方答卷.json>"`（2026-10-15 建成）——键表 `hexaco_official_keytable-100.json` 系从同目录 `ScoringKeys_100.pdf` 机器派生（头含 PDF sha256 溯源，每次计分自动核，PDF 被动过即拒算），⛔ 手抄键表／AI 心算。自检 `--selftest`，重建键表 `--build-keytable`（需 pdftotext）。
 - 施测建议：一次坐完（约20分钟），凭第一反应作答，不反复推敲——推敲会把"应该的我"混进"实际的我"

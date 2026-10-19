@@ -16,7 +16,10 @@
 #   ./reuse_check.sh --all                      # 扫全端已登记守卫清单对照
 set -uo pipefail
 
+# 端限定声明（2026-10-12 O7 裁决·条文57）：①② 端中立全端通用；③④ Hermes 专属探测——非 hermes 端优雅降级（③显"✅ 无"、④逐件静跳过），不报错不假绿。
+
 DEV="${BULUOTUO_DEVTOOLS:-[记忆共享中心]/脚本中心}"
+SIB="${BULUOTUO_SIBLING_DIR:-$(dirname "$DEV")/开发工具}"   # O7修复2026-10-12·恢复 v2 双路扫描（$SIB 曾被占位误伤成残引）
 RED=0
 
 if [ "${1:-}" = "--all" ]; then
@@ -32,7 +35,7 @@ echo "=== 落手前同类件核查：$TARGET ==="
 
 # ① 本端脚本中心/开发工具 下是否已有同名或同类件
 echo "--- ① 同名件 ---"
-SAME=$(find ""/脚本中心" ""/脚本中心" \
+SAME=$(find "$DEV" "$SIB" \
        -maxdepth 2 -name "$TARGET" 2>/dev/null)
 if [ -n "$SAME" ]; then
     echo "  🔴 已存在同名件："
@@ -42,12 +45,12 @@ else
     echo "  ✅ 无同名件"
 fi
 
-# ② 词干类���件（如 xxx_guard → 找 *_guard.py 全族）
+# ② 词干类族件（如 xxx_guard → 找 *_guard.py 全族）
 STEM="${TARGET%.py}"
 STEM="${STEM##*/}"
 STEM="${STEM%_guard}"; STEM="${STEM%_check}"; STEM="${STEM%_audit}"
 echo "--- ② 同族件（词干=${STEM}）---"
-KIN=$(find ""/脚本中心" -maxdepth 2 \
+KIN=$(find "$DEV" -maxdepth 2 \
       \( -name "*${STEM}*guard*" -o -name "*${STEM}*check*" -o -name "*${STEM}*audit*" \) \
       2>/dev/null | head -10)
 if [ -n "$KIN" ]; then

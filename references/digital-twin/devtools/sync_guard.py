@@ -78,7 +78,7 @@ CORE_FILES = [
     ("核心层/CORE.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "核心层", "CORE.md")),
     ("三大思维白皮书.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆蓝图", "01_思维方法论", "三大思维白皮书.md")),
     ("用户基本规则-铁律版.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆规则", "用户基本规则-铁律版.md")),
-    ("用户基本规则-详解存档.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆规则", "用户基本规则-详解存档.md")),
+    ("用户基本规则-详解存档版.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆规则", "用户基本规则-详解存档版.md")),
     ("用户基本规则-摘要版.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆规则", "用户基本规则-摘要版.md")),
     ("SHADOW.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "潜意识层", "SHADOW.md")),
     ("五层记忆系统.md", os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆蓝图", "00_系统总览", "五层记忆系统.md")),
@@ -254,7 +254,7 @@ GUARD_REGISTRY = os.path.join(os.path.expanduser("[记忆共享中心]"), "记�
 # **匹配器过捕获 → 假阳 → 告警疲劳 → 真错误混在噪音里漏网**（2026-09-10 手抄错的
 # twin_changelog_guard 真相源正是被这堆噪音掩盖而漏网·见 守卫编写规范 §3.0·8 元教训）。
 _REG_PATH_RE = re.compile(r"(?:~/|\[记忆共享中心\]/)[^\s`+()（）／·，。、；;：:]+")
-# 2026-09-20 v1.7.1：占位符形态 ~/个人AI档案/xxx 与 ~/xxx 同权提取，候选归一 ~/（存在性判定时
+# 2026-09-20 v1.7.1：占位符形态 [记忆共享中心]/xxx 与 ~/xxx 同权提取，候选归一 ~/（存在性判定时
 #   expanduser 展开）——发布侧参数化后注册表行不再被静默漏检（只认 ~/ = 占位符行恒不检查=假绿）
 _REG_PATH_TAIL = "。，,.、；;：:`"
 
@@ -308,7 +308,7 @@ def registry_path_selftest():
     cases = [
         ("T1 反引号包裹（单路径·git_commit_safe 档）", "`~/bin/git`", ["~/bin/git"]),
         ("T2 全角斜杠并列两条且中点尾随说明（git_commit_safe 档）",
-         "`~/个人AI档案/.git`／`~/.qoder-cn/.git`·家目录非单仓库故逐文件向上找",
+         "`[记忆共享中心]/.git`／`~/.qoder-cn/.git`·家目录非单仓库故逐文件向上找",
          ["~/.git", "~/.qoder-cn/.git"]),  # 占位符输入→候选归一 ~/ 输出（2026-09-20 v1.7.1）
         ("T3 中点尾随说明（doenglingz_slice_watch 档）",
          "`~/.qoder-cn/rules/doenglingz-core.md`·他端入驻即加行",
@@ -617,7 +617,7 @@ def load_manifest_skills():
                 continue
             src = it.get("src_dir") or ""  # 只认目录条目（src 单文件如 restore-my-skills 不算 Skill）
             if "技能配置" in src:
-                # src_dir 形如 ~/[记忆共享中心]/技能配置/daily-buddy/
+                # src_dir 形如 [记忆共享中心]/技能配置/daily-buddy/
                 tail = src.rstrip("/").split("/")[-1]
                 if tail:
                     skills.add(tail)

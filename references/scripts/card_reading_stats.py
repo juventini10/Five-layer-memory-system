@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 card_reading_stats.py — 立场卡 reading_status 统计数据源（愿景仪表盘·自主进化数据源）
@@ -23,11 +19,15 @@ card_reading_stats.py — 立场卡 reading_status 统计数据源（愿景仪�
   python3 card_reading_stats.py             # 输出 JSON 到 stdout
   python3 card_reading_stats.py --save      # 保存到系统日志目录
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys, os, re, json, glob
 from datetime import datetime, timedelta
 
 HOME = os.path.expanduser("~")
-AILIB_DIR = os.path.join(HOME, "~/个人AI档案", "知识库", "AI学习库")
+AILIB_DIR = os.path.join(HOME, "[日记仓库]", "2-知识库", "09-AI学习库")  # 2026-10-13 C''波次2迁移后路径同步
 INDEX_FILE = os.path.join(AILIB_DIR, "INDEX.md")
 LEDGER_FILE = os.path.join(AILIB_DIR, "引用台账.md")
 SYSLOG = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具/logs/runtime")

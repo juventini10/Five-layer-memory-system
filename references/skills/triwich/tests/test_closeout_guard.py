@@ -31,7 +31,7 @@ import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GUARD = os.path.join(os.path.expanduser("~"), "[记忆共享中心]/脚本中心/triwich_closeout_guard.py")
+GUARD = os.path.join(os.path.expanduser("~"), "[记忆共享中心]/脚本中心/triwich_closeout_guard.py")  # 2026-10-18 顺位2轮修正：10-16 直址化工单残留（guard 真身已迁脚本中心/守卫/，测试引用漏跟·triwich 完整Loop逮出实测断链）
 
 spec = importlib.util.spec_from_file_location("triwich_closeout_guard", GUARD)
 G = importlib.util.module_from_spec(spec)

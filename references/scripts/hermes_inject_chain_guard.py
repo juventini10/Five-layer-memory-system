@@ -38,9 +38,10 @@ Hermes 端收口集群——**只因脚本名含 "guard"**。复核源码 L307-3
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import argparse
 import json
 import os
@@ -60,7 +61,7 @@ INJECT_STATE = os.path.join(HERMES, "doenglingz", "doenglingz_inject_state.json"
 STALE_HOURS = 12
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

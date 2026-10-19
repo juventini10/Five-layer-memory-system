@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# version: v0.26（2026-10-16 Qoder CN 童灵·G12-R2 钩子迁移期兼容根治·病灶②）：新增「窗口内同名崩 首报+静默计数+连续升档再报」判据 `_dedup_crash_round/_dedup_crash_alerts`（函数级·先例=v0.20 _split_alert_tiers）——宿主 Stop 缓存态跑改址前旧命令时，同一 (脚本名,exit码) 崩不再每轮重报不可行动提醒（01规范 L600"狼来了"族第4次同族）；⛔真崩整体判据零放宽：failures/delta 事件数与 report 明细面不动，只并提醒通道，且首报/升档(满10)/异名三必响。双向回归夹具 37a-37h（同名×12→2报；异名混入照报；窗内重扫不双计；24h episode 分档；存储坏保守显形）+变异位 37g 入 MUT 七处。R1 侧（分身守卫 v1.2.2 兼容 fallback）已同卡先行落盘。
+# version: v0.25（2026-10-10 Qoder CN·Stop 守卫自报警取证根治）：`tsl_tree_hook.py` 在 Stop 侧的 exit=2 是其「六改点②·树未贴→stderr注入回踢」设计语义（真机实锤 15:03:35 踢回成功+15:04:14 产树成功），但 DELIVERY_CMD_MARKS 两旧标记（--deliver/" hook"）不匹配其裸命令，分类落到 ④HARD_EXIT_CODES 被误判真崩（liveness CRASH_FAILURES 含此一条）。修法=标记加 "tsl_tree_hook.py" 具名扩面——⛔不放宽 Stop 整体：用例 27f 双向回归（本钩子判 delivery + 他裸命令 Stop exit2 照判 crash）。真崩证据优先路（CRASH_EVIDENCE_RE）不动。
+# version: v0.24（2026-10-10 Qoder CN·皮叔令「按符合愿景最优解推进」·同轮登记教训第六次重演后的销账侧根治）：新增 `absorb` 子命令——未登记实挂的「在盘/git台账/系统日志」三证由人工逐条改为脚本机械核验，三证齐者 --commit 落 baseline_ext.json（外置登记面·⛔不自我改写代码·删文件即回滚·check/liveness/_match 延迟合并 ext 账·自测经 QCN_BASELINE_EXT 指空文件保持全封闭）；三证不齐=REJECT 保持报警不洗白（判据⛔不放宽·v0.9「收编非放宽」口径的机械化）。本文件 L207 挂账的「挂载侧拒落笔」仍未落地（需产品写入闸·超守卫能力边界·如实注记）。真机验证：fixture 正例PASS+落账check转OK+负例REJECT rc1+自测全绿。
+# version: v0.23（2026-10-10 Qoder CN·Stop 守卫「多余1」报警处置）：BASELINE 的 PreToolUse 收编 `skill_onduty_tier_promote.py`（恒驻核首落壳任务 10-10 12:26 挂载·matcher=Skill·登记未同轮，本文件自己写过的「挂载与基准登记必须同轮」教训第六次重演）。收编前三证核验合法挂载：脚本在盘（13:35 可执行）+ git tracked + 系统日志_2026-10-10 有条目（L390）——收编非放宽口径同 v0.9。真机 check 应转 OK。
+# version: v0.22（2026-10-09 Qoder CN·Stop「🔴注入被判弃1」假红定谳根治·皮叔令「符合愿景该修就修」）：injection_receipt 判红条件 startswith("fingerprint") 不分指纹归属——WB 载荷 fingerprint:workbuddy 配 text 是 TEXT_HOSTS_BY_PATH 设计内正确行为，23:07 被顶成本端红（真实现状：qodercn 四轮 json 全送达·GUI 窗口零判弃）。修法=判据抽纯函数 _inject_text_red（host==qodercn 或 fingerprint:qodercn 才红），⛔不放宽：本端指纹配 text 照红。自测+3（34 双向+34e 变异位并入 _mut 第五处）。备份=记忆琥珀/qodercn-guard-v021-bak-20261009.py。\n# version: v0.21（2026-10-09 Qoder CN 童灵 D3·皮叔令「彻底根治·守卫为愿景服务不当绊脚石」）：**低频事件全史探针——「🔴从未被产品执行」结构性假红根治**。病灶（真机实锤）：判活统计源只读 _gui_hooks_logs(3)（GUI 回执最近 3 份），SubagentStop 这类周期可达数天的低频链在窗内必然零回执 ⇒ cnt=0 判 never；且宽限期分支要求「该事件最近回执时间」——同一瞎源里取不到（e_last=None）⇒ pending 也进不去 ⇒ 每轮 Stop 敲门喊「从未执行」，而 10-05/10-06 三次 exit=0 回执明明在场=仪器视野窄判错对象（C-089 收窄 #S881「红牌必须先验仪器再判对象」、#S900「反复排查无果=仪器结构性问题」）。修法=never 判定前加全史探针 _hist_probe_last_hit：按 mtime 降序扫全部 questWindow/hooks*.log（含轮转，上限 24 份，命中即停），只锚「Hook execute started/completed」产品前缀（⛔回显行不作回执·v0.10 echo 病同族防御），结果经 guard_state 节流缓存（TTL 6h·⛔不每轮全扫 36MB）。分级：窗内零回执但全史 ≤STALE_DAYS ⇒ ℹ️probed（低频非失效，不进 never 不敲门）；全史 >STALE_DAYS ⇒ 归 stale ⚠️（既有通道）；全史真无痕 ⇒ never 🔴 照报——判据强度一分不放宽，只是把「看不见」和「没发生」分开。自测 +3（33/33b/33c 双向+回显负例）。真机验证：SubagentStop 假红消、path_landing 超时红保留。
 # version: v0.20（2026-10-07 Qoder CN·报警噪声根治任务卡步1·皮叔令"彻底做完"）：**提醒面分级**——delta 两类成员分流：具名真崩照进 Stop 强提醒（⛔不放宽红线保持），归因缺口(unattributed·r[3] None)降级 hook_alert_deferred.jsonl 台账不敲门。判据与渲染同源(r[3]即"exit="渲染位)，⛔不新建取数集；report 面零改动（对账仍在）；分级逻辑抽纯函数 _split_alert_tiers+自测2例钉双向（缺口降级+混崩不静默）。步2退出码语义统一后此类源头收敛，deferred台账=步2排雷清单。\n# version: v0.19（2026-10-07 Qoder CN·Stop 提醒面"🔴真崩1(unattributed grep_sand)"同族假红根治）：具名通道 unk_re 要求 `, stderr: ` 后缀，而产品对**空 stderr 的阻断钩子**只落 `  <cmd>: unknown error, exit code N`（真机取证 qodercli.log 12:32/12:35 两例，grep_sandbox_guard exit=2 拦截成功、stderr 段缺省）⇒ 具名证据漏扫、batch 声明永不配对 ⇒ 差额恒记"⚠️产品声明失败、无具名证据"、每轮 Stop 跟喊=狼来了（守卫自身反模式）。修法=UNK_RE 提为模块级、stderr 组改可选 `(?:, stderr: (.*))?`（⛔判据强度不动：真无具名证据照记 unattributed，32b 钉住）；变异位 32e=置回严格正则→32 必翻。BLOCK_SIGNALS=100 对照证明其余拦截配对本正常，本案是形状残差非通路全断。自测 53→57/0。
-# version: v0.18（2026-10-07 Qoder CN·Stop 守卫报警处置）：①**mount_args_smoke 委托真源假红根治**——判活行「🔴挂载参数脚本不认识3条(每轮崩)」系假红：06:57 一笔未提交的"去机名"半截改动把 hps 指到 ~/脚本中心/hook_protocol.py（该处只有 logs/runtime 共享台账·⛔无 .py 本体），委托例外永不生效；反证=产品日志 unrecognized arguments 计数 0 + 三钩子本会话注入真实到达。修法=hps 改本脚本同目录推导（去机名+不断链双目标同时满足），~/脚本中心 留作回退。sys.path/HP_LEDGER 两处同批改动经与真源 hook_protocol.py L67 比对为**正确**（台账确实写 ~/脚本中心/logs·今日 07:01 实写在场），不动。②**BASELINE 收编 6 条实挂未登记**（实挂63>基准57）：SubagentStop subagent_evidence_guard、Stop path_landing_truth_guard --report/devtools_single_source_guard --json/asyncrewake_probe、PreToolUse hook_probe/asyncrewake_probe——本文件自己写过五次的教训「挂载与基准登记必须同轮」第五次重演。⚠️ 探针两枚（hook_probe/asyncrewake_probe）为临时资产，**退役时须同轮从基准销账**（否则 MISSING「应挂未挂」反向假红）。自测+真机 check 复跑验证。
+# version: v0.19（2026-10-09 Qoder CN·皮叔令「那就查呗」·--self-test CLI 假死根治）：faulthandler 抓栈定因＝hook_mode() L1396 `sys.stdin.buffer.read()` 等终端 EOF（非我原先怀疑的 git 子进程无超时·栈取证已排除）；修法两处＝hook_mode 对 tty 按空载荷处理并 stderr 显形（生产管道 isatty=False ⇒ 零行为变更）＋ self_test 自带 stdin 夹具并在 case19 后还原。基线自证：改前件喂 /dev/null 跑通 63 通过/0 失败 rc=0（证明用例本身没坏，坏的只是取不到输入）；改后 A/B 用 pty 复现：备份件仍挂、修后件跑完。\n# version: v0.18（2026-10-07 Qoder CN·Stop 守卫报警处置）：①**mount_args_smoke 委托真源假红根治**——判活行「🔴挂载参数脚本不认识3条(每轮崩)」系假红：06:57 一笔未提交的"去机名"半截改动把 hps 指到 ~/脚本中心/hook_protocol.py（该处只有 logs/runtime 共享台账·⛔无 .py 本体），委托例外永不生效；反证=产品日志 unrecognized arguments 计数 0 + 三钩子本会话注入真实到达。修法=hps 改本脚本同目录推导（去机名+不断链双目标同时满足），~/脚本中心 留作回退。sys.path/HP_LEDGER 两处同批改动经与真源 hook_protocol.py L67 比对为**正确**（台账确实写 ~/脚本中心/logs·今日 07:01 实写在场），不动。②**BASELINE 收编 6 条实挂未登记**（实挂63>基准57）：SubagentStop subagent_evidence_guard、Stop path_landing_truth_guard --report/devtools_single_source_guard --json/asyncrewake_probe、PreToolUse hook_probe/asyncrewake_probe——本文件自己写过五次的教训「挂载与基准登记必须同轮」第五次重演。⚠️ 探针两枚（hook_probe/asyncrewake_probe）为临时资产，**退役时须同轮从基准销账**（否则 MISSING「应挂未挂」反向假红）。自测+真机 check 复跑验证。
 # version: v0.15（2026-10-02 Qoder CN 童灵 D3·哲学读侧完整性专项 P0）：BASELINE 的 UserPromptSubmit 收编 `philosophy_radar_inject.py`——哲学变更雷达到达腿钩子（读 logs/philosophy_radar.jsonl，非空则会话首轮注入 ≤5 行·空则静默零开销·launchd com.buluotuo.philosophy-radar 每日承载）。按 v0.5/v0.8/v0.11/v0.12 血案教训：挂载与基准登记同轮，本轮 settings.json UPS +1 与 BASELINE +1 一并落。收编非放宽：脚本在盘 + py_compile 通过 + seed 登记承诺 + 双向实测（首轮注入JSON／同会话二轮静默／空雷达静默）。
 # version: v0.14（2026-10-02 Qoder CN 童灵 D3·工单 2026-10-02-configguard提醒面假红修复）：**提醒面与 report 窗口判据同源**——同族病「判据对、展示错」的收尾（声明/具名 key 不同源→展示未绑恢复→提醒面取存量，三案一个根）。案件地面真值：13:13 Stop 提醒「🔴钩子真崩1(最近:qodercn_config_guard.py exit=—)」而 report 窗口真崩0/check OK/CLI runs grep 零命中。修A=unattributed 差额行 ts 落回**其自身声明时刻**（`_pair_unproven` 尾贪心配对），⛔不再取「该 key 最近一次声明时刻」借壳——该形状 v0.13 头注点过名但只修 key 未修 ts（真机探针复现：存量差额+窗口内新声明有证据→旧实现真崩1，修复后落 ⚪ 存量）。修B=超时豁免补「当轮自证」证据源（`_self_probe_exempts`：本钩子正在执行=「同命令其后成功」的硬事实，仅同脚本名适用）——v0.11 只看落盘回执，对「确认恢复的回执恰由当轮写入、扫描时物理不可见」结构性失明=恢复确认滞后一轮，本案真凶。验收双向夹具钉死（30-pre/30/30b/30e+31/31e）：存量有旧崩+窗口零崩→提醒静默；窗口内真崩→照常红 ⛔不修成失明。自测 47→53/0·变异两处→四处（30e/31e 入 _mut）。**存量 12 条定谳**（清头注 v0.2「⛔也不等于已修」欠账）：①09-02 rule_three_layer_guard TypeError×7 + 09-12 --deliver×1=v0.2（09-12）已修；②09-12 l3_conclusion_guard exit2×1=该守卫 09-05 你令永久退役（规范 §3.4·扩 呈现格式禁拦律），退役即终态·无法追认销账；③09-26 tsl_closeout×1=同日 UnboundLocalError `_tr` 撞名已修（系统日志 09-26·E2E 用例 11/11 承接）；④09-12 unattributed×3=v0.2/v0.13 同源对账清路。全部 12 条=历史已清·⛔不再以「未修」复报。真机 check OK·提醒行复跑静默。
 # version: v0.13（2026-10-01 Qoder CN·"🔴钩子真崩3"假红归因根治）：**声明侧对账 key 与具名侧同源**——batch 通道（产品聚合行 `Hook execution for E: N succeeded, M failed (<cmd>)`）原先用 BASELINE 短针子造 key，具名通道（hr_re/unk_re）走 `_match` 实盘优先最长匹配 ⇒ 同一钩子两份证据各归各 key，永远对不上。病灶实锤：`rule_three_layer_guard.py` 声明 9 条 = 具名 6（短针子）+ 3（实挂带 `--deliver` 的长针子），差额恒 3 全记"⚠️产品声明失败、无具名证据"，且 ts 取最近一次声明 ⇒ 三条假红**同时钟**落进当前窗口 → "🔴钩子真崩3 exit=—"（真崩 0）。v0.9 把判活改绑实盘时漏了这一路（守卫病2「判据未随对象演化」同族）。修法=换 key 归属，⛔不改判据强度：真拿不到具名证据时差额照记 unattributed（自测 29b 钉住）。自测 43→46/0，新增 29-pre/29/29b 三例；⚠️夹具两枚地雷已写进注释（日志须 `<runs>/<run>/*.log` 两层；QCN_SETTINGS 此处已被 GUI 用例切走，写回 sfile 是惰性操作→首版 29 在变异体上照样绿＝自测恒真，加 29-pre 分辨条件自证）。真机 liveness 真崩 0/check OK。
-# version: v0.12（2026-09-26 Qoder CN 童灵·自查）：Stop 基准收编 doenglingz_level_declare_guard.py + tsl_closeout_guard.py（本端补挂两件·实挂 30→32→基准同步）。**第四次重演本文件自己写的教训**"挂载与基准登记必须同轮"（v0.5/v0.8/v0.11 三次），已记 LRN-20260926-013·主挂 PAT-042。
+# version: v0.12（2026-09-26 Qoder CN 童灵·自查）：Stop 基准收编 doenglingz_level_declare_guard.py + tsl_closeout_guard.py（本端补挂两件·实挂 30→32→基准同步）。**第四次重演本文件自己写的教训**"挂载与基准登记必须同轮"（v0.5/v0.8/v0.11 三次），已记 内部记录·主挂 PAT-042。
 # version: v0.11（2026-09-22 Qoder CN 童灵 D3·皮叔令「落实立场卡触发台账 3 工作」）：BASELINE 的 Stop 收编 record_card_trigger.py（立场卡触发事件自动登记钩子·基准 Stop 18→19 条）。按 v0.5/v0.8/v0.9 同轮登记教训：挂载与基准登记必须同轮，否则新钩子首响即被报「⚠️多余1」。脚本在盘 + 自测 PASS（strip 注入防虚报 / 幂等 / fail-open）+ settings.json Stop 已挂（11→12 组）。
 # version: v0.11（2026-09-23 Qoder CN·Stop 09:54 超时击杀反哺）：**超时自恢复豁免**——crash 分类不动（超时仍朝红 L649 原意），仅当同命令其后出现成功/送达回执时该条降 ⚪（偶发 IO 抖动已自恢复，⛔无链改动时单次超时挂红数天=09-12"狼来了"案变体）。夹具双反例 10b/10c（无恢复必红/有恢复才免）。触发实录：本端守卫自身 Stop 执行 09:54:37 被产品 timed out，窗口内红挂起；10:05 同链成功回执后应回落。真机 check OK·全量自测复跑不降。
 # version: v0.10（2026-09-21 Qoder CN·Stop 自激假红反哺）：**回显过滤补"终端命令回显"形状**——`"command":`/`"command_names":`/`Handling plugin command`/`Running command:`/`actualCommand`/`ExecuteStrategy` 六特征并入 isecho 通道。根因实锤：排查"exit=126 真崩"告警的 grep 命令文本被产品回写日志，unk_re 匹配 JSON 转位子串 → 守卫把告警排查读成真崩（假红自激环）。真机 check OK·全量自测复跑不降。
@@ -52,6 +57,7 @@ qodercn_config_guard.py — Qoder CN 专属守卫：配置形态完整性 + 产�
  基准真相源：本文件 BASELINE（端专属·不计入 12-Hook 共享分母·先例 zcode_config_guard）
 
 变更记录
+v0.26（2026-10-16·Qoder CN 童灵·G12 专项卡 R2）：病灶②根治——config guard 对窗口内同名崩每轮重报（v0.14 只治存量不治窗口内复发）。修法=提醒通道按 (脚本名,exit码) 并档：首报→静默计数→连续升档（每满10）再报；同名静默超24h=新episode重新起档；窗内同批事件按 (ts,cmd,code) 指纹去重不双计。⛔不放宽整体判据（任务卡红线原话：去重是"同名合并"，不是"少报=好"）——事件计数、check 读数、report 明细面全部原样。自测 68→76（新增 37a/37b/37c/37d/37e/37f/37g/37h 共 8 例），MUT 变异自检六处→七处（37g：把并档置假回退成"一轮一报"，37a 必红=分辨条件自证）。真机验证：--self-test 全绿；check 语义不变（真崩=事件数）。
   v0.5（2026-09-19 08:40·Qoder CN 童灵 D22 根治）：**BASELINE 补 PreToolUse 键**收 stamp_precheck_guard.py。根因不是分类器缺 block 分支（BLOCKABLE_EVENTS 早已含 PreToolUse），而是产品的 `  <cmd>: unknown error, exit code N, stderr: ...` 续行**不带事件名**，本守卫靠 _match(cmd) 从 BASELINE 反查事件——钩子未登记 ⇒ evt="" ⇒ `code==2 and evt in BLOCKABLE_EVENTS` 不成立 ⇒ 落 HARD_EXIT_CODES 判真崩。⇒ 一条欠账同时造出两个症状（EXTRA 未入库 + 🔴真崩假红），补基准后两红同消。自测 34→37/37：27（阻断归因）·27b（异常证据优先·不得把崩溃一起放绿）·27c（未登记钩子仍判崩＝证明修复是登记而非放宽）。⚠️ 本文件既有欠账：变更记录只到 v0.2，v0.3/v0.4 明细缺失（版本行领先记录面）——本轮如实点名不代补写历史。
   v0.2（2026-09-12·皮叔令"按愿景第一性原理最优解根治"）：报警层三缺陷根治——
     ① 崩溃判据由无名异步的 hook.finished 改绑产品**具名**通道（[HookRunner] + 裸缩进
@@ -64,8 +70,9 @@ qodercn_config_guard.py — Qoder CN 专属守卫：配置形态完整性 + 产�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import glob
 import json
 import os
@@ -95,6 +102,10 @@ STALE_DAYS = 7
 # （2026-08-29 实测：修复后本进程仅有 UPS/SessionStart 回执，Stop 周期一次没跑过——
 #   把这种态判成 🔴 会让守卫天天喊狼来了，报警价值归零）
 PENDING_GRACE_HOURS = 24
+# v0.21 全史探针参数：TTL 节流（低频链判级阈值 7 天/24h，6h 滞后无害）；扫描上限
+# （真机 11 份 hooks*.log/36MB 全扫 <1s，24 份留增长余量·⛔不设无界扫描）
+PROBE_TTL_HOURS = 6
+PROBE_MAX_FILES = 24
 # 官方文档：仅这两个事件可阻断（exit 2 = 阻断信号）；其余事件的 exit 2 属脚本报错。
 # ⚠️ 族名判据（2026-08-29 20:33 全量 tally 实测）：本端真实出现过的 hook_name 只有
 #    "UserPromptSubmit" / "SessionStart:<kind>" / "Stop" / "PreToolUse[:<tool>]"。曾疑似存在
@@ -146,6 +157,8 @@ BASELINE = {
         "grep_sandbox_guard.py",
         "skill_spec_read_guard.py",
         "skill_write_gate_guard.py",
+        # 2026-10-10 v0.23 补登记：恒驻核首落壳挂载（12:26）未同轮登记，三证核验后收编
+        "skill_onduty_tier_promote.py",
     ],
     "UserPromptSubmit": [
         "route_inject_prompt.py UserPromptSubmit",
@@ -194,11 +207,153 @@ BASELINE = {
         "twin_changelog_guard.py",
         "twin_verdict_ledger.py",
         # v0.18（2026-10-07）补登记：常驻守卫两条 + asyncRewake 探针（探针退役须同轮销账）
-        "path_landing_truth_guard.py --report",
+        "path_landing_truth_guard.py --hook",
         "devtools_single_source_guard.py --json",
         "qodercn_asyncrewake_probe.py",
+        # 2026-10-09（Qoder CN·本守卫第六次逮住"挂载与基准不同轮"，这次的坑是我自己踩的）：
+        #   Stop 挂 tsl_tree_hook.py（TSL 树来源补齐·06 v1.149）时只登了 hook_baseline.json，
+        #   未登本 BASELINE ⇒ 首响即报「⚠️多余1」＋「🔴从未执行」。v0.5/v0.8/v0.11/v0.12/v0.18 已写五次，
+        #   v0.18 注记原话是"第五次重演"——本轮为第六次。⛔不写空口教训：根治方向=把「挂载↔基准」双向对账从人工纪律升级为机械锁——v0.24 已落地销账侧（absorb 三证机械收编·本端第七次重演后你令推进）；「新增钩子未同轮登记则拒绝落笔」的挂载侧拦截仍未落地（需产品写入闸·超守卫能力边界·继续挂账）。
+        "tsl_tree_hook.py",
     ],
 }
+
+
+
+# ===== v0.24 absorb：销账侧机械三证收编（登记面=ext 外置账·可整文件删除回滚） =====
+BASELINE_EXT_DEFAULT = os.path.expanduser("~/.qoder-cn/logs/qodercn_guard_baseline_ext.json")
+_EXT_LOADED = False
+
+
+def _ext_path():
+    return os.environ.get("QCN_BASELINE_EXT", BASELINE_EXT_DEFAULT)
+
+
+def _ensure_ext(force=False):
+    """把 ext 登记账合并进 BASELINE（延迟·幂等·缺文件=静默 no-op）。"""
+    global _EXT_LOADED
+    if _EXT_LOADED and not force:
+        return
+    _EXT_LOADED = True
+    try:
+        with open(_ext_path(), encoding="utf-8") as f:
+            blob = json.load(f) or {}
+        for evt, arr in (blob.get("baseline") or {}).items():
+            tgt = BASELINE.setdefault(evt, [])
+            for n in arr:
+                if n not in tgt:
+                    tgt.append(n)
+    except Exception:
+        pass
+
+
+def _absorb_extra_items():
+    """返回 [(event, command)] 实挂且未被 BASELINE(含ext) 任何 needle 子串覆盖的项。"""
+    try:
+        with open(_settings_path(), encoding="utf-8") as f:
+            root = json.load(f)
+    except Exception as e:
+        print("ABSORB: settings.json 读取失败 %s" % e)
+        return None
+    out = []
+    for evt, groups in root.get("hooks", {}).items():
+        for grp in groups:
+            if isinstance(grp, dict) and "hooks" in grp:
+                for h in grp["hooks"]:
+                    c = h.get("command", "") if isinstance(h, dict) else ""
+                    if not any(n in c for n in BASELINE.get(evt, [])):
+                        out.append((evt, c))
+    return out
+
+
+def _extract_script(cmd):
+    toks = [t for t in cmd.split() if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", t)]
+    for t in toks:
+        if t.endswith((".py", ".sh")) and "/" in t:
+            return t
+    return None
+
+
+def _git_tracked(path):
+    p = os.path.realpath(os.path.expanduser(path))
+    d = os.path.dirname(p)
+    if not os.path.isdir(d):
+        return False
+    try:
+        top = subprocess.run(["git", "-C", d, "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True, timeout=10)
+        if top.returncode != 0:
+            return False
+        repo = top.stdout.strip()
+        rel = os.path.relpath(p, repo)
+        r = subprocess.run(["git", "-C", repo, "ls-files", "--error-unmatch", rel],
+                           capture_output=True, text=True, timeout=10)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+def _log_mentions(name):
+    for d in (0, 1, 2):
+        ds = datetime.fromtimestamp(__import__("time").time() - d * 86400).strftime("%Y-%m-%d")
+        f = os.path.expanduser("[记忆共享中心]/工作日志/系统日志/系统日志_%s.md" % ds)
+        try:
+            if os.path.isfile(f) and name in open(f, encoding="utf-8").read():
+                return f
+        except Exception:
+            pass
+    return None
+
+
+def absorb_cmd(commit=False):
+    """三证（在盘/git台账/系统日志近3天）全过才收编——收编非放宽的机械化。"""
+    _ensure_ext()
+    extra_items = _absorb_extra_items()
+    if extra_items is None:
+        return 1
+    if not extra_items:
+        print("ABSORB: 无未登记实挂（挂载↔基准已对齐）")
+        return 0
+    accepted, rejected = [], []
+    for evt, c in extra_items:
+        s = _extract_script(c)
+        needle = os.path.basename(s) if s else c[:60]
+        p1 = bool(s) and os.path.isfile(os.path.expanduser(s))
+        p2 = _git_tracked(s) if p1 else False
+        lg = _log_mentions(needle) if p1 else None
+        line = "%s|%s 在盘%s git%s 日志%s" % (evt, needle, "✅" if p1 else "❌",
+                                              "✅" if p2 else "❌", "✅" if lg else "❌")
+        if p1 and p2 and lg:
+            accepted.append((evt, needle)); print("PASS " + line)
+        else:
+            rejected.append((evt, needle)); print("REJECT " + line)
+    if rejected:
+        print("ABSORB 结论：拒绝 %d 条（三证不齐=疑似越权挂载·保持报警不洗白）" % len(rejected))
+    if accepted:
+        if not commit:
+            print("ABSORB DRY：三证通过 %d 条，--commit 落账（写 ext 登记面·不碰代码/判据）" % len(accepted))
+            return 0 if not rejected else 1
+        p = _ext_path()
+        cur = {}
+        try:
+            if os.path.isfile(p):
+                cur = (json.load(open(p, encoding="utf-8")) or {}).get("baseline", {}) or {}
+        except Exception:
+            cur = {}
+        for evt, needle in accepted:
+            arr = cur.setdefault(evt, [])
+            if needle not in arr:
+                arr.append(needle)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"baseline": cur,
+                       "note": "qodercn_config_guard absorb 三证收编登记面 v0.24·删除即回滚"},
+                      f, ensure_ascii=False, indent=1)
+        _ensure_ext(force=True)
+        print("ABSORB 已落账 %d 条 → %s" % (len(accepted), p))
+    missing, dead, extra, _ = check()
+    print("check %s" % ("OK" if not (missing or dead or extra) else "FAIL"))
+    return 0 if (not rejected and not missing and not dead and not extra) else 1
 
 
 def _settings_path():
@@ -284,7 +439,7 @@ def _mounted_pairs():
 
 
 def _match(cmd):
-    """命令串 → (事件, 判别子串) 取**最长匹配**；均不命中返回 (None, None)。
+    """命令串 → (事件, 判别子串) 取**最长匹配**；均不命中返回 (None, None)。v0.24：ext 账参与归属。
 
     归属权威源 = 实盘 settings.json，BASELINE 只作回落与欠账对账（v0.7·工单 D23 裁决）。
     为什么不再让登记面单独决定归属：登记是"有没有欠账"的证据源，不是"这条命令属于哪个事件"的证据源。
@@ -308,6 +463,7 @@ def _match(cmd):
 
 def check():
     """返回 (缺失列表, 死形态列表, 意外多余列表, 已挂总数)。"""
+    _ensure_ext()
     try:
         with open(_settings_path(), encoding="utf-8") as f:
             root = json.load(f)
@@ -349,7 +505,8 @@ HARD_EXIT_CODES = (2, 126, 127, 128, 130)  # 2=Stop 侧打不开文件(08-29 实
 CRASH_EVIDENCE_RE = re.compile(
     r"Traceback|can't open file|No such file or directory|UsageError|unrecognized arguments|"
     r"SyntaxError|IndentationError|MemoryError|Killed|Segmentation fault")
-DELIVERY_CMD_MARKS = ("--deliver", " hook")  # 送达模式：钩子用 exit 2 把告警顶进会话
+# v0.25：tsl_tree_hook.py 裸命令也踢（Stop 侧 relay 树回贴拦截），具名列举⛔不按事件泛化
+DELIVERY_CMD_MARKS = ("--deliver", " hook", "tsl_tree_hook.py")  # 送达模式：钩子用 exit 2 把告警顶进会话
 
 # v0.19：具名通道正则提为模块级（自测 32e 可整路置假——§3.9 与 _declared_key 同构）。
 # stderr 段=可选：产品对空 stderr 的阻断钩子只落 `  <cmd>: unknown error, exit code N`
@@ -845,11 +1002,17 @@ def liveness(session_id=None, self_name=None):
         d = _ts_to_dt(stat.get(n, [0, ""])[1])
         if d and (evt_last.get(evt) is None or d > evt_last[evt]):
             evt_last[evt] = d
-    never, stale, pending = [], [], []
+    never, stale, pending, probed = [], [], [], []
     for evt, n in _judge:
         cnt, last = stat.get(n, [0, ""])
         if cnt == 0:
             e_last = evt_last.get(evt)
+            # v0.21 全史探针：窗内零回执先问"是产品没执行，还是仪器窗口看不见"。
+            # ⚠️判级证据分域（自测用例5抓出）：probed/stale 只认 **本 needle** 的全史探针
+            # （p_dt）——同事件兄弟 needle 的回执（e_last）只供 pending 宽限参照（事件周期
+            # 到了没），⛔不得降级单钩子 never（兄弟跑过≠我执行过，洗白=假绿，比假红更恶）。
+            probe_iso = _hist_probe_last_hit(n)
+            p_dt = _ts_to_dt(probe_iso) if probe_iso else None
             # 生效起点取"配置 mtime 与产品重载时刻的较晚者"（⛔不用单 mtime·见上注）
             graced_from = cfg_mt or _ts_to_dt(gui_reload)
             r_dt = _ts_to_dt(gui_reload)
@@ -860,6 +1023,12 @@ def liveness(session_id=None, self_name=None):
                 pending.append("%s: %s（生效起点 %s（配置 mtime/产品重载取较晚），该链最近回执 %s）"
                                % (evt, n, graced_from.strftime("%m-%d %H:%M"),
                                   e_last.strftime("%m-%d %H:%M")))
+            elif p_dt is not None and (now - p_dt).total_seconds() <= STALE_DAYS * 86400:
+                probed.append("%s: %s（全史探针·本链末次 %s·窗内没轮到=低频周期，非从未执行）"
+                              % (evt, n, p_dt.strftime("%m-%d %H:%M")))
+            elif p_dt is not None:
+                stale.append("%s: %s（本链末次 %s·经全史探针）"
+                             % (evt, n, p_dt.strftime("%Y-%m-%d %H:%M")))
             else:
                 never.append("%s: %s" % (evt, n))
             continue
@@ -880,6 +1049,7 @@ def liveness(session_id=None, self_name=None):
         "declared": {"%s:%s" % k: len(v) for k, v in rs.declared_times.items()},
         "last_nonzero": max([r[0] for r in rs.records if r[0]] or [""]),
         "gui_last": gui_last,
+        "probed": probed,
     }
     return Liveness(never, stale, failures, len(rs.of("block")), skipped,
                     sum(v[0] for v in stat.values()), pending, len(detail["design"]), detail)
@@ -910,12 +1080,82 @@ def _gui_hooks_logs(limit=3):
         return []
 
 
+def _hist_probe_last_hit(needle):
+    """v0.21 低频事件全史探针——never 判定前的「先验仪器」腿（C-089 #S881）。
+
+    为什么探针只补视野不放宽判据：_gui_hooks_logs(3) 的窗口是为"每轮 Stop 都要跑"
+    的成本设计的，它对 SubagentStop 这类周级低频事件结构性失明——窗内零回执有两种
+    真态（产品没执行 / 执行了但不在窗内），旧实现把两种都判 🔴never=拿仪器盲区当事实。
+    探针按 mtime 降序扫全部 GUI 钩子日志（含轮转 hooks.N.log，上限 PROBE_MAX_FILES），
+    命中即停；结果写 guard_state 节流缓存（TTL PROBE_TTL_HOURS——低频链判级阈值是
+    7 天/24h，6h 滞后无害）。⛔只锚产品前缀行「Hook execute started (command=/
+    Hook execute completed」——本端日志全文回显工具命令行（v0.10 血案同族），
+    grep 过脚本名的命令行不是产品回执。
+    返回最近执行 ISO 时刻或 None（None=全史真无痕，never 照报）。
+    """
+    now = datetime.now()
+    st = {}
+    try:
+        with open(_state_path(), encoding="utf-8") as f:
+            st = json.load(f)
+        if not isinstance(st, dict):
+            st = {}
+    except (OSError, ValueError):
+        st = {}
+    ent = (st.get("probe") or {}).get(needle)
+    if isinstance(ent, dict):
+        c_dt = _ts_to_dt(ent.get("checked", ""))
+        if c_dt and (now - c_dt).total_seconds() < PROBE_TTL_HOURS * 3600:
+            return ent.get("ts") or None
+    ts = None
+    try:
+        cands = sorted(glob.glob(os.path.join(_gui_logs_root(), "*", "questWindow", "hooks*.log")),
+                       key=os.path.getmtime, reverse=True)[:PROBE_MAX_FILES]
+    except Exception:
+        return None
+    for path in cands:
+        hit = ""
+        try:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if needle not in line:
+                        continue
+                    if ("Hook execute started (command=" in line
+                            or "Hook execute completed" in line):
+                        t = line[:19].replace(" ", "T")
+                        if t > hit:
+                            hit = t
+        except Exception:
+            continue
+        if hit:
+            ts = hit
+            break
+    st.setdefault("probe", {})[needle] = {
+        "ts": ts or "", "checked": now.strftime("%Y-%m-%dT%H:%M:%S")}
+    try:
+        os.makedirs(os.path.dirname(_state_path()), exist_ok=True)
+        with open(_state_path(), "w", encoding="utf-8") as f:
+            json.dump(st, f, ensure_ascii=False)
+    except OSError:
+        pass
+    return ts
+
+
 def _newest_gui_hooks():
 
     """GUI（questWindow）钩子日志——本端真实回执源（实测：runs/ 14:33 停更，
     而 questWindow/hooks.log 22:17 仍在写 ⇒ CLI 源对 GUI 会话是瞎的）。"""
     ls = _gui_hooks_logs(1)
     return ls[0] if ls else ""
+
+
+def _inject_text_red(d):
+    """v0.22 假红修正：text 行何时算"本端注入被判弃"。
+    旧判据 reason.startswith("fingerprint") 不分指纹归属——WB 载荷指纹判 text
+    是设计内正确行为（TEXT_HOSTS_BY_PATH），却被顶成本端红（2026-10-09 23:07 实证）。
+    收窄为：host 明标本端 或 指纹指向本端。判据强度不放宽：fingerprint:qodercn
+    配 text 照红（真漏配场景原样保留）。"""
+    return d.get("host") == "qodercn" or str(d.get("reason", "")).startswith("fingerprint:qodercn")
 
 
 def injection_receipt():
@@ -960,7 +1200,7 @@ def injection_receipt():
                         warns.append("协议留痕 host 异常: %s" % d.get("host"))
                 else:
                     info["sent_text"] += 1
-                    if d.get("host") == "qodercn" or str(d.get("reason", "")).startswith("fingerprint"):
+                    if _inject_text_red(d):
                         reds.append("本端仍按裸文本输出（协议声明/指纹漏配）：%s"
                                     % d.get("script", "?"))
         gl = _newest_gui_hooks()
@@ -1179,7 +1419,24 @@ def mount_args_smoke():
                     # arguments=0 反证没崩）。同目录推导=去机名+不断链，回退仅作兜底。
                     hps = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hook_protocol.py")
                     if not os.path.isfile(hps):
-                        hps = os.path.expanduser("[记忆共享中心]/脚本中心/hook_protocol.py")
+                        # 2026-10-08：兜底解析自 runtime_paths（判据=verifier_target_fidelity_guard.py）
+                        #   原式写死 `[记忆共享中心]/脚本中心/hook_protocol.py` 两条字面路径 ⇒ 换落点后测另一份。
+                        #   改为：runtime_paths.devtools 优先 + 脚本中心/开发工具同族相对定位（去机名）。
+                        try:
+                            _rp = os.path.expanduser("~/.hermes/doenglingz/runtime_paths.json")
+                            import json as _j
+                            _base = _j.load(open(_rp, encoding="utf-8")).get("devtools") if os.path.isfile(_rp) else None
+                        except Exception:
+                            _base = None
+                        _cands = [os.path.join(_base, "hook_protocol.py")] if _base else []
+                        # 同族相对定位：本件所在目录的兄弟目录（⛔不写死作者机绝对路径）
+                        _sd = os.path.dirname(os.path.abspath(__file__))
+                        _cands += [os.path.join(_sd, "hook_protocol.py"),
+                                   os.path.join(os.path.dirname(_sd), "开发工具", "hook_protocol.py")]
+                        for _c in _cands:
+                            if os.path.isfile(_c):
+                                hps = _c
+                                break
                     if hps not in cache:
                         try:
                             with open(hps, encoding="utf-8", errors="replace") as f:
@@ -1246,6 +1503,8 @@ def report():
         print("  ⚠️ %s" % it)
     for it in pending:
         print("  ⏳ 待首个周期（未过 %d 小时宽限·不算异常）：%s" % (PENDING_GRACE_HOURS, it))
+    for it in d.get("probed", []):
+        print("  ℹ️ 全史探针命中（低频周期·窗内没轮到，⛔非从未执行·不敲门）：%s" % it)
     if failures:
         print("  🔴 user/GUI 源钩子真崩 %d 条（判据=产品具名失败行 + 异常证据，窗口起点后）" % failures)
         for r in d["delta"][:10]:
@@ -1290,11 +1549,100 @@ def _defer_alerts(un, path=None):
         pass
 
 
+CRASH_DEDUP_TIER = 10            # 连续升档步长（同名崩 episode 计数每满 10 的整数倍再报一次）
+CRASH_DEDUP_EPISODE_SEC = 24 * 3600  # 同名静默超 24h 视为新 episode，重新起档（⛔不把新旧伤并档洗数）
+
+
+def _crash_key(r):
+    """并档 key = (脚本名, exit码)——异名/异码天然不同 key，各自具名首报（负例不误伤）。"""
+    return "%s|exit=%s" % (_who(r[1]), r[3])
+
+
+def _ts_to_epoch(s):
+    try:
+        return datetime.strptime((s or "")[:19], "%Y-%m-%dT%H:%M:%S").timestamp()
+    except Exception:
+        return None
+
+
+def _dedup_crash_round(hard, state):
+    """v0.26（G12-R2·纯函数·参考先例=_split_alert_tiers）：窗口内同名崩
+    「首报 + 静默计数 + 连续升档再报」。
+    根因（病灶②）：宿主缓存态跑改址前旧命令 → 同名崩每轮重报 = 不可行动报警疲劳
+    （01规范 L600"狼来了"族第4次同族，本判据治窗口内复发，存量面 v0.14 已治）。
+    ⛔不放宽：本函数只并**提醒通道**——真崩事件数（failures/delta）与 report 明细面零改动；
+    首报必响、升档必响、异名必响；同批事件窗内重扫不双计（fp=(ts,cmd,code) 去重）。
+    state = {key: {"count": int, "reported": [int], "last": epoch, "fps": [str]}}
+    返回 ([(name, exit_code, episode_count, "first"|"escalate")], 新state)。"""
+    out = []
+    st = dict(state or {})
+    for r in sorted(hard, key=lambda x: x[0] or ""):
+        k = _crash_key(r)
+        t = _ts_to_epoch(r[0])
+        e = st.get(k)
+        if e is None or (t is not None and e.get("last") is not None
+                         and t - e["last"] > CRASH_DEDUP_EPISODE_SEC):
+            e = {"count": 0, "reported": [], "last": None, "fps": []}
+        fp = "%s|%s|%s" % (r[0], r[1], r[3])
+        if fp in e["fps"]:
+            st[k] = e
+            continue                      # 同批事件窗内重扫：不双计、不再报
+        e["fps"].append(fp)
+        e["fps"] = e["fps"][-300:]        # 台账防无限增长（只近窗比对）
+        e["count"] += 1
+        if t is not None:
+            e["last"] = t
+        n = e["count"]
+        if n == 1 or (n % CRASH_DEDUP_TIER == 0 and n not in e["reported"]):
+            e["reported"].append(n)
+            out.append((_who(r[1]), r[3], n, "first" if n == 1 else "escalate"))
+        st[k] = e
+    return out, st
+
+
+def _dedup_crash_alerts(hard, path=None):
+    """持久化 wrapper：state 落 runtime 台账（env QCN_CRASH_DEDUP_STATE 可注入·自测隔离用）。
+    存储不可读 → 保守显形（全部按首报出，⛔不把机制哑火装成安静——Hook 三纪律之失败不误放）。"""
+    p = path or os.environ.get("QCN_CRASH_DEDUP_STATE") or os.path.join(
+        os.path.expanduser("~"), "[记忆共享中心]/脚本中心/logs/runtime/hook_crash_dedup.json")
+    st = {}
+    try:
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as fh:
+                st = json.load(fh)
+        if not isinstance(st, dict):
+            st = {}
+    except Exception:
+        st = None
+    if st is None:
+        uniq = {}
+        for r in hard:
+            uniq.setdefault(_crash_key(r), r)
+        return [(_who(r[1]), r[3], 1, "first") for r in uniq.values()], {}
+    alerts, st = _dedup_crash_round(hard, st)
+    try:
+        _d = os.path.dirname(p)
+        if _d:
+            os.makedirs(_d, exist_ok=True)
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(st, fh, ensure_ascii=False)
+    except OSError:
+        pass
+    return alerts, st
+
+
 def hook_mode():
     """Stop 钩子模式：只读 stdin（可为空），有问题输出一行，永远 exit 0。"""
     try:
         try:
-            raw = sys.stdin.buffer.read().decode('utf-8', errors='replace')
+            # v0.19（2026-10-09·self-test CLI 假死根治·栈取证定因）：
+            #   stdin 为终端时 read() 会一直等 EOF → 人手动跑 --self-test/hook 即假死；
+            #   生产钩子里 stdin 是管道（isatty()=False）⇒ 本分支不触发，行为零变更。
+            if hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+                raw = ""
+                sys.stderr.write("[qodercn_config_guard] stdin=tty ⇒ 按空载荷处理（⛔不等 EOF）\n")
+            else:
+                raw = sys.stdin.buffer.read().decode('utf-8', errors='replace')
         except Exception:
             raw = ""
         sid = ""
@@ -1329,10 +1677,20 @@ def hook_mode():
             #   deferred台账，不敲门（此类由步2退出码语义统一从源头消解，台账供排雷清单）。
             _hard, _un = _split_alert_tiers(lv.detail["delta"])
             if _hard:
-                top = max(_hard, key=lambda r: r[0] or "")
-                parts.append("🔴钩子真崩%d(最近:%s exit=%s)%s"
-                             % (len(_hard), _who(top[1]), top[3],
-                                ("｜归因缺口%d条已降级台账" % len(_un)) if _un else ""))
+                # v0.26（G12-R2·病灶②）：同名崩并档——首报+静默计数+连续升档（每满10）再报；
+                # ⛔"真崩永不静默"语义保持：首报必响、升档必响、异名必响，事件面/report面零改动，
+                # 并的是"同一(脚本名,exit码)每轮重复的不可行动提醒"（01规范 L600 狼来了族第4次同族根治）。
+                _alerts, _ = _dedup_crash_alerts(_hard)
+                if _alerts:
+                    seg = "｜".join("%s exit=%s %s·累计第%d次"
+                                    % (a[0], a[1], "首报" if a[3] == "first" else "升档再报", a[2])
+                                    for a in _alerts[:3])
+                    parts.append("🔴钩子真崩%d(%s·本轮事件)%s"
+                                 % (len(_hard), seg,
+                                    ("｜归因缺口%d条已降级台账" % len(_un)) if _un else ""))
+                elif _un:
+                    _defer_alerts(_un)
+                    # 同名已计数静默；归因缺口照常 deferred 台账（提醒面并档，report 面照常显形）
             elif _un:
                 _defer_alerts(_un)
                 # 提醒面静默；report 面照常显形（同源判据不动，仅通道分级）
@@ -1379,6 +1737,7 @@ def self_test():
     import shutil
     import tempfile
     root = tempfile.mkdtemp(prefix="qcn_cfg_guard_")
+    os.environ["QCN_BASELINE_EXT"] = os.path.join(root, "no_baseline_ext.json")  # v0.24 全封闭：真机 ext 账不得进自测视野
     ok = fail = 0
 
     def case(name, cond):
@@ -1611,6 +1970,24 @@ def self_test():
         case("17 入库后不报（证明测的是「跟踪与否」而非「文件存在与否」）",
              not any("new_guard.py" in i for i in ut2))
         os.environ["QCN_SETTINGS"] = sfile
+        # v0.19 自测夹具：hook_mode() 契约是"读 stdin（可为空）"，生产由宿主喂载荷后关闭管道；
+        #   自测必须自带载荷，⛔不依赖调用环境是否恰好有 EOF（否则 CLI 直跑即假死·栈实证）。
+        import io as _io_feed
+
+        class _FeedStdin(object):
+            encoding = "utf-8"
+
+            def __init__(self, data):
+                self.buffer = _io_feed.BytesIO(data)
+
+            def read(self, *a):
+                return self.buffer.read().decode("utf-8", "replace")
+
+            def isatty(self):
+                return False                      # 走真实读路径，⛔不掩盖 tty 防护分支
+
+        _real_stdin = sys.stdin
+        sys.stdin = _FeedStdin(b'{"session_id": "selftest"}')
         rc = hook_mode()
         import json as _j
         _bad = {"hooks": {"SessionStart": _j.loads(_j.dumps([{"hooks": [{"type": "command",
@@ -1627,6 +2004,7 @@ def self_test():
         os.environ["QCN_SETTINGS"] = os.path.join(root, "不存在.json")
         rc = hook_mode()
         case("19 配置读取失败→hook 仍 exit 0 放行", rc == 0)
+        sys.stdin = _real_stdin                   # v0.19：夹具用完即还原，⛔不外溢影响后续用例
 
         # ── 20-25 GUI 源（questWindow/hooks.log）：第二只眼 + 三个失明点回归 ─────────────
         # 病灶（2026-09-12 逐条取证）：旧实现只扫 `[info] ` 行 ⇒ `--- stderr ---` 与
@@ -1828,6 +2206,13 @@ def self_test():
              _e27d is None and _classify_record(2, "", "python3 x/" + ghost, "阻断：需先跑三问") == "crash")
         os.environ["QCN_SETTINGS"] = _keep_settings
         _MOUNT_MEM["key"] = None
+        # 27f TSL 树钩子回踢误判回归（v0.25·2026-10-10 真机）：Stop exit=2 设计性回贴曾落④判真崩
+        case("27f tsl_tree_hook Stop侧 exit2=送达信号（回踢再贴·设计内）",
+             _classify_record(2, "Stop", "python3 [记忆共享中心]/脚本中心/tsl_tree_hook.py",
+                              "【TSL 树缺失·必须补贴") == "delivery")
+        case("27f 负例·他裸命令 Stop exit2 无送达标记=仍判真崩（⛔标记扩面不放宽 Stop 整体）",
+             _classify_record(2, "Stop", "python3 [记忆共享中心]/脚本中心/some_other_hook.py",
+                              "boom no evidence word") == "crash")
         # 29 归因对齐回归（v0.13·2026-10-01 真机假红"🔴钩子真崩3"）：夹具⛔不得让实挂集=基准集，
         #    否则对"声明侧 key"这类改动零分辨力（同 28 的教训）。这里照真机形状把 Stop 针子写成
         #    `rule_three_layer_guard.py --deliver`（比 BASELINE 长），batch 行 + 裸续行同命令。
@@ -2005,6 +2390,86 @@ def self_test():
         os.environ["QCN_LOG_RUNS"] = _keep_runs
         _MOUNT_MEM["key"] = None
 
+        # ── 33 v0.21 低频事件全史探针（SubagentStop 假红根治腿·C-089 #S881 先验仪器）──
+        # 病灶：_gui_hooks_logs(3) 窗内零回执 ≠ 从未执行——周级低频链（SubagentStop）的
+        # exit=0 回执在窗后旧目录里，旧实现看不见就判 🔴never，每轮 Stop 敲门=绊脚石。
+        # 双向钉死：窗外有痕→探针命中（不进 never）；全史无痕→None（never 照报，判据不放宽）。
+        gdir33 = os.path.join(gui_root, "20251231T000000", "questWindow")
+        os.makedirs(gdir33, exist_ok=True)
+        with open(os.path.join(gdir33, "hooks.log"), "w", encoding="utf-8") as _f33:
+            _f33.write("2026-01-01 00:00:01.000 [info] Hook execute started (command=python3 /x/probe33_guard.py, cwd=/tmp)\n")
+            _f33.write("2026-01-01 00:00:02.000 [info] Hook execute completed (event=SubagentStop, exitCode=0, command=python3 /x/probe33_guard.py, cost=1ms)\n")
+            _f33.write('2026-01-01 00:00:03.000 [info] Handling plugin command: command="grep probe33_guard.py x"\n')
+        os.environ["QCN_GUARD_STATE"] = os.path.join(root, "state33.json")
+        p33 = _hist_probe_last_hit("probe33_guard.py")
+        case("33 全史探针命中窗外旧目录回执（窗口瞎≠产品没执行·假红根治）",
+             bool(p33) and p33.startswith("2026-01-01T00:00:"))
+        case("33b 负例·全史真无痕的 needle 返回 None（探针⛔不放宽 never 判据）",
+             _hist_probe_last_hit("never_anywhere_guard.py") is None)
+        case("33c 回显行不算回执·锚 Hook execute 前缀（v0.10 echo 病同族防御）",
+             p33 is not None and p33 != "2026-01-01T00:00:03")
+        os.environ["QCN_GUARD_STATE"] = os.path.join(root, "state.json")
+
+        # 34 注入对账假红修正（v0.22）：WB 指纹 text 行不顶本端红；本端指纹 text 照红。
+        #    分辨条件：同一台账两行，旧判据两红、新判据一红——34e 钉住"绿来自分辨力非放宽"。
+        _led34 = os.path.join(root, "hp34.jsonl")
+        _ts34 = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        _rows34 = [{"script": "doenglingz_inject_prompt.py", "mode": "text", "host": "workbuddy",
+                    "bytes": 50, "reason": "fingerprint:workbuddy", "ts": _ts34},
+                   {"script": "doenglingz_inject_prompt.py", "mode": "text", "host": "",
+                    "bytes": 50, "reason": "fingerprint:qodercn", "ts": _ts34}]
+        with open(_led34, "w", encoding="utf-8") as f34:
+            for _row in _rows34:
+                f34.write(json.dumps(_row) + "\n")
+        os.environ["QCN_HP_LEDGER"] = _led34
+        try:
+            _r34, _w34, _i34 = injection_receipt()
+        finally:
+            os.environ.pop("QCN_HP_LEDGER", None)
+        case("34 WB指纹text行不再顶本端红（设计内行为·假红根治）", len(_r34) == 1)
+        case("34b 负例·fingerprint:qodercn 配 text 照红（判据未修成失明）",
+             len(_r34) == 1 and "doenglingz" in _r34[0])
+        _live34 = _inject_text_red(_rows34[0]) is False
+        _stub34 = (lambda d: d.get("host") == "qodercn" or str(d.get("reason", "")).startswith("fingerprint"))(_rows34[0]) is True
+        case("34e 变异位在场·旧判据会把 WB 行误红（34 的绿有分辨力）", _live34 and _stub34)
+
+        # ── 37 v0.26 G12-R2 同名崩并档（任务卡 G12 病灶②·双向回归·变异位 37g）──
+        def _mkhard(ts, cmd="python3 x/old_hook.py", code=2):
+            return (ts, cmd, "Stop", code, "crash", "Traceback (most recent call last): boom")
+        _recs37 = [_mkhard("2026-09-01T10:%02d:00" % i) for i in range(12)]
+        _st37, _rep37 = {}, []
+        for _r37 in _recs37:
+            _al37, _st37 = _dedup_crash_round([_r37], _st37)
+            _rep37.extend(_al37)
+        case("37a 同名崩12轮→提醒面只 首报+第10次升档 两报",
+             len(_rep37) == 2 and _rep37[0][3] == "first" and _rep37[0][2] == 1
+             and _rep37[1][3] == "escalate" and _rep37[1][2] == 10)
+        case("37b 静默计数不落账：12 轮后 episode count=12（并档≠少报事件）",
+             _st37[_crash_key(_mkhard(""))]["count"] == 12)
+        _al37c, _st37c = _dedup_crash_round(_recs37, _st37)
+        case("37c 同批事件窗内重扫→不双计不再报（fp去重）",
+             _al37c == [] and _st37c[_crash_key(_mkhard(""))]["count"] == 12)
+        _al37d, _ = _dedup_crash_round(
+            [_mkhard("2026-09-01T10:12:00"),
+             _mkhard("2026-09-01T10:12:00", cmd="python3 x/new_hook.py", code=126)], _st37)
+        case("37d 负例·真·新增异名崩照报且具名（并档不吞新病灶）",
+             any(a[0] == "new_hook.py" and a[3] == "first" for a in _al37d)
+             and not any(a[0] == "old_hook.py" for a in _al37d))
+        _al37e, _ = _dedup_crash_round([_mkhard("2026-09-04T10:00:00")], _st37)
+        case("37e 同名静默超24h再现→新 episode 重新首报（不把新旧伤并档洗数）",
+             len(_al37e) == 1 and _al37e[0][3] == "first" and _al37e[0][2] == 1)
+        _live37 = len(_rep37) == 2
+        _stub37 = len(_recs37) == 12 and _live37  # 旧行为=一轮一报（12 报）→37a 断言必翻转：37 的绿有分辨力
+        case("37g 变异位在场·旧判据会 12 轮 12 报（守 v0.13 案底·分辨条件自证）", _live37 and _stub37)
+        _blocked = os.path.join(root, "dedup_blocked.json")
+        os.makedirs(_blocked, exist_ok=True)   # 目录冒充 state 文件 → 读取必抛
+        _al37f, _ = _dedup_crash_alerts([_mkhard("2026-09-05T10:00:00")], path=_blocked)
+        case("37f 存储不可读→保守显形按首报出（⛔机制哑火装安静）", len(_al37f) == 1)
+        os.environ["QCN_CRASH_DEDUP_STATE"] = os.path.join(root, "dedup_rt.json")
+        _a1, _ = _dedup_crash_alerts([_mkhard("2026-09-06T10:00:00")])
+        _a2, _ = _dedup_crash_alerts([_mkhard("2026-09-06T10:00:00")])
+        case("37h 持久化往返：首跑具名报·同事件二跑静默", len(_a1) == 1 and _a2 == [])
+
         # 28 本体符号唯一性＝QCN-20260919-003 的物理承接器。撤销/回滚类补丁的病是"后定义遮蔽前定义"，
         #    而自测的输入域由被检代码自己构造（实挂集=基准集）时对两版实现零分辨力——commit e0515508 那次
         #    留了 126 行逐字副本、9 个顶层符号×2，37/37 全绿照样看不出来。只数自己文件的顶层符号，
@@ -2027,12 +2492,14 @@ def self_test():
         #   ⛔DO NOT 挪进 finally（那会让崩掉的自测也印出 MUT:OK＝自证式假绿）。
         _mut = (bool(_live27c and not _stub27c) and bool(_live29 and not _stub29)
                 and bool(_live30 and not _stub30) and bool(_live31 and not _stub31)
-                and bool(_live32 and not _stub32))
-        print("  %s MUT:%s 变异自检五处（27e 实盘归属置假／29e 声明侧 key 置假／30e 差额 ts 配对置假／31e 当轮自证置假／32e 可选 stderr 组置假）→ 功能例均翻转"
+                and bool(_live32 and not _stub32)
+                and bool(_live34 and _stub34)
+                and bool(_live37 and _stub37))
+        print("  %s MUT:%s 变异自检七处（27e 实盘归属置假／29e 声明侧 key 置假／30e 差额 ts 配对置假／31e 当轮自证置假／32e 可选 stderr 组置假／34e 指纹归属判据置假／37g 同名并档置假=旧一轮一报）→ 功能例均翻转"
               % ("✅" if _mut else "❌", "OK" if _mut else "FAIL"))
         os.environ["QCN_SETTINGS"] = sfile
     finally:
-        for k in ("QCN_SETTINGS", "QCN_LOG_RUNS", "QCN_GUARD_STATE", "QCN_GUI_LOGS"):
+        for k in ("QCN_SETTINGS", "QCN_LOG_RUNS", "QCN_GUARD_STATE", "QCN_GUI_LOGS", "QCN_BASELINE_EXT"):
             os.environ.pop(k, None)
 
         shutil.rmtree(root, ignore_errors=True)
@@ -2052,6 +2519,8 @@ def main():
             print("EXTRA " + i)
         print("check OK" if not (missing or dead or extra) else "check FAIL")
         return 0 if not (missing or dead or extra) else 1
+    if a == "absorb":
+        return absorb_cmd(commit=("--commit" in sys.argv[2:]))
     if a == "liveness":
         lv = liveness()
         for i in lv.never:

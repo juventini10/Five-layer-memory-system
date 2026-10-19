@@ -14,7 +14,7 @@ try:
 except Exception: pass
 import sys, json, datetime, os
 
-LOG = os.path.expanduser("~/[记忆共享中心]/数字分身/steps/h4-conflict-samples.jsonl")
+LOG = os.path.expanduser("[记忆共享中心]/数字分身/steps/h4-conflict-samples.jsonl")
 REQUIRED = {"source", "claim", "action", "verdict"}
 
 

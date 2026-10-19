@@ -34,7 +34,7 @@ python3 plugin_live_gate.py --json         # 机器可读
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -45,9 +45,27 @@ import os
 import subprocess
 import sys
 
-PLUG = os.path.expanduser("~/.hermes/plugins")
+# 🔴 2026-10-11 隔离根治（沙箱实测逮到）：原为硬编码 `~/.hermes/...` ⇒ 隔离验证时
+#    闸门仍去读**真机**声明与插件目录 ⇒ ①验的不是本次部署（假绿）②真机被间接消费。
+#    铁律「会写/会读运行面的闸须带隔离 cfg_root」在本件的欠账。
+#    ✅DO 取值优先级：`--cfg-root` 显式参数 › `DOENGLINGZ_CONFIG_DIR` 环境变量 › 默认 `~/.hermes`。
+#    ⛔DO NOT 回落时静默——回落是恒真判据的制造机，故回落值打印一行来源。
+def _resolve_cfg(argv):
+    cfg = None
+    if "--cfg-root" in argv:
+        i = argv.index("--cfg-root")
+        if i + 1 < len(argv):
+            cfg = argv[i + 1]
+    if not cfg:
+        cfg = os.environ.get("DOENGLINGZ_CONFIG_DIR") or None
+    if cfg:
+        return os.path.expanduser(cfg), "--cfg-root/DOENGLINGZ_CONFIG_DIR"
+    return os.path.join(os.path.expanduser("~"), ".hermes"), "默认值(~/.hermes)"
+
+_CFG_ROOT, _CFG_SRC = _resolve_cfg(sys.argv[1:])
+PLUG = os.path.join(_CFG_ROOT, "plugins")
 # 声明文件落点（安装器生成）——闸门要验的就是它
-CFG = os.path.join(os.path.expanduser("~"), ".hermes", "doenglingz")
+CFG = os.path.join(_CFG_ROOT, "doenglingz")
 DECL = os.path.join(CFG, "runtime_paths.json")
 RESOLVER = os.path.join(CFG, "runtime_paths.py")
 
@@ -134,7 +152,10 @@ def g3_values():
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--cfg-root", default=None,
+                    help="配置根（隔离验证用）·缺省回落 DOENGLINGZ_CONFIG_DIR 再回落 ~/.hermes")
     a = ap.parse_args()
+    print("[plugin_live_gate] 配置根=%s（来源：%s）" % (_CFG_ROOT, _CFG_SRC))
 
     paths = plugins()
     res = {"plugin_count": len(paths), "g0": [], "g1": [], "g2": [], "g3": []}

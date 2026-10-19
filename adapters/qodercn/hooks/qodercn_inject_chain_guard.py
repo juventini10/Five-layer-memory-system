@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 qodercn_inject_chain_guard.py — Qoder CN 注入链健康守卫（Qoder CN 专属）
 
@@ -38,25 +34,33 @@ qodercn_inject_chain_guard.py — Qoder CN 注入链健康守卫（Qoder CN 专�
         证伪 AI 是否如实上报（注入产物只存在于模型上下文，磁盘无痕）。本守卫因此是
         "留痕+对账"而非"独立观测"，价值在忘跑被抓、差集显形，不在证明"确实注入了"。
 
-负例证据：--self-test 14 用例（正常静默/断链/paths误用/引用腐烂/双目录漂移/静默失效/
-          幻影/超龄/串味/无痕迹/他端软链未注入不误报/留痕闸门/按需文件不误报/双端同源去重）
+负例证据：--self-test 16 用例（正常静默/断链/paths误用/引用腐烂/双目录漂移/静默失效/
+          幻影/超龄/串味/无痕迹/他端软链未注入不误报/留痕闸门/按需文件不误报/双端同源去重/
+          痕迹写法归一不误报）
 根因：crossend_guard 曾指错目录静默失效半月无人知（成长箱在案）——注入链断=
       人格与规则静默消失而其余守卫照常跑，是 Qoder CN 端独有的单点失效面。
       ⑤ 来源=2026-08-27 你令 N4：新版 CN 是 0.1.0 换代线，常驻注入建立在官方未文档化
       行为上，"升级后注入自检"须成为可留痕可对账的验收动作（对齐 S816 兼容≠生效）。
 
 作者：皮叔（Qoder CN 端）
-版本：v0.4
-日期：2026-08-24（v0.1）/ 2026-08-27（v0.2 加检测⑤）/ 2026-09-04（v0.3）/ 2026-09-20（v0.4 判定域边界显式外印）
-来源：你令"从最符合我愿景的情况下，第一性原理做最优处理"→六端专属守卫先例
+版本：v0.5
+日期：2026-08-24（v0.1）/ 2026-08-27（v0.2 加检测⑤）/ 2026-09-04（v0.3）/ 2026-09-20（v0.4 判定域边界显式外印）/ 2026-10-11（v0.5 痕迹写法归一根治假红）
+来源：皮叔令"从最符合我愿景的情况下，第一性原理做最优处理"→六端专属守卫先例
       （DSH/LobsterAI/TraeWork/ZCode/AutoClaw/Hermes）的一致解：守本端单点失效面。
-v0.3 变更（2026-09-04·你令"按符合愿景的最优解根治注入自检假警"）：病根=⑤ own_rules
+v0.3 变更（2026-09-04·皮叔令"按符合愿景的最优解根治注入自检假警"）：病根=⑤ own_rules
       无差别含 rules 全部 .md，与注入规范§二"常驻三要件（要件2=alwaysApply 标记）缺一即
       退化按需"不一致→把按需记忆软链（动态快照/问卷/题库·4端共享均无标记）误报"常驻静默
       失效"；且 core-user 双端同源软链，AI 自报只填他端路径时本端被误报。根治=① own_rules
       收窄为仅含 alwaysApply:true（_has_always_apply）② 失效判定加六端同源 realpath 去重
       （_realpath_of_key）。3 记忆软链不动（保 4端共享单一真源·按需要靠常驻路由表触发·
-      快照按需读到最新比常驻启动快照更"懂用户"·愿景④）。纯本端脚本修复·零跨端污染。
+      快照按需读到最新比常驻启动快照更"懂你"·愿景④）。纯本端脚本修复·零跨端污染。
+v0.5 变更（2026-10-11·皮叔令"符合愿景第一性原理真根治，不要再出现"）：病根=⑤ 对账把
+      AI 自报路径与盘上 truth key 做精确字符串比对，不认写法变体——10-10 窗口用 `~/`
+      tilde 或绝对路径落痕后，同一批文件被同时报"注入静默失效"+"幻影注入项"（10-11
+      00:03 实测 12 处假红）。模型看到的注入路径本就常是绝对路径，输入格式控不住，
+      靠文档约束"请用规范前缀"=判据不随对象演化（复发必然）。根治=_canon_seen 按
+      归属 tag 切片归一，写入侧（record）+读取侧（check）双卡；读取侧归一使存量
+      脏痕迹即时自愈，不靠等下个窗口重落痕。负例 T16 焊住此判据。
 
 用法：
   python3 qodercn_inject_chain_guard.py            # Hook 报告制：恒 exit 0
@@ -65,6 +69,10 @@ v0.3 变更（2026-09-04·你令"按符合愿景的最优解根治注入自检�
       --seen .qoder-cn/rules/a.md,.qoder-cn/AGENTS.md   # AI 会话内落观察痕迹并即时对账
   python3 qodercn_inject_chain_guard.py --self-test
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import os
 import re
@@ -82,7 +90,7 @@ import tempfile
 def _guard_log_exit(rc):
     try:
         import subprocess as _sp
-        _sp.Popen(["python3", "[记忆共享中心]/脚本中心/guard_invocation_logger.py",
+        _sp.Popen(["python3", os.path.expanduser("[记忆共享中心]/脚本中心/guard_invocation_logger.py"),
                    "--guard", "qodercn_inject_chain_guard",
                    "--source", os.environ.get("GUARD_TRIGGER_SOURCE", "hook_auto"),
                    "--exit", str(rc),
@@ -105,8 +113,7 @@ NAVIGATOR_FILES = [
 # ⑤ 注入实证对账：痕迹=AI 在会话内报告"实际看到哪些 rules 进了 context"后落盘
 # （注入产物只存在于模型上下文、不落转录——2026-08-27 实测 877159ed.jsonl 无 rules 正文，
 #   故磁盘侧唯一可机械取证的是这条痕迹，脚本不猜、AI 报告、脚本对账）
-OBSERVED_LOG = os.path.join("[记忆共享中心]", "脚本中心", "logs",
-                            "injection_observed_qodercn.jsonl")  # v2.0.1入包：落点随记忆中心占位符替换（装填端deploy _fill）
+OBSERVED_LOG = os.path.expanduser(    "[记忆共享中心]/脚本中心/logs/injection_observed_qodercn.jsonl")
 STALE_DAYS = 7  # 痕迹超龄=自检断链（对齐 autoclaw_gateway_guard 注入链路活性先例）
 STALE_HOURS_WITH_SESSION = 24  # 本端有会话活动但>24h无自检记录=活跃日断链显形（09-22挂尸普查反哺：7天窗口实测放过2天断链）
 
@@ -231,6 +238,24 @@ def _realpath_of_key(key, rules_dirs):
         return None
 
 
+def _canon_seen(item, rules_dirs):
+    """痕迹条目写法归一（v0.5 根治假红）：AI 自报路径存在三种写法——
+    `.qoder-cn/rules/x.md`（规范）/ `~/.qoder-cn/rules/x.md`（tilde）/
+    `/Users/xx/.qoder-cn/rules/x.md`（绝对）。truth 盘上 key 是规范写法，
+    精确差集遇写法变体=同一文件双向误报（静默失效+幻影成对出现=假红指纹）。
+    按归属 tag 从展开路径切片归一；未命中任何 tag 的路径原样返回
+    （真幻影照判，⛔不借归一放行来源不明项）。tag 后必须跟 `/` 且前置边界
+    为路径分隔符，防 `.qoder-cn-work` 类假匹配。"""
+    s = (item or "").strip()
+    exp = os.path.expanduser(s)
+    for rd in rules_dirs:
+        tag = os.path.basename(os.path.dirname(rd))
+        i = exp.find(tag + "/")
+        if i != -1 and (i == 0 or exp[i - 1] == "/"):
+            return exp[i:]
+    return s
+
+
 def _list_injectables(rules_dirs):
     """盘上真相=期望集（⛔不内联清单·第五问纪律）。
     实测注入层不止 rules/ 双目录：`~/.qoder-cn/AGENTS.md`（根级导航仪）同样进 context，
@@ -288,7 +313,7 @@ def record_observed(seen, rules_dirs=None, session="", observed_log=None):
     log = observed_log or OBSERVED_LOG
     os.makedirs(os.path.dirname(log), exist_ok=True)
     now = time.time()
-    seen_set = sorted(set(seen))
+    seen_set = sorted({_canon_seen(s, rules_dirs) for s in seen if s and s.strip()})
     last = _read_last_trace(log) if os.path.isfile(log) else None
     unchanged = bool(last) and sorted(set(last["seen"])) == seen_set \
         and (now - float(last.get("epoch", 0))) < 86400
@@ -334,7 +359,8 @@ def check_injection_proof(rules_dirs, observed_log):
     if trace is None:
         return [("无自检痕迹", f"{os.path.basename(observed_log)} 缺失/不可解析=注入生效性无实证")]
     self_tag = os.path.basename(os.path.dirname(rules_dirs[0]))
-    seen = set(trace["seen"])
+    # 读取侧归一（v0.5）：存量脏痕迹即时自愈，不靠等下一个窗口重新落痕
+    seen = {_canon_seen(s, rules_dirs) for s in trace["seen"]}
     age = time.time() - float(trace.get("epoch", 0))
     if age > STALE_DAYS * 86400:
         findings.append(("痕迹超龄",
@@ -532,6 +558,21 @@ def self_test():
         _write_trace(trace, dirs, omit=[".qoder-cn/rules/normal.md", ".qoder-cn/rules/on-demand.md"])
         case("T13 按需文件(无alwaysApply)不误报失效", 0, run_all(dirs, navs, trace))
 
+        # T16 痕迹写法归一（v0.5 根治假红）：AI 自报用 `~`tilde / 绝对路径写法
+        # （模型看到的注入路径常是绝对路径，输入格式不可控），⛔不得成对误报
+        # "静默失效"+"幻影"——2026-10-10 实测 tilde 痕迹一落，6 文件×双向=12 假红
+        dirs, navs, trace = _mk_fixture(os.path.join(tmp, "t16"))
+        _seen_norm = sorted(_list_injectables(dirs)[0])
+        _mixed = [("~/" + k) if k.startswith(".qoder-cn/")
+                  else os.path.join(tmp, "t16", k) if k.startswith(".qoder/")
+                  else k for k in _seen_norm]
+        _t16_now = time.time()
+        with open(trace, "w", encoding="utf-8") as tf:
+            tf.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(_t16_now)),
+                                 "epoch": int(_t16_now), "seen": sorted(_mixed),
+                                 "session": "t16"}, ensure_ascii=False) + "\n")
+        case("T16 tilde/绝对写法痕迹归一不误报", 0, run_all(dirs, navs, trace))
+
         # T14 六端同源软链去重（v0.3）：本端常驻文件与他端已观察项指向同一共享源
         # （core-user 双端软链同一实体·实测 realpath 一致），AI 自报只填他端路径⛔不判本端失效
         dirs, navs, trace = _mk_fixture(os.path.join(tmp, "t14"))
@@ -605,6 +646,11 @@ if __name__ == "__main__":
         main()
     except SystemExit as _e:
         _rc = _e.code if isinstance(_e.code, int) else 0
+        # 步2(2026-10-07 v? 报警噪声根治卡·你令彻底做完):检红rc归0——平台契约下 exit≠0专留真崩,
+        #   检红可见性=输出红行+台账(_guard_log_exit/.out/patrol log);⛔不减一行红输出。
+        if _rc == 1:
+            _rc = 0
+
     except Exception:
         _rc = 0  # 失败放行（Hook 纪律2）
     finally:

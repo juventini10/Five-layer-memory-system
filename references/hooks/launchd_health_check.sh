@@ -177,7 +177,7 @@ if [[ -f "$sync_script" ]]; then
       echo "   ⚠️  README scripts 索引过时（WatchPaths可能未触发或失败）→ 自动同步中..."
       /usr/bin/python3 "$sync_script" >/dev/null 2>&1 && echo "   ✅ 已自动同步" || echo "   🔴 自动同步失败，请手动运行: python3 $sync_script"
     else
-      echo "   🔴 索引检查失败（exit=$check_exit，可能标记缺失或脚本错误）"
+      echo "   🔴 索引检查失败（exit=${check_exit}，可能标记缺失或脚本错误）"
     fi
   fi
 else
@@ -196,7 +196,7 @@ if [[ -f "$state_bus_script" ]]; then
     if [[ $sb_exit -eq 1 ]]; then
       echo "   ⚠️  有端状态不同步 → 运行 'python3 $state_bus_script' 查看详情"
     else
-      echo "   🔴 状态同步检查失败（exit=$sb_exit，可能state_bus.json缺失或格式错误）"
+      echo "   🔴 状态同步检查失败（exit=${sb_exit}，可能state_bus.json缺失或格式错误）"
     fi
   fi
 else

@@ -1,0 +1,797 @@
+{
+  "_readme": "L1 派生配对豁免册·scope=mac_only|win_only·reason/basis 必填(空壳=L1判红)·候选扫描生成+依据自动定性 2026-10-10",
+  "exemptions": [
+    {
+      "file": "adapters/traework/scripts/install_launchd.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "adapters/traework/scripts/route_traework_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "adapters/zcode/privacy/desensitize-guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "guard_invoke.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧手动埋点包装器（头注'手动侧'自述，依赖 bash 语义与作者机目录结构），不在装机/verify/钩子/适配器任何 Windows 流",
+      "basis": "件头注自述+执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "memory-size-guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧记忆容量守护工具（开发工具面），不在 Windows 安装/verify/钩子流",
+      "basis": "执行形引用实测 0；台账B类作者侧件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "package_lock.sh",
+      "scope": "posix_shell_carried",
+      "reason": "POSIX shell 由 Windows 承载链（Git Bash/钩子承载）执行·批次9三态处置改判",
+      "basis": "端用户钩子/守卫引导语与运行时经 Git Bash 承载执行 package_lock.sh（skill_write_gate_guard 提示行实测2处·Windows 装包前置即 Git Bash）——原 not_on_windows_path 与可执行引用互斥判红，改按检测器正解 scope 登记"
+    },
+    {
+      "file": "references/digital-twin/devtools/automation_completion_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/create_launchd_task.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/deploy_position3.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/doenglingz_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由同目录 doenglingz_guard.py 实现并部署（install_scripts DT_SUITE devtools 含两件），.sh 无 Windows 执行形引用",
+      "basis": "install_scripts.py L156 DT_SUITE 明载 .sh+.py 双件部署；执行形引用正则实测 0 件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_frame_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_frame_guard_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_offline_repair.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_restart.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：一次性运维件（manifest_registrar 注释原话'如 dsh_restart.sh'），非 Windows 运行流",
+      "basis": "注释引用·执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_retitle_offline.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧离线运维件",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/dsh_session_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/git_commit_safe.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 提交包装（依赖 POSIX flock/trap），Win 施工由仓库 git 包装器纪律覆盖",
+      "basis": "iron_rule_antibody_* 仅注释定性其为'提交串行化'；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/git_commit_wrapper.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 包装件（同上），无 Windows 执行流引用",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/guard_invoke.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧手动埋点包装器（头注'手动侧'自述，依赖 bash 语义与作者机目录结构），不在装机/verify/钩子/适配器任何 Windows 流",
+      "basis": "件头注自述+执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/host_identity_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：端运行期自识别的 shell 取证件（判据已被 doenglingz_inject_prompt.py 逐字同源移植为 Python，Win 面走 .py）",
+      "basis": "inject_prompt L69 '判据与 host_identity_hook.sh 逐字同源'注释实证；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/kb_philo_consistency.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧知识-哲学一致性巡检 shell 件（历史缺陷以注释形态被引用），不在 Windows 流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/launchd_health_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/launchd_health_daily.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/memory-size-guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧记忆容量守护工具（开发工具面），不在 Windows 安装/verify/钩子流",
+      "basis": "执行形引用实测 0；台账B类作者侧件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/panel_live_watch.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd、fswatch",
+      "basis": "件内实测引用 launchd fswatch（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/reuse_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：守卫复用检查件——hermes 插件以 sys.executable+path 形态引用（shell 件经 Python 解释器必不成立=该插件面自我跳过），Windows 其他面无执行形调用",
+      "basis": "buluotuo-readonly-guards L246 subprocess 形实证；台账三测判 B 类·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/run_control_loop.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：控制论闭环跑批件（watch_control_loop 告警文案内嵌 cron 路径=作者侧 crontab 面，cron 非 Windows 机制）",
+      "basis": "告警串实证 cron(~/buluotuo_bin/)；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/run_registry_guards.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：Windows 入口=同目录 run_registry_guards.ps1（批次6 承载），.sh 为 mac/Linux 形态",
+      "basis": "install_scripts.py L119 ROSTER deps 含 run_registry_guards.ps1；_hook_command NT 优先 .ps1·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/run_with_token.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧带令牌运行包装（令牌注入=作者机凭据流），端用户无此件运行场景",
+      "basis": "台账B类；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/skill_selfcontained_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由 skill_selfcontained_guard.py 承担，.sh 无执行形引用",
+      "basis": "执行形引用正则实测 0；同目录 .py 在位·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/skill_version_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/digital-twin/devtools/test_rollback.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：回滚功能测试夹具（POSIX shell 夹具，验证由 verify.ps1/Win 面另跑）",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/verify_all_skills.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/digital-twin/devtools/verify_skill_version_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：git hook 部署验证件（作者侧注册表叙述），Windows 提交面不走该 shell hook",
+      "basis": "coverage_audit_matrix 注释'注册表L633 git hook'为叙述面；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/devtools/version_truth_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/watch_control_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/digital-twin/devtools/脚本体系验收.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧全体系验收脚本（开发工具面），非发布运行流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/guards/kb_index_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：守卫族成员——mac/Linux 由 registry_guards.sh 遍历执行，Windows 侧同族守卫走 registry_guards.ps1 的 *guard.ps1 集；本件为 POS",
+      "basis": "install_scripts.py L174 guards 套件声明；执行形引用实测 0（regex 严格形）·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/guards/registry_guards.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：Windows 承载链已建——run_registry_guards.ps1→registry_guards.ps1 为 Stop 钩子 Win 等价实现（批次6），.sh 由 mac/Linux 钩子路径使用",
+      "basis": "registry_guards.ps1 头注①-④同源语义声明；L4 真机 ✅ 自动发现守卫通过（run 38098674167）·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/digital-twin/guards/skill_version_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：同 kb_index_guard 族（registry_guards.sh 遍历族），Windows 面由 ps1 族实现",
+      "basis": "install_scripts.py L172-174 族声明；growth-box 引用为作者侧 HOME 路径形·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/automation_completion_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/create_launchd_task.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/deploy_position3.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/desensitize-guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/doenglingz_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由同目录 doenglingz_guard.py 实现并部署（install_scripts DT_SUITE devtools 含两件），.sh 无 Windows 执行形引用",
+      "basis": "install_scripts.py L156 DT_SUITE 明载 .sh+.py 双件部署；执行形引用正则实测 0 件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/dsh_frame_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/dsh_frame_guard_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/dsh_offline_repair.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/dsh_restart.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：一次性运维件（manifest_registrar 注释原话'如 dsh_restart.sh'），非 Windows 运行流",
+      "basis": "注释引用·执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/dsh_retitle_offline.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧离线运维件",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/dsh_session_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/git_commit_safe.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 提交包装（依赖 POSIX flock/trap），Win 施工由仓库 git 包装器纪律覆盖",
+      "basis": "iron_rule_antibody_* 仅注释定性其为'提交串行化'；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/git_commit_wrapper.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 包装件（同上），无 Windows 执行流引用",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/guard_invoke.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧手动埋点包装器（头注'手动侧'自述，依赖 bash 语义与作者机目录结构），不在装机/verify/钩子/适配器任何 Windows 流",
+      "basis": "件头注自述+执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/host_identity_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：端运行期自识别的 shell 取证件（判据已被 doenglingz_inject_prompt.py 逐字同源移植为 Python，Win 面走 .py）",
+      "basis": "inject_prompt L69 '判据与 host_identity_hook.sh 逐字同源'注释实证；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/kb_philo_consistency.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧知识-哲学一致性巡检 shell 件（历史缺陷以注释形态被引用），不在 Windows 流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/launchd_health_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/launchd_health_daily.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/memory-size-guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧记忆容量守护工具（开发工具面），不在 Windows 安装/verify/钩子流",
+      "basis": "执行形引用实测 0；台账B类作者侧件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/panel_live_watch.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd、fswatch",
+      "basis": "件内实测引用 launchd fswatch（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/reuse_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：守卫复用检查件——hermes 插件以 sys.executable+path 形态引用（shell 件经 Python 解释器必不成立=该插件面自我跳过），Windows 其他面无执行形调用",
+      "basis": "buluotuo-readonly-guards L246 subprocess 形实证；台账三测判 B 类·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/run_control_loop.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：控制论闭环跑批件（watch_control_loop 告警文案内嵌 cron 路径=作者侧 crontab 面，cron 非 Windows 机制）",
+      "basis": "告警串实证 cron(~/buluotuo_bin/)；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/run_registry_guards.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：Windows 入口=同目录 run_registry_guards.ps1（批次6 承载），.sh 为 mac/Linux 形态",
+      "basis": "install_scripts.py L119 ROSTER deps 含 run_registry_guards.ps1；_hook_command NT 优先 .ps1·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/run_with_token.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧带令牌运行包装（令牌注入=作者机凭据流），端用户无此件运行场景",
+      "basis": "台账B类；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/skill_selfcontained_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由 skill_selfcontained_guard.py 承担，.sh 无执行形引用",
+      "basis": "执行形引用正则实测 0；同目录 .py 在位·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/skill_version_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/hooks/test_rollback.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：回滚功能测试夹具（POSIX shell 夹具，验证由 verify.ps1/Win 面另跑）",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/verify_all_skills.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/hooks/verify_skill_version_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：git hook 部署验证件（作者侧注册表叙述），Windows 提交面不走该 shell hook",
+      "basis": "coverage_audit_matrix 注释'注册表L633 git hook'为叙述面；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/hooks/version_truth_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/watch_control_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/hooks/脚本体系验收.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧全体系验收脚本（开发工具面），非发布运行流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/automation_completion_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/create_launchd_task.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/deploy_position3.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/desensitize-guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/doenglingz_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由同目录 doenglingz_guard.py 实现并部署（install_scripts DT_SUITE devtools 含两件），.sh 无 Windows 执行形引用",
+      "basis": "install_scripts.py L156 DT_SUITE 明载 .sh+.py 双件部署；执行形引用正则实测 0 件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/dsh_frame_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/dsh_frame_guard_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/dsh_offline_repair.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/dsh_restart.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：一次性运维件（manifest_registrar 注释原话'如 dsh_restart.sh'），非 Windows 运行流",
+      "basis": "注释引用·执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/dsh_retitle_offline.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧离线运维件",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/dsh_session_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd",
+      "basis": "件内实测引用 launchctl launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/git_commit_safe.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 提交包装（依赖 POSIX flock/trap），Win 施工由仓库 git 包装器纪律覆盖",
+      "basis": "iron_rule_antibody_* 仅注释定性其为'提交串行化'；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/git_commit_wrapper.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧 git 包装件（同上），无 Windows 执行流引用",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/guard_invoke.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧手动埋点包装器（头注'手动侧'自述，依赖 bash 语义与作者机目录结构），不在装机/verify/钩子/适配器任何 Windows 流",
+      "basis": "件头注自述+执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/host_identity_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：端运行期自识别的 shell 取证件（判据已被 doenglingz_inject_prompt.py 逐字同源移植为 Python，Win 面走 .py）",
+      "basis": "inject_prompt L69 '判据与 host_identity_hook.sh 逐字同源'注释实证；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/kb_philo_consistency.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧知识-哲学一致性巡检 shell 件（历史缺陷以注释形态被引用），不在 Windows 流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/launchd_health_check.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/launchd_health_daily.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/memory-size-guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧记忆容量守护工具（开发工具面），不在 Windows 安装/verify/钩子流",
+      "basis": "执行形引用实测 0；台账B类作者侧件·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/panel_live_watch.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd、fswatch",
+      "basis": "件内实测引用 launchd fswatch（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/reuse_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：守卫复用检查件——hermes 插件以 sys.executable+path 形态引用（shell 件经 Python 解释器必不成立=该插件面自我跳过），Windows 其他面无执行形调用",
+      "basis": "buluotuo-readonly-guards L246 subprocess 形实证；台账三测判 B 类·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/run_control_loop.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：控制论闭环跑批件（watch_control_loop 告警文案内嵌 cron 路径=作者侧 crontab 面，cron 非 Windows 机制）",
+      "basis": "告警串实证 cron(~/buluotuo_bin/)；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/run_registry_guards.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：Windows 入口=同目录 run_registry_guards.ps1（批次6 承载），.sh 为 mac/Linux 形态",
+      "basis": "install_scripts.py L119 ROSTER deps 含 run_registry_guards.ps1；_hook_command NT 优先 .ps1·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/run_with_token.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧带令牌运行包装（令牌注入=作者机凭据流），端用户无此件运行场景",
+      "basis": "台账B类；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/skill_selfcontained_guard.sh",
+      "scope": "not_on_windows_path",
+      "reason": "转Python等价物（卡片点名现成三件之一）：Windows 面由 skill_selfcontained_guard.py 承担，.sh 无执行形引用",
+      "basis": "执行形引用正则实测 0；同目录 .py 在位·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/skill_version_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/scripts/test_rollback.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：回滚功能测试夹具（POSIX shell 夹具，验证由 verify.ps1/Win 面另跑）",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/verify_all_skills.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "references/scripts/verify_skill_version_hook.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：git hook 部署验证件（作者侧注册表叙述），Windows 提交面不走该 shell hook",
+      "basis": "coverage_audit_matrix 注释'注册表L633 git hook'为叙述面；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/scripts/version_truth_guard.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/watch_control_loop.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/scripts/脚本体系验收.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧全体系验收脚本（开发工具面），非发布运行流",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/skills/awaken-memory-system/scripts/awaken_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd、osascript、plist",
+      "basis": "件内实测引用 launchd osascript plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/skills/clock-loop/scripts/check_package_health.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 osascript、plist",
+      "basis": "件内实测引用 osascript plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/skills/daily-buddy/scripts/dbbin.sh",
+      "scope": "posix_shell_carried",
+      "reason": "POSIX shell 由 Windows 承载链执行：daily-buddy 工作流（SKILL/task-standards 明载入口形 'bash scripts/dbbin.sh <py>'）在 Windows 经 Git Bash 运行本件；其 HOME 自愈语义 POSIX/Win 同构",
+      "basis": "finalize_report.py L385/409 与 distill_containers.py L19-20 存在 bash dbbin.sh 执行形引用（检查器 exec-rx 实测命中）；Git Bash 承载 Win 形有 L4 真机先例（run 38098674167 bash 跑通守卫族）·2026-10-11 批次9"
+    },
+    {
+      "file": "references/skills/growth-box/scripts/growth_box_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：成长箱检查（作者侧技能配置流，抗体池引用均为注释/注册表叙述）",
+      "basis": "iron_rule_antibody_* 注释实证；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/skills/growth-box/scripts/growth_chain.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 plist",
+      "basis": "件内实测引用 plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/skills/growth-box/tests/test_retire_anchor.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：growth-box 永久测试夹具（tests/ 目录），由作者侧 guard_selftest_check.py 夹具面发现，⛔Windows 装机不执行",
+      "basis": "guard_selftest_check DEV=开发工具路径实证作者侧；growth_box_check 仅注释引用·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/skills/system-logger/scripts/install_watch.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、fswatch",
+      "basis": "件内实测引用 launchctl launchd fswatch（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/skills/system-logger/scripts/systemlog_watch.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd、fswatch、plist",
+      "basis": "件内实测引用 launchd fswatch plist（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/skills/triwich/scripts/run.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：triwich 测试夹具入口（guard_selftest_check 的 DEV=开发工具 夹具发现面=作者侧），非 Windows 装机运行件",
+      "basis": "guard_selftest_check L61-62 BASE=记忆共享中心/开发工具实证·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/成就系统/achievement_notify.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 osascript",
+      "basis": "件内实测引用 osascript（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "references/成就系统/scripts/check_achievements.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：成就系统巡检 shell 件（成就面 Win 走 .py），无执行形引用",
+      "basis": "执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "references/记忆琥珀/scripts/amber_fswatch_wrapper.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 fswatch",
+      "basis": "件内实测引用 fswatch（grep 在位·2026-10-10 自动定性）"
+    },
+    {
+      "file": "run_with_token.sh",
+      "scope": "not_on_windows_path",
+      "reason": "明示不适用：作者侧带令牌运行包装（令牌注入=作者机凭据流），端用户无此件运行场景",
+      "basis": "台账B类；执行形引用实测 0·2026-10-11 批次9 §4-3三态处置·逐件判据=台账win_pairing_triage_20261010+本端执行形引用实测"
+    },
+    {
+      "file": "skill_version_check.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "verify_all_skills.sh",
+      "scope": "not_on_windows_path",
+      "reason": "仅文档面提及，可执行/配置面零引用 ⇒ Windows 不会执行它，补 .ps1 无意义",
+      "basis": "引用面扫描：可执行/配置面 1071 件文本零命中（脚本 platform_compat L1 同判据·2026-10-11）"
+    },
+    {
+      "file": "adapters/doubaowork/scripts/install_launchd.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchctl、launchd、plist",
+      "basis": "件内实测引用 launchctl launchd plist（grep 在位·2026-10-12）"
+    },
+    {
+      "file": "adapters/doubaowork/scripts/route_doubaowork_patrol.sh",
+      "scope": "mac_only",
+      "reason": "仅 macOS 运行：依赖 launchd",
+      "basis": "件内实测引用 launchd（grep 在位·2026-10-12）"
+    }
+  ],
+  "_gaps_note": "以下件既无 .ps1 对应也无 mac 专属依据 ⇒ 判为真缺口，保持空壳让 L1 持续报红，⛔不硬造豁免（清单见 gaps 文件）",
+  "gaps": [
+    "guard_invoke.sh",
+    "memory-size-guard.sh",
+    "package_lock.sh",
+    "references/digital-twin/devtools/doenglingz_guard.sh",
+    "references/digital-twin/devtools/dsh_restart.sh",
+    "references/digital-twin/devtools/dsh_retitle_offline.sh",
+    "references/digital-twin/devtools/git_commit_safe.sh",
+    "references/digital-twin/devtools/git_commit_wrapper.sh",
+    "references/digital-twin/devtools/guard_invoke.sh",
+    "references/digital-twin/devtools/host_identity_hook.sh",
+    "references/digital-twin/devtools/kb_philo_consistency.sh",
+    "references/digital-twin/devtools/memory-size-guard.sh",
+    "references/digital-twin/devtools/reuse_check.sh",
+    "references/digital-twin/devtools/run_control_loop.sh",
+    "references/digital-twin/devtools/run_registry_guards.sh",
+    "references/digital-twin/devtools/run_with_token.sh",
+    "references/digital-twin/devtools/skill_selfcontained_guard.sh",
+    "references/digital-twin/devtools/test_rollback.sh",
+    "references/digital-twin/devtools/verify_skill_version_hook.sh",
+    "references/digital-twin/devtools/脚本体系验收.sh",
+    "references/digital-twin/guards/kb_index_guard.sh",
+    "references/digital-twin/guards/registry_guards.sh",
+    "references/digital-twin/guards/skill_version_guard.sh",
+    "references/hooks/doenglingz_guard.sh",
+    "references/hooks/dsh_restart.sh",
+    "references/hooks/dsh_retitle_offline.sh",
+    "references/hooks/git_commit_safe.sh",
+    "references/hooks/git_commit_wrapper.sh",
+    "references/hooks/guard_invoke.sh",
+    "references/hooks/host_identity_hook.sh",
+    "references/hooks/kb_philo_consistency.sh",
+    "references/hooks/memory-size-guard.sh",
+    "references/hooks/reuse_check.sh",
+    "references/hooks/run_control_loop.sh",
+    "references/hooks/run_registry_guards.sh",
+    "references/hooks/run_with_token.sh",
+    "references/hooks/skill_selfcontained_guard.sh",
+    "references/hooks/test_rollback.sh",
+    "references/hooks/verify_skill_version_hook.sh",
+    "references/hooks/脚本体系验收.sh",
+    "references/scripts/doenglingz_guard.sh",
+    "references/scripts/dsh_restart.sh",
+    "references/scripts/dsh_retitle_offline.sh",
+    "references/scripts/git_commit_safe.sh",
+    "references/scripts/git_commit_wrapper.sh",
+    "references/scripts/guard_invoke.sh",
+    "references/scripts/host_identity_hook.sh",
+    "references/scripts/kb_philo_consistency.sh",
+    "references/scripts/memory-size-guard.sh",
+    "references/scripts/reuse_check.sh",
+    "references/scripts/run_control_loop.sh",
+    "references/scripts/run_registry_guards.sh",
+    "references/scripts/run_with_token.sh",
+    "references/scripts/skill_selfcontained_guard.sh",
+    "references/scripts/test_rollback.sh",
+    "references/scripts/verify_skill_version_hook.sh",
+    "references/scripts/脚本体系验收.sh",
+    "references/skills/daily-buddy/scripts/dbbin.sh",
+    "references/skills/growth-box/scripts/growth_box_check.sh",
+    "references/skills/growth-box/tests/test_retire_anchor.sh",
+    "references/skills/triwich/scripts/run.sh",
+    "references/成就系统/scripts/check_achievements.sh",
+    "run_with_token.sh"
+  ]
+}

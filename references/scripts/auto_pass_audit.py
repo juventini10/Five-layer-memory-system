@@ -16,10 +16,10 @@ import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 
-LOG_PATH = Path.home() / "~/[记忆共享中心]/数字分身/steps/step3-first-review-log.md"
-AUDIT_REPORT_PATH = Path.home() / "~/[记忆共享中心]/数字分身/steps/auto_pass_audit_report.md"
+LOG_PATH = Path.home() / "[记忆共享中心]/数字分身/steps/step3-first-review-log.md"
+AUDIT_REPORT_PATH = Path.home() / "[记忆共享中心]/数字分身/steps/auto_pass_audit_report.md"
 LINT_SCRIPT = Path.home() / "[记忆共享中心]/脚本中心/lint_collision_card.py"
-AI_LIB_PATH = Path.home() / "~/个人AI档案/知识库/AI学习库/"
+AI_LIB_PATH = Path.home() / "[日记仓库]/2-知识库/09-AI学习库/"  # 2026-10-13 C''波次2迁移后路径同步
 
 def parse_reviews(log_path, month=None):
     """解析step3初审台账，返回指定月份的初审记录"""

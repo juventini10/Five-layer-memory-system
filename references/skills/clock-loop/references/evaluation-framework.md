@@ -7,7 +7,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 > **用途**：SKILL.md阶段2自查环节的增强模块，从"对照用户检查清单"升级为"专业规范矩阵+知识网络+哲学维度"的多维评分
 > **加载时机**：阶段2自查环节启动时Read本文件
 > **数据源**：`references/eval-knowledge/`（判断依据内置·v3.9.5起从评估知识库收回，随skill分发不降级） + `references/triwich-integration.md` + `references/philosophical-evaluation.md`
-> **产出物外置**：评估报告归档→`~/[记忆共享中心]/评估知识库/test_results/`、L3沉淀→`evolution/`（产出物留外置不变）
+> **产出物外置**：评估报告归档→`[记忆共享中心]/评估知识库/test_results/`、L3沉淀→`evolution/`（产出物留外置不变）
 > **v2.4.0变更**：token_budget 移出评分体系·poka_yoke_layer+2→17·security_hardcode+3→8·评分维度20→19·总分恒等100·Y级(v4.9.0 第一性原理+童灵L2·L5驱动)
 
 ---
@@ -162,7 +162,7 @@ L1拆解（评分前，Read references/triwich-integration.md） →
   依据：指令编写规范§8.4来源可靠性分级+§8.5跨文件格式对齐（v4.9）
   ⛔DO NOT将格式一致性作为所有Skill的必检维度——原因是单文件简单Skill不需要格式对齐检测，必检=过度评估=评估资源浪费
   →
-机制实效验证（v2.5.0新增·成长箱反哺2026-09-20·LRN-20260920-007/009 实证） →
+机制实效验证（v2.5.0新增·成长箱反哺2026-09-20·内部记录/009 实证） →
   适用对象：含 Hook/守卫件、台账/记录机制、配套评估集的 Skill（三类任一即启用；纯文档 Skill 跳过）
   验证方法（五项·各为机械快查）：
     1. Hook/守卫件：核其测试是否走**真机载荷**——键名取自同域已运行件的 stdin 键表或实盘 stdin_keys。用自拟 JSON 键喂测后宣称"实测通过"=假绿（实证：doenglingz_level_declare_guard v1.0 自拟 6 键，真实键为 last_assistant_message → 全程空转 1 天无人察觉；判据类守卫取不到输入须留负痕 no_text/parse_error——静默 return 使"发病"与"正常无事"同形）
@@ -211,7 +211,7 @@ L1拆解（评分前，Read references/triwich-integration.md） →
     |------|------|------|
     | 故障分型 | 报错说人话 | 抽报错分支核文案——"vNone""未知"式内部值直出=不可读 |
     | 动作指引 | 看完知道怎么办 | 核报错是否带下一步（覆盖/重跑/检查路径）——只报错不带指引=半成品 |
-  依据：LRN-20260920-014（PAT-054 首例）+ 群友 .qoder vNone 事故（门禁拦截行为正确但人看不懂=remediation 语义通道缺失）
+  依据：内部记录（PAT-054 首例）+ 群友 .qoder vNone 事故（门禁拦截行为正确但人看不懂=remediation 语义通道缺失）
   ⛔DO NOT 把 None/空值直接插值进用户可见报错——原因是 exit code 传达给调用链、文案传达给人，两条通道缺一=半成品
   →
 测试夹具卫生检测（v2.7.0新增·成长箱反哺2026-09-20·triwich 3候选实证·JOB-003-20260920-005） →

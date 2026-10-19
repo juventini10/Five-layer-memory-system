@@ -15,7 +15,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import ast
 import io
@@ -27,7 +27,7 @@ PLUG = os.path.expanduser("~/.hermes/plugins")
 
 KEYMAP = [
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "kb_engine"),
-    (os.path.expanduser("[记忆共享中心]/脚本中心/路由家族"), "custom_route"),
+    (os.path.expanduser("[记忆共享中心]/脚本中心家族"), "custom_route"),
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "devtools"),
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "devtools"),
     (os.path.expanduser("[记忆共享中心]/工作日志"), "worklog"),

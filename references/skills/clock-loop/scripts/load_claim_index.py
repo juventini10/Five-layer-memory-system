@@ -41,7 +41,7 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_LEDGER = "~/[记忆共享中心]/未知未知/断言台账.md"
+DEFAULT_LEDGER = "[记忆共享中心]/未知未知/断言台账.md"
 
 
 def resolve_path(p: str) -> Path:
@@ -96,7 +96,7 @@ def main():
     parser.add_argument(
         "--ledger",
         default=DEFAULT_LEDGER,
-        help="断言台账.md路径（默认：~/[记忆共享中心]/未知未知/断言台账.md）",
+        help="断言台账.md路径（默认：[记忆共享中心]/未知未知/断言台账.md）",
     )
     args = parser.parse_args()
 

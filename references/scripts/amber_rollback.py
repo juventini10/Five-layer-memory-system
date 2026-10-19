@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """amber_rollback.py — 备份回滚器（记忆琥珀第三维：怎么把备份取回来）
 
 缘起（2026-10-06）：三明治 L2 裁决——备份决策三维里「放哪」有铁律-005④、
@@ -29,6 +25,10 @@ install_scripts.py 的备份放进记忆琥珀后，**AI 自己找错了文件�
 
 退出码：0=成功；1=有错（明细打印到 stdout）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import re
 import shutil
@@ -37,7 +37,7 @@ import time
 
 HOME = os.path.expanduser("~")
 AMBER = os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆琥珀")
-FALLBACK = "find ~/[记忆共享中心]/记忆琥珀 -name '*%s*.bak*' -type f | xargs ls -t 2>/dev/null"   # ⛔ 保持未格式化模板：每处按 keyword 填，避免二次 % 失效
+FALLBACK = "find [记忆共享中心]/记忆琥珀 -name '*%s*.bak*' -type f | xargs ls -t 2>/dev/null"   # ⛔ 保持未格式化模板：每处按 keyword 填，避免二次 % 失效
 
 
 def _fmt_size(n):

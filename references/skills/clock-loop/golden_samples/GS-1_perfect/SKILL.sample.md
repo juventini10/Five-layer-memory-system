@@ -12,7 +12,7 @@ allowed-tools: [Read, Write, Bash, Grep, Glob, Agent, WebSearch]
 dependencies: []
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/triwich/
+upstream: [记忆共享中心]/技能配置/triwich/
 modifiable: true
 version: "3.14.2"
 cured_snapshot:
@@ -192,7 +192,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 📦 **产出物**：`steps/step0-determination.md`（写入判定结果）
 
-> 🔴 **路径基准声明（v3.12.0·H-9修复·定位键唯一性）**：本 Skill 中所有裸 `steps/` 相对路径，基准 = **当前执行工作区**（用户会话 cwd，`pwd` 可查），⛔DO NOT 解析到 Skill 安装目录（`~/[记忆共享中心]/技能配置/triwich/steps/` 或 `~/.workbuddy/skills/triwich/steps/` 下的历史文件为示例遗留，非本轮产出物）。启动 Step0 前✅DO `pwd` 确认工作区 + `ls {工作区}/steps/` 检查目标文件 mtime 归属本轮——原因是定位键不唯一=熔断器读错对象=锁失效（2026-08-09 L3 实跑：Agent A 读到 skill 目录陈旧 step0 仍继续流程）。唯一例外：计数器载体 `{skill根目录}/steps/agent_b_streak.md`（路径显式带 `{skill根目录}`，见 full-flow.md §Agent B 质量监控，跨会话持久需随 Skill 分发）。
+> 🔴 **路径基准声明（v3.12.0·H-9修复·定位键唯一性）**：本 Skill 中所有裸 `steps/` 相对路径，基准 = **当前执行工作区**（用户会话 cwd，`pwd` 可查），⛔DO NOT 解析到 Skill 安装目录（`[记忆共享中心]/技能配置/triwich/steps/` 或 `~/.workbuddy/skills/triwich/steps/` 下的历史文件为示例遗留，非本轮产出物）。启动 Step0 前✅DO `pwd` 确认工作区 + `ls {工作区}/steps/` 检查目标文件 mtime 归属本轮——原因是定位键不唯一=熔断器读错对象=锁失效（2026-08-09 L3 实跑：Agent A 读到 skill 目录陈旧 step0 仍继续流程）。唯一例外：计数器载体 `{skill根目录}/steps/agent_b_streak.md`（路径显式带 `{skill根目录}`，见 full-flow.md §Agent B 质量监控，跨会话持久需随 Skill 分发）。
 
 **文件首部✅DO写入会话戳**（v3.11.0·取值防伪 v3.12.0）：
 ```

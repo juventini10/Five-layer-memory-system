@@ -22,7 +22,7 @@ v1.1（2026-09-19 08:40·Qoder CN 童灵·皮叔令「根治这个风险」）�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import datetime
 import json
@@ -120,6 +120,7 @@ def main(argv):
         return self_test()
     if "--check-time" in argv:
         i = argv.index("--check-time")
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         txt = argv[i + 1] if i + 1 < len(argv) else sys.stdin.read()
         bad = judge(txt)
         print(_msg(bad) if bad else "✅ 时间戳实取无异常")

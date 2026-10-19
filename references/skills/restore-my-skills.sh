@@ -245,9 +245,15 @@ while IFS=$'\t' read -r pid disp skdir sym excl; do
     if [ "$DRY" = "1" ]; then
         :
     else
+        # C15(2026-10-15)：自愈只碰"端配置根已存在"的端——配置根不在=该端未装，跳过⛔不mkdir占地
+        #   （旧实现给未装端 mkdir skdir：一次自愈在 qodercn 机长出他端 skills 目录=step6 全端扫描同族病）
+        if [ ! -d "$(dirname "$skdir")" ]; then
+            echo "   ⏭️ ${pid} 配置根不存在（该端未装）——跳过不建链"
+            continue
+        fi
         mkdir -p "$skdir" 2>/dev/null || true
         if [ ! -d "$skdir" ]; then
-            echo "   ❌ 无法创建 ${skdir}（该端未装？路径权限？）"
+            echo "   ❌ 无法创建 ${skdir}（路径权限？）"
             FAIL=$((FAIL+${#SKILLS[@]})); continue
         fi
     fi

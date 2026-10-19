@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """shadow_guard_runner.py v1.0 — SSOT 四守卫统一跑口（收口回合自检器）
 
 为什么有这个（2026-10-02·愿景①「全自动化·不依赖人记得」）：
@@ -30,6 +26,10 @@ except Exception: pass
   python3 shadow_guard_runner.py --quiet    # 只在有红时输出
 退出：0=全绿；1=有守卫报红（明细见输出）；2=某守卫脚本缺失/不可执行
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import json
 import os
 import subprocess

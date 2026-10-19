@@ -1,14 +1,14 @@
 ---
 version: "3.6.0"
 source_skill: meta-aletheia
-source_path: ~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+source_path: [记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # 迁理之外哲学评估固化引用
 
 > **来源**：meta-aletheia v3.6.0
-> **源头路径**：`~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md`
+> **源头路径**：`[记忆共享中心]/技能配置/meta-aletheia/SKILL.md`
 > **引用模式**：固化引用（reference）——clock-loop直接读本文件执行，不调用meta-aletheia Skill
 > **版本检查**：阶段1.5知识网络构建时，对比本文件头部版本号与meta-aletheia SKILL.md YAML version字段，不一致则⚠️告警
 
@@ -112,7 +112,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 ---
 
-> 固化版本：v3.6.0 | 固化日期：2026-09-02 | 源头：~/[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
+> 固化版本：v3.6.0 | 固化日期：2026-09-02 | 源头：[记忆共享中心]/技能配置/meta-aletheia/SKILL.md
 
 > **Case A 同步声明（2026-09-02）**：meta-aletheia v3.5.1→v3.6.0 变更为触发双源通道/eval-set二义/标注格式/沉淀写入路径/SHADOW豁免/视角组合表激活③/疲劳量化等触发与流程修复，未触及本文件固化的五大哲学视角/七项哲学检查/视角匹配规则/功能层等价规则/版本同步规则——仅版本号同步，固化内容无变化。
 > **Case A 同步声明（2026-09-01）**：meta-aletheia v3.5.0→v3.5.1 变更为斯多葛坏事预镜子节微调，未触及本文件固化的五大哲学视角/七项哲学检查/视角匹配规则/功能层等价规则/版本同步规则——仅版本号同步，固化内容无变化。

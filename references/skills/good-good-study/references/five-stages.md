@@ -99,7 +99,7 @@ P1 领域分诊 → P2 地基速扫 → P3 断层线扫描 → P4 立场锻造 �
 ### A线产出
 1. 按 `references/card-schema.md` 格式产出立场卡/技能卡
 2. 通过写入前强制自检（5项·card-schema权威·v0.13.2修正残留）
-3. Write 到 `~/[记忆共享中心]/知识库/AI学习库/` + 更新 INDEX.md
+3. Write 到 `~/Local_Obsidian_Vault/2-知识库/09-AI学习库/` + 更新 INDEX.md
 4. 如来自残差 → 回写 `未知未知/显形台账.md`
 5. 如来自碰撞候选 → 卡片必带「碰撞来源: [C-XXX × C-YYY]」字段（D-F4）
    + 回写候选队列该项 status→consumed（防重复消费·见topic-selection.md§二.4）

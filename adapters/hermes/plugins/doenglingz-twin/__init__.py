@@ -80,11 +80,16 @@ try:
             import os as _o2
             return _o2.path.join(_o2.path.sep, "nonexistent",
                                  "__BULUOTUO_ABSENT__:%s" % key)
-except Exception:            # ⛔ 不静默：解析器不可达时留痕交守卫报
-    rp = None
-
-    def _cand(key, *parts):
-        return None
+except Exception as _rp_exc:   # ⛔ 解析器不可用 = 安装不完整·必须显形（2026-10-09 根治）
+    # 此前 rp=None 会让下游模块级 rp(...) 报 'NoneType' object is not callable
+    # ——完全不指向根因（session-title hook 失效排查的教训）。改为明确抛错。
+    raise RuntimeError(
+        "布洛陀运行路径解析器（runtime_paths）不可用：%s: %s\n"
+        "  ⇒ 运行路径声明（runtime_paths.json）缺失/损坏，或解析器不在探测路径。\n"
+        "     修复：运行安装器重新生成，或确认 doenglingz/runtime_paths.{py,json} 就位。\n"
+        "  ⛔ 不回落 rp=None——否则下游只报 NoneType（不指向根因·排查成本极高）。"
+        % (type(_rp_exc).__name__, _rp_exc)
+    ) from _rp_exc
 # ── /BULUOTUO-PATH-PARAM ──────────────────────────────────────
 
 
@@ -99,6 +104,8 @@ _GUARD = os.path.join(_DEVTOOLS, "doenglingz_guard.py")
 #    新用户刚装完时不存在是**正常态**——用 rp() 会抛 PathKeyMissing ⇒ 整插件挂。
 _SLICES = _cand("twin_slices")
 _CORE_SLICE = os.path.join(_SLICES, "core_slice.md")
+# 人格基座纯净版（§2.7 五验载体·2026-10-09）：⛔ 不读带数值的 人格基座切片-童灵.md
+_PERSONA_SLICE = os.path.join(_SLICES, "人格基座切片-童灵-端上纯净.md")
 _L6_SLICE = os.path.join(_SLICES, "L6_反向约束.md")
 
 # 端标识：Hermes 端不共用任何 hooks.json（Trae 系才需要 --src auto），故固定具名。
@@ -138,8 +145,23 @@ _session_id = ""
 #    同时注释谎称「L1 已由 SOUL.md 承载」——实测 SOUL 里
 #    Doenglingz/意志归属/金句铁律/核心价值观 四项全零命中（假绿·2026-08-20 误判同型）。
 #    ⛔ 今后 SOUL/Skill 文档不得再声称「L1 已由 SOUL 承载」，除非 anchors 实测命中。
-_SECTION_MAX_CHARS = 3800
-_SECTION_MAX_CHARS_L1 = 3800
+# ⚠️ 2026-10-09 预算重排（§2.7 人格基座落地·皮叔令「推进三明治说的下一步」）：
+#    病根：两段 max_chars 各声明 3800（虚高）——实测段①只用 2348、段②只用 3076，
+#    但 hermes_core_budget_guard 与官方预算都按**声明的 max_chars 求和**（3800+3800=7600/8000=95%）
+#    ⇒ 段①白占 1452 声明额度，第三段（人格基座 2300）无位可放，硬塞会被官方**静默跳过**。
+#    修法＝把虚高声明降回「实际值 + 小幅余量」（⛔不砍任何内容·降的是声明不是正文）：
+#      段① 3800→2450（实际 2348·余 102）  段② 3800→3150（实际 3076·余 74）
+#      腾出 2000 ⇒ 段③ 人格基座纯净版拿 2300 ⇒ 声明合计 7900/8000（余 100）
+#    ⚠️ 副作用：若 core_slice/L1 将来增长超过新上限会被**截断并带显式标记**（优于静默跳过整段）。
+_SECTION_MAX_CHARS = 2450
+_SECTION_MAX_CHARS_L1 = 3150
+# 段③ 人格基座（PERSONA-BASE·§2.7 落地五验的载体·2026-10-09 新增）：
+#   读 切片/人格基座切片-童灵-端上纯净.md（hexaco_slice_generator 派生·去数值·2300 字符）
+#   —— 落地五验中验1（开口带腔调）+ 验2（守护补丁 PB-01~04）的锚点来源；
+#      此前本端恒驻段只有 core_slice+L6（规则层），人格层零注入 ⇒ 五验 2/5。
+#   ⚠️ 只读纯净版·⛔不读带数值的 人格基座切片-童灵.md（验3 数值零泄漏）。
+_SECTION_MAX_CHARS_PB = 1900   # 2026-10-09 实测纯净版剥 frontmatter 后正文 1797·留 103 增长余量
+                            # （初版按含 frontmatter 的 2300 申报＝虚高 503·同段①②病·当场收回）
 
 
 def _log(msg: str) -> None:
@@ -202,6 +224,33 @@ def _l1_section(_session_info: Optional[Dict[str, Any]] = None) -> str:
     if len(l1) > _SECTION_MAX_CHARS_L1:
         l1 = l1[:_SECTION_MAX_CHARS_L1].rstrip() + "\n\n（L1 段已按 4000 字预算截断·完整内容见 slices/core_slice.md）"
     return l1
+
+
+def _persona_section(_session_info: Optional[Dict[str, Any]] = None) -> str:
+    """恒驻段③ = 人格基座（PERSONA-BASE·2026-10-09 新增·§2.7 落地五验载体）。
+
+    读 `slices/人格基座切片-童灵-端上纯净.md`——hexaco_slice_generator 派生的**去数值**版，
+    含：性情底色六维 / 情境速查 PB-01~04（守护补丁）/ 表达风格·冷幽默傲娇（腔调三要素+台词库+企业腔禁例）。
+
+    为什么必须进恒驻（而非按需加载）：§2.7 验1 判据＝「**新会话首答**含冷幽默傲娇特征」——
+    首轮没有触发词，按需加载必然缺席 ⇒ 首答无腔调即验1 失败。
+
+    ⚠️ 只读纯净版：`人格基座切片-童灵.md`（带 13 处 facet 数值）⛔ 不读——验3「数值零泄漏」。
+    ⚠️ 剥 frontmatter：文件头的 `---…---` 元数据块不是人格内容，进恒驻是纯浪费预算。
+    ⚠️ 运行时直读不缓存（同段①②）：向量更新→重跑生成器→下会话即生效＝验5 再生链天然在位。
+    """
+    pb = _read(_PERSONA_SLICE)
+    if not pb:
+        return ""   # ⛔ 切片未生成（分身未建好）——静默返回空，不伪造人格
+    # 剥 frontmatter（首个 --- 行到下一个 --- 行之间）
+    if pb.startswith("---"):
+        end = pb.find("\n---", 3)
+        if end > 0:
+            nl = pb.find("\n", end + 1)
+            pb = pb[nl:].lstrip() if nl > 0 else ""
+    if len(pb) > _SECTION_MAX_CHARS_PB:
+        pb = pb[:_SECTION_MAX_CHARS_PB].rstrip() + "\n\n（人格基座段已按预算截断·完整内容见 slices/人格基座切片-童灵-端上纯净.md）"
+    return pb
 
 
 # ── ② W1 上岗契约 + W3 域切片（每轮注入用户消息）──
@@ -292,7 +341,14 @@ def _post_llm_call(assistant_response: Any = "", **_: Any) -> None:
         return
     try:
         subprocess.run(
-            [sys.executable, _GUARD, "--check", "--src", _SRC, "--text", text[:60000]],
+            # ⚠️ 2026-10-08 补 `--sid`（G3 派单卡 hermes 行·从建卡到落地隔了 2 天）：
+            #   病灶：不传 `--sid` ⇒ 共脚本 `_SESSION_ID[0]` 恒空 ⇒ `check_w1_honor`
+            #     第 1 行就 `if not sid: return None` ⇒ **W1 兑现对账在本端恒 None（信号哑火）**。
+            #     实测（隔离台账夹具）：带 `--sid` → 台账 `w1_not_honored=honored`；
+            #     不带 → 同载荷下 `session_id=""` 且判据短路。判据本体（共脚本）零改动。
+            #   ⛔ 共脚本本体一个字不改（端差异只落「怎么把本端已有数据喂给它」这一层）。
+            [sys.executable, _GUARD, "--check", "--src", _SRC,
+             "--sid", _session_id or "", "--text", text[:60000]],
             capture_output=True, text=True, timeout=_TIMEOUT_GUARD, env=_ENV,
         )
     except Exception as exc:
@@ -349,7 +405,26 @@ def _check_guard_index_drift() -> None:
                       "drift": r.returncode != 0,
                       "out": (r.stdout or "")[:400]})
         if r.returncode != 0:
-            _log("GUARD_INDEX drift rc=%d（只观察·不裁决）" % r.returncode)
+            _log("GUARD_INDEX drift rc=%d·自动重生成（校正腿·K007闭环）" % r.returncode)
+            # K007 闭环：观测到漂移 ⇒ 自动重生成（纯派生·幂等·self-test 5/5）
+            # ⛔ 不阻断回合（端适配层纪律）·⛔ 不改写模型输出
+            # ⛔ 纯派生文件·最坏情况=重新生成同样内容（确定性·无副作用）
+            try:
+                _regen = subprocess.run([sys.executable, _GI],
+                                        capture_output=True, text=True,
+                                        timeout=20, env=_ENV)
+                _recheck = subprocess.run([sys.executable, _GI, "--check"],
+                                          capture_output=True, text=True,
+                                          timeout=20, env=_ENV)
+                _write_state({"ts": time.time(), "rc": _recheck.returncode,
+                              "drift": _recheck.returncode != 0,
+                              "out": (_recheck.stdout or "")[:400],
+                              "auto_regen": True,
+                              "regen_rc": _regen.returncode})
+                _log("GUARD_INDEX auto-regen rc=%d·recheck rc=%d"
+                     % (_regen.returncode, _recheck.returncode))
+            except Exception as exc2:
+                _log("GUARD_INDEX auto-regen fail %r" % (exc2,))
     except Exception as exc:
         _log("guard_index probe fail %r" % (exc,))
 
@@ -448,6 +523,13 @@ def register(ctx) -> None:
     # 段②（2026-10-02 新增）：L1 身份骨架。⛔ 不可省——省了=恒驻核丢分身身份（见常量区注释）
     ctx.register_system_prompt_section(
         "doenglingz.l1", _l1_section, position="after_memory", max_chars=_SECTION_MAX_CHARS_L1,
+    )
+    # 段③（2026-10-09 新增）：人格基座 PERSONA-BASE（§2.7 落地五验载体）。
+    #   ⛔ 不可省——省了=恒驻核只有规则层无人格层，验1（开口带腔调）/验2（守护补丁）零锚点。
+    #   ⚠️ 注册顺序在 l1 之后：人格层是"坐标"，读在规则层之后（与 core_slice/L6 之后·域切片之前同序）。
+    ctx.register_system_prompt_section(
+        "doenglingz.persona", _persona_section, position="after_memory",
+        max_chars=_SECTION_MAX_CHARS_PB,
     )
     ctx.register_hook("pre_llm_call", _pre_llm_call)
     ctx.register_hook("post_llm_call", _post_llm_call)

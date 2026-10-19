@@ -1,13 +1,13 @@
 # rule_triggers.yaml — 用户基本规则「加载时机」机器可执行触发规格
 #
 # ⚠️ 编译产物声明：本文件由 gen_rule_triggers.py 从 SSOT 编译生成——
-#   SSOT = ~/~/[记忆共享中心]/记忆规则/用户基本规则-铁律版.md 头部「加载时机索引表」
+#   SSOT = [记忆共享中心]/记忆规则/用户基本规则-铁律版.md 头部「加载时机索引表」
 #   ⛔DO NOT 手工编辑本文件的 id/name/resident/source_anchor（编译时会被 SSOT 覆盖）
 #   ✅DO match 正则调优可直接编辑本文件（调优资产·铁律-020：改匹配先 dry-run 看命中）
 #   重新编译：python3 [记忆共享中心]/脚本中心/gen_rule_triggers.py（dry-run 预览）→ --write 落盘
 #   ⑥门禁：rule_three_layer_guard.py 机械校验 索引表条数 == 本文件条数 防漂移
 #
-# 编译时间：2026-10-01 23:07
+# 编译时间：2026-10-11 21:18
 version: 2
 source: 用户基本规则-铁律版.md 加载时机索引表 (SSOT·编译产物)
 triggers:
@@ -77,7 +77,9 @@ triggers:
     resident: true
     source_file: 用户基本规则-铁律版.md
     source_anchor: "### 铁律-008"
-    match: []  # resident 行禁 match（覆盖守卫约束）
+    match:
+      - "(意图分类|产出路由|产出签名|回复格式|回复模板|署名)"
+      - "(开头.{0,8}分类|先分类.{0,8}再开口|署名.{0,8}(最后|永远))"
   - id: "009"
     name: （已合并入008·占位）
     resident: true
@@ -133,6 +135,7 @@ triggers:
     source_anchor: "### 铁律-016"
     match:
       - "审计|接入|落地|设计哲学|进度看板|状态结论|是否.*已|实盘"
+      - "(已?挂工单|已?排期(到|在)|待整合|已随包发|包内已(有|含)|清单已列全|登记已(落|完成)|见[0-9A-Za-z一二三四五六七八九十_]+ *(§|第[一二三四五六七八九十0-9]+))"
   - id: "017"
     name: Skill路由强制启动
     resident: false
@@ -162,6 +165,9 @@ triggers:
     match:
       - "改.*匹配|改.*正则|改.*关键词|改.*分类器|改.*全局匹配|匹配脚本|识别脚本|派生脚本"
       - "修改.*pattern|修改.*regex|修改.*grep|dry-run|sanity check"
+      - "(改|调|加|换|动|修).{0,10}(正则|关键词|词表|匹配|pattern|分类器|识别逻辑|派生逻辑)"
+      - "(试跑|dry.run|抽 ?[0-9一二两] ?个样本|命中(范围|多少|几条)|全量看命中|先看命中)"
+      - "(正则|关键词|词表|匹配|pattern|分类器|识别逻辑|派生逻辑).{0,14}(改|调|加|换|动|修)(过|一下|完|前)?"
   - id: "021"
     name: 验证机制自验证+终检脚本物理拦截（v8.9 补④改动收尾三步）
     resident: false
@@ -170,6 +176,8 @@ triggers:
     match:
       - "验证脚本|统计脚本|比对脚本|终检|长流程|月报|蒸馏|发布流程"
       - "验证通过|检查完成|验证块|自验证|sanity"
+      - "(输入为空|列表为空|计数为 ?0|结果为 ?0|全为 ?0|cards ?空|glob ?笔误)"
+      - "(终检|长流程).{0,12}(物理拦截|阻断|exit|rc=)"
   - id: "022"
     name: 授权≠流程豁免+身份标注真实可核验
     resident: false
@@ -191,6 +199,10 @@ triggers:
     resident: false
     source_file: 用户基本规则-铁律版.md
     source_anchor: "### 铁律-024"
+    match:
+      - "豁免|例外情况|这条跳过|这次特殊|下不为例|这次先不|可以省略|不用走|不用自检|不用跑"
+      - "我判断.{0,6}不必要|应该没问题|大概率不用|自评.{0,8}(可以|不必|省)"
+      - "跳过(这|该)?(步|闸|检查|流程)|绕过(这|该)?(步|闸|检查)"
     match:
       - "分级|例外|不适用|简化|轻量版|这次特殊|成本压力|省token"
       - "自评|自由裁量|酌情|视情况决定"
@@ -241,3 +253,63 @@ triggers:
     source_file: 用户基本规则-铁律版.md
     source_anchor: "### 铁律-030"
     match: []  # TODO: 索引表新增行·match 正则待补（铁律-020 流程）
+  - id: "031"
+    name: 阴性读数先验尺
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-031"
+    match: []  # TODO: 索引表新增行·match 正则待补（铁律-020 流程）
+  - id: "032"
+    name: 源层级取证·镜像永不待修（PAT-074晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-032"
+    match: []  # TODO: 索引表新增行·match 正则待补（铁律-020 流程）
+  - id: "033"
+    name: 字面锚点解析漂移闸（PAT-059晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-033"
+    match:
+      - "(锚点|字面|SearchReplace|replace|正则|模式|pattern).{0,14}(命中|零命中|不唯一|匹配不上|匹配不到|失效|漂移|写坏|转义|失败)"
+      - "(grep|rg).{0,14}(零命中|没结果|搜不到|匹配不到|静默)"
+  - id: "034"
+    name: 编号段独占·内容核归属（PAT-063晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-034"
+    match: []  # TODO: 索引表新增行·match 正则待补（铁律-020 流程）
+  - id: "035"
+    name: 自查须带回读痕（PAT-046晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-035"
+    match:
+      - "(自查|自检|检查|验证|终检|验收).{0,12}(回读|回执|证据|痕迹|贴出|返证|凭证|rc|退出码|原始输出)"
+      - "(只说|光说|口头).{0,8}(做了|完成|改完|通过|好了)"
+  - id: "036"
+    name: 登记同轮全本律（PAT-042晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-036"
+    match:
+      - "(登记|记录|更新|写入|改).{0,12}(账|台账|CHANGELOG|变更日志|索引表|版本号|全本)"
+      - "(漏|忘|没|未).{0,8}(登记|入账|同步|抬版本|更新).{0,8}(账|版本|CHANGELOG|索引|台账|三本|几本)"
+      - "(全本账|几本账|三本账|只抬手上|只改手上|三层一起升|同轮.{0,6}全落)"
+  - id: "037"
+    name: 机制互斥先补信号（PAT-080晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-037"
+    match:
+      - "(条款|规则|铁律|规定|指令|约束|钩子|档位|Skill).{0,12}(冲突|互斥|矛盾|打架)|(冲突|互斥|矛盾|打架).{0,12}(条款|规则|铁律|规定|指令|约束)"
+      - "该听谁的|谁听谁的|听哪个|以哪个为准|谁优先|哪个优先|优先级(冲突|不明|缺失)|哪条(规则|铁律)优先|服从哪"
+  - id: "038"
+    name: 改配置后必跑写侧正门（PAT-086晋升）
+    resident: false
+    source_file: 用户基本规则-铁律版.md
+    source_anchor: "### 铁律-038"
+    match:
+      - "(yaml|YAML|JSON|json|plist|frontmatter|settings|配置文件|配置面|rule_triggers).{0,20}(改|写|坏|解析|校验|跑|检查|生效|不跑|失能|加载)"
+      - "(改|写完|写坏|修改|动完).{0,16}(yaml|YAML|plist|settings|配置文件|配置面|触发表)"
+      - "(写侧|正门|lint|plutil|json.tool|解析失败|不可解析|ScannerError|escape|转义)"

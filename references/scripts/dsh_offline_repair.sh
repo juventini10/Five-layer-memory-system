@@ -39,7 +39,7 @@ for i in $(seq 1 5); do
     PID=$(listening)
     if [ -n "${PID:-}" ]; then
         kill "$PID" 2>/dev/null
-        log "第${i}次停 dsh web（PID=$PID）"
+        log "第${i}次停 dsh web（PID=${PID}）"
         sleep 1
     fi
     if [ -z "$(listening)" ]; then
@@ -96,10 +96,10 @@ for i in $(seq 1 40); do
     sleep 1
     NPID=$(listening)
     if [ -n "${NPID:-}" ]; then
-        log "✅ 修复完成并重启成功：新 PID=$NPID（耗时 ${i}s）"
+        log "✅ 修复完成并重启成功：新 PID=${NPID}（耗时 ${i}s）"
         OK=1
         break
     fi
 done
-[ "$OK" -ne 1 ] && log "❌ 重启失败：40s 内未监听 $PORT（见 $WEBLOG）"
+[ "$OK" -ne 1 ] && log "❌ 重启失败：40s 内未监听 ${PORT}（见 ${WEBLOG}）"
 log "=== 离线修复流程结束 ==="

@@ -52,7 +52,7 @@
 
 | 机制 | 实况 | 证据 |
 |---|---|---|
-| 钩子 | ✅ 四类全在 | `~/.hermes/config.yaml` 的 `plugins.enabled` 实挂 16 个插件 |
+| 钩子 | ✅ 四类全在 | `~/.hermes/config.yaml` 的 `plugins.enabled` 实挂 18 个插件（2026-10-11 订正：旧记 16·capability delivered 曾漏登 `buluotuo-transform-gate` / `buluotuo-verify-gate`） |
 | 恒驻注入 | ✅ `register_system_prompt_section`（每新会话冻结） | `hermes_cli/plugins.py:998` |
 | 逐轮注入 | ✅ `pre_llm_call` 返回值注入**用户消息** | `agent/turn_context.py:754-777` `_collect_pre_llm_call_context` |
 | 守护 | ✅ `post_llm_call` | `buluotuo-stop-hook` / `doenglingz-twin` |

@@ -46,7 +46,7 @@ if not MC_BASE:
 USER_MD = os.path.join(HOME, ".doubaowork-config", "USER.md")
 SLICES_DIR = os.path.join(MC_BASE, "数字分身", "K2切片蒸馏", "slices")
 GROWTH_BOX = os.path.join(MC_BASE, "成长箱")
-AI_LIB = os.path.join(MC_BASE, "AI学习库")
+AI_LIB = os.path.join(HOME, "[日记仓库]", "2-知识库", "09-AI学习库")  # 2026-10-13 C''波次2迁移后路径同步·立场卡已迁入vault
 SYSLOG_DIR = os.path.join(MC_BASE, "工作日志", "系统日志")
 STAMPS_LOG = os.path.join(HOME, ".cache", "tsl_verify", "stamps.log")
 

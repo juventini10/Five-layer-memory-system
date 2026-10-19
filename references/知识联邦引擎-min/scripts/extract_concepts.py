@@ -220,6 +220,16 @@ def check_bundle_coverage(concepts, json_path, meta=None):
     return missing
 
 
+def _qfix(s):
+    """写侧消毒：值内 ASCII 双引号→「」交替（防 definition 首引号致 frontmatter 正则解析失值·§二·三十三第四发实证）"""
+    out, op = [], True
+    for ch in s:
+        if ch == '"':
+            out.append("「" if op else "」"); op = not op
+        else:
+            out.append(ch)
+    return "".join(out)
+
 def cmd_commit(json_path):
     with open(json_path) as f:
         raw = json.load(f)
@@ -277,8 +287,8 @@ def cmd_commit(json_path):
                 h, _why = source_content_hash(s)
                 if h: hashes.append(f'  - "{s}": {h}\n')
             hash_block = ("source_hash:\n" + "".join(hashes)) if hashes else ""
-            card = (f"---\nconcept_id: {cid}\nconcept_name: \"{name}\"\ntype: concept\n"
-                    f"definition: \"{c['definition']}（粗粒度摘要·精确语义见source_cards）\"\n"
+            card = (f"---\nconcept_id: {cid}\nconcept_name: \"{_qfix(name)}\"\ntype: concept\n"
+                    f"definition: \"{_qfix(c['definition'])}（粗粒度摘要·精确语义见source_cards）\"\n"
                     f"source_cards:\n" + "".join(f"  - {s}\n" for s in c["source_cards"]) +
                     hash_block +
                     f"source_owner: {c['source_owner']}\ndomain: \"{c['domain']}\"\n"

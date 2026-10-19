@@ -53,7 +53,7 @@ RUNTIME_ROOTS = {
     "认知层", "行为层", "情境层", "潜意识层", "最伟大的我", "未知未知", "蒸馏源档案",
     "记忆蒸馏", "评估知识库", "归档", "QClaw记忆",
     # 2026-09-30 件4 配套：`知识库/` 层级 —— 端用户卡库/概念库落
-    #   `~/个人AI档案/知识库/{AI学习库,概念卡}/`（真源=数字分身完整版-安装流程设计
+    #   `[记忆共享中心]/知识库/{AI学习库,概念卡}/`（真源=数字分身完整版-安装流程设计
     #   §B2·Phase B 引擎 ensure_dirs() 运行期建）。⛔ 原白名单只列 `AI学习库`
     #   而**无 `知识库`** ⇒ 解析出的首段=`知识库` 落空 → 正确路径反被判**断头**
     #   （实证 4 处：auto_pass_audit / count_card_topic / immunity_l1_draft×2）。
@@ -92,7 +92,7 @@ def collect_refs(pkg_root: Path):
                 if rel == "x.md":
                     continue                          # 2026-09-30：antibody_gate 自测夹具样本名（grep -L 判据用例·同 foo.md 族）
                 if rel.startswith(".."):
-                    # 2026-09-30：`~/个人AI档案/../X` 越出中心 ⇒ 非「中心内资源引用」，
+                    # 2026-09-30：`[记忆共享中心]/../X` 越出中心 ⇒ 非「中心内资源引用」，
                     #   本检查器的管辖域不覆盖（实测 adapters/lobsterai/setup.sh 的
                     #   `$MC/../开发工具/platform_adaptation_check.py` 兜底探测）。
                     continue
@@ -139,7 +139,7 @@ def main():
     refs = collect_refs(root)
     if a.list:
         for where, rel in sorted(refs):
-            print(f"  {where}  →  ~/个人AI档案/{rel}")
+            print(f"  {where}  →  [记忆共享中心]/{rel}")
         print(f"\n共 {len(refs)} 处引用")
         return 0
 
@@ -157,7 +157,7 @@ def main():
     if dead:
         print(f"  [FAIL] 脚本内引用落点断头: {len(dead)} 处（占位符后的路径三腿均不可达）")
         for where, rel in dead[:12]:
-            print(f"         - {where} → ~/个人AI档案/{rel}")
+            print(f"         - {where} → [记忆共享中心]/{rel}")
         if len(dead) > 12:
             print(f"         ... 另有 {len(dead) - 12} 处")
         return 1

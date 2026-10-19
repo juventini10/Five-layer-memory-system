@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# version: v0.1
+# version: v0.2（2026-10-13 同名分叉合并：端运行体功能面 × 源去硬编码意图，双修源侧 Path 用法断裂）
 """session_tail_inject.py — UserPromptSubmit 钩子：新会话首 prompt 自动注入"上次收工+待办欠账"。
 
-愿景依据（SSOT=~/[记忆共享中心]/README.md §演进愿景）：
+愿景依据（SSOT=[记忆共享中心]/README.md §演进愿景）：
     ①全自动化——"上次干到哪/有什么欠账"不再依赖人记得。
 数据源（2026-09-09 实盘核验·只用真实存在的数据）：
     ① 上次收工状态：昨日+今日系统日志最后一条条目（标题/工具/时间）
@@ -24,10 +24,11 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-LOG_DIR = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "工作日志", "系统日志")  # 2026-10-04 回滚模板逆向污染(施工单§11)
+MC_ROOT = os.path.expanduser("[记忆共享中心]")  # relocate 锚定行（包态被占位符替换后 Path() 仍可解析）
+LOG_DIR = Path(MC_ROOT) / "工作日志" / "系统日志"  # 2026-10-17 G案根治：旧形被占位化后成 str/str 静默崩
 _CFG_ROOT = Path(os.environ.get("WORKBUDDY_CONFIG_DIR") or (Path.home() / ".workbuddy"))
 STATE_DIR = _CFG_ROOT / "cache" / "tail-inject"
-GROWTH_DIR = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "成长箱")  # 模板逆向污染回滚 2026-10-04(§11)
+GROWTH_DIR = Path(MC_ROOT) / "成长箱"
 MAX_INJECT_LINES = 8
 
 
@@ -77,7 +78,7 @@ def pending_counts():
     lines = []
     try:
         r = subprocess.run(
-            ["python3", str("~/[记忆共享中心]/技能配置/growth-box/scripts/drain-backlog.py"), "--check"],
+            ["python3", str(Path.home() / "[记忆共享中心]/技能配置/growth-box/scripts/drain-backlog.py"), "--check"],  # 源版字面 "~/..." 不经 shell 展开=FileNotFoundError 静默，已修
             capture_output=True, text=True, timeout=30,
         )
         m = re.search(r'"backlog": (\d+)', r.stdout)

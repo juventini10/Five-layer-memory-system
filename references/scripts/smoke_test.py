@@ -3,7 +3,7 @@
 """smoke_test.py — 布洛陀安装包结构完整性检查（Phase X-PKG 第4检查项）
 ================================================================
 检测：必含文件/目录存在性、Steps完整、9 Skill 结构、Templates 关键文件、
-      占位符残留、空文件、version.md 格式合法。
+      占位符残留、空文件、version.md 格式合法、组件账实对账（P1-P6·2026-10-08）。
 退出码：0=通过  1=有缺陷  2=参数错误
 """
 import os
@@ -180,6 +180,47 @@ def _same_ver(a: str, b: str) -> bool:
     return b.count(".") == 1 and a.startswith(b + ".")
 
 
+def _old_ver_hits(suffix, text, prev):
+    """旧号命中行（注记豁免版·2026-10-08 B 类修正·负例实证）。
+
+    实证反例：归档段 [2.0.0] 建立后全包 17 处命中全部为开发注记/
+    工具自述版本/测试夹具/事故引用（v2.0.0 修订注、__version__、
+    "version": "2.0.0"、V2.0.0-dev.zip 案例、夹具字符串），零处包
+    版本宣称位。本腿语义=抓「非注记语境」旧号残留。
+    """
+    lines = text.splitlines()
+    note_lines = set()
+    if suffix == ".py":
+        try:
+            import io as _io
+            import tokenize
+            for tok in tokenize.generate_tokens(_io.StringIO(text).readline):
+                if tok.type in (tokenize.COMMENT, tokenize.STRING):
+                    note_lines.update(range(tok.start[0], tok.end[0] + 1))
+        except Exception:
+            pass
+    hits = []
+    for i, ln in enumerate(lines, 1):
+        if prev not in ln:
+            continue
+        st = ln.strip()
+        if st.startswith(("#", "//", "<!--")):
+            continue
+        if "-dev" in ln:  # 事故档名引用形态（V2.0.0-dev.zip）·历史案例
+            continue
+        # 列粒度豁免（2026-10-18 Loop轮·你批「能根治就处理」·根治 Agent B⑤行粒度挂账）：
+        #   逐处定位 prev，仅豁免"§紧邻其前"的那一处；同句其余命中照常记红。
+        if not [pp for pp in (mm0.start() for mm0 in re.finditer(re.escape(prev), ln))
+                if not re.search(r"§\s*$", ln[:pp])]:
+            continue
+        if re.match(r'^\s*"(version|__version__)"\s*:', ln):  # 工具自述版本字段
+            continue
+        if i in note_lines:
+            continue
+        hits.append(i)
+    return hits
+
+
 def check_version_consistency(pkg: Path) -> list:
     """版本号同源检查：真源=version.md，核 ①CHANGELOG 顶段头 ②各宣称位 ③旧号残留。
 
@@ -287,8 +328,11 @@ def check_version_consistency(pkg: Path) -> list:
             content = fp.read_text(encoding="utf-8")
         except (UnicodeDecodeError, PermissionError):
             continue
-        if prev_ver in content:
-            issues.append(f"旧版本号 {prev_ver} 残留: {fp.relative_to(pkg)}")
+        _hit = _old_ver_hits(fp.suffix.lower(), content, prev_ver)
+        if _hit:
+            issues.append("旧版本号 %s 残留: %s（行 %s）"
+                          % (prev_ver, fp.relative_to(pkg),
+                             ",".join(str(x) for x in _hit[:5])))
 
     return issues
 
@@ -321,6 +365,338 @@ def check_placeholder_residual(pkg: Path) -> list:
     return issues
 
 
+# ── 组件账实对账 · P1-P6（2026-10-08 新增·皮叔令「提炼进 loop 安装包规则」）──
+# 病根：全包「账实一致」零判据——component-versions 版本登记失准 5/10、
+#   devtools 登记 13 实盘 258、CHANGELOG 缺 [2.0.0] 段、铁律版 desc/正文矛盾、
+#   端数四口径并存、单数路径引用复发面——全部逃过既有腿（既有四查只测
+#   存在性/同源性，不测「账=实」）。本组把账实一致机械化成 6 条判据：
+#   P1 组件版本对账 / P2 件数对账 / P3 规则四件自洽 / P4 CHANGELOG 结构 /
+#   P5 端名册一致 / P6 单数路径防复发。
+# 承重纪律与版本轴自测同款：正例必绿、负例必红、变异必翻转（--self-test）。
+
+_PATH_EXT = {".md", ".py", ".sh", ".ps1", ".json", ".yaml", ".yml", ".txt"}
+
+
+def _skip_scan(p):
+    """扫描跳过口径：缓存/备份/点前缀噪音（计数与路径扫描共用）。"""
+    return ("__pycache__" in p.parts or ".git" in p.parts
+            or p.name == ".DS_Store" or p.name.endswith(".bak"))
+
+
+def _norm_ver(s):
+    """版本串归一：去 v 前缀与空白（对账唯一口径）。"""
+    return s.strip().lstrip("vV")
+
+
+def _count_files(d):
+    """件数口径（与 component-versions 登记对账共用）：递归计数·跳缓存/备份。"""
+    if not d.exists():
+        return -1
+    n = 0
+    for f in d.rglob("*"):
+        if f.is_file() and not _skip_scan(f):
+            n += 1
+    return n
+
+
+def _load_cv(pkg):
+    """读 component-versions.json（None=不存在；dict 含 _parse_error=坏）。"""
+    import json as _json
+    f = pkg / "references/component-versions.json"
+    if not f.exists():
+        return None
+    try:
+        return _json.loads(_read(f))
+    except ValueError as e:
+        return {"_parse_error": str(e)}
+
+
+def check_component_ledger(pkg: Path) -> list:
+    """P1+P2 组件账实对账：component-versions.json 登记 ↔ 实盘（双向）。"""
+    issues = []
+    cv = _load_cv(pkg)
+    if cv is None:
+        return ["component-versions.json 不存在（账实对账整体失明）"]
+    if "_parse_error" in cv:
+        return ["component-versions.json 解析失败：%s" % cv["_parse_error"]]
+    comp = cv.get("components") or {}
+
+    # P1-a skills：双向（登记→实盘 + 实盘→登记）
+    reg = comp.get("skills") or {}
+    disk = {}
+    sk_dir = pkg / "references/skills"
+    if sk_dir.is_dir():
+        for sd in sorted(sk_dir.iterdir()):
+            sm = sd / "SKILL.md"
+            if sm.is_file():
+                m = re.search(r"^version:\s*[\"']?([^\"'\s#]+)", _read(sm), re.M)
+                disk[sd.name] = m.group(1) if m else "?"
+    for name in sorted(reg):
+        if name not in disk:
+            issues.append("[账实] 登记但实盘无：skill %s" % name)
+        elif _norm_ver(reg[name]) != _norm_ver(disk[name]):
+            issues.append("[账实] Skill 版本失准：%s 登记=%s 实盘=%s"
+                          % (name, reg[name], disk[name]))
+    for name in sorted(disk):
+        if name not in reg:
+            issues.append("[账实] 实盘有但登记缺：skill %s（须双向全登记）" % name)
+
+    # P1-b system_rules：登记 ↔ 铁律版正文版本行
+    sr = comp.get("system_rules")
+    tl = pkg / "references/templates/用户基本规则-铁律版.md"
+    if sr and tl.exists():
+        m = re.search(r"^>\s*版本：v?(\S+)", _read(tl), re.M)
+        if not m:
+            issues.append("[账实] 铁律版读不到「> 版本：vX」行，system_rules 无从对账")
+        elif _norm_ver(sr) != _norm_ver(m.group(1)):
+            issues.append("[账实] system_rules 失准：登记=%s 铁律版正文=v%s"
+                          % (sr, m.group(1)))
+
+    # P2-a digital_twin 件数
+    dt = comp.get("digital_twin") or {}
+    for k in sorted((dt.get("files") or {})):
+        rn = dt["files"][k]
+        actual = _count_files(pkg / "references/digital-twin" / k)
+        if actual < 0:
+            issues.append("[账实] digital_twin.%s 已登记=%s 但实盘目录不存在" % (k, rn))
+        elif int(rn) != actual:
+            issues.append("[账实] digital_twin.%s 件数失准：登记=%s 实盘=%s" % (k, rn, actual))
+
+    # P2-b script_system：口径=脚本中心三源并集（install_scripts.deploy_script_center）
+    ss = comp.get("script_system") or {}
+    if ss.get("files") is not None:
+        union = set()
+        for d in ("references/scripts", "references/hooks",
+                  "references/digital-twin/devtools"):
+            dd = pkg / d
+            if dd.is_dir():
+                for f in dd.iterdir():
+                    if f.is_file() and not _skip_scan(f):
+                        union.add(f.name)
+        if int(ss["files"]) != len(union):
+            issues.append("[账实] script_system.files 失准：登记=%s 实盘并集=%s"
+                          % (ss["files"], len(union)))
+
+    # P2-c 安装入口展示模板数字（INSTALL Step -0.6 模板须与 component-versions 同步）
+    inst = pkg / "INSTALL.md"
+    if inst.exists():
+        it = _read(inst)
+        m = re.search(r"系统 v(\S+) · Skill (\d+) 个 · 脚本 (\d+) 文件", it)
+        if m:
+            sr_ = comp.get("system_rules")
+            n_sk = len(comp.get("skills") or {})
+            n_sc = (comp.get("script_system") or {}).get("files")
+            if sr_ and _norm_ver(m.group(1)) != _norm_ver(sr_):
+                issues.append("[账实] INSTALL 模板系统号=%s ≠ 登记=%s"
+                              % (m.group(1), sr_))
+            if n_sk and int(m.group(2)) != n_sk:
+                issues.append("[账实] INSTALL 模板 Skill 数=%s ≠ 登记=%d"
+                              % (m.group(2), n_sk))
+            if n_sc and int(m.group(3)) != int(n_sc):
+                issues.append("[账实] INSTALL 模板脚本数=%s ≠ 登记=%s"
+                              % (m.group(3), n_sc))
+        m2 = re.search(r"▸ triwich：缺失 → v(\S+)", it)
+        tri = (comp.get("skills") or {}).get("triwich")
+        if m2 and tri and _norm_ver("v" + m2.group(1)) != _norm_ver(tri):
+            issues.append("[账实] INSTALL 模板 triwich 示例=%s ≠ 登记=%s"
+                          % (m2.group(1), tri))
+    return issues
+
+
+def check_rules_consistency(pkg: Path) -> list:
+    """P3 规则四件自洽：desc/正文/摘要/详解同版本 + 031 段位 + 索引表齐全。"""
+    issues = []
+    tpl = pkg / "references/templates"
+    vers = {}
+    for label, fn in (("铁律版", "用户基本规则-铁律版.md"),
+                      ("摘要版", "用户基本规则-摘要版.md"),
+                      ("详解版", "用户基本规则-详解存档版.md")):
+        f = tpl / fn
+        if not f.exists():
+            issues.append("[规则自洽] %s 缺失" % fn)
+            continue
+        m = re.search(r"^>\s*版本：v?(\S+)", _read(f), re.M)
+        vers[label] = m.group(1) if m else None
+        if not m:
+            issues.append("[规则自洽] %s 读不到「> 版本：vX」行" % fn)
+    vals = set(v for v in vers.values() if v)
+    if len(vals) > 1:
+        issues.append("[规则自洽] 三层版本号不同号：%s（铁律版头部声明三层须同升）"
+                      % " / ".join("%s=v%s" % (k, v) for k, v in sorted(vers.items())))
+    tl = tpl / "用户基本规则-铁律版.md"
+    if tl.exists():
+        txt = _read(tl)
+        md = re.search(r"^description:\s*\"[^\"]*?（v(\d+\.\d+)", txt, re.M)
+        if md and vers.get("铁律版") and _norm_ver(md.group(1)) != _norm_ver(vers["铁律版"]):
+            issues.append("[规则自洽] 铁律版 description=v%s ≠ 正文=v%s"
+                          % (md.group(1), vers["铁律版"]))
+        if "### 铁律-031" in txt:
+            above = txt[:txt.find("### 铁律-031")]
+            h2 = ""
+            for line in reversed(above.splitlines()):
+                if line.startswith("## "):
+                    h2 = line
+                    break
+            if h2 and "执行铁律" not in h2:
+                issues.append("[规则自洽] 铁律-031 段位异常：挂「%s」下（应在「AI执行铁律」段）"
+                              % h2.strip("# ⚡").strip()[:40])
+            if "| 031 |" not in txt:
+                issues.append("[规则自洽] 铁律-031 未入加载时机索引表")
+        n_idx = len(re.findall(r"^\|\s*\d{3}\s*\|", txt, re.M))
+        n_rules = len(re.findall(r"^### 铁律-\d{3}", txt, re.M))
+        if n_idx and n_rules and n_idx != n_rules:
+            issues.append("[规则自洽] 索引表行(%d)≠条数(%d)（索引漏行或多余）"
+                          % (n_idx, n_rules))
+        for line in txt.splitlines():
+            if line.startswith("## "):
+                phr = re.findall(r"（([^（）]{4,40})）", line)
+                if any(phr.count(x) >= 2 for x in set(phr)):
+                    issues.append("[规则自洽] 段头重复文案：%s" % line.strip()[:64])
+    return issues
+
+
+def check_changelog_structure(pkg: Path) -> list:
+    """P4 CHANGELOG 结构：段头格式合法 + 无裸段 + 顶段==真源 + 有历史段头。"""
+    issues = []
+    f = pkg / "CHANGELOG.md"
+    if not f.exists():
+        return ["[CHANGELOG] CHANGELOG.md 不存在"]
+    ver_sections = []
+    for i, line in enumerate(_read(f).splitlines(), 1):
+        if not line.startswith("## "):
+            continue
+        title = line[3:].strip()
+        if title.startswith("["):
+            m = re.match(r"^\[([^\]]+)\]", title)
+            tag = m.group(1) if m else ""
+            if re.fullmatch(r"\d+\.\d+(\.\d+)?", tag):
+                ver_sections.append(tag)
+            elif tag.lower() not in _UNRELEASED_MARKS:
+                issues.append("[CHANGELOG] 段头格式异常 L%d：%s" % (i, line.strip()[:64]))
+        elif "版本传承" in title:
+            continue
+        else:
+            issues.append("[CHANGELOG] 裸段头（无版本号）：L%d %s" % (i, line.strip()[:64]))
+    v = _read_version(pkg)
+    if ver_sections and v and not _same_ver(v, ver_sections[0]):
+        issues.append("[CHANGELOG] 顶段头=[%s] ≠ version.md=%s" % (ver_sections[0], v))
+    if v and len(ver_sections) < 2:
+        issues.append("[CHANGELOG] 仅 1 个版本段头（历史段缺失）——旧号残留腿将失去比较基准"
+                      "（互锁失明），非首版本须有归档段")
+    return issues
+
+
+def check_platform_roster(pkg: Path) -> list:
+    """P5 端名册四源一致：README/INSTALL 数字 == platform_support true 计数。"""
+    issues = []
+    cv = _load_cv(pkg)
+    if cv is None or "_parse_error" in cv:
+        return ["[端名册] component-versions.json 不可用，对账失明"]
+    ps = cv.get("platform_support") or {}
+    n_true = sum(1 for x in ps.values() if x is True)
+    readme, install = pkg / "README.md", pkg / "INSTALL.md"
+    if readme.exists():
+        m = re.search(r"适配 \*\*(\d+) 端\*\*", _read(readme))
+        if not m:
+            issues.append("[端名册] README 读不到「适配 **N 端**」口径行")
+        elif int(m.group(1)) != n_true:
+            issues.append("[端名册] README=适配 %s 端 ≠ platform_support true 数=%d"
+                          % (m.group(1), n_true))
+    if install.exists():
+        it = _read(install)
+        for rx, label in ((r"（(\d+) 端一包", "INSTALL 标题"),
+                          (r"合并 (\d+) 端适配层", "INSTALL 段头文案"),
+                          (r"把 (\d+) 端合进一个包", "INSTALL 导航文案"),
+                          (r"列上表 (\d+) 端选单", "INSTALL 平台判定")):
+            for got in re.findall(rx, it):
+                if int(got) != n_true:
+                    issues.append("[端名册] %s=「%s 端」≠ true 数=%d" % (label, got, n_true))
+        for got in re.findall(r"其余 (\d+) 端", it):
+            if int(got) != max(n_true - 1, 0):
+                issues.append("[端名册] INSTALL「其余 %s 端」≠ true 数-1=%d" % (got, n_true - 1))
+        # 未适配标注：notes 标「未适配」的端须在 INSTALL 有对应标注
+        # （防「清单 true 但用户无感」·2026-10-08 实证）
+        ends = (cv.get("platform_support_notes") or {}).get("ends") or {}
+        n_unfit = sum(1 for v in ends.values() if "未适配" in str(v.get("status", "")))
+        if n_unfit > 0:
+            _cnt = it.count("未适配完毕")
+            if _cnt < n_unfit:
+                issues.append("[端名册] 「未适配完毕」标注不足：notes 有 %d 端标未适配，INSTALL 仅 %d 处"
+                              % (n_unfit, _cnt))
+    return issues
+
+
+def check_reference_paths(pkg: Path) -> list:
+    """P6 单数 reference 斜杠路径形态 0 残留（防 2026-09 单复数混用复发）。
+
+    frontmatter `type: reference` 字段值是 Diataxis 术语非路径，天然不命中
+    （无斜杠）。本函数自身源码也不含该字面量（运行期拼接），自扫不误伤。
+    """
+    issues = []
+    rx = re.compile(r"(?<![A-Za-z])reference" + "/")
+    _diataxis_rx = re.compile(r"(?<![A-Za-z])reference"
+                              + r"/(?:explanation|how-to|tutorial)")
+    for f in pkg.rglob("*"):
+        if not f.is_file() or f.suffix.lower() not in _PATH_EXT:
+            continue
+        if _skip_scan(f):
+            continue
+        try:
+            txt = _read(f)
+        except Exception:
+            continue
+        n = len(rx.findall(txt)) - len(_diataxis_rx.findall(txt))
+        if n > 0:
+            issues.append("[路径] 单数 reference" + "/ 残留 ×%d：%s"
+                          % (n, f.relative_to(pkg)))
+    return issues
+
+
+def check_legacy_upgrade_fixture(pkg: Path) -> list:
+    """P8 历史形态升级夹具全跑（2026-10-09 条文54·2.1.0四缺陷行为面教训）。
+
+    P1-P7 测账与结构；P8 测「安装器对历史文件形态的升级行为」。
+    无 install_scripts.py 的包形态（加强包等）⇒ N/A 空返回（⛔不假红）；
+    有安装器但缺夹具 ⇒ 红（缺件不静默）；夹具 rc!=0 ⇒ 红带输出截断。
+    """
+    import subprocess
+    if not (pkg / "install_scripts.py").exists():
+        return []
+    fx = pkg / "references/scripts/test_legacy_upgrade.py"
+    if not fx.is_file():
+        return ["[行为夹具] 夹具缺件：references/scripts/test_legacy_upgrade.py 不在（条文54违例·⛔不静默）"]
+    try:
+        r = subprocess.run([sys.executable, str(fx), "--pkg-root", str(pkg)],
+                           capture_output=True, text=True, timeout=180)
+    except Exception as e:
+        return ["[行为夹具] 夹具运行异常：%s" % e]
+    if r.returncode != 0:
+        tail = (r.stdout or r.stderr or "").strip().splitlines()[-3:]
+        return ["[行为夹具] 夹具未过 rc=%d：%s" % (r.returncode, " / ".join(tail))]
+    return []
+
+
+def check_amber_cover_guard(pkg: Path) -> list:
+    """P7 琥珀覆盖保护在位：step6.5 含覆盖保护指令 + amber-watch.ps1 含版本常量。
+
+    病根（2026-10-08）：升级/重装无条件 Copy-Item 会盖掉用户机修复版
+    （实证：目录级旧版覆盖修复版 → 「每15s触发备份+日志膨胀」重现）。
+    """
+    issues = []
+    st = pkg / "references/steps/step6.5-amber-install.md"
+    if st.exists() and "覆盖保护" not in _read(st):
+        issues.append("[琥珀] step6.5 缺覆盖保护指令（amber-watch.ps1 覆盖前须版本比对）")
+    w = pkg / "references/记忆琥珀/scripts/amber-watch.ps1"
+    if w.exists():
+        wt = _read(w)
+        if "AmberWatchVersion" not in wt:
+            issues.append("[琥珀] amber-watch.ps1 缺 AmberWatchVersion 版本常量（覆盖保护比对锚）")
+        if "amber-whitelist" not in wt:
+            issues.append("[琥珀] amber-watch.ps1 缺 whitelist 文件级监听逻辑"
+                          "（amber-whitelist 读取·目录全树递归=误触发病根）")
+    return issues
+
+
 def main():
     pkg = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else DEFAULT_PKG
     if not pkg.exists():
@@ -336,6 +712,13 @@ def main():
         ("空文件检测", check_empty_files(pkg)),
         ("version.md格式", check_version_format(pkg)),
         ("版本号全链路一致", check_version_consistency(pkg)),
+        ("组件账实对账", check_component_ledger(pkg)),
+        ("规则文件自洽", check_rules_consistency(pkg)),
+        ("CHANGELOG结构", check_changelog_structure(pkg)),
+        ("端名册一致", check_platform_roster(pkg)),
+        ("单数路径防复发", check_reference_paths(pkg)),
+        ("琥珀覆盖保护", check_amber_cover_guard(pkg)),
+        ("历史形态夹具P8", check_legacy_upgrade_fixture(pkg)),
     ]
 
     for name, issues in checks:
@@ -485,7 +868,209 @@ def _version_selftest() -> int:
     return 0 if fails == 0 else 1
 
 
+# ── 账实对账自测（P1-P6 承重验证·正例必绿/负例必红/变异必翻转·2026-10-08）──
+def _mk_ledger_fixture(root):
+    """最小账实自洽假包（正例基线：P1-P6 全绿）。"""
+    import json as _json
+    p = Path(root)
+
+    def _w(rel, txt):
+        f = p / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(txt, encoding="utf-8")
+
+    _w("version.md", 'version: "2.1.0"\n')
+    _w("references/skills/alpha-skill/SKILL.md", '---\nversion: "1.0.0"\n---\n')
+    _w("references/skills/beta-skill/SKILL.md", '---\nversion: "v2.0.0"\n---\n')
+    _w("references/digital-twin/guards/g1.sh", "#!/bin/sh\n")
+    _w("references/scripts/one.py", "x = 1\n")
+    _w("references/hooks/two.py", "y = 2\n")
+    _w("references/digital-twin/devtools/three.py", "z = 3\n")
+    _w("references/component-versions.json", _json.dumps({
+        "package_version": "2.1.0",
+        "components": {
+            "skills": {"alpha-skill": "1.0.0", "beta-skill": "v2.0.0"},
+            "system_rules": "v8.29",
+            "digital_twin": {"files": {"guards": 1}},
+            "script_system": {"files": 3},
+        },
+        "platform_support": {"aa": True, "bb": True, "cc": False},
+    }, ensure_ascii=False))
+    _w("references/templates/用户基本规则-铁律版.md",
+       '---\ndescription: "x（v8.29·fixture）"\n---\n\n# 铁律\n\n'
+       "> 版本：v8.29 | 创建：x | 更新：x |\n>\n"
+       "## 加载时机索引表\n\n"
+       "| 001 | a | t | k |\n| 002 | b | t | k |\n\n"
+       "## AI执行铁律（31条·009已合并入008·不可违反）\n\n"
+       "### 铁律-001：a\n\n- x\n\n### 铁律-002：b\n\n- y\n\n"
+       "## 执行规范（精选3条·其余下沉详解存档版）\n\n### 执规-002：c\n\n- z\n")
+    _w("references/templates/用户基本规则-摘要版.md", "# x\n\n> 版本：v8.29 | 创建：x |\n")
+    _w("references/templates/用户基本规则-详解存档版.md", "# x\n\n> 版本：v8.29 | 创建：x |\n")
+    _w("CHANGELOG.md", "# 变更记录\n\n## [2.1.0] — 2026-10-07\n\n- x\n\n"
+                       "## [2.0.0] — 2026-10-01\n\n- y\n")
+    _w("README.md", "# 布洛陀\n\n> v2.1：一个包适配 **2 端**\n")
+    _w("INSTALL.md", "# 布洛陀 2.1.0 — 多平台安装入口（2 端一包）\n\n"
+                    "本包合并 2 端适配层。\n把 2 端合进一个包。\n"
+                    "列上表 2 端选单。\n其余 1 端。\n"
+                    "├─ 包内最新：系统 v8.29 · Skill 2 个 · 脚本 3 文件\n")
+    _w("references/steps/step6.5-amber-install.md",
+       "# 假 step6.5\n\n覆盖保护（fixture）\n")
+    _w("references/记忆琥珀/scripts/amber-watch.ps1",
+       '$AmberWatchVersion = "7.18.0-pkg"\n# reads amber-whitelist.txt\n')
+    return p
+
+
+def _mut_skill_ver(root):
+    f = root / "references/skills/beta-skill/SKILL.md"
+    f.write_text(f.read_text(encoding="utf-8").replace('v2.0.0', 'v9.9.9'),
+                 encoding="utf-8")
+
+
+def _mut_dt_count(root):
+    f = root / "references/component-versions.json"
+    f.write_text(f.read_text(encoding="utf-8").replace('"guards": 1', '"guards": 5'),
+                 encoding="utf-8")
+
+
+def _mut_desc(root):
+    f = root / "references/templates/用户基本规则-铁律版.md"
+    f.write_text(f.read_text(encoding="utf-8").replace('（v8.29·fixture）', '（v8.27·fixture）'),
+                 encoding="utf-8")
+
+
+def _mut_naked_section(root):
+    f = root / "CHANGELOG.md"
+    f.write_text(f.read_text(encoding="utf-8") + "\n## 裸段测试\n\n- x\n",
+                 encoding="utf-8")
+
+
+def _mut_roster(root):
+    f = root / "README.md"
+    f.write_text(f.read_text(encoding="utf-8").replace('**2 端**', '**5 端**'),
+                 encoding="utf-8")
+
+
+def _mut_single_ref(root):
+    f = root / "references/steps/bad.md"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text("see reference" + "/x.md\n", encoding="utf-8")
+
+
+def _mut_inst_sysnum(root):
+    f = root / "INSTALL.md"
+    f.write_text(f.read_text(encoding="utf-8").replace("系统 v8.29", "系统 v8.20"),
+                 encoding="utf-8")
+
+
+def _mut_amber_tag(root):
+    f = root / "references/记忆琥珀/scripts/amber-watch.ps1"
+    f.write_text(f.read_text(encoding="utf-8")
+                 .replace('$AmberWatchVersion = "7.18.0-pkg"', ""),
+                 encoding="utf-8")
+
+
+def _ledger_all(pkg_root):
+    pkg_root = Path(pkg_root)
+    return (check_component_ledger(pkg_root) + check_rules_consistency(pkg_root)
+            + check_changelog_structure(pkg_root) + check_platform_roster(pkg_root)
+            + check_reference_paths(pkg_root) + check_amber_cover_guard(pkg_root))
+
+
+def _ledger_selftest() -> int:
+    import tempfile
+    import shutil as _sh
+    here = Path(__file__).resolve()
+    src = here.read_text(encoding="utf-8")
+
+    def _load(mut_from=None, mut_to=None):
+        code = src
+        if mut_from is not None:
+            n = src.count(mut_from)
+            if n != 1:
+                raise AssertionError("变异锚点命中 %d 次（应为 1）：%r" % (n, mut_from[:44]))
+            code = src.replace(mut_from, mut_to)
+            if code == src:
+                raise AssertionError("变异体与源逐字相同＝自测恒真，拒绝出结论")
+        ns = {"__name__": "smoke_ledger_selftest_ns", "__file__": str(here)}
+        exec(compile(code, "<smoke-ledger-selftest>", "exec"), ns)
+        return ns
+
+    cases = [
+        ("L0 正例：账实自洽假包全绿", None, None),
+        ("L1 负例：Skill 版本失准", _mut_skill_ver, "Skill 版本失准"),
+        ("L2 负例：件数失准", _mut_dt_count, "digital_twin.guards 件数失准"),
+        ("L3 负例：desc/正文矛盾", _mut_desc, "description=v8.27"),
+        ("L4 负例：CHANGELOG 裸段", _mut_naked_section, "裸段头"),
+        ("L5 负例：端名册失配", _mut_roster, "README=适配 5 端"),
+        ("L6 负例：单数路径残留", _mut_single_ref, "单数 reference"),
+        ("L7 负例：INSTALL 模板数字漂移", _mut_inst_sysnum, "INSTALL 模板系统号"),
+        ("L8 负例：琥珀版本常量缺失", _mut_amber_tag, "[琥珀] amber-watch.ps1 缺"),
+    ]
+    fails = 0
+    print("── 账实对账自测（P1-P6）──")
+    with tempfile.TemporaryDirectory() as td:
+        for name, mut, expect in cases:
+            sub = os.path.join(td, "case")
+            if os.path.isdir(sub):
+                _sh.rmtree(sub)
+            root = _mk_ledger_fixture(sub)
+            if mut:
+                mut(root)
+            got = _ledger_all(root)
+            blob = " | ".join(got)
+            if expect is None:
+                ok = not got
+                detail = "无红" if ok else blob[:120]
+            else:
+                ok = expect in blob
+                detail = ("命中「%s」" % expect) if ok else ("未命中，实得：%s"
+                                                          % (blob[:120] or "无红"))
+            print(("  ✅ " if ok else "  ❌ ") + "%s → %s" % (name, detail))
+            if not ok:
+                fails += 1
+        muts = [
+            ("M1 版本比较腿短路（应证 L1 消失）",
+             "elif _norm_ver(reg[name]) != _norm_ver(disk[" "name]):", "elif False:",
+             _mut_skill_ver, "Skill 版本失准"),
+            ("M2 裸段腿短路（应证 L4 消失）",
+             'issues.append("[CHANGELOG] 裸段头（无版本号）：L%d %s" % (i, line.strip()[' ':64]))',
+             'issues.append("_suppressed")',
+             _mut_naked_section, "裸段头"),
+        ]
+        print("── 变异测试（证明判据承重）──")
+        for mname, a, b, mut, key in muts:
+            try:
+                ns = _load(a, b)
+            except AssertionError as exc:
+                print("  ❌ %s — 变异锚点失效：%s" % (mname, exc))
+                fails += 1
+                continue
+            sub = os.path.join(td, "mut")
+            if os.path.isdir(sub):
+                _sh.rmtree(sub)
+            root = _mk_ledger_fixture(sub)
+            mut(root)
+            got = _ledger_all(root)
+            blob = " | ".join(got)
+            got_m = (ns["check_component_ledger"](Path(root))
+                     + ns["check_rules_consistency"](Path(root))
+                     + ns["check_changelog_structure"](Path(root))
+                     + ns["check_platform_roster"](Path(root))
+                     + ns["check_reference_paths"](Path(root)))
+            blob_m = " | ".join(got_m)
+            ok = (key not in blob_m) and (key in blob)
+            print(("  ✅ " if ok else "  ❌ ") + "%s — 短路后「%s」%s"
+                  % (mname, key, "消失（承重✓）" if ok else "仍在（不承重）"))
+            if not ok:
+                fails += 1
+    print("\n🟢 账实对账自测全绿（用例 9＋变异 2）" if fails == 0
+          else "\n🔴 账实对账自测 %d 项失败——判据有假红/假绿，勿据此发货" % fails)
+    return 0 if fails == 0 else 1
+
+
 if __name__ == "__main__":
     if "--self-test" in sys.argv:
-        sys.exit(_version_selftest())
+        _rc1 = _version_selftest()
+        _rc2 = _ledger_selftest()
+        sys.exit(max(_rc1, _rc2))
     main()

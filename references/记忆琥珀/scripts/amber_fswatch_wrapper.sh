@@ -19,13 +19,24 @@
 set -u
 
 HOMEDIR="${HOME}"
-MC="${AMBER_MC:-$HOMEDIR/[记忆共享中心]}"
+MC="${AMBER_MC:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+# P13#3 根治（2026-10-19·真库泄监）：无 AMBER_MC 时靠脚本自定位——launchd 语境下
+# 该回退可算出真实档案库并静默监听。保留回退（作者机设计）但必须显形告警 + 拒 HOME 缺省。
+if [ -z "${AMBER_MC:-}" ]; then
+  echo "[WARN] AMBER_MC 未注入，回退自定位 MC=$MC（launchd 拉起必须经 plist 注入 AMBER_MC+HOME·P13#3）" >&2
+fi
+# P13#1：端配置根（谁调用谁定根·step3-done 单一权威，⛔写死 .workbuddy 全端默认）
+_CFGROOT=""
+if [ -f "$MC/.install/step3-done.md" ]; then
+  _CFGROOT="$(grep -m1 '^CONFIG_ROOT=' "$MC/.install/step3-done.md" 2>/dev/null | cut -d= -f2)"
+  _CFGROOT="${_CFGROOT/#\~/$HOMEDIR}"
+fi
 ENGINE="$MC/记忆琥珀/engine"
 BACKUP_SCRIPT="$ENGINE/amber_backup.sh"
 LOG_DIR="$ENGINE/logs"
 WATCH_LOG="$LOG_DIR/amber-watch.log"
 HEARTBEAT="$LOG_DIR/amber-watch.heartbeat"
-LOCK_FILE="/tmp/amber-fswatch-debounce.lock"
+LOCK_FILE="/tmp/amber-fswatch-debounce_$(printf '%s' "$MC" | shasum -a 256 | cut -c1-8).lock"
 DEBOUNCE_SEC=3
 INTERVAL="${AMBER_INTERVAL:-15}"
 
@@ -35,14 +46,14 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >>"$WATCH_LOG"; }
 
 # ── 监听目录（与白名单覆盖目录一致） ──
 PATHS=(
-  "$HOMEDIR/.workbuddy"
+  "${_CFGROOT:-$HOMEDIR/.workbuddy}"
   "$MC/核心层"
-  "$MC/QClaw记忆"
   "$MC/潜意识层"
   "$MC/情境层"
   "$MC/记忆规则"
   "$MC/成就系统/scripts"
   "$MC/技能配置/daily-buddy"
+  "$MC/技能配置/good-good-study"
   "$MC/技能配置/shall-we-talk"
   "$MC/技能配置/triwich"
   "$MC/技能配置/clock-loop"
@@ -53,6 +64,8 @@ PATHS=(
   "$MC/技能配置/meta-aletheia"
 )
 
+# P13#3② 监听清单显形（泄监可见即可拦）
+log "实际监听目录候选清单（对账用·P13）：${PATHS[*]}"
 # 只保留真实存在的目录
 EXIST_PATHS=()
 for p in "${PATHS[@]}"; do

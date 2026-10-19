@@ -1,5 +1,5 @@
 # skill-up 试点·triwich 行为级评测配置
-# 立项书：~/[记忆共享中心]/自定义层/待完成工作/skill-up借鉴立项书-T0-2026-09-12.md §五步骤3
+# 立项书：[记忆共享中心]/自定义层/待完成工作/skill-up借鉴立项书-T0-2026-09-12.md §五步骤3
 # 夹具声明：本目录 triwich-under-test 为原件只读复制（2026-09-12·源 ~/.zcode/skills/triwich）·已清除运行时残留(steps/seal.log)
 # 判据纪律：全部 expect/rule_based 机械档（确定性分工·零 agent_judge API 依赖）·验收判据见立项书 §五
 # 注入修正（2026-09-12）：qwen_code 引擎自动发现失效（工作区实证为空）·按官方文档显式声明 skills

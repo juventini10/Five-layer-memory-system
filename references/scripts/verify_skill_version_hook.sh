@@ -29,7 +29,7 @@ echo "[verify_skill_version_hook] 解释器：${PY}（$("$PY" -V 2>&1)）" >&2
 # B修源·声明驱动口径v2(2026-10-05·条文47·L2键20261005_194734下沉轮)：记忆根唯一来源=runtime_paths 声明
 # （解析器与本件同目录可达·软链/pre-commit 入口靠 realpath 下沉解析·无声明 hard fail 即教育）。
 # ⛔消费侧默认兜底已删。PY行=解释器选择（非记忆根·批裁范围外·WB 解释器 PyYAML 先例·保持不动）。
-_RP="$(dirname "$0")/runtime_paths.py"
+_RP="$(dirname "$0")/runtime_paths.py"; [ -f "$_RP" ] || _RP="$(dirname "$0")/../runtime_paths.py"  # 2026-10-15 批A：中心位兄弟在上级根·候选序（步2②兄弟引用判据应用）
 _GUIDE="❌ verify_skill_version_hook: 读不到 runtime_paths 声明·作者机先跑 脚本中心/runtime_paths.py build / 端用户机跑安装器(条文47)"
 # 🔴 rc 判定非变量判定(2026-10-05 负例实跑逮出假绿洞·第3支正确形态回补)：
 #    rp 失败时教育文案走 stdout，$(...) 会把它捕成非空变量——[ -n ] 判不住；赋值命令退出码=命令替换rc，用 || 才物理成立。

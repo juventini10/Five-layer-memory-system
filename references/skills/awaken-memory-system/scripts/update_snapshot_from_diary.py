@@ -56,7 +56,7 @@ DEFAULT_WINDOW = 14
 
 def parse_args():
     parser = argparse.ArgumentParser(description="懒加载模式快照实时更新脚本")
-    parser.add_argument("--snapshot", default=None, help="动态状态快照.md路径（默认~/[记忆共享中心]/情境层/动态状态快照.md）")
+    parser.add_argument("--snapshot", default=None, help="动态状态快照.md路径（默认[记忆共享中心]/情境层/动态状态快照.md）")
     parser.add_argument("--diary", default=None, help="当日日记路径（默认自动推导~/[日记仓库]/1-每日计划/01-日记/YYYY-MM/YYYY-MM-DD.md）")
     parser.add_argument("--dry-run", action="store_true", help="只输出将更新的内容，不实际写入")
     parser.add_argument("--backfill-window", type=int, default=DEFAULT_WINDOW, help=f"历史缺失日回看窗口（天·默认{DEFAULT_WINDOW}）")
@@ -76,7 +76,7 @@ def get_default_paths(today=None):
     return snapshot, diary
 
 
-ARCHIVE_PATH = "[记忆共享中心]" / "情境层" / "快照历史存档.md"
+ARCHIVE_PATH = Path('[记忆共享中心]') / "情境层" / "快照历史存档.md"
 
 
 def diary_path_for(day):

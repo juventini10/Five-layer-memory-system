@@ -116,16 +116,17 @@ hooks_surface:
 # 本端形态：SOUL/IDENTITY/USER/MEMORY = workspace-main/ 下独立文件（OpenClaw 每会话加载）；
 # 自定义指令 = AGENTS.md 头部段（本端等价通道）。路径基准 = 本端 config_root（=state/）。
 system_file_paths:
-  # key 必须与 install_scripts.py 的 SYS_FILE_NAMES 逐字一致才能被 system_file_targets() 命中：
-  #   ("SOUL.md","IDENTITY.md","USER.md","MEMORY.md","customPrompt.md")
-  # ⛔ 旧写法「自定义指令」= 自造 key·永不命中 ⇒ 第五件回落成 <config_root>/customPrompt.md（该文件本端不存在）
+  # key 必须与条文32 权威口径（=install_scripts.py SYS_FILE_NAMES·C29 2026-10-15 已归一）逐字一致：
+  #   ("SOUL.md","IDENTITY.md","USER.md","MEMORY.md","自定义指令")
+  # 旧注（2026-10-02）称「自定义指令=自造 key·永不命中」是名单未归一时期的口径，C29 后反转：
+  # 名单已按条文32 归一，第五件协议名就是「自定义指令」。
   SOUL.md: "workspace-main/SOUL.md"
   IDENTITY.md: "workspace-main/IDENTITY.md"
   USER.md: "workspace-main/USER.md"
   MEMORY.md: "workspace-main/MEMORY.md"
   # 本端第5件载体 = AGENTS.md（OpenClaw 官方 how to behave 位·无 customPrompt 字段），
-  # 但 key 仍用标准名 customPrompt.md —— key 是协议，value 是端形态。
-  customPrompt.md: "workspace-main/AGENTS.md"
+  # key 用条文32 协议名「自定义指令」—— key 是协议，value 是端形态（C29 归一）。
+  自定义指令: "workspace-main/AGENTS.md"
 
 # 断章段 id（宪法 C1）：第5件走**头部段增量**·⛔ 不覆盖 AGENTS.md 的 App 托管段
 # ⚠️ 一经发布不可改：改了找不到旧段 ⇒ 追加半截段
@@ -134,7 +135,8 @@ system_file_segments:
   IDENTITY.md: "sys.identity"
   USER.md: "sys.user"
   MEMORY.md: "sys.memory"
-  customPrompt.md: "sys.customprompt.lobsterai.agentsheader"
+  # C29：键名随协议改「自定义指令」，段 id 值一字未动（一经发布不可改·改了找不到旧段）
+  自定义指令: "sys.customprompt.lobsterai.agentsheader"
 
 # ─── 数字分身功能面映射（twin_surface·可选组件但「可选≠缺声明」·条文16 降级不阻塞）───
 twin_surface:

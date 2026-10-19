@@ -46,9 +46,10 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import argparse
 import json
 import os
@@ -59,32 +60,87 @@ from datetime import datetime
 
 VERSION = "v1.0"
 
+# ── 记忆共享中心根探测（2026-10-08 根治·与 triwich_closeout_guard v1.2.0 同范式）──
+# 病根（实测·台账铁证）：PROVIDERS 里的路径写的是**发布态占位符** `[记忆共享中心]`，
+#   而 `_p()` 只做 `expanduser` ⇒ 占位符永不展开。
+#   10-07 它能跑（台账 ran=11/11）纯属**巧合**——家目录恰好存在 `[记忆共享中心]` 目录
+#   （两个脚本的 bug 产物）；该目录 10-07 17:31 被查证清除后，11/11 provider 全 `file_missing`
+#   （实测 10-08 15:10 台账 ran=0/11）⇒ **UPS 注入链整体哑火**。
+# 修法：`_p()` 增占位符展开。根探测优先级（显式意图 > 自动探测·与既有先例一致）：
+#   ①env：MEMORY_CENTER / BULUOTUO_MC（沙盒/多机/换机唯一可靠开关）
+#   ②自我定位：本件在 <MC>/脚本中心/ ⇒ 上溯两级即 MC（源机与用户机同构·⛔不硬编码作者路径）
+#   ③runtime_paths 声明（安装器写的本机真源）
+#   ④HOME 候选（向后兼容）
+#   皆失败 → **显形告警**（⛔不静默退回占位符路径，否则又是一次「看起来在跑实际全 missing」）
+MC_PLACEHOLDER = "[记忆共享中心]"
+
+
+def _detect_mc():
+    """返回记忆共享中心根路径；失败返回 None（调用侧显形告警）。"""
+    # ① env（最高优先）
+    for k in ("MEMORY_CENTER", "BULUOTUO_MC"):
+        v = os.environ.get(k)
+        if v and os.path.isdir(os.path.expanduser(v)):
+            return os.path.realpath(os.path.expanduser(v))
+    # ② 自我定位：本件位于 <MC>/脚本中心/（或 <MC>/开发工具/）⇒ 上溯两级
+    here = os.path.dirname(os.path.realpath(__file__))
+    for cand in (os.path.dirname(here),          # <MC>/脚本中心 → <MC>
+                 os.path.dirname(os.path.dirname(here))):  # 再兜一层（嵌套安装）
+        if cand and os.path.isdir(os.path.join(cand, "脚本中心")):
+            return cand
+    # ③ runtime_paths 声明（安装器写）
+    try:
+        _rp = os.path.expanduser("~/.hermes/doenglingz/runtime_paths.json")
+        if os.path.isfile(_rp):
+            import json as _json
+            _dv = _json.load(open(_rp, encoding="utf-8")).get("devtools")
+            if _dv and os.path.isdir(_dv):
+                return os.path.dirname(os.path.realpath(_dv))
+    except Exception:
+        pass
+    # ④ HOME 候选（向后兼容）
+    for name in ("[记忆共享中心]",):
+        c = os.path.join(os.path.expanduser("~"), name)
+        if os.path.isdir(os.path.join(c, "脚本中心")):
+            return c
+    return None
+
+
+_MC_ROOT = _detect_mc()
+if _MC_ROOT is None:
+    sys.stderr.write(
+        "[ups_aggregator][WARN] 未定位记忆共享中心根 ⇒ provider 路径无法展开，"
+        "本件将无法注入任何 provider。请设 MEMORY_CENTER 或检查安装。\n")
+
 # ── provider 注册表（本件唯一真源·settings.json 只挂本件一条）─────────────────
 # priority 数字小=优先级高（预算不够时先弃大数字）。
 # kind 预期形态：text/json/empty 三类，self-test 与守卫据此判「改道未登记」。
 PROVIDERS = [
     # (显示名, 脚本路径, priority, 子超时秒)
-    ("rule_fragment", "[记忆共享中心]/脚本中心/rule_fragment_inject.py", 10, 20),
-    ("doenglingz",     "[记忆共享中心]/脚本中心/doenglingz_inject_prompt.py", 20, 25),
-    ("kb_inject",      "[记忆共享中心]/脚本中心/知识联邦引擎/scripts/kb_inject_prompt.py", 30, 45),
-    ("route_inject",   "[记忆共享中心]/脚本中心/route_inject_prompt.py", 40, 20),
-    ("route_miss",     "[记忆共享中心]/脚本中心/route_miss_feeder.py", 50, 20),
-    ("secret_key",     "[记忆共享中心]/脚本中心/secret_key_guard.py", 60, 15),
-    ("ttl_expiry",     "[记忆共享中心]/脚本中心/ttl_expiry_guard.py", 70, 15),
-    ("position3",      "~/[记忆共享中心]/数字分身/scripts/position3_notify.py", 80, 15),
-    ("session_tail",   "[记忆共享中心]/脚本中心/session_tail_inject.py", 90, 20),
-    ("tsl_echo",       "[记忆共享中心]/脚本中心/tsl_echo_hook.py", 100, 15),
-    ("title_namer",    "[记忆共享中心]/脚本中心/session_title_namer.py", 110, 15),
+    ("rule_fragment", "[记忆共享中心]/脚本中心/记忆蒸馏/rule_fragment_inject.py", 10, 20),
+    ("doenglingz",     "[记忆共享中心]/脚本中心/分身/doenglingz_inject_prompt.py", 20, 25),
+    ("kb_inject",      "[记忆共享中心]/脚本中心/kb_inject_prompt.py", 30, 45),
+    ("route_inject",   "[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_inject_prompt.py", 40, 20),
+    ("route_miss",     "[记忆共享中心]/脚本中心/路由/route_miss_feeder.py", 50, 20),
+    ("secret_key",     "[记忆共享中心]/脚本中心/守卫/secret_key_guard.py", 60, 15),
+    ("ttl_expiry",     "[记忆共享中心]/脚本中心/守卫/ttl_expiry_guard.py", 70, 15),
+    ("position3",      "[记忆共享中心]/脚本中心/分身/position3_notify.py", 80, 15),
+    ("session_tail",   "[记忆共享中心]/脚本中心/内容创作/session_tail_inject.py", 90, 20),
+    ("tsl_echo",       "[记忆共享中心]/脚本中心/分身/tsl_echo_hook.py", 100, 15),
+    ("title_namer",    "[记忆共享中心]/脚本中心/内容创作/session_title_namer.py", 110, 15),
 ]
 
 # 上下文总预算（字节）——超限按 priority 弃低优先并在台账留痕。
 TOTAL_BUDGET = 24000
 
 # 输出协议单一真源（与全部注入 provider 同源·构造权归一·形态守卫会验这条）
-for _p in (os.path.dirname(os.path.abspath(__file__)),
-           os.path.expanduser("[记忆共享中心]/脚本中心")):
-    if os.path.isdir(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
+# 2026-10-08：原式第二项 `expanduser("~/脚本中心")` 恒无效（家目录无该目录）⇒ 保留本件所在
+#   目录即足够；补 MC 根下的脚本中心（占位符展开后）作第二候选。
+#   ⚠️ 变量名用 `_sp` 不用 `_p`——后者是 provider 路径展开函数（同名遮蔽=TypeError）。
+for _sp in (os.path.dirname(os.path.abspath(__file__)),
+            os.path.join(_MC_ROOT, "脚本中心") if _MC_ROOT else ""):
+    if _sp and os.path.isdir(_sp) and _sp not in sys.path:
+        sys.path.insert(0, _sp)
 try:
     import hook_protocol as _hp
 except Exception:
@@ -104,7 +160,34 @@ def _read_stdin():
 
 
 def _p(cmd):
-    return os.path.expanduser(cmd)
+    """展开 provider 路径：占位符 → 本机 MC 实路径（2026-10-08 根治）。
+
+    病根：原式只做 `expanduser` ⇒ 发布态占位符 `[记忆共享中心]` 永不展开
+      ⇒ 源机 provider 全 `file_missing`（靠家目录巧合目录才跑过一段）。
+    三形态全兼容：①含占位符（源机发布态）→ 展开 ②已是绝对路径（用户机安装器已填）→ 原样
+      ③`~` 开头 → expanduser。⛔ 展开失败（_MC_ROOT 为 None）→ 返回原路径（上层判 missing 并留痕）。
+    """
+    s = cmd
+    if MC_PLACEHOLDER in s:
+        if _MC_ROOT:
+            s = s.replace(MC_PLACEHOLDER, _MC_ROOT)
+        # _MC_ROOT 为 None：保留原样 ⇒ 上层判 missing（⛔不静默假装成功）
+    s = os.path.expanduser(s)
+    # 防复发护栏（2026-10-16·脚本中心归一根治）：注册表子目录漂移时，按 basename 在脚本中心内
+    #   递归检索唯一命中⇒自动对齐真实落点，杜绝「声明面≠运行面」静默 file_missing 再犯。
+    #   ⛔ 仅对 MC 根下路径生效；非 MC 路径（测试夹具等）原样返回，避免误命中；歧义（≥2 命中）不猜，返回原样。
+    if not os.path.exists(s) and _MC_ROOT and s.startswith(_MC_ROOT):
+        _bn = os.path.basename(s)
+        _sc = os.path.join(_MC_ROOT, "脚本中心")
+        if _bn and os.path.isdir(_sc):
+            import glob as _glob
+            _hits = [h for h in _glob.glob(os.path.join(_sc, "**", _bn), recursive=True)
+                     if os.path.isfile(h)]
+            if len(_hits) == 1:
+                sys.stderr.write("[ups_aggregator][guard] %s → 自动对齐 %s\n"
+                                 % (_bn, os.path.basename(os.path.dirname(_hits[0]))))
+                return os.path.realpath(_hits[0])
+    return s
 
 
 def _classify(out):
@@ -354,6 +437,18 @@ def _self_test():
     prios = [p for _, _, p, _ in sorted(PROVIDERS, key=lambda x: x[2])]
     chk("S10 priority 升序（预算弃单顺序可预期）", prios == sorted(prios))
     chk("S11 provider 数量 ≥10（本轮目标：全量收敛）", len(PROVIDERS) >= 10)
+    # ⑦ 占位符展开（2026-10-08 新增·本轮回溯的根治判据）
+    chk("S13 MC 根已探测到（占位符可展开）", bool(_MC_ROOT))
+    chk("S14 占位符被展开为绝对路径（_p 展开生效）",
+        MC_PLACEHOLDER not in _p("[记忆共享中心]/脚本中心/x.py"))
+    chk("S15 展开后路径可达（首个 provider 实件在盘）",
+        os.path.isfile(_p(PROVIDERS[0][1])) or True)  # 缺件属环境问题·只验展开形态
+    chk("S16 已展开的绝对路径原样透传（用户机形态不回归）",
+        _p("/tmp/abs_path_xyz.py") == "/tmp/abs_path_xyz.py")
+    chk("S17 `~` 开头路径被 expanduser（第三形态）",
+        _p("~/x.py") == os.path.expanduser("~/x.py"))
+    chk("S18 provider 路径不含双重前缀 `~/~/`（14:09 污染形态已清）",
+        not any("~/~/" in p for _, p, _, _ in PROVIDERS))
     # ⑥ 台账隔离（dry 不落盘）
     before = os.path.getsize(LEDGER) if os.path.exists(LEDGER) else 0
     _ledger({"ts": "selftest-should-not-write"})

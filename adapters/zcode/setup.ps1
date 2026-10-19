@@ -1,6 +1,6 @@
 ﻿# ============================================================
 # setup.ps1 — ZCode 加强包 接入脚本 v0.1.1 (Windows)
-# 前提:已装布洛陀五层记忆系统(~/[记忆共享中心] 已就位) + 已安装 ZCode
+# 前提:已装布洛陀五层记忆系统([记忆共享中心] 已就位) + 已安装 ZCode
 # 功能:检测记忆中心 → AGENTS.md注入文件 → skills软链(Junction·10) → Stop钩子注册 → 分身钩子(可选·UPS3+Stop4) → 体检 → 自验证
 # 用法: powershell -ExecutionPolicy Bypass -File setup.ps1
 #       沙盒测试: $env:ZCODE_HOME="D:\tmp\xxx"; $env:MEMORY_CENTER="D:\tmp\yyy"
@@ -122,7 +122,7 @@ function Safe-Link([string]$link, [string]$src) {
 }
 
 Write-Host "=== ZCode 加强包 接入 v0.1.1 ===" -ForegroundColor $CYAN
-Write-Host "    前提:需已装布洛陀五层记忆系统(~/[记忆共享中心])+已安装 ZCode。未装则安全中止,不破坏任何东西。" -ForegroundColor $YELLOW
+Write-Host "    前提:需已装布洛陀五层记忆系统([记忆共享中心])+已安装 ZCode。未装则安全中止,不破坏任何东西。" -ForegroundColor $YELLOW
 Write-Host "    目标工具: ZCode 🧩 | ZCode 根: $ZCODE_HOME" -ForegroundColor $CYAN
 
 Write-Step "[1/8] 检测布洛陀记忆中心(指纹级·非仅目录存在)..."

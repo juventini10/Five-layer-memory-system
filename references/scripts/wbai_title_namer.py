@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """wbai_title_namer.py — WorkBuddy AI（国际版）专属适配器：新会话首轮自动命名对话标题。
 
@@ -16,7 +12,7 @@ except Exception: pass
 
 原语来源（2026-09-10 抽公共·跨工具中立）:
     classify / extract_theme / make_title / bj_date_from_ms 在
-    [记忆共享中心]/脚本中心/session_title_utils.py（各端适配器 import，⛔DO NOT 复制实现）。
+    [记忆共享中心]/脚本中心/内容创作/session_title_utils.py（各端适配器 import，⛔DO NOT 复制实现）。
     本文件只保留 WorkBuddy AI 国际版专属的「定位会话 + 落库」两件事——对齐
     §二·七 2026-09-10 皮叔令「端适配器只写定位会话+落库」与 dsh_title_namer.py 先例。
 
@@ -40,6 +36,10 @@ except Exception: pass
     python3 wbai_title_namer.py --dry-run --prompt "修复搜索超时问题"                              # 只看标题不写库
     python3 wbai_title_namer.py --set <session_id> --title "260911 | 功能 | 主题"                  # 手动/历史改名
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import sys
@@ -92,6 +92,7 @@ def set_custom_title(session_id: str, title: str, force: bool = False) -> bool:
 
 def hook_mode() -> None:
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip().startswith("{") else {}
     except Exception:

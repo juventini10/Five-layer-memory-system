@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 # TRUTH_OF: 脚本中心/install_ledger_reconcile.py   # 真源声明·派生面须软链指向本件
 # -*- coding: utf-8 -*-
-"""install_ledger_reconcile.py v1.0.2 — install_ledger 台账对账器（幂等缓存自动追平·分叉隔离）
+"""install_ledger_reconcile.py v1.0.4 — install_ledger 台账对账器（幂等缓存自动追平·分叉隔离）
+
+v1.0.4 夹具归位（v1.0.3 首轮修复自身缺陷·如实记账）：v1.0.3 把 conflict 条目的 path 填成
+脚本中心目标面路径，致 src==dst 被误判 auto；本轮按真机口径重排（path=作者仓源侧·dst=投递面）。
+v1.0.3 自测夹具对齐
+
+v1.0.3 自测夹具对齐（2026-10-08 根治 src_missing:7 假红）：v1.0.2 判据改造后 src 口径=
+相对 base(家目录) 或绝对路径（与真 manifest「个人AI档案/...」一致），但 self_test 夹具仍用
+旧「[记忆共享中心]/」前缀——该前缀无任何映射逻辑，7 条全判 src_missing=夹具与判据分叉。
+纯测试面修复，reconcile() 判定逻辑零改动；missing 夹具改为「源在开发工具·脚本中心无 dst」
+真 pending 形态。
 
 v1.0.2 多面隔离（首跑 --apply 后二跑 --check 显形 redeploy=10 的根因）：同名多条目各面 src
 内容异 → 单键台账逐条处理必随遍历顺序交替刷（二跑又红）；改为整组识别、⛔不动账、归布局治理。
@@ -136,7 +146,7 @@ def write_ledger(ledger_path, new_sha, backup_dir):
 def self_test():
     import tempfile
     base = tempfile.mkdtemp(prefix="reconcile_selftest_")
-    arc = os.path.join(base, "[记忆共享中心]")
+    arc = os.path.join(base, "[记忆共享中心]")   # 与真 manifest「个人AI档案/...」相对家目录口径一致（v1.0.3）
     dev = os.path.join(arc, "开发工具")
     ctr = os.path.join(arc, "脚本中心")
     os.makedirs(dev); os.makedirs(ctr)
@@ -144,35 +154,36 @@ def self_test():
         p = os.path.join(d, n)
         open(p, "w", encoding="utf-8").write(c)
         return p
-    put(dev, "auto.py", "X"); put(ctr, "auto.py", "X")            # auto: 账滞后·文件同
-    put(dev, "noop.py", "Y"); put(ctr, "noop.py", "Y")            # noop: 账实一致
-    put(dev, "missing.py", "Z")                                    # pending: 无dst
-    put(dev, "conflict.py", "A"); put(ctr, "conflict.py", "B")    # redeploy: 源变未重投
-    put(dev, "gone.py", "C")  # src_missing 需要 ledger 有 key 但 src 无 → 用假条目路径
-    put(dev, "twin_a.py", "T1")
-    put(arc, "twin_b.py", "T2")  # 多面组：同名两面内容异
+    # 口径与真机一致：path=源（作者仓侧），dst=dst_root(脚本中心)/<name>（安装投递面）
+    put(dev, "auto_src.py", "AUTO_CONTENT_1"); put(ctr, "auto.py", "AUTO_CONTENT_1")   # auto: 账滞后·源与dst内容同
+    put(dev, "noop_src.py", "NOOP_CONTENT_2"); put(ctr, "noop.py", "NOOP_CONTENT_2")   # noop: 账实一致
+    put(dev, "pending_src.py", "PENDING_CONTENT_3")                                    # pending: 源在·dst缺
+    put(dev, "conflict_src.py", "CONFLICT_SRC_A"); put(ctr, "conflict.py", "CONFLICT_DST_B")  # redeploy: 源与dst内容异
+    # src_missing：ledger 有 gone.py 的 key 但条目路径指向不存在的文件（无需落盘夹具）
+    put(dev, "twin_a_src.py", "TWIN_FACE_1")
+    put(arc, "twin_b_src.py", "TWIN_FACE_2")  # 多面组：同名两面内容异
     entries = [
-        {"name": "auto.py", "path": "[记忆共享中心]/脚本中心/auto.py"},
-        {"name": "noop.py", "path": "[记忆共享中心]/脚本中心/noop.py"},
-        {"name": "missing.py", "path": "[记忆共享中心]/脚本中心/missing.py"},
-        {"name": "conflict.py", "path": "[记忆共享中心]/脚本中心/conflict.py"},
+        {"name": "auto.py", "path": "[记忆共享中心]/脚本中心/auto.py"},   # auto 语义=源与dst同内容·账滞后·path 即目标面
+        {"name": "noop.py", "path": "[记忆共享中心]/脚本中心/noop_src.py"},
+        {"name": "pending.py", "path": "[记忆共享中心]/脚本中心/pending_src.py"},
+        {"name": "conflict.py", "path": "[记忆共享中心]/脚本中心/conflict_src.py"},
         {"name": "gone.py", "path": "[记忆共享中心]/脚本中心/deleted.py"},
-        {"name": "twin.py", "path": "[记忆共享中心]/脚本中心/twin_a.py"},
-        {"name": "twin.py", "path": "个人AI档案/twin_b.py"},
+        {"name": "twin.py", "path": "[记忆共享中心]/脚本中心/twin_a_src.py"},
+        {"name": "twin.py", "path": "个人AI档案/twin_b_src.py"},
     ]
     mp = put(dev, "scripts_manifest.json", json.dumps({"scripts": entries}))
     led = {"source_sha": {
-        "auto.py": "00000000", "noop.py": sha8(os.path.join(dev, "noop.py")),
-        "missing.py": "00000000", "conflict.py": "00000000", "gone.py": "00000000",
+        "auto.py": "00000000", "noop.py": sha8(os.path.join(dev, "noop_src.py")),
+        "pending.py": "00000000", "conflict.py": "00000000", "gone.py": "00000000",
         "twin.py": "00000000"}}
     lp = put(ctr, "install_ledger.json", json.dumps(led))
     counts, new_sha, pend, red = reconcile(mp, lp, base, ctr)
     assert counts == {"noop": 1, "auto": 1, "pending": 1, "redeploy": 1,
                       "src_missing": 1, "multi_face": 1}, counts
     assert new_sha["twin.py"] == "00000000", "多面组不得动账"
-    assert new_sha["auto.py"] == sha8(os.path.join(dev, "auto.py"))
+    assert new_sha["auto.py"] == sha8(os.path.join(dev, "auto_src.py"))
     assert new_sha["conflict.py"] == "00000000", "redeploy 不得刷账"
-    assert new_sha["missing.py"] == "00000000", "pending 不得刷账"
+    assert new_sha["pending.py"] == "00000000", "pending 不得刷账"
     assert len(pend) == 1 and len(red) == 2, red  # redeploy 1 + multi_face 1 同列红清单
     bk = os.path.join(base, "bk")
     write_ledger(lp, new_sha, bk)
@@ -222,7 +233,7 @@ def main():
         pj = os.path.join(ctr, "install_pending_adjudication.json")
         tmp = pj + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump({"generated_by": "install_ledger_reconcile.py v1.0.2",
+            json.dump({"generated_by": "install_ledger_reconcile.py v1.0.4",
                        "generated_at": time.strftime("%Y-%m-%d %H:%M"),
                        "pending_missing_dst": pend, "redeploy_or_multi_face": red},
                       f, ensure_ascii=False, indent=1)

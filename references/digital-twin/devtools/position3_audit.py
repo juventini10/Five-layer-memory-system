@@ -327,7 +327,7 @@ def check_staging_water():
 
 
 # ============ 判据⑤：定时作业健康度（launchd 声明-实盘对账·v1.3 新增·v1.4 补判活） ============
-CRITERIA_VERSION = "v1.9"  # 报告头部与分节标题共用（⛔不两处各写一次=防双本账）
+CRITERIA_VERSION = "v1.10"  # 报告头部与分节标题共用（⛔不两处各写一次=防双本账）
 # 缘起（2026-08-30 实证）：com.knowledge.backup 因 plist 脚本名手误 exit=127 静默死 23 天；
 # 同日又查出 3 个 plist 指向已不存在的脚本且根本没加载。判据①-④ 全测不到这一类——
 # "作业声称每日跑"与"台账实锤没跑"的落差必须机械显形（愿景①不依赖人记得）。
@@ -345,8 +345,8 @@ JOB_GRACE = 2.5  # 产物最大容忍年龄 = 宣称周期 × 该系数
 JOB_ARTIFACTS = {
     "com.用户名.offsite-bundle-backup": ("[记忆共享中心]/脚本中心/offsite_bundle_backup.log", "per-run"),
     "com.knowledge.backup": ("[记忆共享中心]/脚本中心/knowledge-backup.log", "per-run"),  # 2026-10-06 订正：原指向 脚本中心/ 为迁移后旧址（盘上真实产物在 记忆系统自动化/）
-    "com.buluotuo.position3-audit": ("~/[记忆共享中心]/数字分身/steps/position3-audit-log.jsonl", "per-run"),
-    "com.用户名.check-skill-links": ("[记忆共享中心]/脚本中心/audit.log", "alarm-only"),  # 2026-10-06 订正：原键"com.用户名."占位符未替换→查表恒miss=「未登记产物声明」🟡根因；原路径"脚本中心/audit.log"不存在，真实产物在 开发工具/skill-symlink-guard/audit.log（symlink_guard.sh L28 唯一写入点）
+    "com.buluotuo.position3-audit": ("[记忆共享中心]/数字分身/steps/position3-audit-log.jsonl", "per-run"),
+    "com.用户名.check-skill-links": ("[记忆共享中心]/脚本中心/skill-symlink-guard/audit.log", "alarm-only"),  # 2026-10-06 订正：原键"com.用户名."占位符未替换→查表恒miss=「未登记产物声明」🟡根因；原路径"脚本中心/audit.log"不存在，真实产物在 开发工具/skill-symlink-guard/audit.log（symlink_guard.sh L28 唯一写入点）
 }
 
 
@@ -388,7 +388,7 @@ def _rc_semantics(d, rc):
     后果不是"多报 3 个红"，而是**真崩被假红淹没**（信噪比 1:3，狼来了）。
 
     分类判据（机械可判，⛔不依赖被检脚本自报语义）：
-      crash   —— stderr 有异常特征（Traceback/Error/信号/找不到文件等）
+      crash   —— stderr 有异常特征（Traceback/Error/信号/找不到文件等）**且时效不旧于 stdout**（v1.10 时效闸）
       finding —— stderr 空且 stdout 有内容（检查器出了报告）→ 🟡 待处置，非故障
       unknown —— 两者皆无/读不到 → 保守留 🔴（宁可假红不可漏真崩）
     """
@@ -413,7 +413,20 @@ def _rc_semantics(d, rc):
 
     et = _tail(err) if err else []
     if et and _CRASH_RE.search("\n".join(et)):
-        return ("crash", et[-1][:110])
+        # v1.10 时效闸（2026-10-10 第148轮实证）：state-bus-sync 崩案已于前夜修复且复跑
+        # stdout 新鲜、stderr 静默，但 err.log 里的旧 Traceback 残被无条件当现行证据→
+        # 修好的作业永远真崩。判据：崩溃签名只在 stderr mtime ≥ stdout mtime（同轮或更晚）
+        # 时算现行；旧于 stdout ⇒ 上一轮遗账·降级走 finding/unknown。
+        # 保守性不变：取不到 stdout/比较异常时照旧 crash（宁可假红不漏真崩）。
+        stale = False
+        try:
+            if out and os.path.exists(out):
+                stale = os.path.getmtime(err) < os.path.getmtime(out) - 1.0
+        except OSError:
+            stale = False
+        if not stale:
+            return ("crash", et[-1][:110])
+        et = []
     ot = _tail(out) if out else []
     if not et and ot:
         return ("finding", ot[-1][:110])
@@ -696,7 +709,7 @@ def build_report(round_no, pend, ledg, emb, water, jobs, dispositions=None):
     L.append("# 岗位3 · 声明-实盘对账报告（第 %d 轮 · %s）\n" % (round_no, now.strftime("%Y-%m-%d %H:%M")))
     L.append("> 本轮结论：🔴 %d 处脱钩 · 🟡 %d 处悬置 · 其余声明与台账相符%s\n" % (red, yellow,
              ("（已归档处置 %d 条）" % len(dispositions)) if dispositions else ""))
-    L.append("> 判据版本 %s（台账实锤才算✅·悬置阈 %d 天·台账新鲜阈 %d 天·运行时载荷键数≥10·仅当前态区计悬置·schema无stdin_keys不套载荷口径）——v1→v1.1 演进依据=第1轮两处误报实证（变更记录历史区/异端schema）；v1.2→v1.3 演进依据=同日实证 com.knowledge.backup plist 脚本名手误 exit=127 静默死 23 天，判据①-④对『作业没在跑』这一类结构性失明；v1.3→v1.4 演进依据=建 v1.3 过程中自查出的假绿（拿 plist stdout mtime 给常驻作业判时效，而 stdout 新旧与『进程是否在跑』无因果），改由 launchd 自证 state/pid，并补 WatchPaths 指向不存在文件→🔴（事件永不触发）。v1.4→v1.5 演进依据=2026-08-31 实证：重启后/非交互 shell 下 `launchctl list` 返回空→全部 own job 误报『未加载』🔴（手动补跑爆 27 假红）；改由逐 label `launchctl print gui/$UID/<label>` 实查（与 _job_alive 同源可靠），并新增「看门狗看自己」自身节律缺口门禁（>9天未跑→🔴），根治看门狗漏跑无感。v1.5→v1.6 演进依据=同次根治：调度原语从 `StartCalendarInterval`（周一09:00·错过点不补跑·脆弱）改为 `StartInterval 86400`+`RunAtLoad`（每日·加载即跑·睡眠/重启自愈），自身节律门禁阈值随 9→2 天；从愿景①「不依赖人记得」判定此为看门狗最优可靠形态，原「每周」仅为拍脑袋节奏。v1.6→v1.7 演进依据=2026-08-31 第9轮27🔴复盘：判据②原以 /tmp 台账存在+新鲜判守卫健康，但 /tmp 重启易失且事件驱动守卫(端休眠无会话即不写账)→WB/ZCode 误报🔴；根治=事件驱动守卫台账落点迁 ~/.workbuddy/(持久·根治重启清空)+判据②增补「挂载态兜底」(已挂 hooks 但端休眠/未触发→🟡待命而非🔴·真未挂载才🔴)，对齐愿景「可观测·全自动化」。v1.7→v1.8 演进依据=2026-09-01 第20轮实证：第19轮人工处置记录(09:45·consistency-guard 双因修复+QoderCN台账落点迁移)被引擎滚动覆盖丢失仅.bak存留；根治=写报告前引擎自旧报告机械提取处置记录→合并去重入 audit-log rec.dispositions(累积快照)→报告「处置记录」节回显(历史可追溯)，处置台账随 audit-log 供 evolution_deviation.py 闭环流消费——对齐愿景①不依赖人记得/②越用越好用/③自主进化。v1.8→v1.9 演进依据=2026-09-26 第107轮实证：4 处🔴里只有 1 处是真崩（panel_snapshot.compute_okr TypeError），另 3 处是检查器正常工作——`script_family_check.py --strict` 的 help 自陈「任一红→exit 1」、blueprint watcher stdout 末行「发现 2 个问题」、changelog-audit stdout `alarm:true`，其 stderr 全空。原判据对 last exit code 非 0 一律 hard.append（裸比较分支），把「有发现」与「崩了」混为同一红，代价不是多报 3 红，而是**真崩被假红淹没（信噪比 1:3）→ 狼来了 → 红被习惯性跳过**。根治=新增 `_rc_semantics()` 三分类（crash/finding/unknown，机械判据：stderr 异常特征 vs stdout 有产物），finding 记 🟡 待处置（⛔不记 ✅——那等于把欠账藏进绿里），unknown 保守留 🔴（宁可假红不漏真崩）；判据⑤负例夹具 17/17 复跑通过。对齐愿景③「从自身运行数据学习改进」——本轮同时暴露并修掉上游真崩根因（SSOT 那行被加粗成「接入率（**分母」→ 字面锚点失配 → 回退手敲裸 int → 解包崩），教训抽象：**凡靠字面锚点解析文档的机器，匹配前必须先剥 markdown 装饰，且降级兜底值不得携带具体数字（伪装成有效数据的降级=二次故障源）**。（判据预注册下如实升版）· 抽检入口：detail 内路径可直接打开验证\n"
+    L.append("> 判据版本 %s（台账实锤才算✅·悬置阈 %d 天·台账新鲜阈 %d 天·运行时载荷键数≥10·仅当前态区计悬置·schema无stdin_keys不套载荷口径）——v1→v1.1 演进依据=第1轮两处误报实证（变更记录历史区/异端schema）；v1.2→v1.3 演进依据=同日实证 com.knowledge.backup plist 脚本名手误 exit=127 静默死 23 天，判据①-④对『作业没在跑』这一类结构性失明；v1.3→v1.4 演进依据=建 v1.3 过程中自查出的假绿（拿 plist stdout mtime 给常驻作业判时效，而 stdout 新旧与『进程是否在跑』无因果），改由 launchd 自证 state/pid，并补 WatchPaths 指向不存在文件→🔴（事件永不触发）。v1.4→v1.5 演进依据=2026-08-31 实证：重启后/非交互 shell 下 `launchctl list` 返回空→全部 own job 误报『未加载』🔴（手动补跑爆 27 假红）；改由逐 label `launchctl print gui/$UID/<label>` 实查（与 _job_alive 同源可靠），并新增「看门狗看自己」自身节律缺口门禁（>9天未跑→🔴），根治看门狗漏跑无感。v1.5→v1.6 演进依据=同次根治：调度原语从 `StartCalendarInterval`（周一09:00·错过点不补跑·脆弱）改为 `StartInterval 86400`+`RunAtLoad`（每日·加载即跑·睡眠/重启自愈），自身节律门禁阈值随 9→2 天；从愿景①「不依赖人记得」判定此为看门狗最优可靠形态，原「每周」仅为拍脑袋节奏。v1.6→v1.7 演进依据=2026-08-31 第9轮27🔴复盘：判据②原以 /tmp 台账存在+新鲜判守卫健康，但 /tmp 重启易失且事件驱动守卫(端休眠无会话即不写账)→WB/ZCode 误报🔴；根治=事件驱动守卫台账落点迁 ~/.workbuddy/(持久·根治重启清空)+判据②增补「挂载态兜底」(已挂 hooks 但端休眠/未触发→🟡待命而非🔴·真未挂载才🔴)，对齐愿景「可观测·全自动化」。v1.7→v1.8 演进依据=2026-09-01 第20轮实证：第19轮人工处置记录(09:45·consistency-guard 双因修复+QoderCN台账落点迁移)被引擎滚动覆盖丢失仅.bak存留；根治=写报告前引擎自旧报告机械提取处置记录→合并去重入 audit-log rec.dispositions(累积快照)→报告「处置记录」节回显(历史可追溯)，处置台账随 audit-log 供 evolution_deviation.py 闭环流消费——对齐愿景①不依赖人记得/②越用越好用/③自主进化。v1.8→v1.9 演进依据=2026-09-26 第107轮实证：4 处🔴里只有 1 处是真崩（panel_snapshot.compute_okr TypeError），另 3 处是检查器正常工作——`script_family_check.py --strict` 的 help 自陈「任一红→exit 1」、blueprint watcher stdout 末行「发现 2 个问题」、changelog-audit stdout `alarm:true`，其 stderr 全空。原判据对 last exit code 非 0 一律 hard.append（裸比较分支），把「有发现」与「崩了」混为同一红，代价不是多报 3 红，而是**真崩被假红淹没（信噪比 1:3）→ 狼来了 → 红被习惯性跳过**。根治=新增 `_rc_semantics()` 三分类（crash/finding/unknown，机械判据：stderr 异常特征 vs stdout 有产物），finding 记 🟡 待处置（⛔不记 ✅——那等于把欠账藏进绿里），unknown 保守留 🔴（宁可假红不漏真崩）；判据⑤负例夹具 17/17 复跑通过。对齐愿景③「从自身运行数据学习改进」——本轮同时暴露并修掉上游真崩根因（SSOT 那行被加粗成「接入率（**分母」→ 字面锚点失配 → 回退手敲裸 int → 解包崩），教训抽象：**凡靠字面锚点解析文档的机器，匹配前必须先剥 markdown 装饰，且降级兜底值不得携带具体数字（伪装成有效数据的降级=二次故障源）**。v1.9→v1.10 演进依据=2026-10-10 第148轮实证：state-bus-sync 崩案已于10-09修复并复跑（rc=1 系业务发现·stderr 静默），但 err.log 里的旧 TypeError 残骸被 _rc_semantics 无条件当现行证据→修好的作业永远真崩（同源律的取数时点残面：判据演化了，证据时效没跟上）。根治=崩溃签名加时效闸（stderr mtime 早于 stdout ⇒ 上一轮遗账·降级 finding/unknown；无 stdout 可比时照旧 crash·保守性不丢）；负例夹具 +3 例（18旧trace不得crash/19新trace仍crash/20无签名仍finding）。对齐愿景③。（判据预注册下如实升版）· 抽检入口：detail 内路径可直接打开验证\n"
              % (CRITERIA_VERSION, STALE_DAYS, LEDGER_FRESH_DAYS))
     L.append("\n## 处置记录（v1.8·引擎机械归档·历史可追溯）\n")
     if dispositions:
@@ -940,6 +953,22 @@ def mode_negtest_jobs():
     rows, _, _ = check_scheduled_jobs(tmp, roots, {lab: "0", "com.wp.stdout": "0"}, probe=probe_none)
     wo = [r for r in rows if r[0] == "com.wp.stdout"][0]
     case("17 负例·事件驱动作业有 stdout 不得判✅（旧版假绿实锤已修）", wo[1] == "🟡" and "时效不可判" in wo[2])
+
+    # v1.10 时效闸三例（直打 _rc_semantics·防「判据演化了夹具还测旧形状」）
+    se = os.path.join(tmp, "rc.err")
+    so = os.path.join(tmp, "rc.out")
+    open(se, "w").write("Traceback (most recent call last):\nTypeError: old crash\n")
+    open(so, "w").write("正常产物\n")
+    fresh = os.stat(so).st_mtime
+    os.utime(se, (fresh - 60, fresh - 60))
+    k, _ = _rc_semantics({"StandardErrorPath": se, "StandardOutPath": so}, "1")
+    case("18 v1.10·崩溃签名旧于stdout(上一轮遗账)→finding 不判crash", k == "finding")
+    os.utime(se, (fresh + 2, fresh + 2))
+    k, _ = _rc_semantics({"StandardErrorPath": se, "StandardOutPath": so}, "1")
+    case("19 v1.10·崩溃签名新于stdout(现行崩)→crash 保守性不丢", k == "crash")
+    open(se, "w").write("")
+    k, _ = _rc_semantics({"StandardErrorPath": se, "StandardOutPath": so}, "1")
+    case("20 回归·stderr空+stdout有产物→finding", k == "finding")
 
     shutil.rmtree(tmp, ignore_errors=True)
     bad = [n for n, o in results if not o]

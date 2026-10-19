@@ -1,1 +1,1 @@
-{"ts": "2026-10-07T14:58:17", "script": "probe.py", "event": "UserPromptSubmit", "mode": "json", "host": "workbuddy", "reason": "probe", "conflict": false, "bytes": 1, "payload_keys": ["prompt"], "qoder_env": [], "probe": false}
+{"ts": "2026-10-19T13:18:07", "script": "doenglingz_inject_prompt.py", "event": "UserPromptSubmit", "mode": "text", "host": "", "reason": "default:text", "conflict": false, "bytes": 6397, "payload_keys": ["prompt", "session_id"], "qoder_env": ["QODERCN_AGENT", "QODERCN_ENV", "QODERCN_IDE", "QODER_CN_IDE", "QODER_SITE"], "probe": false}

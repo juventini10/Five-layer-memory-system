@@ -33,11 +33,11 @@ import time
 from pathlib import Path
 
 GUARD = "zcode_philosophy_parity_guard.py"
-PHILOSOPHY_DIR_DEFAULT = "[记忆共享中心]" / "记忆蓝图" / "04_系统文件设计" / "布洛陀脚本架构设计哲学"
+PHILOSOPHY_DIR_DEFAULT = Path('[记忆共享中心]') / "记忆蓝图" / "04_系统文件设计" / "布洛陀脚本架构设计哲学"
 STATE_DEFAULT = Path.home() / ".zcode" / "state" / "philosophy_parity.json"
 # 端适配台账=T0 方案文件（本端登记版本·文件名会演进→glob 兜底·前导 * 允许日期前缀）
 TARGET_GLOB_DEFAULT = "*ZCode-HOOK机制最大化施工方案*.md"
-TARGET_DIR_DEFAULT = "[记忆共享中心]" / "自定义层" / "待完成工作"
+TARGET_DIR_DEFAULT = Path('[记忆共享中心]') / "自定义层" / "待完成工作"
 FILES = ["01-脚本架构设计通用规范.md", "守卫编写规范.md", "04-跨端接入指南.md", "INDEX.md"]
 
 FM_RE = re.compile(r"^version:\s*v?(\d+(?:\.\d+)+)", re.M)  # v1.0.1 放宽：v 前缀可选（守卫规范=裸数字）·行尾尾注不拘

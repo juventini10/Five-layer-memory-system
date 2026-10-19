@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """plugin_path_scan.py —— 16 个插件的作者路径硬编码·AST 级分类
 
 沿用 §3.3 的教训：⛔ 不一条正则打天下。先分类再动手。
@@ -17,6 +13,10 @@ except Exception: pass
   LIST      列表/字典里的路径        → 逐条看
   PROMPT    提示词模板里的路径        → 看给谁看
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import ast
 import io
 import os
@@ -27,7 +27,7 @@ PLUG = os.path.expanduser("~/.hermes/plugins")
 
 KEYMAP = [
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "kb_engine"),
-    (os.path.expanduser("[记忆共享中心]/脚本中心/路由家族"), "custom_route"),
+    (os.path.expanduser("[记忆共享中心]/脚本中心家族"), "custom_route"),
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "devtools"),
     (os.path.expanduser("[记忆共享中心]/脚本中心"), "devtools"),
     (os.path.expanduser("[记忆共享中心]/工作日志"), "worklog"),

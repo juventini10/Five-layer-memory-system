@@ -42,7 +42,7 @@ DIARY_DIR = os.path.join(HOME, "[日记仓库]", "1-每日计划", "01-日记")
 CONCEPT_DIR = os.path.join(HOME, "[日记仓库]", "2-知识库", "08-概念层")
 AI_LIB_DIR = os.path.join(HOME, "[记忆共享中心]", "知识库", "AI学习库")
 INDEX_PATH = os.path.join(AI_LIB_DIR, "INDEX.md")
-COLLISION_JSON = os.path.join(os.path.expanduser("[记忆共享中心]"), "开发工具", "知识联邦引擎", "collision_candidates.json")
+COLLISION_JSON = os.path.join(os.path.expanduser("[记忆共享中心]"), "知识联邦引擎", "collision_candidates.json")
 SYSLOG_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "工作日志", "系统日志")
 SNAPSHOT_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "技能配置", "daily-buddy", "data_snapshots")
 

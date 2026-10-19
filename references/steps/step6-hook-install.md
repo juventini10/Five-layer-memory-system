@@ -1,4 +1,5 @@
 # 步骤6·钩子安装（未知未知路由兜底）
+> 🔊 收口播报（P31/P22）：本站收口 MUST 播 INSTALL.md〈段间播报表〉对应行（8/8 口径）；非 T9 终点站⛔禁说"完成/装好了"，只说"这站就位"；进度数字读 .install/stepN-done.md。
 
 📦 **产出物**：`[配置根]/hooks/route_unknown_unknown.py` 已拷贝 + 占位符已替换 + `[配置根]/settings.json` 的 `hooks.Stop` 已追加该钩子（幂等、保留现有钩子）；另含铁律硬墙五件套（`[配置根]/hooks/rule/` → UserPromptSubmit 挂 `rule_fragment_inject.py`、Stop 挂 `rule_three_layer_guard.py` ⑥覆盖守卫）与用户侧**脚本中心文件夹** `[记忆共享中心]/脚本中心/`。
 
@@ -91,7 +92,7 @@ $py = (Get-ChildItem "$env:USERPROFILE\.workbuddy\binaries\python\versions\*\pyt
 
 ```bash
 # 2a. 钩子总表核查（判据与安装同源·不另抄清单）
-python3 install_scripts.py --verify "<记忆共享中心绝对路径>"   # 期望：✅ 19/19 钩子已落盘并注册 · 规则层就位
+python3 install_scripts.py --verify "<记忆共享中心绝对路径>"   # 期望：✅ 38/38 钩子已落盘并注册 · 规则层就位（F2 根治·2026-10-17：旧文 19/19 与 ROSTER 实盘 38 条脱钩）
 
 # 2b. 关键钩子实跑自检
 CFG_DIR="$(grep -m1 '^CONFIG_ROOT=' "$MEMORY_CENTER/.install/step3-done.md" | cut -d= -f2 | sed "s#^~#$HOME#")"  # 配置根→绝对目录
@@ -131,13 +132,13 @@ test -f "<记忆共享中心绝对路径>/脚本中心/rule_fragment_inject.py" 
 ```
 步骤：步骤6·钩子安装（19 个钩子 + 脚本中心·单一数据源驱动）
 完成时间：<当前时间>
-数据源：包根 install_scripts.py 的 ROSTER 数组（19 个钩子 / 30 个文件）
+数据源：包根 install_scripts.py 的 ROSTER 数组（38 个钩子·⛔不写死·以 --list 自报为准）
 产出物：
 - [配置根]/hooks/ 下 19 个钩子 + 同目录依赖件（含 route/、rule/ 两个子域）
-- [配置根]/settings.json 对应事件已注册（UserPromptSubmit 6 / Stop 8 / PreToolUse 4 / SessionStart 1）
+- [配置根]/settings.json 对应事件已注册（UserPromptSubmit 9 / Stop 23 / PreToolUse 5 / SessionStart 1·共 38·动态数为准）
 - [记忆共享中心]/脚本中心/（完整脚本体系·用户拥有的副本）
 - [记忆共享中心]/记忆规则/（触发规格 rule_triggers.yaml + rule_conflict_signals.yaml + 三层规则文件）
-验证：python3 install_scripts.py --verify "<记忆共享中心>" → ✅ 19/19 钩子已落盘并注册 · 规则层就位
+验证：python3 install_scripts.py --verify "<记忆共享中心>" → ✅ 38/38 钩子已落盘并注册 · 规则层就位
 ```
 
 > 🔴 **⛔ "已注册" ≠ "已生效"——本段的成功条件按端分述（2026-10-02 Hermes 端实证）**

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # TRUTH_OF: 脚本中心/doenglingz_guard_zcode.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """doenglingz_guard_zcode.py —— Stop 钩子·童灵守护三查（数字分身常驻守卫·ZCode 端）
@@ -20,6 +16,10 @@ except Exception: pass
   每端独立文件先例对齐 qodercn 后缀方案）。
 跨端适配：06-跨端适配规范§二（内核不分端·装载分态·本端适配器·各端自行实施）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import re
 import json
@@ -95,6 +95,7 @@ def _state_file():
 def get_text_from_stdin():
     """读 stdin JSON，返回 (text, observed_keys)：宽容提取回复文本并记录载荷结构。"""
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read() or "{}"
         d = json.loads(raw)
     except Exception:

@@ -43,7 +43,7 @@ done
 
 # 启动新实例
 if ! command -v dsh >/dev/null 2>&1; then
-    log "❌ dsh 不在 PATH（$PATH）——需人工恢复"
+    log "❌ dsh 不在 PATH（${PATH}）——需人工恢复"
     exit 1
 fi
 
@@ -51,7 +51,7 @@ cd "$HOME" || exit 1
 log "启动: dsh web（输出追加至 dsh-web.log）"
 nohup dsh web >> "$WEBLOG" 2>&1 &
 NEW_SHELL_PID=$!
-log "dsh web 已拉起（shell pid=$NEW_SHELL_PID）·等待监听…"
+log "dsh web 已拉起（shell pid=${NEW_SHELL_PID}）·等待监听…"
 
 # 验证（最多 40s）
 OK=0
@@ -59,7 +59,7 @@ for i in $(seq 1 40); do
     sleep 1
     NPID=$(lsof -nP -iTCP:$PORT -sTCP:LISTEN -t 2>/dev/null | head -1)
     if [ -n "${NPID:-}" ]; then
-        log "✅ 重启成功：新 PID=$NPID（耗时 ${i}s）·URL 见 $WEBLOG 末行"
+        log "✅ 重启成功：新 PID=${NPID}（耗时 ${i}s）·URL 见 $WEBLOG 末行"
         OK=1
         break
     fi

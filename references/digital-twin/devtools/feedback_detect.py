@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 feedback_detect.py — Stop 钩子：召回质量反馈信号自动检测器（检索自进化 P0 落地·2026-08-16）
 
@@ -27,9 +23,14 @@ feedback_detect.py — Stop 钩子：召回质量反馈信号自动检测器（�
   - 失败默认放行（解析异常/无输入 → exit 0）
   - 保守判定（检测信号用硬信号词，不用泛词）
 
-跨工具中立（脚本架构通用规范 §二·五）：公共脚本住开发工具/知识联邦引擎/scripts/，
+跨工具中立（脚本架构通用规范 §二·五）：公共脚本住知识联邦引擎/scripts/（顶层·2026-10-12 迁顶层），
   任何端（DSH/WorkBuddy/Qoder/AutoClaw）Stop 钩子接入即生效；⛔ 不绑定任何单端。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import os
 import re
@@ -105,13 +106,29 @@ def detect(msgs):
 
 
 def record(task, ftype, desc):
-    """调 log_kb_feedback.py 记录（复用 P0 通道·单一真源）"""
-    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log_kb_feedback.py")
-    if not os.path.isfile(script):
-        print(f"⚠️ log_kb_feedback.py 不存在: {script}", file=sys.stderr)
-        return
+    """调 log_kb_feedback.py 记录（复用 P0 通道·单一真源）
+    🔴 2026-10-15 sc-companion-fix：原实现只在本件同目录找 log_kb_feedback.py（兄弟文件假设）。
+       阶段3 把本件归入 记忆蒸馏/ 域、被委派件仍住引擎域 ⇒ 假设失效：钩子照常打印"已自动记录"
+       而委派根本没发生（假绿·stderr 一行警告无人读）。修法＝候选目录逐个探（首个存在者胜），
+       全落空则⛔静默、显形报错并回 False；调用方据真值出词，⛔未跑成不说跑成。"""
+    _here = os.path.dirname(os.path.abspath(__file__))
+    _cands = [_here,
+              os.path.join(os.path.expanduser("[记忆共享中心]/脚本中心"), "知识联邦引擎", "scripts"),
+              os.path.join(os.path.expanduser("[记忆共享中心]/脚本中心"))]
+    script = next((os.path.join(d, "log_kb_feedback.py") for d in _cands
+                   if os.path.isfile(os.path.join(d, "log_kb_feedback.py"))), None)
+    if script is None:
+        print("⛔ log_kb_feedback.py 在三个候选域均不存在：%s ⇒ 本次反馈未落账" % _cands,
+              file=sys.stderr)
+        return False
     import subprocess
-    subprocess.run([sys.executable, script, task, "自动检测", ftype], capture_output=True, timeout=15)
+    p = subprocess.run([sys.executable, script, task, "自动检测", ftype],
+                       capture_output=True, timeout=15, text=True)
+    if p.returncode != 0:
+        print("⛔ log_kb_feedback.py rc=%d（反馈未落账）：%s"
+              % (p.returncode, (p.stderr or p.stdout).strip()[:160]), file=sys.stderr)
+        return False
+    return True
 
 
 def self_test():
@@ -148,6 +165,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--self-test":
         sys.exit(self_test())
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
         tp = payload.get("transcript_path")
@@ -162,8 +180,9 @@ if __name__ == "__main__":
         hit = detect(msgs)
         if hit:
             task, ftype, desc = hit
-            record(task, ftype, desc)
-            print(f"📝 反馈信号已自动记录: task={task[:30]}... type={ftype} ({desc})")
+            _ok = record(task, ftype, desc)
+            print(f"📝 反馈信号已自动记录: task={task[:30]}... type={ftype} ({desc})" if _ok
+                  else f"🔴 反馈信号已检出但**未落账**（见 stderr）: task={task[:30]}... type={ftype}")
         sys.exit(0)
     except Exception:
         sys.exit(0)  # 任何异常放行

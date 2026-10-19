@@ -14,9 +14,9 @@
 
 | 项 | 旧版写法 | 实况（`adapters/hermes/capability.yaml` + 插件源码） |
 |:---|:---|:---|
-| 钩子机制 | 「本端无运行时钩子（Trae SOLO Lite 门禁恒关）」 | **错**。本端 16 个插件经 `plugin.yaml` 的 `provides_hooks` 注册，事件面 = `pre_llm_call` / `post_llm_call` / `pre_tool_call` / `on_session_end` / `UserPromptSubmit` / `Stop` |
+| 钩子机制 | 「本端无运行时钩子（Trae SOLO Lite 门禁恒关）」 | **错**。本端 18 个插件经 `plugin.yaml` 的 `provides_hooks` 注册，事件面 = `pre_llm_call` / `post_llm_call` / `pre_tool_call` / `on_session_end` / `transform_tool_result` / `transform_llm_output` / `pre_verify`（⚠️ 2026-10-11 订正：旧版末两位写 `UserPromptSubmit` / `Stop` 是 **WorkBuddy 口径**，Hermes `VALID_HOOKS`（`hermes_cli/plugins.py` L109-137）里没有这两个名字——**跨端事件名不可搬运**，与「跨端门禁结论不可搬运」同族） |
 | 混淆源 | 把 **Trae SOLO Lite 的 hooks 门禁**结论搬到了 Hermes 端 | 两端是不同产品：Trae 系的门禁结论 ⛔ 不可外推到 Hermes |
-| 后果 | 端 AI 读到本文件 ⇒ 得出「Hermes 没钩子·只能手动触发」⇒ **主动放弃已装的自动能力** | 装完的 16 插件被当成摆设 |
+| 后果 | 端 AI 读到本文件 ⇒ 得出「Hermes 没钩子·只能手动触发」⇒ **主动放弃已装的自动能力** | 装完的 18 插件被当成摆设 |
 
 > **判据沉淀**：**跨端结论不可搬运**。能力面判据只能来自「本端 capability.yaml + 本端插件源码」，
 > ⛔ 不得引用他端门禁/机制结论作本端依据（与 12 号协议 §5.8「⛔ 跨端边界」同源）。
@@ -33,7 +33,7 @@
 
 ⚠️ **恒驻核为什么必须拆两段**（⛔ 不可合回一段）：
 `register_system_prompt_section` 的 `max_chars` **硬上限 4000**
-（`hermes_cli/plugins_dispatch.py:69-70`），而 `core_slice.md` 全文超 4000。
+（`hermes_cli/plugins_dispatch.py` 的 `MAX_SYSTEM_PROMPT_SECTION_CHARS = 4_000` 常量·与 `DEFAULT_SYSTEM_PROMPT_SECTION_MAX_CHARS` 同值；**行号随官方升级漂移故以符号名为准**——2026-10-11 实测：原引 `:69-70` 指的实为 `SYSTEM_PROMPT_SECTION_POSITIONS` frozenset 非 4000 常量本身·已按铁律-016 回源订正），而 `core_slice.md` 全文超 4000。
 ⛔ 首版单段注册且只取 `head` ⇒ **L1 身份骨架整段静默丢弃**（假绿根因之一）。
 ⇒ 现按 `doenglingz.core` / `doenglingz.l1` 两段注册，各段预算 3800。
 

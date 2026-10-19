@@ -30,10 +30,6 @@ scheduler 旧版只扫「最新月段」→ 类型在最新月段无行时整体
 类型表由调用方传入（各 Skill 的类型登记可能不同），本模块只管
 "给定类型表 → 给出每种的预期下次 + 逾期判定"。
 """
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 
 import datetime
 import re

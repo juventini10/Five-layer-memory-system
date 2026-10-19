@@ -43,7 +43,7 @@ LEDGER = os.path.expanduser("[记忆共享中心]/评估知识库/test_results/f
 VALID_VERDICTS = ("verified", "partial", "blocked")
 # v1.1.0（C07 #55）：载体文件与 record_fix 同根 steps/ 目录（与 counter_conditional_promises.md 并列）
 COUNTER_PENDING_REVIEW = os.path.expanduser(
-    "~/[记忆共享中心]/技能配置/clock-loop/steps/counter_pending_review.md")
+    "[记忆共享中心]/技能配置/clock-loop/steps/counter_pending_review.md")
 # 闹钟阈值（与 counter_pending_review.md 头部声明同源·v1.1.0 C07 #55）
 WARN_DAYS = 7
 BLOCK_DAYS = 14

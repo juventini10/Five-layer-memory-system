@@ -35,7 +35,10 @@ $permTotal = @(Get-ChildItem -Path $PermDir -File -ErrorAction SilentlyContinue 
 
 # 告警判定
 $alert = ''
-if (($lastPinDays -eq 'NEVER') -or ([int]$lastPinDays -ge 30)) {
+if ($lastPinDays -eq 'NEVER') {
+    # P15 根治（2026-10-19·Win腿同步）：哨兵值 NEVER 不进用户话术
+    $alert = "⚠️ 永久收藏还没有过第一条——最近有定稿、改好的重要文件想永久留住吗？对AI说：帮我永久保存某某文件。"
+} elseif ([int]$lastPinDays -ge 30) {
     $alert = "⚠️ 永久收藏已 $lastPinDays 天没有新收藏——最近有定稿、改好的重要文件想永久留住吗？对AI说：帮我永久保存某某文件。"
 }
 if ($stray -gt 0) {

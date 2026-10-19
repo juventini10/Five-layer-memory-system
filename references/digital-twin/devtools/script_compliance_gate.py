@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 script_compliance_gate.py — 脚本合规门禁（版本标识 + 在册性 · 只拦变更集）
@@ -43,6 +39,10 @@ script_compliance_gate.py — 脚本合规门禁（版本标识 + 在册性 · �
   python3 script_compliance_gate.py check --recent 60
   python3 script_compliance_gate.py check --files a.py b.py
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import importlib.util
 import json

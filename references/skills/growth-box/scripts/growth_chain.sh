@@ -13,7 +13,19 @@ VERSION="1.0.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE="[记忆共享中心]/成长箱"
 LOG="$BASE/修复草案/链运行.log"
-PYTHON="${PYTHON:-/usr/bin/python3}"
+# 跨平台根治（2026-10-13）：原写死 /usr/bin/python3（Debian/系统位）在 Homebrew-only 机器
+# /Windows Git Bash 不存在→静默失效。改为运行期解析：显式 > PATH > 平台常见位 > py。
+PYTHON="${PYTHON:-}"
+if [ -z "$PYTHON" ]; then
+  PYTHON="$(command -v python3 2>/dev/null || true)"
+  if [ -z "$PYTHON" ]; then
+    for _cand in /usr/bin/python3 /usr/local/bin/python3 /opt/homebrew/bin/python3; do
+      [ -x "$_cand" ] && PYTHON="$_cand" && break
+    done
+  fi
+  [ -z "$PYTHON" ] && PYTHON="$(command -v py 2>/dev/null || true)"  # Windows Python launcher
+  [ -z "$PYTHON" ] && PYTHON="/usr/bin/python3"  # 末位兜底（作者本机系统 python）
+fi
 
 STEPS=(
   "采集|$SCRIPT_DIR/growth_signal_collector.py|"
@@ -22,7 +34,7 @@ STEPS=(
   "预测|$SCRIPT_DIR/growth_pattern_predictor.py|"
   "跨域日报|$SCRIPT_DIR/growth_cross_link.py|"
   "到期提醒|$SCRIPT_DIR/immunity_l1_draft.py|--due --notify"
-  "竞态侦测|[记忆共享中心]/脚本中心/write_race_watch.py|scan"
+  "竞态侦测|[记忆共享中心]/脚本中心/write_race_watch.py|scan"  # 2026-10-17 模块C窗根治断链：脚本中心迁根后链侧引用未随迁（同族直址残留·D13案型本链实例）
 )
 
 run_chain() {

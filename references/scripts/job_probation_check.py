@@ -14,6 +14,7 @@
   python3 job_probation_check.py --record --job JOB-003 --decision-id JOB-003-20260908-001 --content "E9.2最终评估：反哺X写入规范Y" --response approved  # 记录一次决策响应
   python3 job_probation_check.py --stats          # 输出所有岗位的统计摘要
 
+v2.3（2026-10-13·你裁「肯定要填啊，不填的话肯定要漂移的，必须做」）：record 的 --actor 由 default=ge 改 required。原默认值本身就是漂移源——不填即算你响应，JOB-003 92 条中 28 条 actor 字段缺失被向后兼容兜成 ge 即其后果。新增 --ge-directed 承接「你裁方向而动作由闸完成」（不进分子·单计正面确认）。口径真源＝09 表「响应归属口径」。
 v1.9（2026-09-28·童灵收口）：stats/report 实时计算后把 stats 快照写回 JSON（读后写回·幂等·变了才写）——消 record 动作之外的台账数据修正（如 actor 修正）留下的过期缓存旁路假信号（JOB-004 实证：旁路直读 rejection_rate=100%·官方读数路径 calc_stats 实时重算本无恙）。
 """
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
@@ -27,7 +28,7 @@ import sys
 import argparse
 from datetime import datetime, timedelta
 
-LEDGER_PATH = os.path.expanduser("~/[记忆共享中心]/数字分身/job_probation_ledger.json")
+LEDGER_PATH = os.path.expanduser("[记忆共享中心]/数字分身/job_probation_ledger.json")
 REJECTION_THRESHOLD = 15.0  # 推翻率阈值<15%可转正
 
 
@@ -62,6 +63,9 @@ def calc_stats(job):
     # 病根：同一个 `modified` 值承载两种语义（你改 / 童灵自查改），混算致 JOB-004 首条即显
     #   「推翻率 100%」的假信号——而推翻率的用途是**衡量童灵判断被你推翻的频率**（质量信号），
     #   自己改自己不是质量信号。缺失 actor 字段的历史记录视为 ge（向后兼容·⛔不改写历史）。
+    # v2.2（2026-10-13·你裁「按你的建议推进」）：ge_directed=你裁方向而动作由闸完成，
+    #   单独计数供「有无正面确认」读数，⛔不进分子——口径见 09 表「响应归属口径」。
+    ge_directed = sum(1 for x in decisions if x.get('ge_directed'))
     self_corrected = sum(1 for d in decisions
                          if d.get('response') in ('rejected', 'modified', 'questioned')
                          and d.get('actor') == 'self')
@@ -75,6 +79,7 @@ def calc_stats(job):
         'modified': modified,
         'questioned': questioned,
         'self_corrected': self_corrected,
+        'ge_directed': ge_directed,
         'rejection_rate': round(rejection_rate, 1)
     }
 
@@ -103,16 +108,25 @@ def is_probation_expired(job):
         return False
 
 
+MIN_DECISIONS = 10  # 转正评估最小决策样本量（v2.0·2026-10-13·Qoder CN·皮叔令「按符合愿景的最优解根治」）
+
+
 def get_conversion_recommendation(stats):
-    """根据统计数据给出转正建议"""
-    if stats['total'] == 0:
-        return "⏳ 试用期内无决策记录，无法评估（建议延长试用期或人工评估）"
-    if stats['rejection_rate'] < REJECTION_THRESHOLD:
-        return f"✅ 建议转正（推翻率{stats['rejection_rate']}%<{REJECTION_THRESHOLD}%阈值）"
-    else:
-        return f"⚠️ 建议延长试用期或降级（推翻率{stats['rejection_rate']}%≥{REJECTION_THRESHOLD}%阈值）"
-
-
+    """转正建议。v2.0 加样本闸：原判定只看比率不看样本，total=0 时推翻率恒 0%
+    → 一条决策都没记的岗位到期会被判「0%<15% 合格」，等于用空台账给自己盖转正章
+    （JOB-005 登记即触发此态；JOB-004 灰度 10-22 到期而样本仅 4 条）。
+    依据：S006 验证体系无权宣告充分／L014 自评高估与低估同源／L065 判停须过最小负例。"""
+    total = stats.get('total', 0)
+    rate = stats.get('rejection_rate', 0.0)
+    if total == 0:
+        return ("🔴 不判过闸（灰度期 0 条决策记录＝无数据可评；⛔空台账的 0% 不是合格是没记。"
+                "排查：该岗承载 Skill 是否缺 record 调用）")
+    if total < MIN_DECISIONS:
+        return (f"🟡 样本不足不判过闸（{total} < {MIN_DECISIONS} 条·现推翻率 {rate}% 仅作趋势；"
+                f"建议延长灰度至样本达标再评）")
+    if rate < REJECTION_THRESHOLD:
+        return f"✅ 建议转正（推翻率{rate}%<{REJECTION_THRESHOLD}%阈值·样本{total}条）"
+    return f"⚠️ 建议延长试用期或降级（推翻率{rate}%≥{REJECTION_THRESHOLD}%阈值）"
 def print_report(job, job_id):
     """输出转正评估报告"""
     stats = calc_stats(job)
@@ -133,6 +147,8 @@ def print_report(job, job_id):
     print(f"├─ ❌拒绝：{stats['rejected']}次")
     print(f"├─ 🔄修改：{stats['modified']}次")
     print(f"├─ ❓质疑：{stats['questioned']}次")
+    if stats['total'] == 0 and not expired:
+        print("├─ ⚠️ 灰度空转告警：试用期内 0 条决策记录，转正评估将无据可依（请检查该岗 record 是否在位）")
     print(f"├─ 推翻率：{stats['rejection_rate']}%（阈值<{REJECTION_THRESHOLD}%）")
     print(f"├─ 转正建议：{recommendation}")
     
@@ -155,7 +171,7 @@ def print_report(job, job_id):
 
 
 
-BLOCKED_CARDS_PATH = os.path.expanduser("~/[记忆共享中心]/数字分身/steps/step3-blocked-cards.md")
+BLOCKED_CARDS_PATH = os.path.expanduser("[记忆共享中心]/数字分身/steps/step3-blocked-cards.md")
 
 
 def blocked_write(decision_id, text, path=None):
@@ -218,7 +234,7 @@ def mirror_to_log(job_id, decision_id, content, response):
         return False
 
 
-def record_decision(job_id, decision_id, content, response, reason='', actor='ge', blocked_text=''):
+def record_decision(job_id, decision_id, content, response, reason='', actor=None, blocked_text='', ge_directed=''):
     """记录一次决策响应。
 
     v1.8（2026-09-23·皮叔问「拒绝数据能自动么」·Qoder CN）：rejected 决策新增第三账——
@@ -244,6 +260,8 @@ def record_decision(job_id, decision_id, content, response, reason='', actor='ge
             print(f"⚠️ 决策ID已存在：{decision_id}，将更新响应")
             d['response'] = response
             d['actor'] = actor
+            if ge_directed:
+                d['ge_directed'] = ge_directed
             if reason:
                 d['reason'] = reason
             save_ledger(ledger)
@@ -258,7 +276,8 @@ def record_decision(job_id, decision_id, content, response, reason='', actor='ge
         'content': content,
         'response': response,
         'reason': reason,
-        'actor': actor
+        'actor': actor,
+        **({'ge_directed': ge_directed} if ge_directed else {})
     }
     job.setdefault('decisions', []).append(decision)
     
@@ -299,7 +318,11 @@ def cmd_check(args):
     probation_jobs = []
     
     for job_id, job in ledger.get('jobs', {}).items():
-        if job.get('status') == 'probation':
+        # v2.1（2026-10-13）：status 与 monitor_mode 两字段语义重叠，历史上 JOB-005 登记时
+        #   照 JOB-003（已转正=active/post_probation）的习惯写了 status=active，
+        #   被本循环整轮无视→到期永不发起转正评估（静默失效·实测复现）。
+        #   兜底判据：任一字段为 probation 即入列；post_probation 不误收（JOB-003 实测不受影响）。
+        if job.get('status') == 'probation' or job.get('monitor_mode') == 'probation':
             stats = calc_stats(job)
             if is_probation_expired(job):
                 expired_jobs.append((job_id, job, stats))
@@ -312,7 +335,8 @@ def cmd_check(args):
     if expired_jobs:
         print(f"🔔 试用期已满（{len(expired_jobs)}个岗位，可转正评估）：")
         for job_id, job, stats in expired_jobs:
-            print(f"  - {job_id} {job.get('job_name', '')}：推翻率{stats['rejection_rate']}%（{stats['total']}次决策）")
+            warn = "  ⚠️ 灰度空转：0 条决策记录，转正评估将判🔴不判过闸（查该岗 record 是否在位）" if stats['total'] == 0 else ""
+            print(f"  - {job_id} {job.get('job_name', '')}：推翻率{stats['rejection_rate']}%（{stats['total']}次决策）{warn}")
         print()
         print("💡 运行 --report 输出转正评估报告")
     else:
@@ -322,7 +346,10 @@ def cmd_check(args):
         print(f"🟡 试用期内（{len(probation_jobs)}个岗位）：")
         for job_id, job, stats in probation_jobs:
             days_left = (datetime.strptime(job.get('probation_end', '2099-12-31'), '%Y-%m-%d') - datetime.now()).days
-            print(f"  - {job_id} {job.get('job_name', '')}：推翻率{stats['rejection_rate']}%，剩余{days_left}天")
+            warn = "  ⚠️ 灰度空转：0 条决策记录（该岗 record 未在位→到期将判🔴不判过闸）" if stats['total'] == 0 else ""
+            gd = stats.get('ge_directed', 0)
+            gds = f"｜你裁方向{gd}条(不计分子)" if gd else ""
+            print(f"  - {job_id} {job.get('job_name', '')}：推翻率{stats['rejection_rate']}%，剩余{days_left}天{gds}{warn}")
     
     print("=" * 50)
     
@@ -406,8 +433,9 @@ def main():
     record_parser.add_argument('--content', required=True, help='决策内容')
     record_parser.add_argument('--response', required=True, choices=['approved', 'rejected', 'modified', 'questioned'], help='你的响应')
     record_parser.add_argument('--reason', default='', help='原因（可选）')
-    record_parser.add_argument('--actor', default='ge', choices=['ge', 'self'],
+    record_parser.add_argument('--actor', required=True, choices=['ge', 'self'],
                                help='响应主体：ge=你（计入推翻率）/ self=童灵自查修正（不计入·v1.7 口径根治）')
+    record_parser.add_argument('--ge-directed', default='', help='你只裁方向、该响应由闸或流程完成时填此字段（你裁定摘要）；不进推翻率分子，单独计正面确认')
     record_parser.add_argument('--blocked-text', default='', help='rejected 时的被挡条正文（闸5第三账·缺则显形提醒）')
 
     
@@ -422,7 +450,7 @@ def main():
         cmd_report(args)
     elif args.command == 'record':
         record_decision(args.job, args.decision_id, args.content, args.response, args.reason,
-                        getattr(args, 'actor', 'ge'), getattr(args, 'blocked_text', ''))
+                        args.actor, getattr(args, 'blocked_text', ''), getattr(args, 'ge_directed', ''))
     elif args.command == 'stats':
         cmd_stats(args)
     else:

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 LobsterAI 端三域自检 · 独立复现脚本
 =====================================
@@ -28,6 +24,10 @@ LobsterAI 端三域自检 · 独立复现脚本
 
 退出码: 0=本次读数全绿  1=有 FAIL  2=脚本自身异常（⛔读数不可信，看 stderr）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import argparse
 import hashlib
@@ -42,7 +42,7 @@ import time
 HOME = os.path.expanduser("~")
 MC = os.path.expanduser("[记忆共享中心]")
 PKG = os.path.join(MC, "发布库", "五层记忆系统", "布洛陀-全平台安装包")
-GATE_SRC = os.path.join(MC, "开发工具", "skill_write_gate_guard.py")
+GATE_SRC = os.path.join(MC, "脚本中心", "守卫", "skill_write_gate_guard.py")
 GATE_RUN = os.path.join(MC, "脚本中心", "skill_write_gate_guard.py")
 SKILLS_DIR = os.path.join(HOME, "Library", "Application Support",
                           "LobsterAI", "openclaw", "state", "skills")

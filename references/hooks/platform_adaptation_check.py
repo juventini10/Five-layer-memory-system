@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
-"""platform_adaptation_check.py v0.7.1 — 布洛陀脚本体系·平台接入率漂移校验（检测+自愈混合架构）
+"""platform_adaptation_check.py v0.9 — 布洛陀脚本体系·平台接入率漂移校验（检测+自愈混合架构）
+v0.9（2026-10-12·CSK卡内部台账/15 A4'/A4''落地）：check_hermes 新增层1.5=审计账本主判据+import式同源诊断(不复刻候选·降级=纯审计账本)+对偶完整性自证+不可观子空间声明。
+
 v0.7.1（2026-08-26·回滚 SSOT 动态解析·恢复硬编码清单）：
   - 回滚 v0.8 的 SSOT 表格动态解析（复杂表格格式导致解析错误）
   - 恢复 v0.7.1 的硬编码 HOOKS 清单（简洁可靠）
@@ -45,6 +43,10 @@ v0.6（2026-08-21）：新增 --fix 模式（C''方案·事件驱动drift修复�
 Hermes 端由 route-audit-hook（on_session_end）调用，WorkBuddy 由 Stop 钩子调用，
 Qoder Desktop 由各工具自治调用（自治核对·单一写入权归你）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys
 import os
 import re
@@ -78,8 +80,10 @@ HERMES_CONFIG = os.path.expanduser("~/.hermes/config.yaml")
 ZCODE_CONFIG = os.path.expanduser("~/.zcode/cli/config.json")
 AUTOCLAW_CONFIG = os.path.expanduser("~/.openclaw-autoclaw/openclaw.json")
 AUTOCLAW_PATROL = os.path.expanduser(
-    "[记忆共享中心]/脚本中心/route_autoclaw_patrol.sh"
+    "[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_autoclaw_patrol.sh"
 )
+# 2026-10-09 童灵根治：原指 脚本中心/route_autoclaw_patrol.sh（根目录扁平镜像，
+#   10-06 15:13 清理后缺失·同步器只投影开发工具顶层不投影子目录故不会重建）→ 实体真源在子目录。
 AUTOCLAW_INJECT_PLUGIN = os.path.expanduser(
     "~/.openclaw-autoclaw/extensions/buluotuo-route-inject/index.js"
 )
@@ -87,24 +91,28 @@ LOBSTERAI_CONFIG = os.path.expanduser(
     "~/Library/Application Support/LobsterAI/openclaw/state/openclaw.json"
 )  # LobsterAI 运行时配置（macOS 应用标准路径·非 ~/.lobsterai——2026-08-22 实测可读）
 LOBSTERAI_PATROL = os.path.expanduser(
-    "[记忆共享中心]/脚本中心/route_lobsterai_patrol.sh"
+    "[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_lobsterai_patrol.sh"
 )
+# 2026-10-09 童灵根治：根目录扁平镜像 10-06 清理后缺失 → 对齐 Skill路由引擎/scripts 实体。
 LOBSTERAI_HOOKS_DIR = os.path.expanduser(
     "~/Library/Application Support/LobsterAI/openclaw/state/hooks"
 )
 TRAEWORK_PATROL = os.path.expanduser(
-    "[记忆共享中心]/脚本中心/route_traework_patrol.sh"
-)  # Trae Work 运行时接入源（无 CC 式 hooks 平台边界·守卫全挂 patrol 拉模式·实盘可读）
+    "[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_traework_patrol.sh"
+)  # Trae Work 运行时接入源（2026-10-09 童灵根治：根目录扁平镜像 10-06 清理后缺失→对齐子目录实体；无 CC 式 hooks 平台边界·守卫全挂 patrol 拉模式·实盘可读）
 DOUBAOWORK_PATROL = os.path.expanduser(
-    "[记忆共享中心]/脚本中心/route_doubaowork_patrol.sh"
-)  # 豆包办公运行时接入源（无 hooks+无 session_memory 平台边界·仅 2 个文件级守卫可机械执行·patrol 拉模式·实盘可读）
+    "[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_doubaowork_patrol.sh"
+)  # 豆包办公运行时接入源（2026-10-09 童灵根治：根目录扁平镜像 10-06 清理后缺失→对齐子目录实体；无 hooks+无 session_memory 平台边界·patrol 拉模式·实盘可读）
 DOUBAOWORK_HEARTBEAT = os.path.expanduser(
     "[记忆共享中心]/脚本中心/.patrol/last_run_doubaowork.ts"
-)  # 豆包办公巡逻心跳（执行证据校验路径·不读配置文件·读心跳新鲜度≤60min）
+)  # 豆包办公巡逻心跳（2026-10-09 童灵根治：原指 脚本中心/.patrol/ 与 patrol 实写位置不符→对齐 patrol line26/37 实写路径；执行证据·新鲜度≤60min）
 DSH_PLUGIN = os.path.expanduser(
     "[记忆共享中心]/脚本中心/five-layer-memory/src/index.js"
-)
+)  # DSH 插件真源（2026-10-09 童灵根治：原指 脚本中心/five-layer-memory 镜像 10-06 清理后缺失→对齐开发工具实体）
 SSOT = os.path.expanduser(
+    # 2026-10-09 Trae CN 修：原指 脚本中心/布洛陀脚本架构设计哲学/04-跨端接入指南.md——
+    # 该脚本中心镜像目录已缺失（读取恒失败→documented_rate 恒 None→对账静默跳过=假绿根因）。
+    # 改指 canonical 真源（与 panel_snapshot.py 同款·与 04 frontmatter"SSOT 路径已同步指向本文件"声明一致）。
     "[记忆共享中心]/脚本中心/布洛陀脚本架构设计哲学/04-跨端接入指南.md"
 )
 LOG = os.path.expanduser(
@@ -127,9 +135,13 @@ HOOKS = [
     # reply_format_guard.py 已 ⛔合法停用（2026-08-26 皮叔令"完全删除"·替代方案=core-soul.md 常驻注入）
     # l3_conclusion_guard.py 已 ⛔永久关闭（2026-09-05 你令·2026-09-12 全端下线：Stop 正则误判污染回复=伪确定性类别错误，
     #   判据见 守卫编写规范 §3.4·扩「呈现格式禁拦律」）→ 移出分母，对齐 reply_format_guard 全局移除先例
+    # ⚠️ 以上两行为历史注记非判据本体——禁设面机器真源=同目录 retired-hooks.json（§二·廿一
+    #    法则1·check_retired() 每跑必核查）；新增退役：先写台账一行+04表一行，再回来删注释。
     ("feedback_detect.py", "Stop", True, ""),
     ("rule_three_layer_guard.py", "Stop", True, ""),
     ("card_id_guard.py", "Stop", True, "AI学习库立场卡编号防撞·hook 模式 exit 0 放行"),
+    ("session_title_namer 族", "SessionStart/UserPromptSubmit/pre-step", True,
+     "2026-10-09 自实验区转正（门槛①7端落地+你令）·各端适配器名:session_title_namer(WB)/dsh_title_namer(DSH)/traecode_title_namer(TraeCN)/qodercn_title_namer(QCN)/zcode_title_namer(ZCode)/wbai_title_namer(WBAI)/buluotuo-session-title-hook(Hermes插件)·已落地端的分子计法由各端 check 函数按其适配器名特判（未特判端分子暂少计1·回写期口径）"),
 ]
 
 # 平台级合法停用（⛔排除分母·端特例版·对齐 reply_format 全局移除先例）：
@@ -147,6 +159,20 @@ def log_line(msg):
             f.write(f"{datetime.now().isoformat(timespec='seconds')} {msg}\n")
     except Exception:
         pass
+
+
+def report_source_missing(src, what, path):
+    """被检对象读取失败 = 守卫成功发现静默失效（非守卫自身故障）→ print 显形 + rc=2 真报警。
+
+    2026-10-09 童灵根治假绿：旧逻辑 open 失败即 log_line+return 0，在最该报警的条件
+    （镜像被清理/路径缺失）下沉默，背叛守卫"把静默失效变成主动检测"的使命。
+    rc=2 经 patrol 的 run_guard_standalone 捕获只记录不传播、patrol 末仍 exit 0
+    → 不阻断生产，只在巡逻 .out/log 留下 CRITICAL（对齐 skill_health_guard exit=2）。
+    """
+    msg = f"[BROKEN] {src} {what} 读取失败（镜像缺失/被清理？）：{path}"
+    print(msg)
+    log_line(msg)
+    return 2
 
 
 def load_settings():
@@ -232,7 +258,10 @@ def documented_rate(col=3):
     # ② 接入率行（表头之后的含 "接入率" 的表格行）
     rate_cells = None
     for line in lines[header + 1:]:
-        if "接入率" in line and line.strip().startswith("|"):
+        # 2026-10-09 Trae CN 修（严格行定位）：只认首单元格=「接入率」的行——
+        # 旧条件 "接入率 in line" 会被表内自核签名行（含"接入率重估"字样）抢匹配 → 取错行→返回 None→假绿。
+        cells0 = line.strip().lstrip("|").strip()
+        if line.strip().startswith("|") and cells0.startswith("接入率"):
             rate_cells = [c.strip() for c in line.strip().strip("|").split("|")]
             break
     if rate_cells is None:
@@ -309,6 +338,49 @@ def check_hermes():
     if core not in actual:
         drift.append(f"核心接入插件{core}未在 plugins.enabled（Hermes 审计链路断）")
 
+    # 层1.5：审计账本反向实证(主判据)+import式可达性诊断（A4'/A4'' 2026-10-12 CSK卡内部台账/15落地）
+    # ⛔不硬编码复刻候选序列（漂移面·违S842平台无关）——import插件真源调 _find_script，插件改候选探针自动跟
+    import json as _json
+    _audit_log = os.path.expanduser("[记忆共享中心]/脚本中心/logs/route_audit.jsonl")
+    _hermes_lines = []
+    try:
+        with open(_audit_log, encoding="utf-8") as _f:
+            for _ln in _f:
+                try:
+                    _d = _json.loads(_ln)
+                except Exception:
+                    continue
+                if _d.get("src") == "hermes":
+                    _hermes_lines.append(_d)
+    except FileNotFoundError:
+        pass
+    if _hermes_lines:
+        log_line(f"[层1.5·审计账本] src=hermes {len(_hermes_lines)}行·末行ts={str(_hermes_lines[-1].get('ts','?'))[:19]}")
+    else:
+        log_line("[层1.5·审计账本] src=hermes 0行（Hermes会话未跑属正常；已跑而0行→落不可观子空间①，不可从本判据区分）")
+    _reach = None
+    try:
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("route_audit_hook_probe", os.path.expanduser("~/.hermes/plugins/route-audit-hook/__init__.py"))
+        _mod = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        _reach = {n: bool(_mod._find_script(n)) for n in ("route_audit.py", "route_guard_audit.py", "deident_plugins.py")}
+        _adapter = getattr(_mod, "_KB_ADAPTER", None)
+        _reach["adapter"] = bool(_adapter and (os.path.isfile(_adapter) or os.path.isdir(_adapter)))
+    except Exception as _e:
+        _reach = None  # 降级=纯审计账本判据（内部台账降级分支）
+    if _reach is not None:
+        _miss = [k for k, v in _reach.items() if not v]
+        if _miss:
+            drift.append(f"插件同源诊断不可达: {_miss}（层1.5·A4'）")
+        else:
+            log_line("[层1.5·import] 三脚本+adapter 经插件 _find_script 全可达（真源同源·零候选复刻）")
+    # 对偶完整性自证（A4''②·修复面⊆观测面）
+    if _reach is not None:
+        log_line("[对偶] 修复面:插件候选→审计账本+import观测 / rp.custom_route→import观测 / adapter迁顶层→import观测(adapter位) ✓ 同构")
+    # 不可观子空间显式声明（A4''①·诚实边界落盘）
+    log_line("[不可观] ①插件触发面(on_session_end未 firing→审计账本0行与静默失效不可分) ②audit内部降级 ③runtime_paths其他键漂移")
+
     # 层2：定性对账（§二·七 ✅ 清单→日志，供下游消费）
     expected = hermes_expected_from_ssot()
     documented_ok = []
@@ -379,8 +451,7 @@ def check_dsh(fix=False):
     """
     mounted = dsh_actual_mounted()
     if mounted is None:
-        log_line("[platform_adaptation_check:dsh] 插件 index.js 读取失败→exit0放行")
-        return 0
+        return report_source_missing("dsh", "插件 index.js", DSH_PLUGIN)
     # DSH 专属合法停用排除（对齐哲学文件分母口径 ①排除分母：⛔合法停用+N/A·各平台自查自己列）
     DSH_EXCLUDED = {"crossend_guard.py", "reply_format_guard.py"}
     applicable = [h for h in HOOKS if h[0] not in DSH_EXCLUDED]
@@ -388,6 +459,12 @@ def check_dsh(fix=False):
     yes = sum(1 for n, _, _, _ in applicable if n in mounted)
     rate = f"{yes}/{denominator}"
     doc = documented_rate(5)  # DSH 列 = col 5
+    _df = documented_fraction(5)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] dsh 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("dsh", yes, denominator, 5)
     detail = " | ".join(
         f"{n}:{'✅' if n in mounted else '❌'}" for n, _, _, _ in applicable
     )
@@ -405,7 +482,8 @@ def check_dsh(fix=False):
                 print(f"[SUGGEST] dsh 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 STOP_GUARDS)")
                 log_line(f"[SUGGEST] dsh 未挂 {missing}")
     else:
-        log_line(f"[OK] dsh 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] dsh 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
     return 0
 
 
@@ -484,12 +562,17 @@ def check_autoclaw(fix=False):
     """
     mounted = autoclaw_actual_mounted()
     if mounted is None:
-        log_line("[platform_adaptation_check:autoclaw] patrol/配置读取失败→exit0放行")
-        return 0
+        return report_source_missing("autoclaw", "patrol/配置", AUTOCLAW_PATROL)
     denominator = len(HOOKS)  # 13：crossend 适用（历史事故肇事方）
     yes = sum(1 for n, _, _, _ in HOOKS if n in mounted)
     rate = f"{yes}/{denominator}"
     doc = documented_rate(4)  # AutoClaw 列 = col 4
+    _df = documented_fraction(4)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] autoclaw 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("autoclaw", yes, denominator, 4)
     detail = " | ".join(
         f"{n}:{'✅' if n in mounted else '❌'}" for n, _, _, _ in HOOKS
     )
@@ -507,7 +590,8 @@ def check_autoclaw(fix=False):
                 print(f"[SUGGEST] autoclaw 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 patrol/插件)")
                 log_line(f"[SUGGEST] autoclaw 未挂 {missing}")
     else:
-        log_line(f"[OK] autoclaw 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] autoclaw 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
     return 0
 
 
@@ -572,13 +656,18 @@ def check_lobsterai(fix=False):
     """
     mounted = lobsterai_actual_mounted()
     if mounted is None:
-        log_line("[platform_adaptation_check:lobsterai] patrol 读取失败→exit0放行")
-        return 0
+        return report_source_missing("lobsterai", "patrol", LOBSTERAI_PATROL)
     applicable = [h for h in HOOKS if h[0] != "crossend_guard.py"]
     denominator = len(applicable)
     yes = sum(1 for n, _, _, _ in applicable if n in mounted)
     rate = f"{yes}/{denominator}"
     doc = documented_rate(6)  # LobsterAI 列 = col 6
+    _df = documented_fraction(6)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] lobsterai 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("lobsterai", yes, denominator, 6)
     detail = " | ".join(
         f"{n}:{'✅' if n in mounted else '❌'}" for n, _, _, _ in applicable
     )
@@ -596,7 +685,8 @@ def check_lobsterai(fix=False):
                 print(f"[SUGGEST] lobsterai 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 patrol/插件)")
                 log_line(f"[SUGGEST] lobsterai 未挂 {missing}")
     else:
-        log_line(f"[OK] lobsterai 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] lobsterai 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
     return 0
 
 
@@ -631,18 +721,18 @@ def traework_actual_mounted():
 def check_traework(fix=False):
     """Trae Work 端 drift 校验（2026-08-22 第 9 端机械校验·根治"自签例外"）。
 
-    诚实分母=12（13-Hook - crossend N/A 唯一排除·2026-08-22 分母纠偏，推翻 v1.3.18 自造 6/6）：
+    诚实分母=11（HOOKS 现 11 项·l3_conclusion/reply_format 已移出清单·2026-10-09 随清单收敛；
+      旧口径 13-Hook - crossend=12 已过时，推翻 v1.3.18 自造 6/6）：
       crossend N/A（无跨端场景·设计不适用）→ 唯一排除分母
       3 入站改写（route_inject/miss_feeder/kb_inject·无 UserPromptSubmit 事件/插件点）+ 4 无转录
       （l3/reply/unknown_unknown/feedback·摘要级审计）→ 🔴待支持·计入分母（功能装不上·非排除）
       实接共享 = 5 降级守卫（patrol 实挂·route_audit/guard_audit/audit_search_kb/rule_three/card_id）
-      → 接入率 5/12 (42%)；专属 session_memory_quality_guard 另计 +1 不进共享比值。
-      对账 SSOT §二·七 Trae Work 列（col 7·5/12）。
+      → 接入率 5/11 (45%)；专属 session_memory_quality_guard 另计 +1 不进共享比值。
+      对账 SSOT §二·七 Trae Work 列（col 7·5/11）。
     """
     mounted = traework_actual_mounted()
     if mounted is None:
-        log_line("[platform_adaptation_check:traework] route_traework_patrol.sh 读取失败→exit0放行")
-        return 0
+        return report_source_missing("traework", "route_traework_patrol.sh", TRAEWORK_PATROL)
     try:
         patrol_src = open(TRAEWORK_PATROL, encoding="utf-8").read()
     except Exception:
@@ -654,10 +744,16 @@ def check_traework(fix=False):
     applicable = [h for h in HOOKS if h[0] in
                   {"route_audit.py", "route_guard_audit.py", "audit_search_kb.py",
                    "rule_three_layer_guard.py", "card_id_guard.py"}]
-    denominator = len([h for h in HOOKS if h[2]])  # 12：13-Hook - crossend(N/A)·3入站+4无转录🔴计入不排除
+    denominator = len([h for h in HOOKS if h[2]])  # 11：HOOKS 现 11 项·l3/reply 已移出·🔴待支持计入不排除
     yes = sum(1 for n, _, _, _ in applicable if n in mounted)  # 实接共享=5·专属另计不含比值
     rate = f"{yes}/{denominator}"
-    doc = documented_rate(7)  # Trae Work 列 = col 7·5/12
+    doc = documented_rate(7)  # Trae Work 列 = col 7·5/11
+    _df = documented_fraction(7)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] traework 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("traework", yes, denominator, 7)
     detail = " | ".join(
         f"{n}:{'✅' if n in mounted else '❌'}" for n, _, _, _ in applicable
     )
@@ -679,7 +775,8 @@ def check_traework(fix=False):
                 print(f"[SUGGEST] traework 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 patrol)")
                 log_line(f"[SUGGEST] traework 未挂 {missing}")
     else:
-        log_line(f"[OK] traework 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] traework 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
     return 0
 
 
@@ -711,15 +808,16 @@ def doubaowork_actual_mounted():
 def check_doubaowork(fix=False):
     """豆包办公端 drift 校验（2026-08-25 第10端机械校验·执行证据校验路径·第一性原理修正）。
 
-    诚实分母=12（13-Hook - crossend N/A 唯一排除·2026-08-25 第一性原理修正，推翻原 8/12）：
+    诚实分母=11（HOOKS 现 11 项·l3_conclusion/reply_format 已移出清单·2026-10-09 随清单收敛；
+      旧口径 13-Hook - crossend=12 已过时，2026-08-25 第一性原理修正曾推翻原 8/12）：
       crossend N/A（Qoder 系专属·设计不适用）→ 唯一排除分母
       3 入站改写（route_inject/miss_feeder/kb_inject·无 UserPromptSubmit 事件）+ feedback_detect
       （无完整转录）→ 🔴待支持·计入分母（功能装不上·非排除）
       6 个需要 transcript 的守卫（route_audit/audit_search_kb/route_guard_audit/unknown_unknown/
       reply_format/l3_conclusion）→ 🟡软约束（Skill 内校验 AI 自觉·非机械执行·不计入分子）
       实接机械执行 = 2 个文件级守卫（patrol 实挂·rule_three_layer/card_id）
-      → 接入率 2/12 (17%)。
-      对账 SSOT §二·七 豆包办公列（col 10·2/12）。
+      → 接入率 2/11 (18%)。
+      对账 SSOT §二·七 豆包办公列（col 10·2/11）。
 
     执行证据校验路径（创新·不读配置文件）：
       不读 settings.json（豆包办公无配置文件在文件系统），读巡逻脚本执行产物+心跳新鲜度（≤60min）。
@@ -727,8 +825,7 @@ def check_doubaowork(fix=False):
     """
     mounted = doubaowork_actual_mounted()
     if mounted is None:
-        log_line("[platform_adaptation_check:doubaowork] route_doubaowork_patrol.sh 读取失败→exit0放行")
-        return 0
+        return report_source_missing("doubaowork", "route_doubaowork_patrol.sh", DOUBAOWORK_PATROL)
     # 心跳新鲜度检查（执行证据·≤60min=巡逻在运行）
     heartbeat_fresh = False
     try:
@@ -741,10 +838,16 @@ def check_doubaowork(fix=False):
         heartbeat_fresh = False
     applicable = [h for h in HOOKS if h[0] in
                   {"rule_three_layer_guard.py", "card_id_guard.py"}]
-    denominator = len([h for h in HOOKS if h[2]])  # 12：13-Hook - crossend(N/A)·3入站+feedback🔴计入不排除·6转录类🟡软约束不计分子
+    denominator = len([h for h in HOOKS if h[2]])  # 11：HOOKS 现 11 项·l3/reply 已移出·🔴待支持计入·6转录类🟡软约束不计分子
     yes = sum(1 for n, _, _, _ in applicable if n in mounted)  # 实接机械执行=2
     rate = f"{yes}/{denominator}"
-    doc = documented_rate(10)  # 豆包办公列 = 表头第11列(索引10)·2/12（documented_rate 按表头列序解析·不依赖星号格式）
+    doc = documented_rate(10)  # 豆包办公列 = 表头第11列(索引10)·2/11（documented_rate 按表头列序解析·不依赖星号格式）
+    _df = documented_fraction(10)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] doubaowork 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("doubaowork", yes, denominator, 10)
     detail = " | ".join(
         f"{n}:{'✅' if n in mounted else '❌'}" for n, _, _, _ in applicable
     )
@@ -759,14 +862,125 @@ def check_doubaowork(fix=False):
         print(msg)
         log_line(msg)
         if fix:
-            fix_ssot_rate("doubaowork", yes, denominator, 6)
+            fix_ssot_rate("doubaowork", yes, denominator, 10)
             missing = [n for n, _, _, _ in applicable if n not in mounted]
             if missing:
                 print(f"[SUGGEST] doubaowork 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 patrol)")
                 log_line(f"[SUGGEST] doubaowork 未挂 {missing}")
     else:
-        log_line(f"[OK] doubaowork 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] doubaowork 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
     return 0
+
+
+def traecn_actual_mounted():
+    """读 Trae CN 实盘：`~/.trae-cn/hooks.json`（官方全局 Hook 配置·2026-10-09 第 20 端接入）。
+
+    真相源=配置文件本身（对齐 zcode/workbuddy 读配置先例·hooks.json 为官方唯一挂载面，
+    项目级 .trae/hooks.json 本机无）。commands 全文串包含即判挂载（含 adapter --run 的
+    共脚本路径参数）。返回 04 §Hook 清单口径挂载名集合；读不到 → None。
+    """
+    try:
+        cfg = json.load(open(os.path.expanduser("~/.trae-cn/hooks.json"), encoding="utf-8"))
+    except Exception:
+        return None
+    corpus = []
+    for groups in cfg.get("hooks", {}).values():
+        for g in groups:
+            for h in g.get("hooks", []):
+                corpus.append(h.get("command", ""))
+    blob = "\n".join(corpus)
+    mounted = set()
+    for name in ("route_inject_prompt.py", "route_miss_feeder.py", "kb_inject_prompt.py",
+                 "route_unknown_unknown.py", "audit_search_kb.py", "route_audit.py",
+                 "route_guard_audit.py", "feedback_detect.py", "rule_three_layer_guard.py",
+                 "card_id_guard.py", "rule_fragment_inject.py",
+                 "traecode_title_namer.py"):
+        if name in blob:
+            mounted.add(name)
+    return mounted
+
+
+def check_traecn(fix=False):
+    """Trae CN 端 drift 校验（2026-10-09 第 20 端机械校验腿·皮叔令「动手」）。
+
+    分母=12（2026-10-09 title_namer 转正 +1：traecode_title_namer UPS 实挂·自实验区迁入正式矩阵；
+    前值 11 = 04 矩阵行 − reply_format/l3_conclusion 排除 − session_memory N/A
+    − crossend N/A[合并单端·.trae-cn 无他端共居·2026-10-09 by Trae CN 签名排除]）：
+      直挂 text 通道：route_inject / route_miss_feeder / kb_inject / rule_fragment
+      直挂 Stop：route_unknown_unknown / card_id
+      adapter --run 喂食（traecn_transcript_adapter）：route_audit / route_guard_audit /
+        audit_search_kb / feedback_detect / rule_three_layer_guard
+    对账 SSOT §二·七 Trae CN 列（col 15·12/12·2026-10-09 title_namer 转正后 by Trae CN）。
+    rc 恒 0（报告制·漂移只打印+日志，--fix 才动文档）。
+    """
+    mounted = traecn_actual_mounted()
+    if mounted is None:
+        return report_source_missing("traecn", "~/.trae-cn/hooks.json",
+                                     os.path.expanduser("~/.trae-cn/hooks.json"))
+    items = ("route_inject_prompt.py", "route_miss_feeder.py", "kb_inject_prompt.py",
+             "route_unknown_unknown.py", "audit_search_kb.py", "route_audit.py",
+             "route_guard_audit.py", "feedback_detect.py", "rule_three_layer_guard.py",
+             "card_id_guard.py", "rule_fragment_inject.py", "traecode_title_namer.py")
+    denominator = 12
+    yes = sum(1 for n in items if n in mounted)
+    rate = f"{yes}/{denominator}"
+    doc = documented_rate(15)  # Trae CN 列 = 第 15 个平台列（表尾·2026-10-09 插列）
+    _df = documented_fraction(15)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] traecn 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if fix:
+            fix_ssot_rate("traecn", yes, denominator, 15)
+    detail = " | ".join(f"{n}:{'✅' if n in mounted else '❌'}" for n in items)
+    if doc is None:
+        # 假绿防护：文档列解析不出 ≠ 无漂移——显形不静默（守卫规范 §3.5）
+        msg = f"[WARN] traecn 文档列(col15)解析为空·无法对账——按实盘记录 {rate}（{detail}）"
+        print(msg)
+        log_line(msg)
+        return 0
+    if doc != str(yes):
+        msg = (
+            f"[DRIFT] traecn 实测 {rate} ≠ 文档记录 {doc}/{denominator} —— "
+            f"SSOT §二·七 Trae CN 列与实盘脱节（幽灵挂载检查·{detail}）"
+        )
+        print(msg)
+        log_line(msg)
+        if fix:
+            fix_ssot_rate("traecn", yes, denominator, 15)
+            missing = [n for n in items if n not in mounted]
+            if missing:
+                print(f"[SUGGEST] traecn 清单内未挂：{', '.join(missing)} —— 确认是停用(改文档注记)还是漏挂(补 hooks.json)")
+                log_line(f"[SUGGEST] traecn 未挂 {missing}")
+    else:
+        _ok = f"[OK] traecn 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
+    return 0
+
+
+
+def documented_fraction(col):
+    """纯分母变更腿（2026-10-09·皮叔令「立项·按K007做完」·K007 v1.1 声明值对账固定项反哺缺口）。
+    返回接入率行第 col 列的 "N/M" 全分数；解析失败 → None（显形不静默·守卫规范 §3.5）。
+    缺口根因：documented_rate 只取分子 → 分母单变（如 title_namer 转正 +1）时分子门禁全盲、
+    --fix 不触发、文档分母滞留旧值（登记表与实盘脱钩=C-206 同族病）。"""
+    try:
+        txt = open(SSOT, encoding="utf-8").read()
+    except Exception:
+        return None
+    for line in txt.splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        if not line.strip().lstrip("|").strip().startswith("接入率"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if col < len(cells):
+            m = re.search(r"(\d+)/(\d+)", cells[col])
+            if m:
+                return m.group(0)
+        return None
+    return None
+
 
 
 def fix_ssot_rate(args_src, yes, denominator, col):
@@ -787,7 +1001,11 @@ def fix_ssot_rate(args_src, yes, denominator, col):
     lines = txt.splitlines()
     fixed = False
     for i, line in enumerate(lines):
-        if "接入率" not in line or not line.strip().startswith("|"):
+        # 2026-10-09 Trae CN 修（严格行定位·与 documented_rate 同款）：首单元格=「接入率」才认，
+        # 防自核签名行（含"接入率重估"）抢匹配致 --fix 空转假绿。
+        if not line.strip().startswith("|"):
+            continue
+        if not line.strip().lstrip("|").strip().startswith("接入率"):
             continue
         # 按表格单元格分割（与 documented_rate 一致）
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
@@ -803,6 +1021,11 @@ def fix_ssot_rate(args_src, yes, denominator, col):
                     new_rate = f"{yes}/{denominator}"
                     # 替换原单元格中的 N/M
                     new_cell = raw[:m.start()] + new_rate + raw[m.end():]
+                    # pct 腿（同轮·K007 分母腿配套）：首个百分比重算（只动引导段第一个 · 防注释区误伤）
+                    mp = re.search(r"[（(]\s*\d{1,3}\s*[%％]\s*[）)]", new_cell)
+                    if mp and mp.start() < m.start() + 40:
+                        npct = round(int(yes) * 100 / int(denominator))
+                        new_cell = new_cell[:mp.start()] + f"({npct}%)" + new_cell[mp.end():]
                     cells[col] = new_cell
                     # 重新组装行
                     new_line = "| " + " | ".join(cells) + " |"
@@ -846,7 +1069,7 @@ def absorb_scan(src_key):
             "workbuddy": "WorkBuddy", "zcode": "ZCode", "dsh": "DSH", "autoclaw": "AutoClaw",
             "lobsterai": "LobsterAI", "traework": "Trae Work", "doubaowork": "豆包办公",
             "teleagent": "TeleAgent", "catpaw": "CatPaw", "workbuddyai": "WorkBuddy AI",
-            "zwork": "Zwork"}.get(src_key, src_key)
+            "zwork": "Zwork", "traecn": "Trae CN"}.get(src_key, src_key)
     tgt_col = None
     for j, c in enumerate(cols):
         if j > 0 and disp.lower() in c.lower():
@@ -923,21 +1146,191 @@ def _absorb_selftest():
     return 0 if fail == 0 else 1
 
 
+
+# ── 禁设台账核查（2026-10-10·Qoder CN D3 轮·§二·廿一 法则1 机制化）──────────
+# 病根：禁止面（退役/永久关闭的守卫与钩子）此前只活在两处散文里——04 表行 +
+# HOOKS 列表注释——散文不是判据：checker 不消费它，禁设复活无人机械可见（§二·廿一
+# 「禁止类知识必须落盘成台账，源码只读台账」立的法由本函数自证）。
+RETIRED_LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "retired-hooks.json")
+
+
+def _load_retired_ledger(ledger_path=None, home=None):
+    """返回 (ledger|None, err_kind, err_msg)。缺账语义分态：作者态=🔴（法则失效）·
+    装机态=⚠️ 静默跳（台账不随包属既定设计·⛔不拿作者法绑架端机）。"""
+    ledger_path = ledger_path or RETIRED_LEDGER
+    home = home or os.path.expanduser("~")
+    try:
+        with open(ledger_path, encoding="utf-8") as f:
+            return json.load(f), None, ""
+    except FileNotFoundError:
+        author_side = os.path.isdir(PLACEHOLDER)
+        if author_side:
+            return None, "red", ("🔴 禁设台账缺失——§二·廿一 法则1 失效面（源码读不到台账=禁设核查"
+                                 "静默变零，比无台账更毒：消费者以为有闸）：%s" % ledger_path)
+        return None, "skip", "⚠️ 禁设台账 absent（装机态合法·作者态必在）·本项静默跳"
+    except Exception as e:
+        return None, "red", "🔴 禁设台账不可解析：%s" % e
+
+
+def check_retired(ledger_path=None, home=None, doc_path=None, verbose=True):
+    """五态核查：①台账在且可解析 ②条目四字段齐 ③entity_deleted=零复活
+    ④exit0_stub=只活在白名单路径+行数≤max+无must_not_contain ⑤台账name⊆04文档表。
+    返回异常数（0=全绿）。夹具缝=三入参可注入（--retired-selftest 消费）。"""
+    import glob as _glob
+    home = home or os.path.expanduser("~")
+    ledger, kind, msg = _load_retired_ledger(ledger_path, home)
+    if kind == "skip":
+        if verbose:
+            print("  " + msg)
+        return 0
+    if kind == "red":
+        if verbose:
+            print("  " + msg)
+        return 1
+    doc = doc_path or os.path.join(
+        home, "[记忆共享中心]/脚本中心/布洛陀脚本架构设计哲学/04-跨端接入指南.md")
+    doctxt = ""
+    try:
+        doctxt = open(doc, encoding="utf-8").read()
+    except Exception:
+        pass
+    noise = ("记忆琥珀", "存档包", "/归档", ".bak", "sessions", "workspace",
+             ".openclaw-attachments", "__pycache__", "backup")
+
+    def _hits(patterns):
+        out = []
+        for pat in patterns:
+            for fp in _glob.glob(pat, recursive=True):
+                if any(n in fp for n in noise):
+                    continue
+                out.append(fp)
+        return out
+
+    problems = 0
+    for item in ledger.get("retired_hooks", []):
+        name = item.get("name", "?")
+        miss = [k for k in ("name", "decision", "form", "ref") if not item.get(k)]
+        if miss:
+            problems += 1
+            if verbose:
+                print("  🔴 [%s] 台账字段缺失：%s" % (name, miss))
+            continue
+        form = item["form"]
+        if form == "entity_deleted":
+            hits = _hits([os.path.join(home, d, "**", name) for d in
+                         (".qoder-cn", ".workbuddy", ".qoder", ".trae-cn", ".zcode",
+                          ".openclaw-autoclaw", ".hermes", ".dsh", ".claude", ".codex")]
+                        + [os.path.join(os.path.expanduser("[记忆共享中心]"), "**", name)])
+            if hits:
+                problems += 1
+                if verbose:
+                    print("  🔴 [%s] entity_deleted 复活于：%s"
+                          % (name, [h.replace(home, "~") for h in hits[:4]]))
+        elif form == "exit0_stub":
+            allow = [os.path.realpath(os.path.expanduser(p)) for p in item.get("allowed_paths", [])]
+            files = _hits([os.path.join(os.path.expanduser("[记忆共享中心]"), "**", name)]
+                          + [os.path.join(home, d, "**", name) for d in
+                             (".qoder-cn", ".workbuddy", ".qoder", ".trae-cn", ".zcode",
+                              ".openclaw-autoclaw", ".hermes", ".dsh")])
+            for fp in files:
+                if any(os.path.realpath(fp).startswith(a) for a in allow):
+                    if os.path.exists(fp):
+                        txt = open(fp, encoding="utf-8", errors="ignore").read()
+                        if (len(txt.splitlines()) > item.get("max_stub_lines", 30)
+                                or any(t in txt for t in item.get("must_not_contain", []))):
+                            problems += 1
+                            if verbose:
+                                print("  🔴 [%s] 桩形态破形（超行数或含阻断token）：%s"
+                                      % (name, fp.replace(home, "~")))
+                    continue
+                problems += 1
+                if verbose:
+                    print("  🔴 [%s] 桩出现在非白名单位：%s" % (name, fp.replace(home, "~")))
+        if doctxt and name not in doctxt:
+            problems += 1
+            if verbose:
+                print("  🟡 [%s] 两本账漂移：台账条目未同现于 04 文档表（%s）" % (name, os.path.basename(doc)))
+    if verbose:
+        print(("  ✅ 禁设台账核查通过（%d 条）" % len(ledger.get("retired_hooks", [])))
+              if problems == 0 else "  🔴 禁设台账 %d 项异常" % problems)
+    return problems
+
+
+def _retired_selftest():
+    """出厂夹具（§3.9 判据完备性：每个红灯分支都要有能置假的用例·R5 变异自证）。"""
+    import tempfile
+    import shutil as _sh
+    ok = 0
+    total = 5
+    tmp = tempfile.mkdtemp(prefix="retired-selftest-")
+    try:
+        home = os.path.join(tmp, "home")
+        arch = PLACEHOLDER
+        ledger = json.load(open(RETIRED_LEDGER, encoding="utf-8"))
+        lg = os.path.join(tmp, "retired-hooks.json")
+        json.dump(ledger, open(lg, "w", encoding="utf-8"))
+        doc = os.path.join(tmp, "04doc.md")
+        open(doc, "w", encoding="utf-8").write(
+            "\n".join(r["name"] for r in ledger["retired_hooks"]))
+        def t(name, cond):
+            nonlocal ok
+            print(("  ✅ " if cond else "  🔴 ") + name)
+            if cond:
+                ok += 1
+        # R1 正例：干净态=0
+        t("R1 正例·无复活→0 异常", check_retired(lg, home, doc, verbose=False) == 0)
+        # R2 复活：entity_deleted 件出现在端 hooks 位
+        d = os.path.join(home, ".qoder-cn", "hooks")
+        os.makedirs(d, exist_ok=True)
+        open(os.path.join(d, "reply_format_guard.py"), "w").write("sys.exit(2)")
+        t("R2 负例·reply_format 复活必红", check_retired(lg, home, doc, verbose=False) >= 1)
+        os.remove(os.path.join(d, "reply_format_guard.py"))
+        # R3 桩破形：白内位塞 >max 行/含 exit2
+        s = os.path.join(arch, "技能配置/triwich/scripts")
+        os.makedirs(s, exist_ok=True)
+        open(os.path.join(s, "l3_conclusion_guard.py"), "w").write(
+            ("x = 1" + chr(10)) * 40 + "sys.exit(2)")
+        t("R3 负例·桩含 sys.exit(2)/超行必红", check_retired(lg, home, doc, verbose=False) >= 1)
+        os.remove(os.path.join(s, "l3_conclusion_guard.py"))
+        # R4 两本账漂移：04 文档表缺条目名
+        open(doc, "w", encoding="utf-8").write("空表")
+        t("R4 负例·台账name缺席04表必显形", check_retired(lg, home, doc, verbose=False) >= 1)
+        open(doc, "w", encoding="utf-8").write(
+            "\n".join(r["name"] for r in ledger["retired_hooks"]))
+        # R5 变异自证：作者态缺账=🔴（不是静默绿）
+        t("R5 变异·作者态台账缺失=红非静默", check_retired(os.path.join(tmp, "nope.json"), home, doc, verbose=False) >= 1)
+    finally:
+        _sh.rmtree(tmp, ignore_errors=True)
+    print("=== 禁设台账自测 %d/%d ===" % (ok, total))
+    return ok == total
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default="workbuddy",
-                    choices=["workbuddy", "hermes", "qoder-desktop", "qoder-cn", "dsh", "zcode", "autoclaw", "lobsterai", "traework", "doubaowork", "workbuddyai"],
-                    help="平台源：workbuddy=读 ~/.workbuddy/settings.json；hermes=读 config.yaml plugins.enabled；qoder-desktop=读 ~/.qoder/settings.json；qoder-cn=读 ~/.qoder-cn/settings.json；dsh=读插件 index.js 实盘（STOP_GUARDS+pre-step）；zcode=读 ~/.zcode/cli/config.json hooks.events 实盘；autoclaw=读 openclaw.json+patrol 实盘（2026-08-22 第7端）；lobsterai=读 openclaw.json plugins.allow+patrol+state/hooks 实盘（2026-08-22 第8端）；traework=读 route_traework_patrol.sh 实盘（2026-08-22 第9端·Trae Work 无 hooks 平台边界·守卫全挂 patrol 拉模式）；doubaowork=读 route_doubaowork_patrol.sh 实盘+心跳（2026-08-25 第10端·豆包办公无 hooks+无 session_memory·仅2文件级守卫可机械执行·执行证据校验路径不读配置文件）；workbuddyai=读 ~/.workbuddy-ai/settings.json（2026-09-11 第18端·WorkBuddy AI 国际版·与国内版同 schema 同代码双发行版）")
+                    choices=["workbuddy", "hermes", "qoder-desktop", "qoder-cn", "dsh", "zcode", "autoclaw", "lobsterai", "traework", "doubaowork", "workbuddyai", "traecn"],
+                    help="平台源：workbuddy=读 ~/.workbuddy/settings.json；hermes=读 config.yaml plugins.enabled；qoder-desktop=读 ~/.qoder/settings.json；qoder-cn=读 ~/.qoder-cn/settings.json；dsh=读插件 index.js 实盘（STOP_GUARDS+pre-step）；zcode=读 ~/.zcode/cli/config.json hooks.events 实盘；autoclaw=读 openclaw.json+patrol 实盘（2026-08-22 第7端）；lobsterai=读 openclaw.json plugins.allow+patrol+state/hooks 实盘（2026-08-22 第8端）；traework=读 route_traework_patrol.sh 实盘（2026-08-22 第9端·Trae Work 无 hooks 平台边界·守卫全挂 patrol 拉模式）；doubaowork=读 route_doubaowork_patrol.sh 实盘+心跳（2026-08-25 第10端·豆包办公无 hooks+无 session_memory·仅2文件级守卫可机械执行·执行证据校验路径不读配置文件）；workbuddyai=读 ~/.workbuddy-ai/settings.json（2026-09-11 第18端·WorkBuddy AI 国际版·与国内版同 schema 同代码双发行版）；traecn=读 ~/.trae-cn/hooks.json 实盘（2026-10-09 第20端·Trae CN 合并版·6事件命令式 Hook·分母11·crossend N/A·Stop 正文类经 traecn_transcript_adapter --run 承载）")
     ap.add_argument("--fix", action="store_true",
                     help="自动修复模式：实测接入率与SSOT文档不一致时自动同步文档（低风险）；settings.json 缺 Hook 仅报告建议（高风险）")
     ap.add_argument("--absorb", metavar="SRC", help="FU-79腿：本端缺项×别端已落地 只读显形（不计分子·不改文件）")
     ap.add_argument("--absorb-selftest", action="store_true", help="absorb_scan 出厂夹具+变异承重自证")
+    ap.add_argument("--retired", action="store_true",
+                    help="禁设台账独立核查（2026-10-10 §二·廿一 机制化·rc≠0=复活/破形/漂移）")
+    ap.add_argument("--retired-selftest", action="store_true",
+                    help="check_retired 出厂夹具+变异自证（R1-R5·含『缺账必红』承重）")
     args = ap.parse_args()
 
     if args.absorb_selftest:
         return _absorb_selftest()
     if args.absorb:
         return absorb_scan(args.absorb)
+    if args.retired_selftest:
+        return 0 if _retired_selftest() else 1
+    if args.retired:
+        return 1 if check_retired() else 0
+    _rp = check_retired()
+    if _rp:
+        print("🔴 [禁设台账] %d 项异常（见上·⛔退役守卫重挂=踩 §3.4·扩/退役裁决·处置先查本台账）" % _rp)
     if args.src == "hermes":
         return check_hermes()
     if args.src == "dsh":
@@ -950,6 +1343,8 @@ def main():
         return check_traework(fix=args.fix)
     if args.src == "doubaowork":
         return check_doubaowork(fix=args.fix)
+    if args.src == "traecn":
+        return check_traecn(fix=args.fix)
 
     # 平台参数：配置文件 / SSOT 列 / 分母是否含 crossend（Qoder Desktop/CN 专属适用）
     if args.src == "qoder-desktop":
@@ -971,10 +1366,23 @@ def main():
         with open(cfg_path) as f:
             settings = json.load(f)
     except Exception:
-        log_line(f"[platform_adaptation_check:{args.src}] 配置读取失败→exit0放行")
-        return 0
+        return report_source_missing(args.src, "配置文件", cfg_path)
 
     mounted, dead_only, unverified_only = actual_mounted(settings)
+    # 2026-10-09 童灵根治 WB 端聚合器误报：WB 端 UserPromptSubmit 已收敛为单出口
+    # ups_aggregator.py（内部并发跑 11 组 provider），route_inject_prompt / route_miss_feeder /
+    # kb_inject_prompt / session_title_namer 四件作为 provider 被聚合器实跑
+    # （非 settings.json 顶层独立挂载）。旧提取按顶层命令子串匹配 → 四件全 ❌ → 虚假 8/12 漂移。
+    # 修法：聚合器确已实挂（命令串含 ups_aggregator.py）则按适配器名承认可其承载的四件，
+    # 避免把「聚合承载」误判成「未接入」（C-206 登记表与实盘脱钩同族病）。
+    if args.src == "workbuddy":
+        ups_carried = {"route_inject_prompt.py", "route_miss_feeder.py",
+                       "kb_inject_prompt.py", "session_title_namer 族"}
+        _s, _u, _d = classify_entries(settings)
+        ups_mounted = any("ups_aggregator.py" in c for _, c in _s) or \
+                      any("ups_aggregator.py" in c for _, c in _u)
+        if ups_mounted:
+            mounted |= ups_carried
     # 2026-08-26 你拍板：所有平台统一分母 = 12（含 crossend_guard）
     # crossend_guard 定位：跨工具中立守卫（多工具共居家目录均需）
     # 🔴待支持（因平台功能不支持）计入分母·N/A排除分母
@@ -1006,6 +1414,12 @@ def main():
         log_line(uv_msg)
 
     doc = documented_rate(col)
+    _df = documented_fraction(col)
+    if _df is not None and _df.split("/")[0] == str(yes) and _df.split("/")[1] != str(denominator):
+        _dm = f"[DRIFT-DEN] {args.src} 纯分母变更：文档 {_df} vs 计算 {yes}/{denominator}（分子一致·分子门禁盲区·K007 分母触发腿 2026-10-09）"
+        print(_dm); log_line(_dm)
+        if args.fix:
+            fix_ssot_rate(args.src, yes, denominator, col)
     detail = " | ".join(
         f"{hooks_eff[i][0]}:{'✅' if hooks_eff[i][0] in mounted else '❌'}" for i in applicable_filter
     )
@@ -1026,7 +1440,8 @@ def main():
                 print(f"[SUGGEST] {args.src} 缺失 Hook：{', '.join(missing)} —— 建议手动补挂（不自动修改配置）")
                 log_line(f"[SUGGEST] {args.src} 缺失 {len(missing)} 个 Hook：{missing}")
     else:
-        log_line(f"[OK] {args.src} 接入率 {rate} 无漂移（{detail}）")
+        _ok = f"[OK] {args.src} 接入率 {rate} 无漂移（{detail}）"
+        print(_ok); log_line(_ok)
 
     return 0
 
@@ -1050,7 +1465,7 @@ if __name__ == "__main__":
 
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

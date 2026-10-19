@@ -52,7 +52,7 @@ if not MC_BASE:
 CORE_MD = os.path.join(HOME, ".trae-cn", "user_rules", "doenglingz-core.md")
 SLICES_DIR = os.path.join(MC_BASE, "数字分身", "K2切片蒸馏", "slices")
 GROWTH_BOX = os.path.join(MC_BASE, "成长箱")
-AI_LIB = os.path.join(MC_BASE, "AI学习库")
+AI_LIB = os.path.join(HOME, "[日记仓库]", "2-知识库", "09-AI学习库")  # 2026-10-13 C''波次2迁移后路径同步
 SYSLOG_DIR = os.path.join(MC_BASE, "工作日志", "系统日志")
 STAMPS_LOG = os.path.join(HOME, ".cache", "tsl_verify", "stamps.log")
 # 本端切片自愈 watcher（launchd label）

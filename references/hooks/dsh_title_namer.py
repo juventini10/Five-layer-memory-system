@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """dsh_title_namer.py — DeepSeek Harness 专属适配器：新会话首轮自动命名对话标题。
 
@@ -29,6 +25,10 @@ except Exception: pass
     python3 dsh_title_namer.py --prompt "修复搜索超时问题"                     # 钩子模式（pre-step 调用）
     python3 dsh_title_namer.py --dry-run --prompt "修复搜索超时问题"          # 只看生成的标题不写
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import os

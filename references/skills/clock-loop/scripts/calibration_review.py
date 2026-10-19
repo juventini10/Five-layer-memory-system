@@ -19,7 +19,7 @@ import json, sys
 from collections import Counter
 from pathlib import Path
 
-LEDGER_DEFAULT = "[记忆共享中心]/评估知识库/test_results/calibration_ledger.json"
+LEDGER_DEFAULT = Path.home() / "[记忆共享中心]/评估知识库/test_results/calibration_ledger.json"
 
 
 def main() -> int:

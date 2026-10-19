@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """hermes_tsl_closeout_adapter.py — Hermes 端 TSL 收尾守卫适配层 v1.0.0
 
 ## 为什么需要这个适配层（⛔不是重复造守卫·是补一段端差异）
@@ -32,6 +28,10 @@ JSONL 夹具**，再调用共用守卫本体。
 `~/.hermes/doenglingz/tsl_closeout_fixture/<session_id>.jsonl`
 （与 `doenglingz-twin` 插件的 `_CONFIG_ROOT` 同根·本端私有）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import os
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     if "--selftest" in sys.argv:
         raise SystemExit(selftest())
     # 调试用：把 stdin 当作 assistant_response 灌进去
+    sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     _in = sys.stdin.read()
     _r = run(assistant_response=_in, session_id="cli")
     print(_r.stdout if _r else "")

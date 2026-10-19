@@ -191,7 +191,7 @@ if [ -n "$REPO_HITS" ]; then
   if [ $repo_cleaned -gt 0 ]; then
     echo -e "${YEL}  [已隔离] 仓库历史 $repo_cleaned 项 → $BAN_TRASH_ROOT/$BAN_TS/(不删除·可还原)${NC}"
     # 写警告日志到系统日志
-    python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py \
+    python3 [记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py \
       "脱敏门禁: 包 $PKG 内含 $repo_cleaned 个嵌套.git目录，已移至 $BAN_TRASH_ROOT/$BAN_TS/（阻断发布·需人工确认是否真机验证仓）" \
       --tag "守卫" --level "⚠️" 2>/dev/null || true
   fi

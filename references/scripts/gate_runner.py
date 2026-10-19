@@ -16,7 +16,7 @@
   | 声称方 | 规格书 L38 正则解析 | 文档说有 G1–G4 |
   | 注册方 | gates/*.json 磁盘发现 | 实际注册了几个 |
   | 实跑方 | 本轮执行结果 | 真正跑起来的几个 |
-  三方不一致 = 漂移 → 报警（文档与实盘脱钩的机械检测，LRN-20260825-001）
+  三方不一致 = 漂移 → 报警（文档与实盘脱钩的机械检测，内部记录）
 
 🔴 未定义 ≠ 不可见：
   status=spec_pending 的门禁（规格只有括号注释、无判据）不会被静默跳过，
@@ -38,8 +38,8 @@ import glob
 import subprocess
 from datetime import datetime
 
-GATES_DIR = os.path.expanduser("~/[记忆共享中心]/数字分身/gates")
-SPEC_FILE = os.path.expanduser("~/[记忆共享中心]/数字分身/童灵·人格规格书.md")
+GATES_DIR = os.path.expanduser("[记忆共享中心]/数字分身/gates")
+SPEC_FILE = os.path.expanduser("[记忆共享中心]/数字分身/童灵·人格规格书.md")
 # 2026-09-22 挂尸普查根治：/tmp 违反守卫规范§三·06（重启即灭·不可跨重启审计）→迁持久台账；全仓扫描证实读写方仅本文件，零跨端读方
 HEARTBEAT = os.path.expanduser("[记忆共享中心]/脚本中心/logs/gate_runner.heartbeat")
 

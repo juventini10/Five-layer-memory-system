@@ -42,7 +42,7 @@ Register-AmberTask -Name 'MemoryAmberWeeklyReport' `
 $statusFile = Join-Path $MC '记忆琥珀/engine/amber-status.txt'
 if (Test-Path $statusFile) {
     Write-Host "✅ 首次体检完成，状态文件已生成："
-    Get-Content $statusFile | Select-Object -Last 1
+    Get-Content $statusFile -Encoding UTF8 | Select-Object -Last 1
 } else {
     Write-Host "⚠️ 状态文件未生成，请检查 amber-checkup.ps1 输出"
 }

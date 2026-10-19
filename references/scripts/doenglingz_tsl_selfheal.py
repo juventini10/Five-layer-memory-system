@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 doenglingz_tsl_selfheal.py —— TSL 自愈检测器（TSL闭环冲刺·段3）
@@ -37,6 +33,10 @@ doenglingz_tsl_selfheal.py —— TSL 自愈检测器（TSL闭环冲刺·段3）
   python3 doenglingz_tsl_selfheal.py --state /tmp/x.json  # 隔离压测
   python3 doenglingz_tsl_selfheal.py --json               # 机器可读
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import json
 import os

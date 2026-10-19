@@ -13,7 +13,7 @@
 
 | 形态 | 处理 | 理由 |
 |:---|:--|:---|
-| `~/个人AI档案/…` | → `~/个人AI档案/…` | 路径形态·写死=用户机器上不存在 |
+| `[记忆共享中心]/…` | → `[记忆共享中心]/…` | 路径形态·写死=用户机器上不存在 |
 | `os.path.expanduser("~")` 作 `os.path.join` 段 | → `os.path.expanduser("~")` | 同上 |
 | **候选探测列表**（`(…, os.path.expanduser("~"), …)` 多个并列候选） | ⛔ **跳过** | 那是**有意的多候选**（探测用户记忆中心叫啥）·⛔ 不是泄露 |
 | **脱敏/检测脚本本体** | ⛔ 跳过 | 它必须写着要检测的模式 |
@@ -29,7 +29,7 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # REG: family=校验器|registry=记忆蓝图/04_系统文件设计/数字分身设计哲学/INDEX.md|board=记忆蓝图/04_系统文件设计/数字分身设计哲学/03-进度看板.md
 """d_tier_exclusivity_dryrun.py — D 轴档位互斥的机械回归（06 §1.6 互斥律的取证器）
 
@@ -21,9 +17,39 @@ except Exception: pass
 自带变异（§3.9 变异测试红线：探针必须可证伪）：把 `if not _d2:` 短路成 `if True:`，
   本件必须 FAIL；不变异则必须全绿。跑 `--mutant` 自检这一条。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 # 版本载体（与 doenglingz_inject_prompt.py 同律：版本以盘上常量为真源，⛔以文档手写号为准）
 __version__ = "v1.1"  # v1.1：加 D7/D8（标签≡实盘）＋四处同步漂移对账＋第二种变异
 
+# ── A5 去硬码（2026-10-18·来源唯一性迁移）：路径经 runtime_paths 单一出口 ──
+#   ⛔ 字面 [记忆共享中心]/数字分身/... 硬码；键值改由 runtime_paths.json 供给（改根不改脚本）。
+#   装载自给自足（自带 import，⛔依赖宿主已导入项）；realpath 取根——旧址长期为软链，
+#   abspath 会返回软链路径使 dirname(dirname()) 错位（同 A4 判据）。
+import os as _rp_os, sys as _rp_sys
+
+
+def _rp_find_root(_d):
+    """两态自适应上溯：作者端件在 <档案>/脚本中心/分身[/d4_behavior]，装机端件在 <MC>/数字分身/k2-slice-generator。
+    逐级向上，每级试「该目录」与「该目录/脚本中心」两种落点，命中 runtime_paths.py 即返回（≤4 级）。
+    ⛔写死上溯级数——2026-10-18 A5 就是写死两级，令 d4_behavior 层 22 支算到 脚本中心/分身 而装载必崩。"""
+    for _ in range(4):
+        for _c in (_d, _rp_os.path.join(_d, "脚本中心")):
+            if _rp_os.path.isfile(_rp_os.path.join(_c, "runtime_paths.py")):
+                return _c
+        _up = _rp_os.path.dirname(_d)
+        if _up == _d:
+            break
+        _d = _up
+    return None
+
+
+_RP_ROOT = _rp_find_root(_rp_os.path.dirname(_rp_os.path.realpath(__file__)))
+if _RP_ROOT and _RP_ROOT not in _rp_sys.path:
+    _rp_sys.path.insert(0, _RP_ROOT)
+from runtime_paths import rp
 import os
 import re
 import subprocess
@@ -134,7 +160,7 @@ def seg_names(out):
 def _fixture_slices(tmpdir, drop_layer):
     """复制真 slices/ 但删掉指定层——测"词表命中而正文读不到"时档位是否老实降回 D1。"""
     import shutil
-    src = os.path.expanduser("~/[记忆共享中心]/数字分身/K2切片蒸馏/slices")
+    src = rp("twin_slices")
     d = os.path.join(tmpdir, "slices")
     shutil.copytree(src, d)
     os.remove(os.path.join(d, drop_layer + ".md"))

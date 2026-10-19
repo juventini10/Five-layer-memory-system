@@ -13,9 +13,9 @@ allowed-tools: [Read, Write, Bash, Grep, Glob, Agent, WebSearch]
 dependencies: []
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/triwich/
+upstream: [记忆共享中心]/技能配置/triwich/
 modifiable: true
-version: "v4.5.2"
+version: "4.5.4"
 cured_snapshot:
   consumer: clock-loop
   reference: 技能配置/clock-loop/references/triwich-integration.md
@@ -235,7 +235,7 @@ stdout 那串(如 `20260827_232415`)**原样**作为本轮 `{ts}`,写进判定�
 > 🗄 **steps/ 生命周期条款(v3.15.2·防无界增长)**:steps/ 判定文件为留痕资产,默认保留;你可随时说"清理 triwich steps"→ 只清理 7 天前的 `{ts}` 文件(⛔当日文件与并发会话文件不动·延续"不批量清理"纪律--他端/并发会话可能正在使用,见上方固定名退役禁令与 §防跳步机制 并发覆盖先例)。
 > 🗄 **注记义务边界(2026-09-02 清零批#14·消解与固定名"禁读"的张力)**:v3.15.1"历史遗留物证已加注"义务仅限**可安全读取的 `{ts}` 键文件**--退役固定名 `step0-determination.md` 受"⛔DO NOT 读取"约束,**不加注**(加注需先读=违反禁令);其留存即物证本身,无需标注。
 
-> 🔴 **路径基准声明(v3.12.0·H-9修复·定位键唯一性第二段)**:本 Skill 中所有裸 `steps/` 相对路径,基准 = **当前执行工作区**(用户会话 cwd,`pwd` 可查),⛔DO NOT 解析到 Skill 安装目录(`~/[记忆共享中心]/技能配置/triwich/steps/` 或 `~/.workbuddy/skills/triwich/steps/` 下的历史文件为示例遗留,非本轮产出物)。启动 Step0 前✅DO `pwd` 确认工作区 + `ls {工作区}/steps/` 确认本轮 `{ts}` 命名的判定文件存在(其 mtime 为第二见证,见下方取值防伪)--原因是定位键不唯一=熔断器读错对象=锁失效(2026-08-09 L3 实跑:Agent A 读到 skill 目录陈旧 step0 仍继续流程)。**家根红线(v4.4.22立法·2026-10-05 P4根治)**:`pwd` 结果 == $HOME(工作区根即家根)时,⛔DO NOT 把判定键解析到 `{HOME}/steps/`——家根直系子项必须留给记忆中心,写进去=家根幽灵目录(落点守卫判据②机械报红;实证:2026-10-05 归档 65 份多端混存件即此病)。本窗口确需跑 Step0:键显式落 `~/[记忆共享中心]/自定义层/待完成工作/steps/`(该位有先例),并在回复首段声明「⚠️家根窗口·应急落点」;永久解=把该端工作区根改指专属目录(家根污染面不止 steps——同 cross-end-guard ①号物理修复)。唯一例外:计数器载体 `{skill根目录}/steps/agent_b_streak.md`(路径显式带 `{skill根目录}`,见 full-flow.md §Agent B 质量监控,跨会话持久需随 Skill 分发)。
+> 🔴 **路径基准声明(v3.12.0·H-9修复·定位键唯一性第二段)**:本 Skill 中所有裸 `steps/` 相对路径,基准 = **当前执行工作区**(用户会话 cwd,`pwd` 可查),⛔DO NOT 解析到 Skill 安装目录(`[记忆共享中心]/技能配置/triwich/steps/` 或 `~/.workbuddy/skills/triwich/steps/` 下的历史文件为示例遗留,非本轮产出物)。启动 Step0 前✅DO `pwd` 确认工作区 + `ls {工作区}/steps/` 确认本轮 `{ts}` 命名的判定文件存在(其 mtime 为第二见证,见下方取值防伪)--原因是定位键不唯一=熔断器读错对象=锁失效(2026-08-09 L3 实跑:Agent A 读到 skill 目录陈旧 step0 仍继续流程)。**家根红线(v4.4.22立法·2026-10-05 P4根治)**:`pwd` 结果 == $HOME(工作区根即家根)时,⛔DO NOT 把判定键解析到 `{HOME}/steps/`——家根直系子项必须留给记忆中心,写进去=家根幽灵目录(落点守卫判据②机械报红;实证:2026-10-05 归档 65 份多端混存件即此病)。本窗口确需跑 Step0:键显式落 `[记忆共享中心]/自定义层/待完成工作/steps/`(该位有先例),并在回复首段声明「⚠️家根窗口·应急落点」;永久解=把该端工作区根改指专属目录(家根污染面不止 steps——同 cross-end-guard ①号物理修复)。唯一例外:计数器载体 `{skill根目录}/steps/agent_b_streak.md`(路径显式带 `{skill根目录}`,见 full-flow.md §Agent B 质量监控,跨会话持久需随 Skill 分发)。
 
 > 🔴 **临时目录声明(跨平台·检查10合规)**:L3 推导留痕目录 `/tmp/triwich_l3_{ts}/` 仅在 Unix/macOS 有效;Windows 等价替换为 `%TEMP%/triwich_l3_{ts}/`(运行时按 `$TMPDIR` / `%TEMP%` 解析,非硬编码 `/tmp`)。
 

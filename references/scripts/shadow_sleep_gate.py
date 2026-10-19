@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """shadow_sleep_gate.py v1.0 — 机械睡眠闸自动触发器（补「何时写」那一半）
 
 背景（本脚本存在的唯一理由）：
@@ -29,6 +25,10 @@ except Exception: pass
 
 出口：0=未达标或已写；3=达标但未写入（需人工/AI 补写·提醒级）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import glob
 import json
 import os

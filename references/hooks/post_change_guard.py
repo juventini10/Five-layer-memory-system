@@ -99,7 +99,7 @@ def get_recently_modified_files(since_minutes=60):
     
     # 扫描工作区常见目录（v0.3·2026-08-21 跨端兼容修复：补 Qoder CN——此前仅硬编码 Desktop 路径致 CN 漏扫）
     scan_dirs = [
-        os.path.expanduser("~/"),  # v0.4(2026-10-04) 根治家目录全扫：find ~ 每轮30s超时→WARN入stderr→未归因真崩(仪器面)+路由面静默失效(功能面)。语义对齐 hooks/ 已修副本，扫描对象=记忆资产树非整个家
+        os.path.expanduser("[记忆共享中心]/"),  # v0.4(2026-10-04) 根治家目录全扫：find ~ 每轮30s超时→WARN入stderr→未归因真崩(仪器面)+路由面静默失效(功能面)。语义对齐 hooks/ 已修副本，扫描对象=记忆资产树非整个家
         "~/.qoder/rules/",
         "~/.qoder/skills/",
         "~/.qoder-cn/rules/",
@@ -167,7 +167,7 @@ def find_file(filename_pattern, search_dirs=None):
     """在常见目录下搜索文件"""
     if search_dirs is None:
         search_dirs = [
-            os.path.expanduser("~/"),
+            os.path.expanduser("[记忆共享中心]/"),
             os.path.expanduser("[记忆共享中心]/记忆规则/"),
             os.path.expanduser("[记忆共享中心]/记忆蓝图/"),
             os.path.expanduser("[记忆共享中心]/技能配置/")  # Phase 1扩展：技能配置目录

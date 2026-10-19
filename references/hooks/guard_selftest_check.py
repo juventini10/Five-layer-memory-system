@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""guard_selftest_check.py v0.2.5 — 守卫家族自测聚合元守卫（检测退化·报告制+差集检测）
+"""guard_selftest_check.py v0.3.3 — 守卫家族自测聚合元守卫（检测退化·报告制+差集检测）
 
 v0.2.5（2026-09-18·Qoder CN·发现窗口根治）：`discover()` 原先只读文件头 20000 字节，
   而 Python 守卫的 `--self-test` 注册几乎都在文件尾部的 `main()` 里 ⇒ 有夹具却被差集判成
@@ -70,13 +70,63 @@ SCAN_ROOTS = [
     os.path.join(BASE, "自定义层", "待完成工作", "路由家族", "scripts"),
     os.path.join(BASE, "技能配置"),
     os.path.join(BASE, "发布库", "五层记忆系统", "存档包", "脱敏门禁"),
+    os.path.join(BASE, "数字分身", "数字分身脚本"),
+    os.path.join(BASE, "数字分身", "scripts"),
 ]
+# [C] pytest 裸夹具发现域（v0.3.2·2026-10-10 Loop反哺：17件 test_*.py 夹具因本机无执行器从未被跑=结构性静默）
+C_ROOTS = [
+    os.path.join(BASE, "脚本中心"),
+    DEV,
+    os.path.join(BASE, "技能配置"),
+    os.path.join(BASE, "数字分身", "数字分身脚本"),
+    os.path.join(BASE, "数字分身", "scripts"),
+    os.path.join(BASE, "自定义层", "待完成工作", "路由家族", "scripts"),
+]
+C_SKIP_SEG = ("/.venv", "/node_modules", "/_vendored/", "/site-packages", "/extensions/", "/记忆琥珀/", "/_archive/", "/归档/", "/tests/")
 LOG = os.path.join(DEV, "logs", "guard_selftest_check.log")
 TIMEOUT_DEFAULT = 60
-SELF_VERSION = "v0.2.5"  # 打印位唯一真源（与 docstring 首行同源·⛔不在 print 里另写死）
+SELF_VERSION = "v0.3.3"  # 打印位唯一真源（与 docstring 首行同源·⛔不在 print 里另写死）
 
-# 发现任意 .py/.sh 守卫中的 self-test 参数注册痕迹（argparse add_argument / case 分支 / usage 注释）
-SELFTEST_RE = re.compile(r'self[-_]test', re.IGNORECASE)
+# v0.3.3（同日S8：[C]tests段off-by-one修正+第三方pip依赖域剔除·deepseek/pyJianYingDraft 8件出网）
+# v0.3.2（同日①批：数字分身域入网+[C]pytest裸夹具批跑）
+# v0.3.1（同日R3补刀：--selftest拼写族/R-B业务参数门/差集CJK/版本同源）
+# v0.3.0（2026-10-10·clock-loop 自检接线对账 Loop 反哺·两病同治）：
+#   ①结构性盲区：旧 SELFTEST_RE 只认 self[-_]test，对 --selfcheck 族全盲（实锤：候选140件中
+#     45% 自检入口吃不到，position3/heartbeat/inject 族均在盲区）。现扩族 self[-_]test|selfcheck；
+#     --check-only 不纳入自动执行（语义可能是产品模式非自检·P10待人工复核，宁漏不假跑）。
+#   ②假发现：旧判据整文件正则把注释/函数名里的 self-test 字样当真入口（实锤：末run 3 件
+#     unrecognized arguments 假红）。现收紧：旗须出现在参数解析语境行（add_argument/==/in/case/argv），
+#     纯注释行剔除；执行命令按件选旗。
+# 痕迹粗筛（差集检测兼容用；真入选以 detect_entry_flag 为准）
+SELFTEST_RE = re.compile(r'self[-_]?test|selfcheck', re.IGNORECASE)
+_SELF_FLAG_LINE = re.compile(
+    # v0.3.1 R-B：add_argument 须是开关形态（带action/nargs，或120字符内无default=）——
+    # 业务参数型 --selfcheck（shadow_append案：default="—"的内容字段）不再算自检入口
+    r'(?:add_argument\(\s*["\']--?(?:self[-_]?test|selfcheck)["\'](?![^)]{0,120}default=)[^)]{0,120}(?:action|nargs)'
+    r'|add_argument\(\s*["\']--?(?:self[-_]?test|selfcheck)["\']\s*\)'
+    r'|["\']--?(?:self[-_]?test|selfcheck)["\']\s+in\s'
+    r'|(?:==|!=)\s*["\']--(?:self[-_]?test|selfcheck)'
+    r'|["\']--?(?:self[-_]?test|selfcheck)["\']\s*(?:==|in\b)'
+    r'|\bin\s*\([^)]{0,80}--(?:self[-_]?test|selfcheck)'
+    r'|argv[^\n]{0,50}--?(?:self[-_]?test|selfcheck)'
+    r'|--(?:self[-_]?test|selfcheck)[^)\s]*\)'
+    r'|case[^\n]{0,40}--?(?:self[-_]?test|selfcheck))', re.IGNORECASE)
+
+
+def detect_entry_flag(text):
+    """返回该文件真实注册的自检旗（'--self-test'/'--selfcheck'/None）；纯注释行不算。"""
+    best = None
+    for ln in text.splitlines():
+        if ln.lstrip().startswith("#"):
+            continue
+        if _SELF_FLAG_LINE.search(ln):
+            low = ln.lower()
+            m = re.search(r"--(?:self[-_]?test|selfcheck)", low)
+            if m and "test" in m.group(0):
+                return m.group(0)          # --self-test / --selftest / --self_test 原样回传
+            if m:
+                best = best or m.group(0)  # --selfcheck
+    return best
 
 
 def discover():
@@ -104,10 +154,13 @@ def discover():
             continue
         if not SELFTEST_RE.search(text):
             continue
+        flag = detect_entry_flag(text)
+        if not flag:
+            continue  # 入口语境收紧：注释/函数名字样不再算发现（v0.3.0 假发现根治）
         if p.endswith(".py"):
-            items.append(("A", p, ["python3", p, "--self-test"]))
+            items.append(("A", p, ["python3", p, flag]))
         else:
-            items.append(("A", p, ["bash", p, "--self-test"]))
+            items.append(("A", p, ["bash", p, flag]))
     # B. tests 夹具（run*.sh）
     for p in sorted(glob.glob(os.path.join(DEV, "**", "tests", "run*.sh"), recursive=True)):
         items.append(("B", p, ["bash", p]))
@@ -115,6 +168,29 @@ def discover():
     l3 = os.path.join(DEV, "l3_conclusion_guard_tests", "run.sh")
     if os.path.isfile(l3):
         items.append(("B", l3, ["bash", l3]))
+    # C. pytest 裸夹具（v0.3.2：test_*.py 递归发现·缺 pytest 由执行端显式 SKIP·⛔不静默）
+    try:
+        import pytest as _pt  # noqa: F401
+        _has_pytest = True
+    except Exception:
+        _has_pytest = False
+    if _has_pytest:
+        for cr in C_ROOTS:
+            if not os.path.isdir(cr):
+                continue
+            for dirpath, dirnames, filenames in os.walk(cr):
+                dirnames[:] = [d for d in dirnames if not d.startswith(".") and d not in ("__pycache__", "node_modules", "logs", "cache")]
+                # v0.3.3：tests 段判定修正——dirpath 恰以 /tests 结尾时旧写法漏剔（off-by-one·
+                # 本行缺陷由 [C] 首跑逮住：deepseek-harness sdk/tests 第三方件入网=仪器自犯其病·登记自证律实证）
+                _dp = dirpath + "/"
+                if any(seg in _dp for seg in ("/.venv", "/node_modules", "/_vendored/", "/site-packages", "/extensions/", "/记忆琥珀/", "/_archive/", "/归档/", "/tests/", "/deepseek-harness/", "/video-shotcraft", "/jianying-export/")):
+                    continue
+                for f in filenames:
+                    if re.match(r"^(test_.+|.+_test|.+_selftest)\.py$", f):
+                        items.append(("C", os.path.join(dirpath, f),
+                                      ["python3", "-m", "pytest", "-q", "-p", "no:cacheprovider", os.path.join(dirpath, f)]))
+    else:
+        log_line("[C] pytest 不可用——裸夹具批本轮显式SKIP（非静默：见运行报告⏭️行）")
     # 去重
     seen, out = set(), []
     for t, p, cmd in items:
@@ -151,7 +227,7 @@ def extract_registry_guards():
             for line in f:
                 # 匹配注册表行：| xxx.py | 或 | xxx.sh |
                 # 注册表格式：| 守卫文件名 | 辖区 | ...
-                m = re.match(r'^\|\s*([a-zA-Z0-9_-]+\.(?:py|sh))\s*\|', line)
+                m = re.match(r'^\|\s*([a-zA-Z0-9_\u4e00-\u9fff-]+\.(?:py|sh))\s*\|', line)
                 if m:
                     guards.add(m.group(1))
     except Exception as e:

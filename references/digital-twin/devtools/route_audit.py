@@ -25,6 +25,9 @@ v0.2（2026-08-24）：新增 predicted_skill_id/predicted_bucket 显式标签�
 
 ⚠️ 已知边界：模型执行 Skill 时不一定提名字 → potential_miss 是"疑似漏判"线索，
   最终对账看系统日志（两账比对：路由日志"应该命中" vs 系统日志"实际做了"）。
+v0.4（2026-10-15·C35 修包线）：命中场景每笔必落行（covered→actual_skill_id=证据命中 Skill；
+  miss→actual=null）——旧版只记 miss ⇒ actual 恒空、零误杀无凭据（305/305 全空之根因是
+  结构上不存在分母，不是忘了回填）。漏判率分母自 v0.4 行起有效，历史行不回填不冒充。
   消费端：--stats 子命令统计（两周基线后人工对账）。
 
 用法：
@@ -54,6 +57,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from router import route, SKILLS  # 单一真源：路由核心改一处，审计跟着走
 
 DEFAULT_LOG = os.path.expanduser("[记忆共享中心]/脚本中心/logs/route_audit.jsonl")
+
+sys.path.insert(0, os.path.expanduser("[记忆共享中心]/脚本中心"))
+import transcript_reader as _tr  # 跨端解析·单一真源（2026-09-23 童灵根治·2026-10-12 并源恢复：⛔不可丢非CC格式腿）
 LOG_PATH = os.environ.get("ROUTE_AUDIT_LOG", DEFAULT_LOG)  # 测试可重定向
 MAX_BACKTRACK = 3  # 延续任务回溯深度
 
@@ -119,6 +125,11 @@ def read_transcript(path):
     user 行当任务——其余 user 行是压缩续接文本/Skill 正文回显/工具结果，
     实测本端 403 条 user 行仅 ~16 条为皮叔真实发言。
     """
+    # ZCode model-io 适配（2026-10-11 队列④②段·审计账本端扩展）：config.json Stop hook 早已挂载
+    # --src zcode 但 A 账零 zcode 行——根因=model-io-*.jsonl 行是 API 调用快照（request.messages+
+    # response.text+turnId），无 role/content 对话结构 → 原解析得 0 行 → 静默 exit 0（挂载空转家族）。
+    if os.path.basename(path).startswith("model-io-"):
+        return _read_zcode_modelio(path)
     raw = []
     with open(path, encoding="utf-8") as f:
         for line in f:
@@ -129,8 +140,11 @@ def read_transcript(path):
                 d = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            content = d.get("message", {}).get("content")
-            role = d.get("role") or (d.get("message") or {}).get("role") or d.get("type") or ""
+            try:
+                role, content = _tr.locate(d)   # 跨端格式分派优先（09-23 根治能力恢复）
+            except Exception:
+                content = d.get("message", {}).get("content")
+                role = d.get("role") or (d.get("message") or {}).get("role") or d.get("type") or ""
             text = ""
             human = d.get("humanInput")
             has_human = isinstance(human, dict) and bool(human.get("text"))
@@ -164,6 +178,55 @@ def read_transcript(path):
     return msgs
 
 
+def _read_zcode_modelio(path):
+    """ZCode model-io-*.jsonl → [(role, text)]（队列④②段·2026-10-11）。
+
+    每行=一次主回合 API 调用快照：request.messages 末条 user=本回合输入，
+    response.text=本回合最终回复（同 turnId 的工具循环中间行被末行覆盖）。
+    querySource 只认 main_turn（subagent/辅助调用不入人话审计）。
+    """
+    turns = {}
+    order = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                d = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if d.get("querySource") not in (None, "main_turn"):
+                continue
+            req = d.get("request") or {}
+            msgs = req.get("messages") or []
+            user_text = ""
+            for m in reversed(msgs):
+                if isinstance(m, dict) and m.get("role") == "user":
+                    c = m.get("content")
+                    if isinstance(c, str):
+                        user_text = c
+                    elif isinstance(c, list):
+                        user_text = " ".join(
+                            x.get("text", "") for x in c
+                            if isinstance(x, dict) and x.get("text"))
+                    break
+            if not user_text:
+                continue
+            resp = (d.get("response") or {}).get("text") or ""
+            tid = d.get("turnId") or d.get("requestId")
+            if tid not in turns:
+                order.append(tid)
+            turns[tid] = (user_text, resp)
+    out = []
+    for tid in order:
+        u, r = turns[tid]
+        out.append(("user", u))
+        if r:
+            out.append(("assistant", r))
+    return out
+
+
 def find_last_hit_task(msgs):
     """找最后一则硬路由命中场景。返回 (任务, [(skill, 触发词)]) 或 (None, None)"""
     user_tasks = []
@@ -193,16 +256,24 @@ def get_hits(task):
 
 
 def covered(after_text, skills):
-    """场景后文本是否含任一命中 Skill 的证据词"""
+    """命中场景的实际侧证据：返回首个在「本轮助手回复」中找到执行证据的 Skill（无证据=None）。
+
+    口径如实声明（v0.4）：证据=文本窗（助手回复含 Skill 名/正式名/执行标志，read_transcript
+    已把 tool_use 的 name+skill 参数并入文本——真调用必留强信号）。文本证据是"疑似已执行"
+    线索级（⛔冒充工具事件级终判），终判仍以系统日志人查为准——两账比对自此有了分母。
+    """
     for s in skills:
         for w in EVIDENCE_WORDS.get(s, [s]):
             if w and w in after_text:
-                return True
-    return False
+                return s
+    return None
 
 
 def append_log(entry):
-    path = LOG_PATH
+    # v0.4：动态读 env——旧写法在 import 时定死 LOG_PATH，测试夹具先 import 后设
+    #   ROUTE_AUDIT_LOG 会失效写穿真日志（decision_room 夹具未重定向同族先例）。
+    path = os.environ.get("ROUTE_AUDIT_LOG", DEFAULT_LOG)
+    globals()["LOG_PATH"] = path  # 与 stats/其它读取点保持同源单值
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         if fcntl:
@@ -217,6 +288,9 @@ def audit(transcript_path, src="stop-audit"):
         return 0
     msgs = read_transcript(transcript_path)
     if not msgs:
+        # 解析 0 行显式告警（2026-10-11 TE-20261011-002·挂载空转根治配套）：
+        # fail-open 不阻塞主流程，但必须留痕——静默 exit 0=挂载空转两月无感知的根因形态
+        print("[route_audit] ⚠️ transcript 解析出 0 行（格式不适配或文件空）——挂载可能空转", file=sys.stderr)
         return 0
     task, hits = find_last_hit_task(msgs)
     if not task:
@@ -238,22 +312,22 @@ def audit(transcript_path, src="stop-audit"):
             break
     after_text = " ".join(t for role, t in msgs[scene_start:scene_end] if role == "assistant")
     skills = [s for s, _ in hits]
-    if covered(after_text, skills):
-        return 0  # 可能已触发（调用/讨论均视为覆盖），不记
+    matched = covered(after_text, skills)
+    # v0.4（C35）：命中场景**每笔必落行**——旧版 covered 直接 return 不落账，
+    #   日志里只剩 miss 行 ⇒ actual 恒空、漏判率永无分据（仪器只装负样本=半账）。
     # predicted_skill_id = 主预测 Skill（skills[0] 为最高优先级）
-    # predicted_bucket = 预测任务桶（skills[0]，与 Skill 同粒度的分类）
-    # actual_skill_id / actual_bucket = 实际执行 Skill 与桶（initially null，待 deviation 仪表盘两账对账后回填）
-    # potential_miss=True 时 actual_* 必为 null（执行未发生）
+    # actual_skill_id / actual_bucket = 本轮文本证据命中的实际 Skill（线索级口径，见 covered docstring；
+    #   null=未见执行证据 ⇒ potential_miss=True）。历史行（v0.4 前）全部只记过 miss，⛔回填视为无账。
     entry = {
         "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "task": task[:100],
         "predicted_skill_id": skills[0] if skills else None,
         "predicted_bucket": skills[0] if skills else None,
-        "actual_skill_id": None,  # 待 deviation 仪表盘两账对账后回填
-        "actual_bucket": None,    # 同上
+        "actual_skill_id": matched,
+        "actual_bucket": matched,
         "skills": skills,
         "triggers": {s: w[:6] for s, w in hits},
-        "potential_miss": True,
+        "potential_miss": matched is None,
         "src": src,
     }
     append_log(entry)
@@ -274,14 +348,23 @@ def stats():
                 rows.append(json.loads(line))
             except json.JSONDecodeError:
                 continue
+    miss_rows = [r for r in rows if r.get("potential_miss")]
+    covered_rows = [r for r in rows if not r.get("potential_miss")]
     by_skill = {}
     for r in rows:
         for s in r.get("skills", []):
-            by_skill[s] = by_skill.get(s, 0) + 1
-    print(f"路由审计日志共 {len(rows)} 条疑似漏判")
-    for s, n in sorted(by_skill.items(), key=lambda x: -x[1]):
-        print(f"  {s}: {n}")
-    print("提示：疑似漏判需与系统日志对账确认（两账比对：路由'应该命中' vs 日志'实际做了'）")
+            e = by_skill.setdefault(s, [0, 0])
+            e[0] += 1
+            if r.get("potential_miss"):
+                e[1] += 1
+    print(f"路由审计：命中场景 {len(rows)} 笔（v0.4 起 covered 也落账）＝漏判 {len(miss_rows)} ＋ 已覆盖 {len(covered_rows)}")
+    if not covered_rows and not rows:
+        print("  （日志为空）")
+    if not covered_rows and miss_rows:
+        print("  ⚠️ 全为 miss 行：v0.4 前的历史行只记过负样本，漏判率对此段不可计算，⛔不拿旧账冒充分母")
+    for s, (n, m) in sorted(by_skill.items(), key=lambda x: -x[1][0]):
+        print(f"  {s}: 命中 {n} 漏 {m}")
+    print("提示：actual 为文本证据线索级；疑似漏判终判看系统日志（两账比对=本日志预测侧 vs 日志实做侧）")
     return 0
 
 
@@ -305,17 +388,29 @@ def self_test():
     msgs2 = read_transcript(t2)
     t2_, h2 = find_last_hit_task(msgs2)
     ok2 = t2_ == "写今天的日记" and "daily-buddy" in [s for s, _ in h2]
-    # 覆盖判定
+    # 覆盖判定（v0.4：返回命中的 Skill 名，非 bool）
     after1 = " ".join(t for _, t in msgs1[1:])
-    ok3 = covered(after1, ["system-logger"]) is True
+    ok3 = covered(after1, ["system-logger"]) == "system-logger"
     # 坏输入
     p = subprocess.run([sys.executable, __file__], input="not json", capture_output=True, text=True)
     ok4 = p.returncode == 0
     print(f"用例1 命中判定（系统日志）: {'✅' if ok1 else '❌'}")
     print(f"用例2 命中判定（每日伙伴）: {'✅' if ok2 else '❌'}")
     print(f"用例3 覆盖判定: {'✅' if ok3 else '❌'}")
+    # 用例5（C35 本体）：covered/miss 两类场景都落行，分母非零
+    audit(t1)   # covered 场景
+    audit(t2)   # miss 场景
+    with open(os.environ["ROUTE_AUDIT_LOG"], encoding="utf-8") as f:
+        rows = [json.loads(x) for x in f if x.strip()]
+    ok5 = (len(rows) == 2
+           and rows[0]["actual_skill_id"] == "system-logger" and rows[0]["potential_miss"] is False
+           and rows[1]["actual_skill_id"] is None and rows[1]["potential_miss"] is True)
+    print(f"用例1 命中判定（系统日志）: {'✅' if ok1 else '❌'}")
+    print(f"用例2 命中判定（每日伙伴）: {'✅' if ok2 else '❌'}")
+    print(f"用例3 覆盖判定: {'✅' if ok3 else '❌'}")
     print(f"用例4 坏输入 exit 0: {'✅' if ok4 else '❌'}")
-    return 0 if all([ok1, ok2, ok3, ok4]) else 1
+    print(f"用例5 两账全量落行（covered 带 actual＋miss 带 null·分母=2）: {'✅' if ok5 else '❌'}")
+    return 0 if all([ok1, ok2, ok3, ok4, ok5]) else 1
 
 
 if __name__ == "__main__":

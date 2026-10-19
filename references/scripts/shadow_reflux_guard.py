@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """shadow_reflux_guard.py v1.0 — 月度蒸馏回流校验（治 SHADOW 断回流）
 
 背景：
@@ -24,19 +20,23 @@ except Exception: pass
   python3 shadow_reflux_guard.py --fix-hint         # 打印补写建议
 出口：0=全部回流；1=存在断回流月份；2=SHADOW 表结构不可解析
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import re
 import sys
 from datetime import date
 
 MC = os.path.expanduser("~")
-SSOT = os.path.join(MC, "~/[记忆共享中心]/潜意识层/SHADOW.md")
+SSOT = os.path.join(MC, "[记忆共享中心]/潜意识层/SHADOW.md")
 
 # 月报/自画像可能的落点（多端命名不一，全量找）
 DISTILL_DIRS = [
-    os.path.join(MC, "~/[记忆共享中心]/工作日志/系统日志月度蒸馏"),
-    os.path.join(MC, "~/[记忆共享中心]/最伟大的我/自画像"),
-    os.path.join(MC, "~/[记忆共享中心]/记忆蒸馏"),
+    os.path.join(MC, "[记忆共享中心]/工作日志/系统日志月度蒸馏"),
+    os.path.join(MC, "[记忆共享中心]/最伟大的我/自画像"),
+    os.path.join(MC, "[记忆共享中心]/记忆蒸馏"),
 ]
 
 

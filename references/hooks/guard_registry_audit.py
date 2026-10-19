@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """guard_registry_audit.py v1.0.0 — 守卫登记三问审计（2026-10-01·皮叔令「没登记的就去登记」）
 
 ## 你的原话
@@ -33,7 +29,12 @@ except Exception: pass
 · ⛔ 不自动把「未入册」判成「漏登」——须先分类（一次性卡片生成器 ≠ 守卫）
 · 分类口径照抄 registrar 的设计意图：`_cards_*/_gen_round*/__init__` = 一次性产物
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import glob
 import json
 import os
@@ -41,10 +42,26 @@ import re
 import sys
 import time
 
-__version__ = "v1.0.0"
+__version__ = "v1.1.0"   # v1.1.0(2026-10-09·童灵根治)：MANIFEST 改经 manifest_locator 解析
+# ⚠️ DEV/SC 语义 = **本机脚本扫描面**（manifest_registrar 同源口径·两处都要扫：
+#    开发工具侧软链 + 脚本中心侧实体），⛔ 不当作 manifest 落点用。
 DEV = os.path.expanduser("[记忆共享中心]/脚本中心")
 SC = os.path.expanduser("[记忆共享中心]/脚本中心")
-MANIFEST = os.path.join(DEV, "scripts_manifest.json")
+# 🔧 2026-10-09 根治「派生副本找不到 manifest」一族病（与 guard_index_pointer 同因）：
+#    原式假定 manifest 与本脚本同目录；物理真源在 `开发工具/`（发布链 SSOT·⛔不可搬）
+#    ⇒ 找不到时 `manifest_names()` 返回 ({}, None) ⇒ 读着像「在册 0 条」静默失效。
+#    ✅ 改经共用定位器 manifest_locator（自身→上级→runtime_paths→作者态兜底）。
+#    ⚠️ 本脚本原有 `if not os.path.isfile(MANIFEST): return {}, None` 的容错保留
+#       （Fail-Loud 由 CLI 层负责），但容错不再等于「0 条」——见 main() 显形分支。
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from manifest_locator import find_manifest, ManifestNotFound
+    try:
+        MANIFEST = find_manifest(__file__)
+    except ManifestNotFound:
+        MANIFEST = os.path.join(DEV, "scripts_manifest.json")   # 交 main() 指名报错
+except ImportError:
+    MANIFEST = os.path.join(DEV, "scripts_manifest.json")       # 定位器缺失 ⇒ 原式兜底
 REGISTRY = os.path.expanduser(
     "[记忆共享中心]/脚本中心/布洛陀脚本架构设计哲学/守卫编写规范.md")
 SETTLE_MINUTES = 10   # 与 manifest_registrar 的成熟期闸门同口径
@@ -195,6 +212,14 @@ def main():
     print("  · ⛔不自动登记——登记执行器是 manifest_registrar.py（--apply），⛔不抢它的活")
     print("  · ⛔不维护第四份清单——那是制造新的双本账")
     print("  · ⛔不改 MEMORY/SOUL——那是常驻人格层，须单独决定")
+    # ── v1.1.0 新增：manifest 不可读 ⇒ Fail-Loud（⛔不装「在册 0 条」）──
+    # 病灶：manifest_names() 找不到时返回 ({}, None) ⇒ 全套三问照常跑完，
+    #   输出「在册 0/dangling 0」看着像「全部已登记」= 静默失效最危险形态。
+    if not os.path.isfile(MANIFEST):
+        print("\n❌ manifest 不可读：%s" % MANIFEST, file=sys.stderr)
+        print("   ⇒ 三问读数全部不可信（⛔不当成『在册 0 条』）", file=sys.stderr)
+        print("   修：跑 python3 manifest_locator.py 看候选解析结果", file=sys.stderr)
+        return 2
     return 0
 
 

@@ -583,6 +583,9 @@ def check_handoff_pending(todo_dir, today=None):
 SCRIPT_CENTER_MANIFEST = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "scripts_manifest.json")
 # 基础设施/构建产物目录（永不含业务脚本·剪枝用）
 INFRA_EXCLUDE = {"__pycache__", "node_modules", ".git", "dist", "logs", "_drafts"}
+# 全域遍历排除清单（判据⑦⑧ 共用·同源律：两个遍历共用同一份排除清单·⛔不给两判据造两个真相面）
+#   记忆琥珀=备份（历史快照同号是它的职责）·归档/存档包=历史留存·真源消副本前备份=迁移留痕
+_EXCL_DIRS = {"记忆琥珀", "归档", "存档包", "真源消副本前备份", "__pycache__", ".venv", "node_modules"}
 # 已知第三方/子项目目录（合法不入册·与 EXTERNAL_GUARD_DIRS 同源硬编码风格）
 KNOWN_SUBPROJECT_EXCLUDE = {
     "DailyHotApi", "Kami", "JsBarcode", "deepseek-harness",
@@ -765,16 +768,33 @@ def run_selftest():
     import shutil
     for _d in hp_dirs.values():
         shutil.rmtree(_d, ignore_errors=True)
-    # —— ⑦ 撞号判据夹具（2026-10-07 v1.1 扩面·字母后缀段号）——
+    # —— ⑦ 撞号判据夹具（2026-10-07 v1.1 扩面·字母后缀段号；v1.2 扩面·CHANGELOG 版本号）——
     import tempfile as _tf, shutil as _sh
     with _tf.TemporaryDirectory() as _td:
         _mb = os.path.join(_td, "记忆蓝图"); os.makedirs(_mb)
+        # C 形态夹具（版本号撞号）——与 A/B 同文件共存，验三形态互不干扰
+        open(os.path.join(_mb, "dup_seed_clog.md"), "w", encoding="utf-8").write(
+            "- **v1.3.126（2026-10-11·Hermes·甲）**：条目甲\n"
+            "- **v1.3.126（2026-10-11·Hermes·乙）**：条目乙（同裸号·真撞号·必红）\n"
+            "- **v1.3.125-H（2026-10-10·Hermes·丙）**：带后缀\n"
+            "- **v1.3.126-H（2026-10-11·Hermes·丁）**：带后缀（与裸号并存·L53 正解·必绿）\n"
+            "- **v1.3.127-H（2026-10-11·Hermes·戊）**：同后缀重复（真撞号·必红·供 C4）\n"
+            "- **v1.3.127-H（2026-10-11·Hermes·己）**：同后缀重复（真撞号·必红·供 C4）\n"
+            "- **v1.3.128-Q（2026-10-11·Hermes·庚）**：另一端的独立后缀·只此一次（必绿·供 C3）\n"
+            "- **v1.14.9·C6熔断器修复（P1）**：同版本多子条目甲（必绿·供 C7）\n"
+            "- **v1.14.9·YAML触发词修正（命名修正）**：同版本多子条目乙（必绿·供 C7）\n"
+            "- **v0.1.3 做法（收敛后的正解）**：空格+子标题甲（必绿·供 C8）\n"
+            "- **v0.1.3 新增第三道（疑问词裸奔）**：空格+子标题乙（必绿·供 C8）\n"
+            "- **v2.0.1（2026-10-11·Qoder CN·条目壬）**：完整条目甲（真撞号·必红·供 C9）\n"
+            "- **v2.0.1（2026-10-11·WorkBuddy·条目癸）**：完整条目乙（真撞号·必红·供 C9）\n"
+            "本文提及 v1.3.999 但不构成条目（非 bullet·必绿）\n")
         open(os.path.join(_mb, "dup_seed.md"), "w", encoding="utf-8").write(
             "#### 3.4·扩F 甲律（正例锚）\n正文\n#### §3.4·扩F 乙律（同号病灶）\n"
             "## 条文 7 丙\n## 条文 7 丁\n## 条文 28\n## 条文 28·附 合法派生\n"
             "#### 3.5·扩F 戊（父节不同·合法）\n#### 3.4·扩 己（无字母后缀·不判）\n")
-        _hits = check_article_duplication(_td)
-        _d = _hits[0][1] if _hits else {}
+        _hits = {os.path.basename(fp): d for fp, d in check_article_duplication(_td)}
+        _d = _hits.get("dup_seed.md", {})
+        _c = _hits.get("dup_seed_clog.md", {})
         ad = [
             ("A1 同文件两个 3.4·扩F → 报红（本次真病灶形态）",
              "3.4·扩F" in _d and _d.get("3.4·扩F") == 2),
@@ -784,12 +804,66 @@ def run_selftest():
              "3.5·扩F" not in _d),
             ("A4 条文28 + 条文28·附 派生号 → 不判撞（防假红·既有annex规则对⑦B同步生效域）",
              "条文 28" not in _d),
+            # ── C 形态（2026-10-11 v1.2 扩面·Hermes 撞号案）──
+            ("C1 同裸号 v1.3.126 出现两次 → 报红（本次真病灶形态）",
+             _c.get("版本 v1.3.126") == 2),
+            ("C2 裸号 v1.3.126 与带后缀 v1.3.126-H 并存 → 不判撞（L53「后加者让号加后缀」正解·防假红）",
+             "版本 v1.3.126-H" not in _c),
+            ("C3 不同端后缀 v1.3.128-Q 只出现一次 → 不判撞（后缀≠免撞金牌·但单独出现本就不该撞）",
+             "版本 v1.3.128-Q" not in _c),
+            ("C4 同后缀 v1.3.127-H 出现两次 → 仍报红（后缀不是免撞金牌）",
+             _c.get("版本 v1.3.127-H") == 2),
+            ("C5 非 bullet 行里的版本号字面量 → 不判撞（只认条目行·防假红）",
+             not any(str(k).startswith("版本 v1.3.999") for k in _c)),
+            ("C6 A/B/C 三形态同目录并存 → 互不干扰（A 形态结论不因 C 加入而变）",
+             _d.get("3.4·扩F") == 2 and _d.get("条文 7") == 2),
+            # ── v1.3 扩面（同版本多子条目豁免·2026-10-11 全域扫描实证 4 处假红后补）──
+            ("C7 `v1.14.9·C6熔断器` 与 `v1.14.9·YAML修正` → 不判撞（同版本多子条目·正常记账·防假红）",
+             "版本 v1.14.9" not in _c),
+            ("C8 `v0.1.3 做法` 与 `v0.1.3 新增第三道` → 不判撞（空格+子标题·同族形态）",
+             "版本 v0.1.3" not in _c),
+            ("C9 两条各自完整的 `v2.0.1（端·条目）` → 仍报红（⛔ 豁免不收纵到放过真撞号）",
+             _c.get("版本 v2.0.1") == 2),
         ]
         _sh.rmtree(_mb, ignore_errors=True)
+    # —— ⑧ 官方源引用符号在位性夹具（2026-10-11 v1.2.253·Hermes 行号漂移案）——
+    #   双向：真符号在位→绿｜假符号（编的名）→红｜他端口径词/否定语境→豁免不红
+    with _tf.TemporaryDirectory() as _td8:
+        _repo = os.path.join(_td8, "repo"); os.makedirs(_repo)
+        _off = os.path.join(_td8, "hermes-agent", "hermes_cli"); os.makedirs(_off)
+        _ag = os.path.join(_td8, "hermes-agent", "agent"); os.makedirs(_ag)
+        open(os.path.join(_off, "plugins.py"), "w", encoding="utf-8").write(
+            "VALID_HOOKS = {'pre_llm_call'}\n\ndef invoke_hook(hook_name):\n    return []\n")
+        open(os.path.join(_ag, "turn_context.py"), "w", encoding="utf-8").write(
+            "from agent.title_generator import start_title_upgrade\n")
+        open(os.path.join(_repo, "ref_seed.md"), "w", encoding="utf-8").write(
+            "见 `hermes_cli/plugins.py` 的 `invoke_hook()` 派发钩子（真符号·必绿）\n"
+            "`VALID_HOOKS` 是内核合法集（真符号·必绿）\n"
+            "调 `turn_context.py` 的 `start_title_upgrade`（真符号·必绿）\n"
+            "`hermes_cli/plugins.py` 的 `totally_fake_symbol_xyz` 不在源里（假符号·紧邻官方 .py·必红·判据有牙）\n"
+            "他端 `UserPromptSubmit`/`Stop` 事件对照（他端口径词·豁免不红）\n"
+            "共用件要 `transcript_path`·而 Hermes 没有该字段（否定语境·豁免不红）\n")
+        _save_dir, _save_core = _OFFICIAL_SRC_DIR, dict(_OFFICIAL_CORE)
+        try:
+            globals()["_OFFICIAL_SRC_DIR"] = os.path.join(_td8, "hermes-agent")
+            globals()["_OFFICIAL_CORE"] = {"plugins.py": "hermes_cli/plugins.py", "turn_context.py": "agent/turn_context.py"}
+            _od = check_official_ref_integrity(_repo)
+        finally:
+            globals()["_OFFICIAL_SRC_DIR"], globals()["_OFFICIAL_CORE"] = _save_dir, _save_core
+        _bad = {(b, sy) for _fp, b, sy, _ln in _od}
+        dd = [
+            ("D1 真符号 `invoke_hook` 在位 → 不报（防假绿·判据有效性）", ("plugins.py", "invoke_hook") not in _bad),
+            ("D2 假符号 `totally_fake_symbol_xyz` 编造 → 报红（真病灶形态·判据有牙）", ("plugins.py", "totally_fake_symbol_xyz") in _bad),
+            ("D3 他端口径词 `UserPromptSubmit`/`Stop` → 豁免不报（跨端对照词非官方符号·防假红）", ("plugins.py", "UserPromptSubmit") not in _bad and ("plugins.py", "Stop") not in _bad),
+            ("D4 否定语境 `transcript_path`（没有该字段） → 豁免不报（论证缺失·符号查无是论点·防假红）", ("turn_context.py", "transcript_path") not in _bad),
+        ]
+        for t, g in dd:
+            ok += bool(g)
+            print("  %s %s" % ("✅" if g else "❌", t))
     for t, g in ad:
         ok += bool(g)
         print("  %s %s" % ("✅" if g else "❌", t))
-    total = len(cases) + len(bf) + len(hp) + len(ad)
+    total = len(cases) + len(bf) + len(hp) + len(ad) + len(dd)
     print("自测 %d/%d %s" % (ok, total, "全绿" if ok == total else "有红"))
     return 0 if ok == total else 1
 
@@ -798,38 +872,197 @@ def run_selftest():
 
 
 def check_article_duplication(repo_root):
-    """⑦ 规范条文号唯一性（2026-10-07·条文45撞号案·多端并发立法防再同号）。
+    """⑦ 标识号唯一性（2026-10-07 条文45撞号案·多端并发立法防再同号）。
 
-    判据（两形态·同一文件内标题多现即撞号）：
+    判据（三形态·同一文件内标题多现即撞号）：
     A. `^## 条文 (N)` 数字条文号（2026-10-07 初版·条文45撞号案）。
     B. 子节号字母后缀 `^#+ §?X.Y·扩Z`（v1.1 扩面·2026-10-07 守卫编写规范
        「§3.4·扩F」两节并发立法案——原判据只认 A 形态，字母后缀段号在盲区）。
        父节号不同（3.4·扩F vs 3.5·扩F）=合法·不判撞。
-    范围=记忆蓝图/ 全部 .md（条文标题格式是设计规范族共有形态，⛔只盯单文件）。
+    C. 🔴 CHANGELOG bullet 版本号 `^- **vX.Y.Z(-端后缀)?（` （v1.2 扩面·2026-10-11
+       Hermes 撞号案）——病形同 A/B（多端共写同一本账·无原子发号），但载体是
+       **变更记录 bullet 而非标题** ⇒ A/B 两形态的正则全不匹配 ⇒ **恒静默全绿**。
+       实盘实证（扩判据前）：记忆蓝图下 **5 处存量撞号**全部漏判
+       （脚本哲学 01 的 v1.3.130/127/115/109 四处 + 安装包哲学 CHANGELOG 的 v1.3.115 一处），
+       而判据⑦当时正打印「✅ 无条文撞号」——**判据盲区 = 静默全绿**，比没判据更危险。
+       ⚠️ 合法豁免：版本号**带端后缀**（`v1.3.126-H` vs `v1.3.126`）是 CHANGELOG L53
+       「后加者让号·加区分后缀」纪律的**正解形态** ⇒ 视为不同号·不判撞。
+       ⛔ 但**同后缀重复**（`v1.3.126-H` 出现两次）仍是撞号·照判。
+    范围=repo_root 全域 .md（v1.3 扩面·2026-10-11；原为 `记忆蓝图/` 单目录 ⇒ 同族账本
+       散在他处恒静默全绿·实测 218 条/35 文件中仅 117 条/11 文件在记忆蓝图内）。
+       **逐文件独立判**（⛔ 不是「全域同号」）⇒ 跨副本/投影同号天然不红（不同文件）。
+       排除：隐藏目录/`记忆琥珀`（备份）/`归档`+`存档包`（历史留存）/缓存类。
     """
     import glob, collections
     head = re.compile(r"^## 条文 (\d+)(.*)$")
-    annex = re.compile(r"^\s*[·・\-—]?\s*附")   # 附条（条文28附 / 条文33·附）=合法派生号·不算撞号
+    annex = re.compile(r"^\s*[·・\-—]?\s*附")   # 附条（条文28附 / 条文33附）=合法派生号·不算撞号
     subhead = re.compile(r"^#{2,6}\s*§?\s*(\d+(?:\.\d+)*)\s*·?\s*扩([A-Z])(?![A-Za-z])")
+    # C 形态：bullet 版本号（捕获版本串·含可选端后缀）
+    clogver = re.compile(r"^- \*\*(v\d+\.\d+\.\d+(?:-[A-Za-z]+)?)")
+    # ⚠️ 同版本多子条目豁免（v1.3 扩面实证·2026-10-11）：
+    #   判据⑦ C 形态首跑逮到 4 处**假红**——`- **v1.14.9·C6熔断器…**` 与
+    #   `- **v1.14.9·YAML触发词…**` 同一版本号下记**多条改动**（一个版本含多项变更
+    #   是正常记账·不是撞号）。撞号病的定义是「**两个独立条目**声称同一版本号」，
+    #   而这里是「**同一版本号的多个子段**」。
+    #   ✅DO 判据：版本号后紧跟 `·` 或全角间隔号 + 子标题 ⇒ 视为**同条多段**·不计入撞号。
+    #      （`- **v0.1.3 做法（收敛后的正解）**` 这类版本号后接空格+子标题的也属同类）
+    #   ⛔ DO NOT 放宽成「同号一律不判」——那会把**真撞号**（两条各自完整的版本条目
+    #      用同一号）也放过 = 判据自毁。区分点：**有无子标题后缀**。
+    _subtail = re.compile(r"^(v\d+\.\d+\.\d+(?:-[A-Za-z]+)?)\s*(?:[·・]|\s)")
+    # ── 扫描域（v1.3 扩面·2026-10-11 全域）────────────────────────────────
+    # 原 glob 前缀 `记忆蓝图/` ⇒ 同族账本散在他处时**恒静默全绿**（判据盲区同族病）。
+    # 实测分布（扩域前）：记忆蓝图 117 条/11 文件、技能配置 48/8、发布库 42/10、
+    #   自定义层 4/3、脚本中心 3/1、开发工具 3/1、工作日志 1/1 —— 共 218 条 / 35 文件。
+    # ⇒ 扩到 repo_root 全域，**逐文件独立判**（判据语义=「同文件内标识号重复」，
+    #   ⛔ 不是「全域同号」）⇒ 跨副本/投影同号天然不红（不同文件·已实证 18 份 CHANGELOG
+    #   跨副本共同版本号 = 0·唯一共同 1 个的 v4.16 双份也在不同文件）⇒ 扩域不引入假红。
+    # ⚠️ 排除项：`.git`/隐藏目录（版本库与工具缓存）/`记忆琥珀`（**备份**·历史快照同号是它的职责）/
+    #   `归档`+`存档包`（历史留存·同 A/B 两形态的一贯豁免域）/`__pycache__`/`.venv`（缓存）。
+    #   ⚠️ A/B 两形态（条文号/扩字母段号）随之扩域——三者同属「设计规范族标识格式」，
+    #     分离扫描域 = 给同一判据造两个真相面（⛔ 双本账）。
+    #   `_EXCL_DIRS` 已提为全局常量（L585·与判据⑧ 共用·同源律）。
     hits = []
-    for fp in glob.glob(os.path.join(repo_root, "记忆蓝图", "**", "*.md"), recursive=True):
-        try:
-            lines = open(fp, encoding="utf-8", errors="replace").read().splitlines()
-        except OSError:
-            continue
-        nums = []
-        for ln in lines:
-            mm = head.match(ln)
-            if mm and not annex.match(mm.group(2)):
-                nums.append("条文 " + mm.group(1))
+    for dp, dns, fns in os.walk(repo_root):
+        dns[:] = [d for d in dns if d not in _EXCL_DIRS and not d.startswith(".")]
+        for fn in fns:
+            if not fn.endswith(".md"):
                 continue
-            ms = subhead.match(ln)
-            if ms:
-                nums.append("%s·扩%s" % (ms.group(1), ms.group(2)))
-        dups = {k: v for k, v in collections.Counter(nums).items() if v > 1}
-        if dups:
-            hits.append((os.path.relpath(fp, repo_root), dups))
+            fp = os.path.join(dp, fn)
+            try:
+                lines = open(fp, encoding="utf-8", errors="replace").read().splitlines()
+            except OSError:
+                continue
+            nums = []
+            for ln in lines:
+                mm = head.match(ln)
+                if mm and not annex.match(mm.group(2)):
+                    nums.append("条文 " + mm.group(1))
+                    continue
+                ms = subhead.match(ln)
+                if ms:
+                    nums.append("%s·扩%s" % (ms.group(1), ms.group(2)))
+                    continue
+                # C 形态：CHANGELOG bullet 版本号（⚠️ 带端后缀与裸号视为不同号·见 docstring）
+                mv = clogver.match(ln)
+                if mv:
+                    # 同版本多子条目豁免：`v1.14.9·C6熔断器` / `v1.14.9·YAML修正`
+                    # = 一个版本号下记多条改动（正常记账）⇒ 不计入撞号分母。
+                    # ⚠️ 判据只看「版本号后是否紧跟子标题分隔符」·⛔ 不放开到「同号一律不判」
+                    #    （那会放过真撞号：两条各自完整的版本条目用同一号）。
+                    if not _subtail.match(ln.lstrip("- *").strip()):
+                        nums.append("版本 " + mv.group(1))
+            if not nums:
+                continue
+            dups = {k: v for k, v in collections.Counter(nums).items() if v > 1}
+            if dups:
+                hits.append((os.path.relpath(fp, repo_root), dups))
     return hits
+
+
+# —— ⑧ 官方源引用完整性（2026-10-11·Hermes 端「生搬硬套/行号漂移」案·宪法铁律#6 的机械承接器）——
+# 病根：宪法 T0 铁律#6 只要求「改机制前先回源」，没规定**引用形态**。手抄行号（`xxx.py:行号`）
+# 零机械校验 ⇒ 官方 hermes-agent 一升级即全漂（实测 21 处引用漂 4 处·invoke_hook 漂 191 行）。
+# 判据形态：文档里凡**官方核心文件**引用，查其引用的**符号名**是否在官方全局符号集内；
+#   非官方文件（我们包内的 runtime_paths/path_utils/技能自带的 scan/shared 等）⇒ 静默跳过。
+# ⛔ 本判据不判「行号对不对」——行号随版本必漂、判它必假红风暴；判的是「**符号名是否在位**」（跨版本稳定）。
+# ⚠️ 官方源=**白名单**（basename 唯一≠官方源·首版 204 处假红根因就是误收包内同名文件）。
+#    一行可引多文件 ⇒ 符号查**全局官方符号集**（union of all 白名单文件的符号）·⛔ 不按命名文件单查。
+# 官方核心白名单（Hermes 端·宪法铁律#6 常引的那几个）：
+_OFFICIAL_SRC_DIR = os.path.join(os.path.expanduser("~"), ".hermes", "hermes-agent")
+_OFFICIAL_CORE = {
+    "plugins.py": "hermes_cli/plugins.py",
+    "plugins_dispatch.py": "hermes_cli/plugins_dispatch.py",
+    "turn_context.py": "agent/turn_context.py",
+    "turn_finalizer.py": "agent/turn_finalizer.py",
+    "title_generator.py": "agent/title_generator.py",
+    "config_defaults.py": "hermes_cli/config_defaults.py",
+    "memory_tool_store.py": "tools/memory_tool_store.py",
+}
+# 他端口径词豁免集：这些是**被对照的他端事件名/字段名**（UserPromptSubmit/Stop/PreToolUse…）
+#   ⛔ 不是 Hermes 官方符号——文档拿它们做跨端对照表时必然反引号包裹·判据不该验它们在官方源在不在
+#   （病名=判据把「叙述对象」当「官方符号」·他端事件名在 Hermes 源里查无是**应该的**）
+_HETEROGENOUS_TERMS = {
+    "UserPromptSubmit", "Stop", "PreToolUse", "SessionStart", "PostToolUse",
+    "provides_hooks", "SessionEnd", "SubagentStop",
+}
+# 引用形态：`官方源文件.py`（反引号可选）·后可选 `:行号` 或 `:行号-行号`
+_OFFICIAL_REF_RE = re.compile(r'`?([A-Za-z_][\w\-]*\.py)`?(?:[：:](\d+)(?:-(\d+))?)?')
+# 符号名提取：**只认反引号包裹的标识符**（`符号名`）——这是文档里标「这是官方符号」的约定形态
+#   ⛔ 不认紧跟()/= 的散落词——首版 2320 + 次版 116 处假红全来自把 Stop/position/title/from
+#   等文档叙述词当符号验（病名=判据⑤「提取正则太宽」·收窄到反引号唯一形态才干净）
+_SYMBOL_TOKEN_RE = re.compile(r'`([A-Za-z_][A-Za-z0-9_]{3,})`')
+_STOPWORDS = {'py', 'md', 'the', 'and', 'for', 'doc', 'note', 'from', 'import', 'True', 'False', 'None', 'json'}
+# 否定语境豁免：文档写「输入要 transcript_path·而 Hermes **没有**该字段」= 在**论证缺失**
+#   ⇒ transcript_path 不在源里是**论点本身**（事实正确）·⛔ 判据不把否定式引用当符号漂移
+#   （病名=判据不分「肯定引用」vs「否定引用」·否定语境里符号查无是应该的）
+_NEGATION_CONTEXT_RE = re.compile(r'没有|不传|缺少|无该字段|查无|不存在|无此字段|不持有|未持有|而非|而不是')
+
+
+def check_official_ref_integrity(repo_root):
+    """⑧ 官方源引用符号在位性。返回 [(docpath, filename, symbol, lineno)] · 符号不在位=漂移。
+
+    白名单制：只验 6 个官方核心文件（_OFFICIAL_CORE）·非官方同名文件不验（basename 唯一≠官方源）。
+    符号查全局官方符号集（union）·⛔ 不按命名文件单查（一行可引多文件）。
+    """
+    # 建全局官方符号集（union of 白名单文件的所有 def/常量/集合元素）
+    official_symbols = set()
+    for base, rel in _OFFICIAL_CORE.items():
+        fp = os.path.join(_OFFICIAL_SRC_DIR, rel)
+        if not os.path.exists(fp):
+            continue
+        try:
+            text = open(fp, encoding='utf-8', errors='replace').read()
+        except Exception:
+            continue
+        for m in re.finditer(r'^\s*def ([A-Za-z_]\w*)\(', text, re.M):
+            official_symbols.add(m.group(1))
+        for m in re.finditer(r'^([A-Z_][A-Z0-9_]*)\s*[:=]', text, re.M):
+            official_symbols.add(m.group(1))
+        # kwargs 参数名（hook 派发形态 `assistant_response=...` / 函数签名内的关键字参数）
+        for m in re.finditer(r'\b([a-z_]\w*)\s*=\s*\w', text):
+            official_symbols.add(m.group(1))
+        for m in re.finditer(r'"([A-Za-z_]\w{3,})"', text):
+            official_symbols.add(m.group(1))
+    drift = []
+    for dp, dns, fns in os.walk(repo_root):
+        dns[:] = [d for d in dns if d not in _EXCL_DIRS and not d.startswith(".")]
+        for fn in fns:
+            if not fn.endswith('.md'):
+                continue
+            fp = os.path.join(dp, fn)
+            try:
+                doc_lines = open(fp, encoding='utf-8', errors='replace').read().split('\n')
+            except Exception:
+                continue
+            for i, line in enumerate(doc_lines):
+                # 逐 .py 引用处理：只验**紧邻该 .py** 的反引号符号（同片段）
+                #   ⛔ 一行可引多文件——把整行所有反引号符号算给同行的 .py = 符号归属错（假红）
+                #   例：`turn_context.py:245` 的 `start_title_upgrade` 紧邻算它的；
+                #       同行 `title_source` 是 hermes_state_titles.py 的·不归 turn_context。
+                for m in _OFFICIAL_REF_RE.finditer(line):
+                    base = m.group(1)
+                    if base not in _OFFICIAL_CORE:
+                        continue  # 非官方核心文件 ⇒ 短路跳过·⛔不硬拉
+                    # 紧邻窗口：.py 引用位置前后各 60 字符（覆盖 `xxx.py:行号` 的 `符号名` 形态）
+                    lo = max(0, m.start() - 60)
+                    hi = min(len(line), m.end() + 60)
+                    window = line[lo:hi]
+                    # 提取窗口内反引号符号（去停用词 + 去他端口径词）
+                    toks = set()
+                    for gm in _SYMBOL_TOKEN_RE.finditer(window):
+                        grp = gm.group(1)
+                        if grp and grp not in _STOPWORDS and grp not in _HETEROGENOUS_TERMS:
+                            toks.add(grp)
+                    for tok in toks:
+                        # 符号在位判：查全局官方符号集（union）·⛔ 不按命名文件单查
+                        if tok in official_symbols:
+                            continue
+                        # 否定语境豁免：窗口内若含否定词（没有/不传/查无…）= 文档在论证「该符号缺失」
+                        #   ⇒ 查无是论点本身·不判漂移
+                        if _NEGATION_CONTEXT_RE.search(window):
+                            continue
+                        drift.append((os.path.relpath(fp, repo_root), base, tok, i + 1))
+    return drift
 
 
 def main():
@@ -918,6 +1151,10 @@ def main():
     art_dups = check_article_duplication(repo_root)
     drift = drift or bool(art_dups)
 
+    # —— ⑧ 官方源引用符号在位性（2026-10-11·宪法铁律#6 机械承接器·行号漂移案）——
+    off_drift = check_official_ref_integrity(repo_root)
+    drift = drift or bool(off_drift)
+
     if args.json:
         print(json.dumps({
             "actual_mounts": {k: sorted(v) for k, v in sorted(actual.items())},
@@ -934,6 +1171,7 @@ def main():
             "backflow_new_debts": bf_new,
             "backflow_stock_debts": bf_stock,
             "article_number_collisions": [[f, d] for f, d in art_dups],
+            "official_ref_symbol_drift": off_drift,
             "drift": drift,
         }, ensure_ascii=False, indent=2))
     else:
@@ -1009,11 +1247,27 @@ def main():
                 print("✅ 开发工具/ 在册范围无未入册脚本（库存与 manifest 一致）")
         print()
         if art_dups:
-            print(f"❌ 规范条文撞号（同文件「## 条文 N」或「§X.Y·扩Z」标题多现·⑦·并发立法同号病）: {len(art_dups)} 个文件")
+            print(f"❌ 标识号撞号（同文件「## 条文 N」/「§X.Y·扩Z」/「^- **vX.Y.Z」多现·⑦·并发同号病）: {len(art_dups)} 个文件")
             for fp, d in art_dups:
-                print(f"   - {fp}  {d}  （按让号先例归位：外部机械落点引用密度低者让号·历史文字冻结）")
+                print(f"   - {fp}  {d}")
+                # C 形态（CHANGELOG 版本号）单独给处置口径——⛔ 不套用条文让号那套
+                _ver_dups = {k: v for k, v in d.items() if str(k).startswith("版本 ")}
+                if _ver_dups:
+                    print(f"     ↳ CHANGELOG 版本号撞号处置：按该文件多端共写纪律「后加者让号·加区分后缀」")
+                    print(f"        （如 v1.3.126 → v1.3.126-H；H=端名首字母）。带后缀与裸号=不同号·同后缀重复仍算撞。")
+                else:
+                    print(f"     ↳ 条文/段号撞号处置：按让号先例归位（外部机械落点引用密度低者让号·历史文字冻结）")
         else:
-            print("✅ 无条文撞号（记忆蓝图/ 全部规范文件条文号/子节字母段号均唯一）")
+            print("✅ 无标识号撞号（记忆蓝图/ 全部 .md 的条文号/扩字母段号/CHANGELOG 版本号均唯一）")
+        print()
+        if off_drift:
+            print(f"❌ 官方源引用符号漂移（文档引用的符号名不在 live 官方源·宪法铁律#6·行号随版本必漂·符号名跨版本稳定）: {len(off_drift)} 处")
+            for fp, base, sym, ln in off_drift[:40]:
+                print(f"   - {fp}:{ln} → {base} 的 `{sym}` 不在源里（改符号名为 live 实际名·或该功能已下线则删引用）")
+            if len(off_drift) > 40:
+                print(f"   … 其余 {len(off_drift)-40} 处")
+        else:
+            print("✅ 官方源引用符号全部在位（文档引用的 Hermes 官方符号名与 live 源一致）")
         print()
         print("结论:", "发现硬漂移，需修正文档或机制" if drift else "一致，无漂移 ✅")
 

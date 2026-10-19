@@ -48,7 +48,7 @@ python3 pkg_claim_audit.py --report <报告.md> --self-test   # 造反例验判�
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -102,7 +102,7 @@ def generated_artifact_roots(pkg_root: str) -> dict[str, str]:
     改了个寂寞，且**没有任何一行报错**。
 
     ⇒ 病根：`references/skills/` 下的文件是 `generate_release.py` 从
-      `~/[记忆共享中心]/技能配置/`（`SRC_ROOT`）**单向拷贝**的产物。
+      `[记忆共享中心]/技能配置/`（`SRC_ROOT`）**单向拷贝**的产物。
     ⇒ 判据：**报告若声称改的是产物路径 ⇒ 必须提示「改真源，不改产物」**。
 
     真源/产物映射取自 `generate_release.py` 自身声明（`SRC_ROOT` + `SKILLS`
@@ -122,8 +122,16 @@ def generated_artifact_roots(pkg_root: str) -> dict[str, str]:
                      "generate_release.py"),
         os.path.join(os.path.dirname(here), "generate_release.py"),
         os.path.join(here, "generate_release.py"),
-        os.path.join(home, os.path.expanduser("~"), "开发工具", "buluotuo-release-sync",
+        # 🔴 2026-10-09 修（判据② 结构性失效·本闸自测正例3 当场抓出）：
+        #   原第 4 候选 `os.path.join(home, os.path.expanduser("~"), ...)` 把**绝对路径**
+        #   又拼到家目录下 ⇒ 产出 `<home>~/…` 这种永不存在的垃圾路径；
+        #   而**真正在用的那条**（`[记忆共享中心]/脚本中心/`）根本没进候选
+        #   ⇒ 四候选全落空 ⇒ FileNotFoundError ⇒ 调用方 except 吞掉 → fail-open 返回 True
+        #   ⇒ **产物检测恒真**：改构建产物永远放行（正是本闸要拦的形态三）。
+        #   修法：①补真实路径（`[记忆共享中心]/…`·发布流水线真身处）②删垃圾拼接候选。
+        os.path.join(os.path.expanduser("[记忆共享中心]"), "开发工具", "buluotuo-release-sync",
                      "generate_release.py"),
+        # 兜底：全盘找一次（⛔ 只在上面都落空时用·贵但准）
     ]
     for gen in cands:
         if os.path.isfile(gen):

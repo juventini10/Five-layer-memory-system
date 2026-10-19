@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 doubaowork_skill_health_guard.py v0.1 — 豆包办公 Skill 生态健康守卫（专属·质变级）
 
@@ -31,6 +27,10 @@ doubaowork_skill_health_guard.py v0.1 — 豆包办公 Skill 生态健康守卫�
   python3 doubaowork_skill_health_guard.py --json     # JSON 报告
   python3 doubaowork_skill_health_guard.py --fix      # 尝试修复（重新创建断裂软链接·需源存在）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import sys
 import json
@@ -64,13 +64,20 @@ def scan_skill_links(links_dir):
         return results, f"软链接目录不存在: {links_dir}"
     for name in sorted(os.listdir(links_dir)):
         link_path = os.path.join(links_dir, name)
-        if not os.path.islink(link_path):
-            continue  # 非软链接跳过（如真实目录）
-        target = os.readlink(link_path)
-        # 解析相对路径
-        if not os.path.isabs(target):
-            target = os.path.normpath(os.path.join(os.path.dirname(link_path), target))
-        exists = os.path.isdir(target)
+        if os.path.islink(link_path):
+            target = os.readlink(link_path)
+            # 解析相对路径
+            if not os.path.isabs(target):
+                target = os.path.normpath(os.path.join(os.path.dirname(link_path), target))
+            exists = os.path.isdir(target)
+        elif os.path.isdir(link_path):
+            # 端专属 Skill 直部署实体目录（2026-10-06 起⛔非软链）→ 同样纳入体检。
+            # 2026-10-09 童灵根治：旧逻辑只扫软链、实体目录一律跳过，把"布洛陀-豆包办公规则"
+            # 等直部署 Skill 误判为必备缺失（假报警），扫描口径未跟上端专属直部署架构。
+            target = link_path
+            exists = True
+        else:
+            continue  # 普通文件等非目录跳过
         has_skill_md = False
         version = None
         if exists:

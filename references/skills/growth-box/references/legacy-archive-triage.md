@@ -10,7 +10,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 ## 核心裁决
 
-当校验闸门采用**整文件"至少一处字段存在"语义**（如 `scripts/growth_box_schema_check.py`：读整个文件、用 `re.search` 对全文件匹配，非逐条——见脚本 L14-16 / L48 / L56-59），历史归档条目（legacy entries）**天然被祖父化（grandfathered）**——它们不阻断任何操作。
+当校验闸门采用**整文件"至少一处字段存在"语义**（如 `scripts/growth_box_schema_check.py`：读整个文件、用 `re.search` 对全文件匹配，非逐条——判据位置＝脚本 `REQUIRED_BOLD_FIELDS`／`SECTIONS` 常量与 `check_learnings()`；⛔行号锚＝派生值，脚本增行即漂，v4.12.2 改语义锚），历史归档条目（legacy entries）**天然被祖父化（grandfathered）**——它们不阻断任何操作。
 
 ✅ **DO** — 判定 legacy 归档迁移前，先确认：①闸门是否整文件语义；②是否因某条新条目已提供全部必填字段而整文件已 exit 0。若已 exit 0，**保留 legacy 为祖父化历史记录，不迁移**。
 

@@ -74,7 +74,7 @@ python3 guard_liveness_check.py --self-test
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -88,7 +88,7 @@ import time
 VERSION = "v1.0.0"
 HOME = os.path.expanduser("~")
 PLUGIN = os.path.join(HOME, ".hermes", "plugins", "buluotuo-readonly-guards", "__init__.py")
-SELFTEST = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "guard_selftest_check.py")
+SELFTEST = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "守卫", "guard_selftest_check.py")
 SCRIPT_CENTER = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心")
 DEVTOOLS = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具")
 LOG = os.path.join(DEVTOOLS, "logs", "guard_liveness_check.log")

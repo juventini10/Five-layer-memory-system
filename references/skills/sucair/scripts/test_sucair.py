@@ -8,10 +8,6 @@
 运行：cd scripts && python3 -m unittest test_sucair -v   （或 python3 -m unittest discover -s scripts -p "test_sucair.py"）
 退出码：0=全绿（G2回归通过）；非0=有硬伤，⛔DO NOT 带红交付。
 """
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 import os
 import sys
 import unittest
@@ -86,7 +82,7 @@ class TestRuleSingleSource(unittest.TestCase):
         self.assertEqual(nv._SOURCE_TYPE_SET, ("book", "paper", "article-long", "article-short", "thread"))
 
     def test_t9_schema_anchor(self):
-        self.assertEqual(nv.CARD_SCHEMA_VERSION, "读书卡片schema v1.3.1", "v4.10.3 F3收口锚")
+        self.assertEqual(nv.CARD_SCHEMA_VERSION, "读书卡片schema v1.3.4", "v1.3.4 card_id 全池统一+严格机检（2026-10-15 D3根治批·负例证过#S243）")
 
     def test_t10_required_guard(self):
         issues = nv.validate_card({})

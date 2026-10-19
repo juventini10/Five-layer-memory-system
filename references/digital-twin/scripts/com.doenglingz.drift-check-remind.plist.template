@@ -18,15 +18,10 @@
         <string>[数字分身中心]</string>
     </dict>
 
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Day</key>
-        <integer>1</integer>
-        <key>Hour</key>
-        <integer>9</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
+    <key>StartInterval</key>
+    <integer>86400</integer>
+    <key>RunAtLoad</key>
+    <true/>
 
     <key>StandardOutPath</key>
     <string>[数字分身中心]/scripts/drift_check_remind.out.log</string>

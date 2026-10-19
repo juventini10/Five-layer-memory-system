@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """awaken-memory-system 8.0 阶段③ — 蒸馏待办三级阈值检测（patrol.md §2 逻辑·脚本化）
 
-输入：蒸馏中心.md 路径（默认 ~/[记忆共享中心]/记忆蒸馏/蒸馏中心.md·可用位置参数覆盖）
+输入：蒸馏中心.md 路径（默认 [记忆共享中心]/记忆蒸馏/蒸馏中心.md·可用位置参数覆盖）
 输出：每行一条待办 DUE|<级别>|<蒸馏类型>|<预期下次>|<说明>；无待办输出 NONE
 退出码：0=检测成功（含无待办）；1=文件缺失/读取失败
 设计约束：⛔不硬编码蒸馏类型（动态解析·未来新增类型自动支持·patrol.md §2）；
@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-DEFAULT_CENTER = "[记忆共享中心]" / "记忆蒸馏" / "蒸馏中心.md"
+DEFAULT_CENTER = Path('[记忆共享中心]') / "记忆蒸馏" / "蒸馏中心.md"
 TODAY = datetime.date.today()
 
 LEVEL_ORDER = {"🔴严重逾期": 0, "🟡已逾期": 1, "🔵即将到期": 2}
@@ -128,7 +128,7 @@ def latest_expected(rows):
         return {}
     # 从 rows 反推类型表后走公共口径（归一化在 core 内完成·此处不自行分桶）
     cfg = {typ: {"match": typ, "normalize": True} for (_m, typ, _n) in rows}
-    center = "[记忆共享中心]" / "记忆蒸馏" / "蒸馏中心.md"
+    center = Path('[记忆共享中心]') / "记忆蒸馏" / "蒸馏中心.md"
     try:
         content = center.read_text(encoding="utf-8")
     except OSError:
@@ -149,15 +149,14 @@ def latest_expected(rows):
 
 
 def classify(nxt: datetime.date):
-    """三级阈值（patrol.md §2）：🔵提前3天 / 🟡逾期1-7天 / 🔴逾期>7天。"""
-    days = (nxt - TODAY).days
-    if days < 0:
-        overdue = -days
-        level = "🔴严重逾期" if overdue > 7 else "🟡已逾期"
-        return level, f"逾期{overdue}天"
-    if days <= 3:
-        return "🔵即将到期", ("今天到期" if days == 0 else f"{days}天后到期")
-    return None, None
+    """三级阈值（patrol.md §2）·口径真源 = distill_due_core.classify（FU-81 丙方案落地 2026-10-10）。
+
+    原实现为本文件私有一份，与 core.classify 同构（同一逻辑双写）——
+    口径=分桶+取行+阈值三要素，10-02 v8.3.1 只上了前两者，阈值是残留的结构欠账
+    （改一处阈值另一处必漂）。本次落地=三要素全链单真源；
+    dashboard（awaken_health_dashboard 经 ddc.classify）自动随本行同口径。
+    """
+    return _core().classify(nxt.isoformat(), TODAY)
 
 
 def main():

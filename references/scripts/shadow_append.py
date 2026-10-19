@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # TRUTH_OF: 脚本中心/shadow_append.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """shadow_append.py v1.0.0 — SHADOW.md 合法写入口（解锁→段内插入→回锁·append-only 语义保护）
@@ -23,6 +19,10 @@ except Exception: pass
 退出码：0 成功 | 2 输入校验拒绝（未触碰文件） | 3 IO/回锁失败（大声报错+手动恢复指引）
 设计约束：纯 stdlib 零依赖（铁律-014 写入工具安全；坏不得堵死最后的人工通道）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import datetime
 import os

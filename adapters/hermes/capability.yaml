@@ -39,7 +39,7 @@ system_file_anchors:
 
 # ── 运行路径语义键声明（2026-10-02 · 插件/脚本的唯一取路径入口）────────
 #
-# 为什么需要：16 个插件各自硬编码**作者侧开发工具路径**（实测 16/16）。
+# 为什么需要：18 个插件各自硬编码**作者侧开发工具路径**（2026-10-02 实测 16/16·当时 16 件）。
 # 包若照抄 ⇒ 其他用户装完全静默 fail-open。解法＝安装器把本机真实落点写进
 # `<配置根>/doenglingz/runtime_paths.json`，插件只调 `rp("<键>")` 取值。
 #
@@ -123,23 +123,33 @@ hooks_surface:
   # ⚠️ 插件名 = `~/.hermes/plugins/` 与包内 `adapters/hermes/plugins/` 的**目录实名**
   #    （首版曾去掉 buluotuo- 前缀 + 凭空造 crossend_check ⇒ 被 verify「插件未安装」当场逮出——
   #      声明不跑一遍就是想象出来的，这是本段的教训）
-  delivered:                  # 已装且带 provides_hooks 的插件（端实盘 16/16·非推断）
-    - {plugin: route-inject-prompt-hook,     events: [UserPromptSubmit]}
-    - {plugin: route-audit-hook,             events: [Stop]}
-    - {plugin: skills-relink-hook,           events: [UserPromptSubmit]}
+  delivered:                  # 已装且带 provides_hooks 的插件（端实盘 18/18·非推断）
+                            # ⚠️ 2026-10-10 事件名口径订正：此前写 UserPromptSubmit/Stop 是
+                            #   **WorkBuddy 口径**，Hermes `VALID_HOOKS`（hermes_cli/plugins.py
+                            #   L109-137）里**没有这两个名字** ⇒ 声明用别端口径冒充本端
+                            #   （capability 自己的注释已警告过这属"声明造假"）。
+                            #   events 一律改为插件 `plugin.yaml` 里 provides_hooks 的真名；
+                            #   并由 install_scripts.py 的 verify 逐件比对（不再只对插件名）。
+    - {plugin: route-inject-prompt-hook,     events: [on_session_end]}
+    - {plugin: route-audit-hook,             events: [on_session_end]}
+    - {plugin: skills-relink-hook,           events: [on_session_end]}
     - {plugin: doenglingz-twin,              events: [pre_llm_call, post_llm_call], note: "分身插件·恒驻核+注入+守护三通道"}
-    - {plugin: buluotuo-session-title-hook,  events: [UserPromptSubmit]}
-    - {plugin: buluotuo-crossend-guard,      events: [Stop]}
-    - {plugin: buluotuo-skill-health-guard,  events: [Stop]}
-    - {plugin: hermes-plugin-health,         events: [Stop]}
-    - {plugin: guard-scheduler-hook,         events: [Stop], note: "守卫调度器"}
-    - {plugin: buluotuo-closeout-guards,     events: [Stop], note: "收尾族"}
-    - {plugin: buluotuo-readonly-guards,     events: [Stop], note: "只读守卫族"}
-    - {plugin: buluotuo-pretool-guards,      events: [pre_tool_call], note: "pre_tool_call 面·三道门"}
-    - {plugin: buluotuo-prompt-inject-hook,  events: [UserPromptSubmit]}
-    - {plugin: buluotuo-tsl-hook,            events: [UserPromptSubmit], note: "TSL 树/回执"}
-    - {plugin: buluotuo-stop-hook,           events: [Stop]}
-    - {plugin: release-guard-hook,           events: [Stop], note: "发布门禁"}
+    - {plugin: buluotuo-session-title-hook,  events: [pre_llm_call]}
+    - {plugin: buluotuo-crossend-guard,      events: [on_session_end]}
+    - {plugin: buluotuo-skill-health-guard,  events: [on_session_end]}
+    - {plugin: hermes-plugin-health,         events: [on_session_end]}
+    - {plugin: guard-scheduler-hook,         events: [on_session_end]}
+    - {plugin: buluotuo-closeout-guards,     events: [post_llm_call]}
+    - {plugin: buluotuo-readonly-guards,     events: [on_session_end]}
+    - {plugin: buluotuo-pretool-guards,      events: [pre_tool_call]}
+    - {plugin: buluotuo-prompt-inject-hook,  events: [pre_llm_call]}
+    - {plugin: buluotuo-tsl-hook,            events: [pre_llm_call, post_llm_call], note: "TSL 树/回执"}
+    - {plugin: buluotuo-stop-hook,           events: [post_llm_call]}
+    - {plugin: release-guard-hook,           events: [pre_tool_call], note: "发布门禁"}
+    # ── 2026-10-10 补登 2 件（此前漏登·capabilities.transform_tool_result: true
+    #    正点名前者 ⇒ 键声明为真而交付面查无此件 = 自相矛盾）──
+    - {plugin: buluotuo-transform-gate,      events: [transform_tool_result, transform_llm_output], note: "transform 层洗作者路径/测试噪声"}
+    - {plugin: buluotuo-verify-gate,         events: [pre_verify], note: "改代码后 verify 前闸"}
   gaps:
     - {note: "本端注册面=插件目录·不设 gaps；插件缺失由 plugin-health 守卫显形，不在此重复声明"}
 

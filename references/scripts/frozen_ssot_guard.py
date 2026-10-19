@@ -28,13 +28,15 @@ from datetime import date
 #   ⇒ 冻结段门卫**从建立起从未成功校验过**，且每次报「工作区文件不存在」
 #   ——把「冻结段被改」判定完全架空（与 verify_skill_version_hook 同款：伪装成有效）。
 #   正解=记忆根走 runtime_paths 声明（⛔ 不回落默认值·回落=静默失效·键哲学 §3.5）
-#   兜底=脚本自身所在目录的上级（本件在 <MC>/开发工具/）⇒ 无声明也能定位。
+#   兜底=脚本自身所在目录的上级（历史位 <MC>/开发工具/·现位 <MC>/脚本中心/守卫/·两级推导均=<MC>）⇒ 无声明也能定位。
 def _resolve_mc():
     """记忆中心根：runtime_paths 声明优先·自推导兜底（⛔ 不回落 $HOME）。"""
     try:
         import importlib.util as _ilu
-        _rp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "runtime_paths.py")
-        if os.path.isfile(_rp):
+        _d = os.path.dirname(os.path.abspath(__file__))
+        # 2026-10-15 批A：本件已归 <MC>/脚本中心/守卫/·兄弟声明件在 <MC>/脚本中心/ 根（候选序·步2②判据应用·原同目录引用为预存静默降级）
+        _rp = next((c for c in (os.path.join(_d, "runtime_paths.py"), os.path.join(_d, "..", "runtime_paths.py")) if os.path.isfile(c)), None)
+        if _rp and os.path.isfile(_rp):
             _sp = _ilu.spec_from_file_location("_rtp_amb", _rp)
             _m = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_m)
             _v = _m.get("archive_root")

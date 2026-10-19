@@ -14,7 +14,7 @@ install_script_center.py — 布洛陀「安装脚本体系」命令（端用户
 ----------
 1. 脱敏接通：复制即跑 deident_rules.deident()（优先复用发布管线 SSOT，否则内联最小集兜底）。
    规则：~/ → ~/ 、你→用户、用户名→用户名、某友人分叉→某友人分叉。
-2. 动态路径解析：脚本内 `~/个人AI档案/<dir>/` 互调引用 → `<root>/<dir>/`（root=安装位置）。
+2. 动态路径解析：脚本内 `[记忆共享中心]/<dir>/` 互调引用 → `<root>/<dir>/`（root=安装位置）。
    使端用户机器上脚本间互调指向其 脚本中心，而非作者家目录。
 3. 跨平台过滤：Windows 跳过无 win_entry 的 .sh（无 bash 入口）。.py 跨平台。
 4. 幂等台账：install_ledger.json 记录每条的【源 sha】。重跑以源 sha 是否变化为准——
@@ -41,7 +41,7 @@ install_script_center.py — 布洛陀「安装脚本体系」命令（端用户
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import os
 import re
@@ -256,9 +256,9 @@ def main():
         d = os.path.dirname(p)
         prefixes.add(d)
         # 2026-09-17 童灵根治：运行时状态目录（.guard/ .patrol/ .snapshots/ 配置 json）与脚本同族
-        # 但**不在 scripts/ 之下**，引用形式为 `~/个人AI档案/<族根>/.guard/...` ⇒ 仅有一级 dirname
+        # 但**不在 scripts/ 之下**，引用形式为 `[记忆共享中心]/<族根>/.guard/...` ⇒ 仅有一级 dirname
         # 前缀不命中重写 → 端用户盘上会按旧绝对路径 mkdir 出**作者侧目录结构**（实测 6 件在册硬依赖）。
-        # 补「直接父级」一级覆盖。⛔不加 `个人AI档案` 本身——那会把 `~/个人AI档案/<任意>` 整体
+        # 补「直接父级」一级覆盖。⛔不加 `个人AI档案` 本身——那会把 `[记忆共享中心]/<任意>` 整体
         # 重写到脚本中心，误伤记忆中心文件（变更日志/自定义层 USER.md 等）。
         parent = os.path.dirname(d)
         if parent.startswith("个人AI档案/") and parent != os.path.expanduser("~"):
@@ -305,7 +305,7 @@ def main():
             text = f.read()
         text = deident(text, rel)
         # 长前缀优先：短前缀先替换会把长前缀的尾巴吃掉（2026-09-17 童灵）
-        # 形态覆盖 ①`~/个人AI档案/<d>` ②`~/个人AI档案/<d>` ③`~/个人AI档案/<d>`
+        # 形态覆盖 ①`[记忆共享中心]/<d>` ②`[记忆共享中心]/<d>` ③`[记忆共享中心]/<d>`
         # （shell 变量式——实证 route_*_patrol.sh 的 KB_SCRIPTS 用 $HOME/ 形式，只认 `~/` 会漏）
         for d in sorted(prefixes, key=len, reverse=True):
             repl = (os.path.join(root_abs, center_rel(d)) or root_abs).replace("\\", "/")

@@ -1826,13 +1826,28 @@ def eval_backup_gate(skill_path):
     skill_name = os.path.basename(os.path.dirname(skill_path))
     if not os.path.isdir(BACKUP_DIR):
         return 0.0, {'skill': skill_name, 'backups': 0, 'note': '备份目录不存在'}
+    # v4.18.7 P2改造（B-5 Agent B N7实证：子串匹配让 clock-loop 的
+    #   triwich-integration.md_*.bak 在评估 triwich 时顶备份拿满分=盲区）：
+    #   归属两级判据——strong=文件名以 `{skill}_`/`{skill}__` 前缀显式归属（P1 新规范形）；
+    #   weak=旧平铺形首段(按'_'切)==被评树实存文件名（跨skill同名SKILL.md为已知过渡局限·form字段显数）。
     try:
-        matches = [f for f in os.listdir(BACKUP_DIR)
-                   if skill_name.lower() in f.lower()]
+        names = os.listdir(BACKUP_DIR)
     except Exception as e:
         return 0.0, {'skill': skill_name, 'backups': 0, 'warning': f'备份目录读取失败: {e}'}
-    return (1.0 if matches else 0.0), {
-        'skill': skill_name, 'backups': len(matches)}
+    tree_files = set()
+    for _r, _d, fs in os.walk(os.path.dirname(skill_path)):
+        tree_files.update(fs)
+    strong = weak = 0
+    for f in names:
+        if '.bak' not in f.lower():
+            continue
+        if f.startswith(skill_name + '_') or f.startswith(skill_name + '__'):
+            strong += 1
+        elif f.split('_')[0] in tree_files:
+            weak += 1
+    n = strong + weak
+    return (1.0 if n else 0.0), {
+        'skill': skill_name, 'backups': n, 'form': f'strong={strong}/weak={weak}'}
 
 
 # ── 2026-08-10 反哺：声明-事实核对（报告P0#1·同源自欺盲区）──
@@ -1931,7 +1946,15 @@ def eval_version_grading_advisory(skill_path):
     y_or_x = not z_only
     feature_words = ('新增', '新功能', '新步骤', '新机制', '新检查', 'Phase', '工作流')
     fix_only_words = ('修复', '修正', '补', '同步', 'typo', '漂移')
-    has_feature = any(w in body for w in feature_words)
+    # v4.18.7 P4：否定语境豁免（B-5 N6实证："六工作流功能零变更"命中"工作流"=误报——
+    #   advisory 若高频误报即"狼来了"，判级粗筛可信度反噬）。命中词后12字窗口内出现否定形不计。
+    _NEG = ('零变更', '无变更', '未变更', '不变更', '零改动', '功能零', '零新增', '无新增', '未新增', '不新增')
+    def _hit(w):
+        for m in re.finditer(re.escape(w), body):
+            if not any(neg in body[m.end():m.end()+12] for neg in _NEG):
+                return True
+        return False
+    has_feature = any(_hit(w) for w in feature_words)
     only_fix = (not has_feature) and any(w in body for w in fix_only_words)
     if z_only and has_feature:
         return (f"疑似判级偏低: v{'.'.join(map(str, v_old))}→v{'.'.join(map(str, v_new))} 仅升Z，"
@@ -2882,7 +2905,12 @@ def _check_dependencies(main_content, skill_dir):
         if not dep_path:
             # C-A1（L3反哺·2026-08-12）：path 字段缺失时按本机技能配置目录约定解析——
             # 实证：sucair H1 幻影版本（shall-we-talk 声明 4.5.0 vs 磁盘 1.5.2）因依赖条目无 path 字段整条漏检
-            cand = os.path.join(os.path.expanduser('[记忆共享中心]'), '技能配置', dep_name)  # v1.7.1参数化:原写死默认目录名,自定义名用户依赖解析漏检
+            # v1.7.2 断根（2026-10-10）：原式只试发布态占位符 ⇒ 作者机 expanduser 不展开=相对路径 ⇒ isdir 恒假 ⇒ 依赖漏检静默。
+            # 改多候选：本机真名优先，占位符兜底（保留自定义记忆中心名用户的包内语义）。
+            cand = next((c for c in (
+                os.path.join(os.path.expanduser('[记忆共享中心]'), '技能配置', dep_name),
+                os.path.join(os.path.expanduser('[记忆共享中心]'), '技能配置', dep_name),
+            ) if os.path.isdir(c)), os.path.join(os.path.expanduser('[记忆共享中心]'), '技能配置', dep_name))  # v1.7.1参数化:原写死默认目录名,自定义名用户依赖解析漏检
             dep_path = cand if os.path.isdir(cand) else None
         if dep_path:
             dep_path = dep_path.replace('~', os.path.expanduser('~'))
@@ -3093,9 +3121,19 @@ def eval_version_uniform(skill_path):
                 # （awaken/daily-buddy/system-logger·漏改即模式F）与独立版本体系（clock-loop tests v1.0·设计如此）。
                 # 机械无法区分两者→亮灯人判：从"完全盲"（三度复发根因）变"warnings可见"。
                 if main_ver and normalize_ver(tv) != normalize_ver(main_ver):
-                    result['warnings'].append(
-                        'tests/%s 头部版本戳 %s ≠ SKILL.md 版本 %s（L3反哺①·模式F亮灯：跟随主版本形态的Skill此处=漏改信号，独立体系形态可忽略）' % (fname, tv, main_ver)
-                    )
+                    # v4.18.1（L3 反哺·成长箱 C-20 承接）：tests 戳若是「最近一次实校对时点」语义（文件内含
+                    #   版本戳语义声明注记），不一致不是漏改信号——上一版把两种语义混成一条亮灯，导致每轮
+                    #   对 growth-box 重复报同一无效黄灯（消耗注意力且不改变判定，且诱导"为空刷版本号"造假同步）。
+                    declared = any(k in head for k in ('版本戳语义声明', '实校对时点', '不随主版本空刷'))
+                    if declared:
+                        result['warnings'].append(
+                            'tests/%s 版本戳 %s ≠ SKILL.md %s（该文件带「版本戳语义声明」注记＝戳记最近一次实校对时点，'
+                            '非漏改信号，无需处理；仅当触发词集合本身有变更而未重校对时才需重跑校对并刷戳）' % (fname, tv, main_ver)
+                        )
+                    else:
+                        result['warnings'].append(
+                            'tests/%s 头部版本戳 %s ≠ SKILL.md 版本 %s（L3反哺①·模式F亮灯：跟随主版本形态的Skill此处=漏改信号，独立体系形态可忽略）' % (fname, tv, main_ver)
+                        )
 
     # 5. 附加文件版本扫描（仅供参考，不产生FAIL——固化引用/模板有自己的版本号体系）
     #    只记录到 versions 供排查，不加入 mismatches

@@ -32,9 +32,10 @@ AI 每轮**只读** `SOUL.md`(5767字) + `memories/MEMORY.md`——全项目唯�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import argparse
 import io
 import json
@@ -45,15 +46,35 @@ import sys
 import tempfile
 import time
 
-__version__ = "v1.1.0"
+__version__ = "v1.2.0"   # v1.2.0(2026-10-09·童灵根治)：MANIFEST/OUT 改经 manifest_locator 解析
 DEV = os.path.expanduser("[记忆共享中心]/脚本中心")
 SC = os.path.expanduser("[记忆共享中心]/脚本中心")
-MANIFEST = os.path.join(DEV, "scripts_manifest.json")
+# 🔧 2026-10-09 根治「派生副本找不到 manifest」一族病（假红噪音·一天三报）：
+#    原式 MANIFEST = os.path.join(DEV, "scripts_manifest.json") 假定 manifest 与本
+#    脚本同目录；而 manifest 物理真源在 `开发工具/`（发布链 SSOT·⛔不可搬）⇒
+#    脚本中心侧派生副本解析到不存在的 sibling ⇒ --check 抛 FileNotFoundError ⇒ rc=1。
+#    ✅ 改经共用定位器 manifest_locator（自身→上级→runtime_paths→作者态兜底）。
+#    ⚠️ Find-Loud 纪律仍归 main()：定位失败须显形报错，⛔不静默当成「0 条」。
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from manifest_locator import find_manifest, ManifestNotFound
+    try:
+        MANIFEST = find_manifest(__file__)
+    except ManifestNotFound:
+        MANIFEST = os.path.join(DEV, "scripts_manifest.json")   # 交 main() 指名报错
+except ImportError:
+    MANIFEST = os.path.join(DEV, "scripts_manifest.json")       # 定位器缺失 ⇒ 原式兜底
+# ⚠️ OUT（指针卡落点）保持 `DEV`（= 脚本中心）语义·⛔不改成 __file__ 同级：
+#    历史真实落点是 `开发工具/GUARD_INDEX.md`（Oct-4 生成·卡内自引路径指向它）。
+#    改落点 = 第二次搬迁 ⇒ 旧位置留死文件、新位置要人重新发现 ⇒ 违背最小方案。
+#    ⇒ 本机两种调用路径（脚本中心直跑 / 开发工具软链跑）DEV 都是脚本中心，
+#      与历史实际生成落点（开发工具）不同——此差异由「盘上只一份卡」事实兜住：
+#      卡内容与 manifest 逐字节比对（--check）不受落点影响。
 OUT = os.path.join(DEV, "GUARD_INDEX.md")
 TEMP_PAT = re.compile(r"^(_cards_|_gen_round|_gen_subbatch|_step\d|_gen_20|__init__|_batch)")
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

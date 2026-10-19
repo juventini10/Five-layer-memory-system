@@ -18,7 +18,7 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import importlib.util
@@ -159,8 +159,10 @@ def s7_conflict_not_failure():
         os.makedirs(src)
         _mk_skill(src, "x")
         # 直接验证退出码逻辑：errors 为空 ⇒ 不 sys.exit(1)
+        # v0.3 配套(2026-10-10)：退出码判定随 run_one 下沉·断言跟语义主体走(绑 main 位=实现耦合)
         import inspect
-        src_txt = inspect.getsource(sr.main)
+        _fn = getattr(sr, "run_one", None) or sr.main
+        src_txt = inspect.getsource(_fn)
         _t("退出码只看 errors 不看 conflicts",
            "if not ARGS.dry and errors:" in src_txt and "and conflicts" not in src_txt)
     finally:

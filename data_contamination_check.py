@@ -15,9 +15,11 @@ data_contamination_check.py v2 — 布洛陀记忆系统『数据污染检测与
    条目哈希不同，数学上零误删。
 2. 尊重作者隐私 → 参照物是不可逆哈希（扁平指纹池，无原文、无计数结构）。
    普通人打开只见乱码，无法读取/还原任何内容。
-3. 两类文件区别对待：
+3. 文件分类区别对待：
    - 有用户手写记录的（SHADOW / 未知未知）→ 精准删样例块、留用户条目
-   - 纯 tracker 自动生成的展示（成就系统）→ 重置为标准模板，tracker 下次重算
+   - 纯 tracker 自动生成的展示（成就系统）→ runtime 域·⛔不整体重置（B5 死循环，见下）；
+     仅对「历史发布包曾带出的作者泄露行」做 surgical 精准清除（见 scrub_achievement_legacy）；
+     出包干净度主责在 mirror 投影脱敏 + A7 隐私门禁（release_privacy_guard）。
 
 用法
 ----
@@ -60,6 +62,71 @@ except Exception:
 # 若日后确有样例随包，须：① 放包内公开样例目录 ② 用具体件名列此 ③ 池从中立源生成。
 TARGETS = []
 
+# ── 成就存量泄露行精准清除（2026-10-13·隐私红线·用户令「只清我不清用户」）──────
+# 历史发布包曾把作者成就个人数据（书名/✅已完成/达成日期/概念碰撞LOG）随包带出。
+# 已知作者泄露行的不可逆 SHA256 行级哈希池：删哈希==该行；用户自录行内容不同→哈希不同→零误删。
+# ⛔不并入 TARGETS（2026-10-03 no-op 根治·勿回退）。生产机闸护作者自己的成就（真数据不清）。
+ACHIEVE_LEGACY_HASHES = frozenset({
+    "04ce256f2a332ae75402300ad1455245b84f3dae2a02828e681d64efc9b4c286",
+    "061ae509d97f1a63a7ad04676f72fdf29d13acc3c3b17ccac40462d0624ae007",
+    "1e1f3b3ac1d1223725915596510ac81f25d8aefbc5f1e0ae65e4ff22b396ddc7",
+    "33af19bc119e783a58cb9c1e5c7a624bd9cda9366cc3c7a0649077ddd880d92d",
+    "3576d8fa32cdaaf46eaf5dbbd22c0fcc5d1174057771f05b76d8abe4eafd7020",
+    "388558233bf53f158da4fa266953d39ca6e361d48611cb647b4005471b04be32",
+    "4d726d6404b58120432dc9ac9241dfcb4981421e59f89802d5092e11522fe580",
+    "52eca83f8ef77377aebe30d988a5ef7ff903d36d7ab7d1e616df2b951c4fc439",
+    "54bf9e8399bdd907ad10f67b424aea4a8697968693f8d17279bb8f632219cc85",
+    "5e10ec2d4b46a8929acc02d24f0b0c5cd2121415ac8b2f69fbd1570aa7dc0312",
+    "7dc2c18773919d501e2f0c112cf1e045a56bf404b5e589b308e3d48139fdd748",
+    "7fad85f7bb880e64a7793a6ad6caa1da14e987fbcbfe0a7a1818c668ff11941e",
+    "80d6d7b2643201e9aa52b259f580a328be071c3d8872aab3f7ba782ed3f5478d",
+    "87c140317fbf62fc6f7f26016eaeb9e4bfeee2e07fa630081e336ebe235c3034",
+    "8979e8e5b1fdba7cf8bb4e896f894ebb8b9842e1f1ecf8b8f4b020c2bd6a2793",
+    "8ed0e0daaadc513468ea7f3f01328e10497d9b63dc3acfc89893e699b55f5b62",
+    "9118d57e92c626e31bb5480b5252ee74551d6c3332f429189ef62247e0a65cf7",
+    "920b2a27cbf39bdca6fc17c4ca78634fcc7d5ccd7118f2b72e73e283eaa374c4",
+    "a294b06bfa39447d443da4683c03d5039c9e5cb4677c3979480d072a02af63d8",
+    "b78af28ba089048983fcbe63e2cd41cd6fab6f0df4a5cbed1a60d886caeb0967",
+    "c0fd8f64f7b9370543573e586f86e7d1885870968992faa8e6b92568cbfd916c",
+    "cbc1a71d1ff83a9cca043af2e5ff4a2b43020e8f31f2dd9d0dc5514ac2add061",
+    "e087cbbbe5f6f07349f7dfc1df87a9bd9d2fbf734b6767c6383ba409885d8343",
+    "f41fd26898bb7d4dcb90fff2b4d2aeec4209f09202d5a36f20cdba9cadf8ea5c",
+    "fbbfb55743049324aef538646f9a354284ba434e8f9d76e43ce679299c0283e5",
+    "fbf822d28a0375a87b6ec026ec1877fd779989b04e3eb3ae79018444b02a4de2",
+})
+# C31 声明：本路径＝作者侧旧包标记（生产机有该目录才命中）；端用户机器恒不存在属预期，
+#   已登记 personal-path-whitelist.json（唯一登记处）——门禁长期共账，⛔ 另开豁免口。
+_ACH_LEAK_MARKER_DIR = os.path.expanduser("~/个人AI档案/发布库/布洛陀-安装包-备份版")
+
+def _ach_h(t):
+    return hashlib.sha256(chr(10).join(ln.rstrip() for ln in t.splitlines() if ln.strip()).encode(chr(117)+chr(116)+chr(102)+chr(45)+chr(56))).hexdigest()
+
+def scrub_achievement_legacy(memory_root, apply, force_producer=False):
+    ad = Path(memory_root) / "成就系统"
+    if not ad.is_dir():
+        return 0
+    if apply and not force_producer and os.path.isdir(_ACH_LEAK_MARKER_DIR):
+        print("  info 成就存量清除：生产机检测作者侧旧包，跳过 apply（作者成就=真数据，--force-producer 强制）")
+        return 0
+    total = 0
+    for p in sorted(ad.glob("*.md")):
+        try:
+            lines = p.read_text(encoding="utf-8").splitlines(keepends=True)
+        except OSError:
+            continue
+        kept = [ln for ln in lines if not (ln.strip() and _ach_h(ln) in ACHIEVE_LEGACY_HASHES)]
+        removed = len(lines) - len(kept)
+        if removed:
+            total += removed
+            print("   %s: 命中作者泄露行 %d 条 %s" % (p.name, removed, "(已删.bak)" if apply else "(dry-run)"))
+            if apply:
+                if not os.access(p, os.W_OK):
+                    continue
+                p.with_suffix(p.suffix + ".pre-achscrub.bak").write_text("".join(lines), encoding="utf-8")
+                p.write_text("".join(kept), encoding="utf-8")
+    return total
+
+
 DIGIT_BLOB = re.compile(r"[0-9]{20,}")
 ENV_LINE = re.compile(r"^(\s*environments:\s*)\[[^\]]*\]", re.MULTILINE)
 
@@ -78,6 +145,9 @@ def _hash(text: str) -> str:
 #   比对 → 重置 → tracker 再填 → 死循环（群友实锤）；结构比对 → 抹掉用户结构演进。
 #   故 reset 模式整体废除，runtime 件只查存在性·永不重置——包内模板干净度归发布
 #   门禁（pkg_cleanliness/check_package_health）管，装机后污染检测只管 surgical 样例块。
+# 【2026-10-13 补·隐私红线】上述「永不重置」指整文件 reset；对**已知作者泄露行**的 surgical
+#   行级哈希清除（scrub_achievement_legacy·见 ACHIEVE_LEGACY_HASHES）是本裁决的窄例外——只删哈希==
+#   作者确切泄露行、用户自录行哈希不同→零误删、生产机闸护作者自己成就，与「不误删用户」一致。
 
 
 def split_blocks(text: str, entry_start):
@@ -280,7 +350,10 @@ def main():
     hits = do_scan(Path(os.path.expanduser(a.memory_root)),
                    Path(os.path.expanduser(a.fingerprints)), tr, a.apply,
                    force_producer=a.force_producer)
-    sys.exit(1 if (hits and not a.apply) else 0)
+    ach = scrub_achievement_legacy(os.path.expanduser(a.memory_root), a.apply, force_producer=a.force_producer)
+    if ach:
+        print("  scrub 成就存量泄露行 %s %d 条（用户自录行完整保留）" % (("已清除" if a.apply else "命中待清"), ach))
+    sys.exit(1 if ((hits or ach) and not a.apply) else 0)
 
 
 if __name__ == "__main__":

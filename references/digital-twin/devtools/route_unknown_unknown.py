@@ -189,6 +189,13 @@ def mark_routed(text: str):
 
 
 def build_entry(index: int, date: str, description: str) -> str:
+    # 写侧止漏（2026-10-10·悬置清账专项§待推进2）：多行 description 曾直接内插单行
+    # f-string，首个换行即击穿 `- 毛坯描述:` 字段契约——10-06 六条 `**` 占位条目实证
+    # （正文溢出到字段外，分诊工具报「形态违规」，见 悬置区分诊报告-2026-10-10.md §四）。
+    # 修法=首行后各非空行缩进 2 空格续行（markdown 同列表项，§1.6 冻结 schema 字段名零改动；
+    # 读侧配对=suspend_zone_triage.field() 折叠续行）。空行丢弃防块断裂。
+    lines = [ln.strip() for ln in description.strip().splitlines() if ln.strip()]
+    desc_block = "\n  ".join(lines) if lines else "(空)"
     return (
         f"### 残差#{index:03d} · {date}\n"
         f"- 触发: T5\n"
@@ -196,7 +203,7 @@ def build_entry(index: int, date: str, description: str) -> str:
         f"- 来源: 对话\n"
         f"- 记录者: AI\n"
         f"- 状态: 悬置(未闭合)\n"
-        f"- 毛坯描述: {description.strip()}\n"
+        f"- 毛坯描述: {desc_block}\n"
         f"- 显形: (待月报回看)"
     )
 

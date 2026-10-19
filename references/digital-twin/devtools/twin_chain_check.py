@@ -65,18 +65,30 @@ date: 2026-01-01
 """
 
 
-def _child_env():
+def _child_env(sandbox_home=None, ailib=None):
     """Windows 子进程 UTF-8 加固（2026-10-07 clock-loop 真机反哺）：子脚本中文 print
-    在 cp1252 控制台下 UnicodeEncodeError 崩溃 ⇒ 透传 UTF-8 环境强制走 utf-8 编码。"""
+    在 cp1252 控制台下 UnicodeEncodeError 崩溃 ⇒ 透传 UTF-8 环境强制走 utf-8 编码。
+
+    路径硬隔离（2026-10-18 Loop轮·你批「修」）：子脚本族经 expanduser("~")/真实 HOME
+    解析卡库路径（regen L13 实锤），继承调用方 HOME=作者机直跑会写坏真库 INDEX.md
+    （实证：2026-10-17 23:10 K008 行被沙箱读数打坏·git 复原）。沙箱自证=把 HOME 与
+    KB_AILIB_ROOT 钉进沙箱，不靠调用方外部注入——「零触真实卡库」从宣称变物理。"""
     import os as _os
     e = dict(_os.environ)
     e["PYTHONIOENCODING"] = "utf-8"
     e["PYTHONUTF8"] = "1"
+    if sandbox_home:
+        e["HOME"] = str(sandbox_home)
+        e["USERPROFILE"] = str(sandbox_home)
+    if ailib:
+        e["KB_AILIB_ROOT"] = str(ailib)
+        e["KB_CONCEPTS_ROOT"] = str(os.path.join(os.path.dirname(str(ailib)), "概念卡"))
     return e
 
 
 def _run(py: str, script: str, cwd: str):
-    """返回 (rc, 合并输出尾部)。"""
+    """返回 (rc, 合并输出尾部)。⚠️ 现零调用者=历史遗留；新调用点 MUST 改走
+    _child_env(sandbox_home=..., ailib=...) 全参形态——无参=不钉 HOME=昨天事故继承路径（2026-10-18 Agent B审查⑥）。"""
     try:
         p = subprocess.run([py, script], cwd=cwd, capture_output=True, text=True,
                            timeout=180, env=_child_env(), encoding="utf-8", errors="replace")
@@ -115,6 +127,7 @@ def main():
         # 沙箱布局：安装态判定依赖「脚本中心」祖先（见 _paths.py）；卡库落 知识库/AI学习库/
         ailib = os.path.join(tmp, "知识库", "AI学习库")
         os.makedirs(ailib, exist_ok=True)
+        os.makedirs(os.path.join(tmp, "知识库", "概念卡"), exist_ok=True)  # ④配套：CONCEPTS 覆写目标在沙箱内真实存在
         with open(os.path.join(ailib, SEED_CARD_NAME), "w", encoding="utf-8") as f:
             f.write(SEED_CARD_BODY)
 
@@ -132,7 +145,7 @@ def main():
             try:
                 p = subprocess.run([py, script] + extra, cwd=scripts,
                                    capture_output=True, text=True, timeout=180,
-                                   env=_child_env(), encoding="utf-8", errors="replace")
+                                   env=_child_env(sandbox_home=tmp, ailib=ailib), encoding="utf-8", errors="replace")
                 rc = p.returncode
                 tail = ((p.stdout or "") + (p.stderr or "")).strip().splitlines()[-2:]
             except subprocess.TimeoutExpired:

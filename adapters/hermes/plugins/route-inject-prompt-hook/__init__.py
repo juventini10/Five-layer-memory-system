@@ -51,11 +51,16 @@ try:
             import os as _o2
             return _o2.path.join(_o2.path.sep, "nonexistent",
                                  "__BULUOTUO_ABSENT__:%s" % key)
-except Exception:            # ⛔ 不静默：解析器不可达时留痕交守卫报
-    rp = None
-
-    def _cand(key, *parts):
-        return None
+except Exception as _rp_exc:   # ⛔ 解析器不可用 = 安装不完整·必须显形（2026-10-09 根治）
+    # 此前 rp=None 会让下游模块级 rp(...) 报 'NoneType' object is not callable
+    # ——完全不指向根因（session-title hook 失效排查的教训）。改为明确抛错。
+    raise RuntimeError(
+        "布洛陀运行路径解析器（runtime_paths）不可用：%s: %s\n"
+        "  ⇒ 运行路径声明（runtime_paths.json）缺失/损坏，或解析器不在探测路径。\n"
+        "     修复：运行安装器重新生成，或确认 doenglingz/runtime_paths.{py,json} 就位。\n"
+        "  ⛔ 不回落 rp=None——否则下游只报 NoneType（不指向根因·排查成本极高）。"
+        % (type(_rp_exc).__name__, _rp_exc)
+    ) from _rp_exc
 # ── /BULUOTUO-PATH-PARAM ──────────────────────────────────────
 
 

@@ -118,7 +118,7 @@ def run_achievement_check():
     # 🔒 防漂移校验：achievement_tracker.py 必须是指向成就系统真源的软链
     # 单源架构：真源 = [记忆共享中心]/成就系统/scripts/achievement_tracker.py，daily-buddy 侧仅软链
     # 若被编辑器物化成实体副本 / 改指别处 → 立即报错退出，杜绝静默漂移（2026-08-02 修复）
-    _REAL_SRC = ("[记忆共享中心]/成就系统/scripts/achievement_tracker.py").resolve()
+    _REAL_SRC = (Path.home() / "[记忆共享中心]/成就系统/scripts/achievement_tracker.py").resolve()
     if not script_path.is_symlink():
         raise SystemExit(
             f"❌ 漂移告警：{script_path} 已物化为实体副本（非软链）。\n"

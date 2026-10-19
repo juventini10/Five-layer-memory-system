@@ -31,7 +31,7 @@ import sys
 
 # ─── 路径配置 ────────────────────────────────────────────────
 DIARY_DIR = Path.home() / "[日记仓库]/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = "[记忆共享中心]/成就系统"
+ACHIEVEMENT_DIR = Path.home() / "[记忆共享中心]/成就系统"
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
 # 优先用隔离 venv（已装 pyyaml），失败回退 bare python3
 VENV_PYTHON = "~/.workbuddy/binaries/python/envs/default/bin/python"

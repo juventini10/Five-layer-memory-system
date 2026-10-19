@@ -27,7 +27,7 @@ card_id_guard.py — AI学习库立场卡编号守卫（防撞号物理闸）
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import json
@@ -36,7 +36,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-KB_DIR = Path.home() / "[记忆共享中心]" / "知识库" / "AI学习库"  # 2026-10-04 13:2x 回滚模板逆向污染（原改动把作者路径净化式改写进生产文件致 str/str TypeError·真凶见施工单§11）
+KB_DIR = Path.home() / Path('[记忆共享中心]') / "知识库" / "AI学习库"  # 2026-10-04 13:2x 回滚模板逆向污染（原改动把作者路径净化式改写进生产文件致 str/str TypeError·真凶见施工单§11）
 # 状态文件按宿主端隔离（跨工具中立·v0.2）：各端各写自己的状态文件，互不干扰去重逻辑。
 # 宿主由环境变量 CARD_GUARD_HOST 指定（缺省 qoder-cn 兼容原挂载）；hooks 命令里传 env。
 import os as _os

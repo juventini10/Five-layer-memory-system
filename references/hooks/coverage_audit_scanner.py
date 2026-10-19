@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 # 件端覆盖矩阵扫描器 v0（试点：仅 ZCode 列实扫）·零副作用只读
 # 行全量三源: ①守卫编写规范§四注册表 ②04-跨端接入指南 Hook清单14件 ③scripts_manifest(路由/引擎/变换)
-import json, re, os
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
+import json, re, os, sys
 from datetime import datetime
 
 SCAN_TIME = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -73,7 +74,17 @@ for i in range(gstart + 1, len(guide_lines)):
     hook14.append({"raw": name, "name": clean, "line": i + 1, "retired": retired, "src": "Hook清单14"})
 
 # ---------- 源③ scripts_manifest（路由/引擎/变换）----------
-MAN = os.path.expanduser("[记忆共享中心]/脚本中心/scripts_manifest.json")
+# 🔧 2026-10-09 童灵根治：原式写死 `[记忆共享中心]/脚本中心/scripts_manifest.json`，
+#   而 manifest 物理真源在 `开发工具/`（发布链 SSOT·⛔不可搬）⇒ 本行 `json.load(open(MAN))`
+#   在派生副本侧直接 FileNotFoundError 崩栈（比静默失效好，但仍是路径基准分家病）。
+#   ✅ 改经共用定位器 manifest_locator（自身→上级→runtime_paths→作者态兜底）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from manifest_locator import find_manifest
+    MAN = find_manifest(__file__)
+except Exception as _e:
+    MAN = os.path.expanduser("[记忆共享中心]/脚本中心/scripts_manifest.json")
+    print("⚠️ manifest_locator 不可用（%s）·回退原式：%s" % (_e, MAN), file=sys.stderr)
 man = json.load(open(MAN))
 man_rows = []
 for s in man["scripts"]:

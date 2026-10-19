@@ -3,6 +3,14 @@
 """
 三明智结论块封口（triwich_seal v1.5.5）—— 阶段3 物理锁层 + 决策卡回访挂载
 
+v1.5.6（2026-10-17·WorkBuddy 端·皮叔令「发现的阻塞性缺陷按符合愿景的最优解根治」）：锁获取 EEXIST 双形态归一 + 释放不再静默。
+  根因：沙箱代理层（WorkBuddy sitecustomize._brokered_os_mkdir）把 host 侧 mkdir 的 EEXIST 重抛成
+  PermissionError，原 `except FileExistsError` 抓不到 ⇒ 异常穿透整链 + 已持锁无人释放（2026-10-17
+  09:35-09:52 实证：seal.log.lock / decision-room.md.lock 双残留，record 从第二次起必死，手工清锁 3 轮）。
+  修：_acquire_path_lock 改捕 OSError 后按 FileExistsError/errno==17/"EEXIST" 字面判存在性，非"已存在"类
+  错误照常 raise（不吞真故障）；_release_path_lock 失败改 stderr 告警（原 `except OSError: pass` 静默）。
+  实测：五场景单测 5/5（含代理层 PermissionError 归一、真故障不吞）+ 既有回归 33/33 + record 端到端零锁残留。
+
 v1.5.5（2026-09-21·R6 尾批）：单横线已知 flag 别名旁路封死（-tool 类一律确定性拒）+ 注释落点措辞逐字对应。
 
 v1.5.4+D18（2026-09-26·Qoder CN 童灵·⛔不跳版本号，同族 v1.5.x 多端共写·抢号即造新漂移）：verify 的「链尾会话≠当前会话」分支补**口径提示**——链尾键形如「端名:文本sha1前12」＝该跳由 record --text-file 封口，而 verify 未传同一文件时拿运行时会话 id 比对，两者永不可能相等，旧文案独指「可能被删除」会把审计者推向修一条根本没发生的删除。⛔判定逻辑与退出码一字未动（只加提示串）。实测判别力：真链 62 跳中 text-file 键形 58（触发提示）／sess_ 运行时段 4（不触发），正则 ^[^:]+:[0-9a-f]{12}$ 对两类零混淆。
@@ -91,7 +99,7 @@ v1.1.0（2026-09-04 跨工具通用改造）：
 - 自动检测当前工具的chat-history目录（AutoClaw/Qoder CN/WorkBuddy/Trae Work等）
 - 符合愿景"能通用的，就不要只绑定在一个工具上"（皮叔 2026-09-04 要求）
 - 优先使用环境变量TRIWICH_HIST_DIR，否则自动检测
-- 位置：从开发工具目录迁移到skill本体scripts/目录（~/[记忆共享中心]/技能配置/triwich/scripts/triwich_seal.py）
+- 位置：从开发工具目录迁移到skill本体scripts/目录（[记忆共享中心]/技能配置/triwich/scripts/triwich_seal.py）
 
 模式（对齐 verify_achievement_seal.py：盐+真实数据派生+独立校验器）：
 - record：从最新 chat-history 提取三明智完成签名+结论块段头 → 计算 seal 追加到哈希链日志
@@ -155,7 +163,7 @@ else:
 LOG_PATH = os.environ.get("TRIWICH_SEAL_LOG", LOG_PATH)
 # 决策卡台账（G2 回访闭环唯一 source）——环境变量仅测试隔离用
 DECISION_ROOM_PATH = os.environ.get("TRIWICH_DECISION_ROOM") or os.path.expanduser(
-    "~/[记忆共享中心]/技能配置/triwich/references/decision-room.md")
+    "[记忆共享中心]/技能配置/triwich/references/decision-room.md")
 
 # —— G2「机制回访」物理锚（v1.5.0·2026-09-18 Qoder CN·L2 裁决）——
 # 病灶：resolve 的 --mechanism 仅校验枚举，不校验「这张卡是否真由 followup 前置筛查发起过」
@@ -178,7 +186,7 @@ JSONL_SOURCES = [
 ]
 JSONL_ENABLED = True  # 测试隔离开关：monkeypatch 置 False 强制走老 load_latest_history 路径
 
-SIG_RE = re.compile(r'\[🧠\s*三明智\s*L[123][^\]]*[✅❌][^\]]*\]')
+SIG_RE = re.compile(r'\[🧠\s*三明智\s*L[123][^\]]*[✅🟡❌][^\]]*\]')  # v1.5.6: 🟡入列——SSOT 状态符号三态(✅/🟡/❌)原正则只认两态，🟡结论轮封不了口=审计证据缺(2026-10-12 实测)
 BLOCK_RE = re.compile(r'^## L[123][^\n]* 结果\s*$', re.M)
 
 
@@ -435,14 +443,29 @@ def _dr_lock_path():
 
 def _acquire_path_lock(lp, timeout_s=5.0):
     """路径级 mkdir 原子锁（v4.4.10·R2-seal分叉根治时泛化——DR/SEAL 两把锁同一实现，⛔不复制锁逻辑成第二本账）。
-    os.mkdir 各平台原子；持锁者崩溃由 30s stale 夺取兜底；超时 False=调用方 Fail-Closed。"""
+    os.mkdir 各平台原子；持锁者崩溃由 30s stale 夺取兜底；超时 False=调用方 Fail-Closed。
+
+    v1.5.6（2026-10-17·WorkBuddy 端·皮叔令「按符合愿景的最优解根治」）：EEXIST 双形态归一。
+    沙箱/宿主代理层（如 WorkBuddy sitecustomize 的 _brokered_os_mkdir）会把 host 侧 mkdir 的
+    EEXIST 重新抛成 **PermissionError**，原 `except FileExistsError` 抓不到 ⇒ 异常穿透整链中断，
+    且已持有的锁无人释放（2026-10-17 09:35-09:52 实证：seal.log.lock / decision-room.md.lock
+    双双残留，record 从第二次起必死）。改为捕 OSError 后按 errno/EEXIST 字面判"已存在"，
+    非"已存在"类错误照常抛出（不吞真故障）。"""
     import time as _t
     deadline = _t.time() + timeout_s
     while True:
         try:
             os.mkdir(lp)
             return True
-        except FileExistsError:
+        except OSError as e:
+            # EEXIST 两种形态：原生 FileExistsError(errno=17) / 代理层包装的 PermissionError(消息含 EEXIST)
+            is_exists = (
+                isinstance(e, FileExistsError)
+                or getattr(e, "errno", None) == 17
+                or "EEXIST" in str(e)
+            )
+            if not is_exists:
+                raise
             try:
                 if _t.time() - os.path.getmtime(lp) > 30:
                     os.rmdir(lp)
@@ -455,10 +478,13 @@ def _acquire_path_lock(lp, timeout_s=5.0):
 
 
 def _release_path_lock(lp):
+    """释放路径锁。v1.5.6：失败不再静默——静默吞=锁残留不可见，下次必然 EEXIST（2026-10-17 实证）。"""
     try:
         os.rmdir(lp)
-    except OSError:
-        pass
+    except FileNotFoundError:
+        pass  # 已被 stale 夺取或从未创建，属正常路径
+    except OSError as e:
+        print(f"WARN: 锁释放失败 {lp}: {e}（下次获取可能 EEXIST）", file=sys.stderr)
 
 
 def _acquire_dr_lock(timeout_s=5.0):

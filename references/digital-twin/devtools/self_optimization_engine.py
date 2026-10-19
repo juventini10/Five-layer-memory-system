@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """self_optimization_engine.py v0.2 — 自寻优引擎（真实闭环·跨工具中立）
 
 控制论闭环定位：偏差信号 → 观测 → 方向性决策 → 配置覆盖层 → 观测比较 → 保留/回滚。
@@ -20,7 +16,12 @@ v0.2 根治（2026-08-24·据三明智L2评估·皮叔令"去完成工作·为�
   - 填值权归脚本：改参机械执行，AI 不编造
   - 跨工具中立：公共设施住 [记忆共享中心]/脚本中心/，各端 hook/调度器只调用不拥有
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import os
 import sys
 import json
@@ -43,7 +44,7 @@ THRESHOLD_RANGE = [0.01, 0.10]
 THRESHOLD_STEP = 0.005
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-route_guard_audit.py v0.1 — 护栏防线3：敏感操作审计（Stop 钩子·留痕不拦截）
+route_guard_audit.py v0.2 — 护栏防线3：敏感操作审计（Stop 钩子·留痕不拦截）
+
+v0.2（2026-10-15·跨端交接单第④项根治·WB 端实测本端复现）：`read_transcript_rich()` 对
+  WB 扁平 `{"type":"function_call"}` 行（locate 取不到 role）补 role="assistant"——
+  此前工具调用被 extract 出来又被 role 门整族丢弃 ⇒ 对他端假绿；回归位入 `self_test()`
+  三构型＋反向断言（纯文本不误报）。⛔未动共享层 `_ROLE_TYPES`（改它＝改所有消费方语义）。
 
 依据：护栏路由POC设计.md v0.1 §三 + 敏感操作清单v0
 功能：每次主代理结束响应时（Stop 钩子），解析 transcript，检测本轮对话中的
@@ -27,10 +32,15 @@ route_guard_audit.py v0.1 — 护栏防线3：敏感操作审计（Stop 钩子·
 try:
     import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import os
 import re
 import json
+# 跨端解析·单一真源（2026-09-23 童灵根治·2026-10-14 R1' 融合回灌根层——原只在路由家族副本里）
+# 路径取 脚本中心 真源而非 开发工具 转发链（阶段5 废转发链后本行仍成立）
+sys.path.insert(0, os.path.expanduser("[记忆共享中心]/脚本中心"))
+import transcript_reader as _tr
 try:
     import fcntl  # Unix-only（Windows 无此模块）——缺失时降级为"无文件锁"，仍可运行（2026-09-15 出包容错）
 except ImportError:  # pragma: no cover
@@ -114,16 +124,23 @@ def read_transcript_rich(path):
                 d = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            content = d.get("message", {}).get("content")
-            parts = []
-            if isinstance(content, list):
-                for c in content:
-                    if c.get("type") == "tool_use":
-                        # 只审计实际工具调用，带工具名（规则按字段匹配）
-                        parts.append(json.dumps({"tool": c.get("name"), "input": c.get("input", {})}, ensure_ascii=False))
-            elif isinstance(content, str):
-                pass  # 纯文本不参与检测（同理由）
-            msgs.append((d.get("role", ""), " ".join(parts)))
+            # 工具调用提取走跨端统一层（2026-09-23 童灵根治·R1' 融合回灌）：
+            # 端A 独立行式 function_call（WB）/ 端B content 元素式 tool_use（QCN）
+            # ⛔ 本函数不在此内联重写解析分支——内联版只认 tool_use，令 WB 形态的工具调用
+            #    整族不进审计域（= 护栏防线3 对他端假绿），2026-10-14 diff 实证根层曾因此退化。
+            role, _ = _tr.locate(d)
+            parts = [json.dumps({"tool": t["tool"], "input": t["input"]}, ensure_ascii=False)
+                     for t in _tr.extract_tool_calls(d)]
+            # 🔴 2026-10-15 交接单第④项根治（WB 端实测·本端独立复现确认）：
+            #   WB 扁平行 `{"type":"function_call",...}` 在 locate() 里取不到 role（"function_call"
+            #   不在 _ROLE_TYPES），返回 ""；而 audit() 只收 role=="assistant" ⇒ 工具调用被提取出来
+            #   却在下一步整族丢弃＝假绿钩子（护栏防线3 对他端失明）。
+            #   修法落在本函数而非 _ROLE_TYPES：工具调用本身即"助手侧实际动作"，与端形态无关；
+            #   ⛔只给"有工具调用且无 role"的行补位——纯文本行（含用户消息/文档里写 rm -rf 的说明）
+            #   不受影响，反向断言 D 仍须为 0 检出。
+            if parts and not role:
+                role = "assistant"
+            msgs.append((role, " ".join(parts)))
     return msgs
 
 
@@ -255,7 +272,7 @@ def self_test():
     cases = [
         # (名称, 工具调用 input JSON, 期望命中规则) —— 文本讨论不再检测（护栏管实际动作）
         ("删除类", '{"command": "rm -rf /tmp/old_dir"}', "R1_delete"),
-        ("核心写", '{"path": os.path.expanduser("[记忆共享中心]/记忆规则/用户基本规则-铁律版.md"), "content": "..."}', "R2_core_write"),
+        ("核心写", '{"path": "[记忆共享中心]/记忆规则/用户基本规则-铁律版.md", "content": "..."}', "R2_core_write"),
         ("外发类", '{"command": "send_mail --content ~/个人AI档案摘要"}', "R3_external"),
         ("文本引用不误报", '{"text": "文档里写了 rm -rf 示例"}', None),
         ("无敏感", '{"command": "ls -la"}', None),
@@ -272,17 +289,40 @@ def self_test():
         else:
             print(f"用例 {name}: ❌ (期望 {expect}, 实际 {hit})")
             ok = False
-    # 整链：audit 写日志
-    t = tempfile.mktemp(suffix=".jsonl")
-    with open(t, "w", encoding="utf-8") as f:
-        f.write(json.dumps({"role": "user", "message": {"content": [{"type": "text", "text": "清理一下"}]}}) + "\n")
-        f.write(json.dumps({"role": "assistant", "message": {"content": [{"type": "tool_use", "name": "exec", "input": {"command": "rm -rf /tmp/x"}}]}}) + "\n")
-    audit(t)
-    n = sum(1 for _ in open(EVENT_LOG, encoding="utf-8") if _.strip())
-    if n == 1:
-        print("整链 audit 写日志: ✅")
-    else:
-        print(f"整链 audit 写日志: ❌ ({n} 条)"); ok = False
+    # 整链：audit 写日志（三构型对照·2026-10-15 交接单第④项根治永久回归位）
+    # 病根：WB 端扁平行 {"type":"function_call",...} 在 locate() 取不到 role，旧 audit() 只收
+    #       role=="assistant" ⇒ 工具调用整族被丢＝假绿钩子（WB 实测·本端独立复现 2026-10-15）。
+    #       回归位必须含"另两端形态真能检出"，⛔只测本端嵌套形态＝测了个不会坏的。
+    chain_cases = [
+        ("整链 QCN嵌套tool_use",
+         [{"role": "user", "message": {"content": [{"type": "text", "text": "清理一下"}]}},
+          {"role": "assistant", "message": {"content": [
+              {"type": "tool_use", "name": "exec", "input": {"command": "rm -rf /tmp/x"}}]}}], 1),
+        ("整链 WB扁平function_call须检出",
+         [{"type": "function_call", "name": "Bash",
+           "arguments": json.dumps({"command": "rm -rf /tmp/wb_flat"})}], 1),
+        ("整链 WB扁平核心写须检出",
+         [{"type": "function_call", "name": "Write",
+           "arguments": json.dumps({"path": os.path.expanduser(
+               "[记忆共享中心]/记忆规则/用户基本规则-铁律版.md"), "content": "x"})}], 1),
+        ("整链 WB扁平纯文本不误报（反向断言）",
+         [{"type": "message", "role": "assistant",
+           "content": "文档里写了 rm -rf 示例，仅说明用途"}], 0),
+    ]
+    for name, records, want in chain_cases:
+        EVENT_LOG = tempfile.mktemp(suffix=".jsonl")
+        t = tempfile.mktemp(suffix=".jsonl")
+        with open(t, "w", encoding="utf-8") as f:
+            for d in records:
+                f.write(json.dumps(d, ensure_ascii=False) + "\n")
+        audit(t)
+        n = sum(1 for _ in open(EVENT_LOG, encoding="utf-8") if _.strip()) if os.path.exists(EVENT_LOG) else 0
+        if n == want:
+            print(f"{name}: ✅ ({n} 条)")
+        else:
+            # 2026-10-14 R1' 融合留的诊断位：账本 0 条常因"规则配置缺失→不检测"，⛔掩盖成真红
+            hint = "（0 条常因 route_guard_config.json 缺失→整条不检测·属 fail-open 非脚本崩）" if n == 0 else ""
+            print(f"{name}: ❌ (期望 {want}·实际 {n}{hint})"); ok = False
     # 坏输入
     import subprocess
     p = subprocess.run([sys.executable, __file__], input="not json", capture_output=True, text=True)

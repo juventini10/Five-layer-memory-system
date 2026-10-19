@@ -30,3 +30,9 @@
 ~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/IDENTITY.md
 ~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/USER.md
 ~/Library/Application Support/LobsterAI/openclaw/state/workspace-main/MEMORY.md
+
+# 2026-10-09 缺陷②根治（布洛陀2.1.0上游反馈）：规则层运行时数据进三路比较册
+# 病根=install_rule_data 原幂等覆盖，把手工维护的触发规格真源冲成包内编译产物（40→30条实证）。
+# 入册后升级流按三路比较处置；install 直装路径同步加「外部维护声明→[SKIP]」守卫（双保险）。
+[记忆共享中心]/记忆规则/rule_triggers.yaml
+[记忆共享中心]/记忆规则/rule_conflict_signals.yaml

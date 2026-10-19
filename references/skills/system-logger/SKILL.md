@@ -9,9 +9,9 @@ allowed-tools: [Read, Write, Bash, SearchReplace, Glob]
 dependencies: [scripts/normalize_tool.py, scripts/systemlog_gate_check.py, scripts/reconcile_overview.py, scripts/append_log_entry.py, scripts/render_mode_banner.py, scripts/systemlog_watch.sh, scripts/systemlog_normalize_fix.py, scripts/install_watch.sh]
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/system-logger/
+upstream: [记忆共享中心]/技能配置/system-logger/
 modifiable: true
-version: "3.17.0"
+version: "3.17.6"
 license: MIT
 complies_with: 文件格式规范 v2.3.0 · 指令编写规范 v4.8
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
@@ -221,7 +221,7 @@ date "+%Y-%m-%d %H:%M"
 ```
 
 **🔴 脚本承接时间戳（v3.10.5新增·第一性原理根治时间毛刺）**：
-- ✅DO — 首选 `python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --tool {工具}` 承接时间戳捕获：脚本内部 `date` 取 HH:MM + 解析当日日志路径 + 组头 tail 判定 + O_APPEND 追加 + 调 `reconcile_overview.py` 派生概览，最后打印真实块供 AI 回显。AI 只传**无时间值的条目体**（`完成：<NOW>` 占位），物理接触不到时间值 = 时间必为真（贴合本 Skill Poka-Yoke「物理接触不到错误源」）。
+- ✅DO — 首选 `python3 [记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --tool {工具}` 承接时间戳捕获：脚本内部 `date` 取 HH:MM + 解析当日日志路径 + 组头 tail 判定 + O_APPEND 追加 + 调 `reconcile_overview.py` 派生概览，最后打印真实块供 AI 回显。AI 只传**无时间值的条目体**（`完成：<NOW>` 占位），物理接触不到时间值 = 时间必为真（贴合本 Skill Poka-Yoke「物理接触不到错误源」）。
 - ☑SHOULD — 自我思考类条目追加 `--reflection`：脚本在 `###` 标题前打 `[童灵思考]` 前缀（v3.10.15·v1.2 更名反思→思考·蒸馏管道按此标记分流 L2/L3/L6），AI 不手写该前缀——手写=标记可能与内容不符，分流即失真。
 - ⛔DO NOT 手写字面时间戳。下方 `$(date)` 变量注入法仍允许，但若条目 `完成` 行出现字面 HH:MM 而非 `<NOW>` → `append_log_entry.py` 拒绝写入（exit 1）强制改用脚本。
 - 根因：L442 曾写「20:46」而文件 mtime 14:35——AI 手填时间值 = 概率路径必漂；根治只能让 AI 碰不到时间值。
@@ -246,12 +246,12 @@ date "+%Y-%m-%d %H:%M"
 🔌 熔断器
 ├─ 成功条件：文件路径存在或可创建
 ├─ 失败处理：中止
-├─ 可修正参数：日志目录路径 → 检查 ~/[记忆共享中心]/工作日志/系统日志/ 是否存在
+├─ 可修正参数：日志目录路径 → 检查 [记忆共享中心]/工作日志/系统日志/ 是否存在
 ├─ 重试次数：1
 └─ 降级方案：无——路径不可用时中止
 
 ```
-~/[记忆共享中心]/工作日志/系统日志/系统日志_{YYYY-MM-DD}.md
+[记忆共享中心]/工作日志/系统日志/系统日志_{YYYY-MM-DD}.md
 ```
 
 **规则**：
@@ -286,7 +286,7 @@ date "+%Y-%m-%d %H:%M"
 - 来源：2026-07-18 T0 事故——AutoClaw 先 Read 了系统日志_2026-07-18.md 全文（工具返回完整），但 Write 时只写入了新增条目，原有 17 条 WorkBuddy 记录全部丢失。步骤 2.5 的 Read 环节本身成功——防护失败在"AI 记住并拼回去"这一步依赖认知而非物理锁
 
 **🔴 结构健康门禁（v3.9.2新增·v3.9.4扩四条·v3.10.0封装单脚本·v3.10.17扩五条·防整体重贴/层级错位/正文塌陷·接触法）**：
-- ✅DO — 写前必查：`python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/systemlog_gate_check.py 目标文件` 必须 exit 0（五查合一：h1唯一/概览唯一/体积<800KB/normalize工具名校验/SKILL.md正文完整性）。退出码语义：exit 1=通用错误（文件不存在等）、exit 2=一级标题异常（整体重贴）、exit 3=概览异常、exit 4=体积超限、exit 5=工具名/重复组违规、exit 6=SKILL.md 正文塌陷（本 Skill 的执行正文 <200 行）。任一非 0=文件已被异常整体重贴/膨胀/层级错位/组头重复，或本 Skill 已失去可执行正文 → 🔴 拒写 + 报警 + 先执行治理（备份至记忆琥珀→按一级标题整块去重→按条目工具字段重组→回验）再恢复写入
+- ✅DO — 写前必查：`python3 [记忆共享中心]/技能配置/system-logger/scripts/systemlog_gate_check.py 目标文件` 必须 exit 0（五查合一：h1唯一/概览唯一/体积<800KB/normalize工具名校验/SKILL.md正文完整性）。退出码语义：exit 1=通用错误（文件不存在等）、exit 2=一级标题异常（整体重贴）、exit 3=概览异常、exit 4=体积超限、exit 5=工具名/重复组违规、exit 6=SKILL.md 正文塌陷（本 Skill 的执行正文 <200 行）。任一非 0=文件已被异常整体重贴/膨胀/层级错位/组头重复，或本 Skill 已失去可执行正文 → 🔴 拒写 + 报警 + 先执行治理（备份至记忆琥珀→按一级标题整块去重→按条目工具字段重组→回验）再恢复写入
 - 数字是物理特征：一级标题数≠1 = 整体重贴结构病，工具名违规 = 层级错位结构病（## 段承载条目内容），继续写只会加速恶化。写前确认改走 shell 通道（wc -c/grep -c/python3，**仅限只读核查命令**——非写入授权，条目写入仍唯一走步骤 3.2 脚本通道），不依赖受限读取工具
 - 来源：2026-08-07 08-07 日志被整体自拼接 8 轮至 2^8=256 份副本（2.6MB/1794 条目行实为 10 条真实条目）；全机脚本无自追加逻辑、Skill 四副本路径一致，根因=Qoder CN 执行端"读全文写回"类操作实现为追加（你认定·QCN-20260807-001）——门禁让此类异常写入物理上过不了门
 - 来源（第五查）：2026-08-27 00:03 提交 `c564e9fe` 为改 frontmatter 一个字段，用覆盖式 Write 把本文件 639→11 行（`git show --stat` diff `632 +--------------------`），事故存活约 22h 且**过了全部既有守卫**——因为旧四查只扫日志文件、不扫 Skill 本体，写路径的"唯一合法通道声明"整段消失后 AI 便自寻 heredoc 旁路（同日 ②概览脏行、③追加旁路的共同上游）。第五查把"Skill 有没有正文"从认知依赖变成机械断言：阈值取最低合法正文量 200 行而非当前值——瘦身是常态，绑当前值=每次瘦身都要改数字
@@ -313,11 +313,12 @@ date "+%Y-%m-%d %H:%M"
 
 > 根因：门禁 `normalize_tool.py` 只检测不拦截；非 WorkBuddy 端（AutoClaw / Qoder 等）直写文件、绕过 `append_log_entry.py` 的 `--tool` 归一化，会写出「任务标题式 `## ` 头」（带 emoji / 工具名 / 时间括号）→ 层级错位违例；并发写入时 EOF 追加还会把条目误归到错误工具组。手动 patch 后**复发**——因为没在写入端堵死。
 
-**✅DO — 部署写时守护（根治·非检测）**：`bash ~/[记忆共享中心]/技能配置/system-logger/scripts/systemlog_watch.sh` 启动 fswatch 监听日志目录，任何 `.md` 变更后防抖 2s 跑 `systemlog_normalize_fix.py`：把非规范 `## ` 头按条目 `- **工具**：` 字段归组、降为 `### ` 清洗标题；按条目字段把 entry 重排到正确 `## {工具}` 组。覆盖所有写入端（含 AutoClaw 直写），异常在下次写入即自我消解。
+**✅DO — 部署写时守护（根治·非检测）**：**macOS** 跑 `bash [记忆共享中心]/技能配置/system-logger/scripts/systemlog_watch.sh`、**Windows** 跑 `powershell -ExecutionPolicy Bypass -File <MC>\技能配置\system-logger\scripts\systemlog-watch.ps1`（轮询快照版），监听日志目录，任何 `系统日志_*.md` 变更后防抖 2s 跑 `systemlog_normalize_fix.py`：把非规范 `## ` 头按条目 `- **工具**：` 字段归组、降为 `### ` 清洗标题；按条目字段把 entry 重排到正确 `## {工具}` 组。覆盖所有写入端（含 AutoClaw 直写），异常在下次写入即自我消解。
 
 - 引擎 `systemlog_normalize_fix.py`：幂等（跑两次输出一致）、先备份再写（`.bak-<时间戳>`）、仅移动/重命名标题不丢内容、无变化不写盘。
 - 不死循环：合规后引擎不产生写盘 → 不触发新事件。
-- 持久化（跨重启）：`bash ~/[记忆共享中心]/技能配置/system-logger/scripts/install_watch.sh` —— 按当前 `$HOME` 渲染 plist 到 `~/Library/LaunchAgents/com.buluotuo.systemlog.watch.plist` 并 `launchctl bootstrap`，随后用 `launchctl print … state` 实读 `running` 作装机凭证（沙箱/部分环境 `launchctl load` 报 I/O error 已按 bootstrap 域处理；仍失败则保留后台 fswatch 进程，脚本显式报 🟡 不谎称绿）。
+- 持久化（跨重启·双轨）：**macOS** → `bash [记忆共享中心]/技能配置/system-logger/scripts/install_watch.sh` —— 按当前 `$HOME` 渲染 plist 到 `~/Library/LaunchAgents/com.buluotuo.systemlog.watch.plist` 并 `launchctl bootstrap`，随后用 `launchctl print … state` 实读 `running` 作装机凭证（沙箱/部分环境 `launchctl load` 报 I/O error 已按 bootstrap 域处理；仍失败则保留后台 fswatch 进程，脚本显式报 🟡 不谎称绿）。**Windows** → `powershell -ExecutionPolicy Bypass -File <MC>\技能配置\system-logger\scripts\systemlog-install-task.ps1` —— schtasks 注册 `SystemLogWatch`（S4U+pwsh 全路径+AtLogOn/AtStartup 双触发+IgnoreNew，镜像记忆琥珀 amber-install-task 加固模式，根治 0xC000013A），注册后用 `Get-ScheduledTask` 实读 State 作凭证；卸载加 `-Uninstall`。⛔ Windows/Git Bash 无 launchctl/fswatch，⛔勿把 Win 用户指向 install_watch.sh。
+  - Win/mac 差异（诚实声明）：Win 版守护含塌缩熔断隔离报警（骤降>30% 拒跑 normalize·存证 `.collapse-*`），⛔无 git HEAD 自动恢复/checkpoint 提交（前提=git 在 PATH+MC 为 git 仓，端用户机不保证）——塌缩恢复 Win 侧走 git/人工。
   - ⛔DO NOT 再随包分发写死绝对路径的 `systemlog_watch.plist`——原因是 launchd **不展开** `ProgramArguments` 里的 `$HOME`，仓库里存一份真实路径=发布物含个人态（脱敏门禁 ❌ 阻断），存 `$HOME/…` 形式=骗过扫描器却让看守器在别人机器上静默起不来。正确解是运行时渲染，源头不产生个人态。卸载用 `install_watch.sh --uninstall`。
 - 与门禁构成「检测 + 修复」双防：门禁拦已发生异常（exit≠0 报警），守护让异常物理上无法停留。
 
@@ -346,7 +347,7 @@ date "+%Y-%m-%d %H:%M"
 
 #### 3.3 更新今日概览（机械派生 · 非手填）
 
-**🔴 概览由脚本机械派生（v3.10.4·第一性原理根治漂移）**：概览 任务数 是各工具 `### ` 条目数的冗余副本，手填「+1」必漂——并发写入者（如外部 AutoClaw logger）追加条目但不维护 概览，造成系统性漂移（实测 30→31 窗口漂移）。✅DO — 追加/修改条目后运行 `python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/reconcile_overview.py 目标文件`，由脚本重算各工具 `### ` 数并重写 概览 任务数单元格（同步行集合+单元格：新工具首建组自动补行、保留全部条目、幂等）。⛔DO NOT 手动 `+1` 或 SearchReplace 概览数字——手写副本=漂移结构回归。概览头不含📋——与门禁脚本 `^## 今日概览` pattern 和实际文件一致（v3.10.1 格式单一真源）。**前缀匹配宽容度（v3.10.3·M10声明）**：概览头后允许自定义主题后缀（如"## 今日概览（主题日）"），门禁按 `^## 今日概览` 前缀匹配放行。**计数不变式（v3.10.3 复审补·v3.10.4 升格为机械派生）**：概览任务数 == 当日 `### ` 条目数，由 `reconcile_overview.py` 派生保证（非人工核对；人工核对仍可能漏）。
+**🔴 概览由脚本机械派生（v3.10.4·第一性原理根治漂移）**：概览 任务数 是各工具 `### ` 条目数的冗余副本，手填「+1」必漂——并发写入者（如外部 AutoClaw logger）追加条目但不维护 概览，造成系统性漂移（实测 30→31 窗口漂移）。✅DO — 追加/修改条目后运行 `python3 [记忆共享中心]/技能配置/system-logger/scripts/reconcile_overview.py 目标文件`，由脚本重算各工具 `### ` 数并重写 概览 任务数单元格（同步行集合+单元格：新工具首建组自动补行、保留全部条目、幂等）。⛔DO NOT 手动 `+1` 或 SearchReplace 概览数字——手写副本=漂移结构回归。概览头不含📋——与门禁脚本 `^## 今日概览` pattern 和实际文件一致（v3.10.1 格式单一真源）。**前缀匹配宽容度（v3.10.3·M10声明）**：概览头后允许自定义主题后缀（如"## 今日概览（主题日）"），门禁按 `^## 今日概览` 前缀匹配放行。**计数不变式（v3.10.3 复审补·v3.10.4 升格为机械派生）**：概览任务数 == 当日 `### ` 条目数，由 `reconcile_overview.py` 派生保证（非人工核对；人工核对仍可能漏）。
 
 #### 🧠 思考检查点（写入前自检）
 
@@ -541,7 +542,7 @@ date "+%Y-%m-%d %H:%M"
 📋 变更日志检测：N/A（个人工具·未安装）
 
 🔖 流程完成令牌：{8位hash·脚本机械产出·AI不能伪造}
-↑ 步骤 5.6 嵌入——先跑 `python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --guard-line`（v3.10.24·每会话 1 次·机械产出 GUARD_LINE 行并写入缓存 `~/.cache/systemlogger/guard_line.txt`）；`append_log_entry.py` 写入时自动读取该缓存填验证块 `📋 变更日志检测` 行。AI 只 relay，不填值（审查F2修复：缓存>60分钟视为陈旧，验证块将如实显示「guard_line 未跑或缓存已陈旧」——陈旧✅不再进验证块）。：
+↑ 步骤 5.6 嵌入——先跑 `python3 [记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --guard-line`（v3.10.24·每会话 1 次·机械产出 GUARD_LINE 行并写入缓存 `~/.cache/systemlogger/guard_line.txt`）；`append_log_entry.py` 写入时自动读取该缓存填验证块 `📋 变更日志检测` 行。AI 只 relay，不填值（审查F2修复：缓存>60分钟视为陈旧，验证块将如实显示「guard_line 未跑或缓存已陈旧」——陈旧✅不再进验证块）。：
 · 输出 `GUARD_LINE ✅ 全部已记` → 填 `📋 变更日志检测：✅ 全部已记`
 · 输出 `GUARD_LINE ⚠️ N 条候选未记录（整行红框高亮）` → 填 `📋 变更日志检测：` 标题行 + `- ⚠️ N 条候选未记录` 内容行——⚠️ 在**行首 `- ` 前缀**后 = diff 删除行 = **整行红框高亮**（该红的地方红；前三行校验无前缀不红）
 · 输出 `GUARD_LINE N/A（个人工具·未安装）` → 填 `📋 变更日志检测：N/A（个人工具·未安装）`（安装包用户无此脚本·静默跳过）
@@ -567,10 +568,10 @@ date "+%Y-%m-%d %H:%M"
 
 验证块输出后，执行最终完整性锁校验：
 - [ ] **日志条目齐全**：今日概览表已更新 + 任务条目已追加 + 字段8/8齐全
-- [ ] **签名一致**：工具字段 ∈ 工具名规范 allowlist（无 emoji/符号/括号注释）——**机械断言**：`python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/normalize_tool.py 目标文件` 必须 exit 0（v3.7.0·脚本级兜底·v3.10.3 绝对路径统一，非仅 prompt 级）
+- [ ] **签名一致**：工具字段 ∈ 工具名规范 allowlist（无 emoji/符号/括号注释）——**机械断言**：`python3 [记忆共享中心]/技能配置/system-logger/scripts/normalize_tool.py 目标文件` 必须 exit 0（v3.7.0·脚本级兜底·v3.10.3 绝对路径统一，非仅 prompt 级）
 - [ ] **引用证据齐全**：涉及文件路径真实存在 + 来源标注（🟢/🟡/🔴）已填写
 - [ ] **结论有判定**：结论字段包含"做了什么+结果是什么"双要素，非空泛描述
-- [ ] **回复包含流程完成令牌**（v3.13.0新增·防误层根治）：AI 回复末尾必须包含验证块中的「🔖 流程完成令牌：{hash}」——**系统日志流程完成的唯一标志**。没有令牌=流程未完成=必须重新逐字 relay 验证块。**机械断言**：`python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --verify-reply <回复文件>` 必须 exit 0。
+- [ ] **回复包含流程完成令牌**（v3.13.0新增·防误层根治）：AI 回复末尾必须包含验证块中的「🔖 流程完成令牌：{hash}」——**系统日志流程完成的唯一标志**。没有令牌=流程未完成=必须重新逐字 relay 验证块。**机械断言**：`python3 [记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --verify-reply <回复文件>` 必须 exit 0。
 
 > 完整性锁全通过 → 日志写入流程正式完成。任一未通过 → 回到对应步骤补正。
 > ⚠️ **v3.13.0 诚实边界**：纯 AI 环境不存在「绝对物理杜绝」——AI 仍然可以选择不 relay 验证块，只是这样流程就不算完成（完整性锁未通过）。`--verify-reply` 需要 AI 自觉跑，AI 可以不跑。可达的最优形态：绕过成本 > 遵守成本 + 绕过留痕。有 Hook 端（WorkBuddy 等）由 Stop Hook 兜底检测回复完整性；无 Hook 端（豆包办公等）依赖令牌机制 + `--verify-reply` 脚本兜底。双层防护，各端适配。
@@ -580,7 +581,7 @@ date "+%Y-%m-%d %H:%M"
 
 📦 **产出物**：嵌入步骤 5 验证块的 `📋 变更日志检测` 行（物理绑定·不可拆分跳过）
 
-本步骤的执行指令已**合并进步骤 5 验证块模板**。机制（v3.10.24·2026-09-01·你"系统日志写半天"架构解耦）：跑 `python3 ~/[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --guard-line` → 读 `GUARD_LINE` 输出回显（**每会话 1 次**；会话内又有 Skill 版本改动再重跑）。⛔DO NOT 直接跑 `changelog_guard.sh --check` 自填——填值权归 `--guard-line` 机械产出（AI 接触不到填值权·防假阴性疲劳设计不变）。历史版本（v3.10.7-v3.10.23）在写入路径同步内嵌 `--check`（全树扫描 ~7s×每次写入=写入变慢主凶），v3.10.24 起解耦：写入路径只做追加+概览派生（~0.3s）。
+本步骤的执行指令已**合并进步骤 5 验证块模板**。机制（v3.10.24·2026-09-01·你"系统日志写半天"架构解耦）：跑 `python3 [记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py --guard-line` → 读 `GUARD_LINE` 输出回显（**每会话 1 次**；会话内又有 Skill 版本改动再重跑）。⛔DO NOT 直接跑 `changelog_guard.sh --check` 自填——填值权归 `--guard-line` 机械产出（AI 接触不到填值权·防假阴性疲劳设计不变）。历史版本（v3.10.7-v3.10.23）在写入路径同步内嵌 `--check`（全树扫描 ~7s×每次写入=写入变慢主凶），v3.10.24 起解耦：写入路径只做追加+概览派生（~0.3s）。
 
 **降级处理（安装包兼容）**：`changelog_guard.sh` 是个人开发工具，布洛陀安装包不携带此脚本。脚本不存在时 → `--guard-line` 输出 `N/A（个人工具·未安装）`，验证块填 `📋 变更日志检测：N/A（个人工具·未安装）`，静默跳过、不报错、不阻塞系统日志生成。`N/A` 是合法终态值，非执行失败。
 
@@ -588,6 +589,7 @@ date "+%Y-%m-%d %H:%M"
 > - ✅DO 机械守卫报警（`--check` 报 alarm=true）时，必须用机械手段销账——跑 `--report` 逐项核实（每项查主数据源实况），逐项定"真漏/豁免"后才能销账。
 > - ⛔DO NOT 凭印象/记忆判"假阳性"放行——检测层是脚本（可信），销账层若靠 AI 印象（会漂），守卫链强度=最弱一环，报警形同虚设。
 > - 实证：guard 报 22 候选，凭"我每版都记了 CHANGELOG"的印象差点判假阳性，实际 22 候选全真（记的是 references/CHANGELOG 非中央日志）——若按初判放行，中央日志当天断层。
+> - ✅DO 候选归属**他端**时（如 clock-loop/GGS 等他端本轮 bump 未入中央账）：标注明「他端归属·不代补」留归属端处置，⛔不做假销账、⛔不代改他端产物（10-10/10-11 判例：clock-loop 4.17.8 / GGS 1.1.1 两条，连续两轮如实标注未误销）。
 
 > **v3.6.4 合并原因**：2026-07-27 WorkBuddy 端实测步骤 5 和步骤 5.6 分离导致 5.6 被连续跳过——分离结构为脆弱设计。Poka-Yoke 修法：合并后输出验证块 = 必跑 guard，跳过=验证块自身残缺=可被回检。
 
@@ -623,10 +625,10 @@ date "+%Y-%m-%d %H:%M"
 ## 月度系统蒸馏工作流（Trigger: "系统月报" / "月度系统蒸馏"）
 
 > 每月初（次月1号）或用户主动触发，从上月系统日志提取「数据→模式→洞察→建议」四层递进分析。
-> **完整报告独立存储（v3.14.0·2026-09-02）**：完整月度蒸馏报告写入 `~/[记忆共享中心]/工作日志/系统日志月度蒸馏/系统日志月度蒸馏_YYYY-MM.md`，执行日日志只存摘要条目+完整报告路径链接，根治月度蒸馏与日常日志混存导致的执行日日志膨胀、查阅困难问题。
+> **完整报告独立存储（v3.14.0·2026-09-02）**：完整月度蒸馏报告写入 `[记忆共享中心]/工作日志/系统日志月度蒸馏/系统日志月度蒸馏_YYYY-MM.md`，执行日日志只存摘要条目+完整报告路径链接，根治月度蒸馏与日常日志混存导致的执行日日志膨胀、查阅困难问题。
 > 完整流程（D1 定位上月日志 / D2 结论导向分析含 🪞成就证据提取 / **D2.5 工作模式信号提取（可观测·非评价·供 daily-buddy 月报 PULL）** / **D2.6 忽略信号自查（黑匣子思维·强制补"这月哪些信号我忽略了"·防蒸馏变功劳簿·愿景④盲区自查落点）** / D3 月度综览（完整报告写独立文件+执行日日志写摘要） / D4 写入蒸馏中心）见 `references/monthly-distillation.md`（触发时按需 Read）。
-> 联动：**最伟大的我**——D2 提取工作成就写入 `~/[记忆共享中心]/最伟大的我/成就证据/`（系统日志=成就证据的独立主数据源）。
-> 联动：**每日伙伴**——D2.5 提取「工作模式信号」（仅可观测证据，不含对你的评价）追记至 `~/[记忆共享中心]/记忆蒸馏/蒸馏中心.md`，由 daily-buddy 月报 PULL 并入其评估维度（推拉分离：本 Skill 只推总线，不调用 daily-buddy）。
+> 联动：**最伟大的我**——D2 提取工作成就写入 `[记忆共享中心]/最伟大的我/成就证据/`（系统日志=成就证据的独立主数据源）。
+> 联动：**每日伙伴**——D2.5 提取「工作模式信号」（仅可观测证据，不含对你的评价）追记至 `[记忆共享中心]/记忆蒸馏/蒸馏中心.md`，由 daily-buddy 月报 PULL 并入其评估维度（推拉分离：本 Skill 只推总线，不调用 daily-buddy）。
 
 ---
 ## 署名来源

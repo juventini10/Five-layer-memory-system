@@ -25,7 +25,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 try:
     import fcntl          # Unix/macOS：读端加锁防读到半截写入
@@ -176,6 +176,42 @@ def extract_tool_calls(d):
                 inp = c.get("input")
                 out.append({"tool": str(c["name"]),
                             "input": inp if isinstance(inp, dict) else {"raw": inp}})
+    return out
+
+
+def iter_messages_with_ts(path):
+    """JSONL → [(role, text, ts_str)]；ts 取条目自带时间字段，取不到给空串。
+
+    2026-10-10 新增（PAT-087 根治·Qoder CN 童灵）：`iter_messages` 只给 (role, text)，
+    使任何"按回合时刻对账"的判据无锚点可用——declare 对账腿因此只能拿
+    「台账最后一行」当「本回合」，跨回合交叠时真红与假红同形。
+    ⛔不改 iter_messages 行为（它被多端共用·改返回形状＝牵连既有读面）。
+    """
+    out = []
+    if not path or not os.path.isfile(path):
+        return out
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line or not line.startswith("{"):
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                if not isinstance(d, dict):
+                    continue
+                role, content = locate(d)
+                ts = ""
+                for k in ("timestamp", "ts", "created_at", "time"):
+                    v = d.get(k)
+                    if isinstance(v, str) and v.strip():
+                        ts = v.strip()
+                        break
+                out.append((role, flatten_content(content), ts))
+    except Exception:
+        return []
     return out
 
 

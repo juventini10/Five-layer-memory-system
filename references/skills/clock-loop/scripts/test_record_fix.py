@@ -9,7 +9,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 # v2.9.12同族根治（2026-09-27·clock-loop自评Loop R1）：v4.12.13的dont_write_bytecode只覆盖了
 # test_skill_eval.py——本文件import record_fix同样写.pyc污染被评树（file_clutter candidate-found实锤）。

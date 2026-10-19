@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # grep_sandbox_guard.py — PreToolUse 守卫·拦本沙箱不可用的 grep 正则语法
-# version: v1.0（2026-09-20·WorkBuddy·LRN-20260920-009 落地）
+# version: v1.0（2026-09-20·WorkBuddy·内部记录 落地）
 #
-# Disease（LRN-20260920-009·单日 4 次实例）：
+# Disease（内部记录·单日 4 次实例）：
 #   本沙箱 / 环境（toybox / BSD grep）**不支持** `\|` `\w` `\+` `\{n\}`——
 #   命令**不报错**，但把它们当字面量 → **静默零命中**。
 #   零命中被读成"不存在"→ 污染结论（实证：误判 "SKILL.md 缺 version 字段" 并向皮叔报出）。
@@ -80,7 +80,7 @@ def check():
         print(json.dumps({
             "alarm": True,
             "reason": "grep 命令含本环境不支持的转义（\\| / \\w / \\+ / \\{n}）——"
-                      "命令不会报错但会**静默零命中**，零命中≠不存在（LRN-20260920-009 实证误判）",
+                      "命令不会报错但会**静默零命中**，零命中≠不存在（内部记录 实证误判）",
             "fix": "改用 Grep 工具（ripgrep·支持完整正则），或 python3 -c 正则；"
                    "仅需多关键词或（alternation）时也可用 grep -E 'a|b'"
         }, ensure_ascii=False))

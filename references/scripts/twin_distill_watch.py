@@ -40,7 +40,7 @@ WATCH = [
     # 方向：童灵→童灵（自我认知深化），不伪装成你的立场（防二阶折射）。
     ("systemlog", os.path.join(BASE, "工作日志/系统日志"), True),
     # dsh 插件活体（2026-08-25 抗更新监视）：被升级/重装覆盖时在此现形
-    # → 处置：python3 [记忆共享中心]/脚本中心/dsh_plugin_deploy.py --deploy
+    # → 处置：python3 [记忆共享中心]/脚本中心/内容创作/dsh_plugin_deploy.py --deploy
     ("dsh-plugin", os.path.expanduser("~/.dsh/profiles/web/node_modules/five-layer-memory/src/index.js"), False),
 ]
 

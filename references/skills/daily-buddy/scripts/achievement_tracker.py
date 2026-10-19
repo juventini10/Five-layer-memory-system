@@ -38,11 +38,11 @@ from glob import glob
 
 # ─── 路径配置 ────────────────────────────────────────────────
 DIARY_DIR = Path.home() / "[日记仓库]/1-每日计划/01-日记"
-ACHIEVEMENT_DIR = "[记忆共享中心]/成就系统"
+ACHIEVEMENT_DIR = Path.home() / "[记忆共享中心]/成就系统"
 DATA_FILE = ACHIEVEMENT_DIR / "scripts" / "achievement_data.json"
 READING_NOTES_DIR = Path.home() / "[日记仓库]/2-知识库/01-读书笔记"
 KNOWLEDGE_INDEX = Path.home() / "[日记仓库]/2-知识库/05-知识池/INDEX.md"  # 读书助手拆书索引（⛔不再作为阅读数数据源·拆解≠阅读·2026-08-08）
-GREATEST_ME_DIR = "[记忆共享中心]/最伟大的我/成就证据"  # 与最伟大的我联动
+GREATEST_ME_DIR = Path.home() / "[记忆共享中心]/最伟大的我/成就证据"  # 与最伟大的我联动
 
 # ─── 成就定义 ────────────────────────────────────────────────
 ACHIEVEMENTS = {

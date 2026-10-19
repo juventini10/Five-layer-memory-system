@@ -1,11 +1,12 @@
 # 步骤3：路径配置
+> 🔊 收口播报（P31/P22）：本站收口 MUST 播 INSTALL.md〈段间播报表〉对应行（8/8 口径）；非 T9 终点站⛔禁说"完成/装好了"，只说"这站就位"；进度数字读 .install/stepN-done.md。
 
 📦 **产出物**：记忆共享中心路径 + 完整目录结构
 
 ---
 
 > **⚡ 步骤锁定协议**
-> ① 导航锁：每次回复首行输出 `步骤3/7`
+> ① 导航锁：每次回复首行输出 `步骤3/8`
 > ② 偏离锁：用户问无关问题 → 记到待办列表，不展开回答，继续安装
 > ③ 检查点前置依赖：Read `[记忆共享中心]/.install/step2-done.md` — **升级/续装用户**不存在则阻塞（防跳步）；**全新用户**（记忆中心路径本步才确定、此前无处写检查点）→ 跳过此前置检查、正常继续，⛔DO NOT 阻塞。本步确定路径后 ✅DO 创建 `[记忆共享中心]/.install/` 并补写 step1-done/step2-done/step3-done，使步骤4起检查点链正常。
 > ④ 检查点写入：末尾 Write `[记忆共享中心]/.install/step3-done.md`
@@ -94,7 +95,7 @@
 安装过程中必须记录以下路径变量，**写入 `[记忆共享中心]/.install/step3-done.md` 文件头部**：
 
 ```
-📦 步骤3/7 路径配置 ✅ {date命令返回日期}
+📦 步骤3/8 路径配置 ✅ {date命令返回日期}
 
 路径变量（供后续步骤从文件读取）：
 MEMORY_CENTER=[记忆共享中心]
@@ -112,7 +113,7 @@ CONFIG_ROOT=[配置根]
 按 INSTALL Step -0.5 判定的端 ID，从其 `adapters/<端ID>/capability.yaml` 读配置根：
 
 ```bash
-CONFIG_ROOT=$(grep -m1 '^config_root:' "adapters/<端ID>/capability.yaml" | awk '{print $2}' | tr -d '"')
+CONFIG_ROOT=$(grep -m1 '^config_root:' "adapters/<端ID>/capability.yaml" | sed -e 's/^config_root:[[:space:]]*//' -e 's/[[:space:]]*#.*$//' | tr -d '"')
 [ -z "$CONFIG_ROOT" ] && CONFIG_ROOT="~/.workbuddy"   # 占位端/无 capability.yaml → 默认 WorkBuddy（向后兼容）
 ```
 

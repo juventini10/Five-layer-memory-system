@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """dsh_session_title_batch.py — DSH 历史会话标题批量统一命名（对齐 WB session_title_batch_rename.py）
 
@@ -26,6 +22,10 @@ except Exception: pass
 ① 备份 `<file>.bak-<ts>-prerename` ② 原子替换 ③ 改后自校验（可解压+事件形状合规）
 ④ 只追加 1 条 title 事件，⛔不动既有事件 ⑤ 宿主正写该文件时跳过（不硬改）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import glob
 import json

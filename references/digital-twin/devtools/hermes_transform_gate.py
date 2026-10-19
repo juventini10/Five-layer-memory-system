@@ -35,7 +35,7 @@ B. `transform_llm_output` —— AI 回复**最终投递之前**塑形
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import json
@@ -147,6 +147,7 @@ def main() -> int:
     if mode == "--self-test":
         return _self_test()
     if mode == "--json":
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         text = sys.stdin.read()
         out, hits = clean_tool_result(text)
         print(json.dumps({"text": out} if hits else {}, ensure_ascii=False))

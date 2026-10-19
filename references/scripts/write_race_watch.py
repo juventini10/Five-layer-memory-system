@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 write_race_watch.py — 恢复式写入竞态侦测器（v1.0.0·2026-09-18·工单 §六 D5 根治）
 
@@ -29,6 +25,10 @@ write_race_watch.py — 恢复式写入竞态侦测器（v1.0.0·2026-09-18·工
   python3 write_race_watch.py --self-test     # 造 R1/R2/R3/正常 四态夹具自测
 写域：仅 成长箱/竞态台账.jsonl + 成长箱/learnings/write_race_watch_state.json
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import hashlib
 import json

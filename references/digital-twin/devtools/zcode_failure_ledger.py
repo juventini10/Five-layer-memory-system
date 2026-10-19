@@ -73,6 +73,7 @@ def _extract(payload):
 def record():
     raw = ""
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read() or ""
     except Exception:
         raw = ""

@@ -43,9 +43,15 @@ def snapshot_status():
     in_table = False
     for line in lines:
         s = line.strip()
-        if s.startswith("###") and "最近变更摘要" in s:
+        # 层级解析（B1 根治·2026-10-10 刚叔提请单 F1）：原判据写死 `###`，而本包 step5
+        # 合成用的模板 `references/templates/情境层-动态状态快照.md` 产的是 `## 📝 最近变更摘要`
+        # ——包自己的合成链保证每个新装用户该维恒失明（"数据来源形状↔解析器断言形状"无配对校验）。
+        # 判据改按标题层级族匹配并以标题文本定位，⛔不认某一级。
+        if re.match(r"^#{2,6}\s", s) and "最近变更摘要" in s:
             in_table = True
             continue
+        if in_table and re.match(r"^#{1,6}\s", s):
+            break  # 进入下一章节：表格已结束，⛔越界把后文表格当本段数据
         if not in_table or not s.startswith("|"):
             continue
         cells = [c.strip() for c in s.strip("|").split("|")]

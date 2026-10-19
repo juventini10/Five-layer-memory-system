@@ -7,7 +7,10 @@ route_inject_prompt.py — UserPromptSubmit 钩子：调用 router.py 硬匹配�
 - 单一真源：import router.route()（触发词从 15 个 SKILL.md desc 自动提取，v3.0.0 起含语义标签散列兜底）。
 - 置信门控：
   · 唯一命中（len==1）→ 注入该 Skill 路由提示 + SSOT 格式契约。
-  · 多命中（>1）→ 取首个匹配注入 + 标⚠️歧义告警写入 route_state.json，交软路由/你裁决
+  · 多命中（>1）→ v3.0.1/v3.0.2 起改为**非指令候选提示**（且不下发任一候选的格式契约）（列出全部候选·不指定调用谁）+ 歧义告警写入
+    route_state.json。原「⚠️歧义…请调用该 Skill 执行」属自相矛盾指令：自己都判不了档还下祈使句，
+    等于每轮把裁定负担推给模型（2026-09-20 better-harness 复盘 finding hooks-inject-conflicting-instructions）。
+  · 显式命令轮（载荷含 <command-name> 或以 / 开头）→ 唯一命中也降级为提示，⛔与你显式命令抢方向盘
     （v3.0.0 修复：原"多命中静默不注入"是连锁盲区——router 修语义兜底后"写文案"类指令
      变为多命中反被门控丢弃，scriyore 仍不触发；现改为降级注入+告警而非黑箱丢弃）。
   · 0 命中 → 不注入，交软路由（feeder）语义召回。
@@ -21,16 +24,17 @@ route_inject_prompt.py — UserPromptSubmit 钩子：调用 router.py 硬匹配�
   · traces/ 有 2026-08-24 当天多次调用记录；/tmp/route_state.json 有实跑决策留痕。
   · 结论：钩子已挂载且在跑，"是否注入属待验证项"旧注释有误导性，已删除。
 """
-# Win console UTF-8 guard (auto by clock-loop 1.7.2)
+# Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import sys
 import os
 import json
+# Win console UTF-8 guard (auto by clock-loop 1.7.2 · 2026-10-12 并源嫁接)
 import datetime
 
-ROUTER_DIR = os.path.expanduser("[记忆共享中心]/脚本中心")
+ROUTER_DIR = os.path.expanduser("[记忆共享中心]/脚本中心/Skill路由引擎/scripts")  # 2026-10-12 单点化：真源自身
 sys.path.insert(0, ROUTER_DIR)
 from router import route  # 单一真源
 from format_contract import extract_format_contract  # SSOT 格式契约抽取（注入/校验共用）
@@ -56,7 +60,7 @@ def main():
         return
     raw = ""
     try:
-        raw = sys.stdin.buffer.read().decode('utf-8', errors='replace')
+        raw = sys.stdin.buffer.read().decode('utf-8', errors='replace')  # 2026-10-12 并源：裸字节不炸（devtools 硬化块嫁接）
     except Exception:
         raw = ""
     # 离线诊断兼容：把原始 payload 追加写入 /tmp/wb_hook_probe.log（非致命，便于回归排查）
@@ -142,10 +146,19 @@ def _inject(prompt):
     # 置信门控注入
     if len(matched) == 1:
         skill = matched[0]
-        ctx = (
-            "【路由引擎硬匹配】此消息命中技能 `%s`，请调用该 Skill 执行"
-            "（不要绕过、不要手动 Edit 日志文件）。" % skill
-        )
+        explicit = ("<command-name>" in prompt) or prompt.lstrip().startswith("/")
+        if explicit:
+            ctx = (
+                "【路由引擎·候选提示（非指令）】本轮是显式命令轮，硬匹配候选 `%s` "
+                "**仅作提示**——显式命令优先，不按本条改道（本条非指令）。" % skill
+            )
+            _emit(ctx, decision)   # v3.0.3：定档让位于显式命令，格式契约随之停发（独立复核补漏：原写法仍在此分支拼"以此为准"=半指令）
+            return
+        else:
+            ctx = (
+                "【路由引擎硬匹配】此消息命中技能 `%s`，请调用该 Skill 执行"
+                "（不要绕过、不要手动 Edit 日志文件）。" % skill
+            )
         # SSOT 格式契约实时注入（最优根治闭环）：拉活源、不依赖历史缓存
         contract = ""
         try:
@@ -162,16 +175,18 @@ def _inject(prompt):
     elif len(matched) > 1:
         # v3.0.0 修复：多命中不再静默丢弃——取首个降级注入 + 标⚠️歧义告警
         skill = matched[0]
+        # v3.0.1：引擎自己都判不了档时⛔不下祈使指令——原写法「⚠️多命中歧义…请调用该 Skill
+        # 执行」把裁定负担整包推给模型（每轮需自行仲裁，且指令与用户显式命令抢方向盘）。
+        # 改为显式非指令：候选列全，裁定归实际意图/显式命令。
         ctx = (
-            "【路由引擎硬匹配】此消息命中技能 `%s`（⚠️多命中歧义：%s），请调用该 Skill 执行"
-            "；若不符意图以软路由/你裁决为准（不要绕过、不要手动 Edit 日志文件）。"
-            % (skill, "/".join(matched))
+            "【路由引擎·候选提示（非指令）】此消息命中多个技能：%s。引擎无法机械定档，"
+            "**不指定调用哪一个**——以你的显式命令与实际意图为准自行裁定；若都不适用，忽略本条即可"
+            "（本条非指令，⛔不要因它绕开显式命令；日志仍不手动 Edit）。"
+            % "/".join(matched)
         )
+        # v3.0.2：既然不定档，就⛔不同时下发 matched[0] 的「回复格式契约」并写"以此为准"——
+        # 那等于把裁定负担只下推一半（口头说不指定，手上仍按首选注入格式=半指令·复核实测发现）。
         contract = ""
-        try:
-            contract = extract_format_contract(skill)
-        except Exception:
-            contract = ""
         if contract:
             ctx += (
                 "\n\n【SSOT 格式契约·实时拉取】以下为 `%s` 技能 SKILL.md 中“回复/输出格式”"

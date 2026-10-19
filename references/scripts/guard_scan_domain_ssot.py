@@ -39,7 +39,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import ast
@@ -194,6 +194,13 @@ def audit():
                               # ⛔ 归档不是活载体（2026-10-03 正例实跑抓到
                               #   `归档/脚本归档/…-deprecated` 里的已废弃守卫）
                               "归档")
+                 # 🔴 2026-10-08 补两类归档/备份物（Hermes 端实证·判据③ 报 2 处盲区）：
+                 #   ① `_archive/` 下带日期的批次归档（2026-10-05-P6-misfire-newfiles 等）
+                 #   ② 一次性「消副本前备份」目录（真源消副本前备份-20261006_1400·28 件）
+                 #   两类都是**备份/归档物·非活载体**——与上方 `归档` 同理：把已废弃
+                 #   守卫算成「元层看不见的盲区」= 假红。判据收窄·⛔非放宽（活载体不受影响）。
+                 and not x.startswith("_archive")
+                 and not x.startswith("真源消副本前备份")
                  and not x.startswith(".")]
         guards = [f for f in fn
                   if f.endswith((".py", ".sh")) and any(t in f for t in GUARD_TOKENS)]

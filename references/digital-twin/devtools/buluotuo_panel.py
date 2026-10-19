@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """buluotuo_panel.py v0.1 — 布洛陀神经态可视化聚合器（引擎类·stats·跨工具中立）
 
 把已存在的真实信号源聚合成「壮族铜鼓活面板」单文件 HTML：
@@ -21,6 +17,10 @@ except Exception: pass
 
 用法：python3 buluotuo_panel.py  → 输出 HTML 到 可视化呈现/铜鼓活面板.html
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import sys
 import json

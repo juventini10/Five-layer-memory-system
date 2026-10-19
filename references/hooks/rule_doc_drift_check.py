@@ -18,7 +18,7 @@ rule_doc_drift_check.py — 铁律版索引表描述 vs 实盘常驻文件 一�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import os
 import re
@@ -113,15 +113,20 @@ def check():
     # 检查3: 索引表编号连续性
     print("=== 检查3: 索引表编号连续性 ===")
     nums = [int(r[0]) for r in rows]
-    expected = list(range(1, 23))
+    # 预期集从被检对象自身派生（B8 根治·2026-10-10 刚叔提请单·条文19 判据-变换一致性）：
+    # 原硬编码 range(1,23) 在规则晋升到 037/038 条后把 023-038 全判成"多出编号"＝15 项假阳性，
+    # 真·空洞反被淹没；规则每晋升一次这条判据就自动过期，属"判据未随对象演化"标准形态。
+    # 跨源一致性（索引行数 vs 正文条目数）由检查1 负责，此处不重复计数职责。
+    _hi = max(nums) if nums else 0
+    expected = list(range(1, _hi + 1))
     missing = [n for n in expected if n not in nums]
-    extra = [n for n in nums if n not in expected]
+    extra = sorted({n for n in nums if nums.count(n) > 1})
     if missing:
         issues.append(f"⚠️ 索引表缺少编号: {missing}")
     if extra:
-        issues.append(f"⚠️ 索引表多出编号: {extra}")
+        issues.append(f"⚠️ 索引表重号: {extra}")
     if not missing and not extra:
-        print(f"  ✅ 001-022完整（009占位正常）")
+        print(f"  ✅ 001-{_hi:03d} 连续（无空洞·无重号·预期集随索引表自身派生）")
     print()
 
     # 报告

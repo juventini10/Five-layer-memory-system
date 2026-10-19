@@ -105,7 +105,7 @@ say "    配置根: $OUT$( [ "$DRY" = "1" ] && echo '  (dry-run·零写入)' )"
 say "    记忆中心: ${MC:-<未找到>}"
 say "    user_skills: $US"
 
-# ── [1/6] 记忆中心指纹检测（fail-loud·防装到通用空目录）──────────────────────
+# ── [1/8] 记忆中心指纹检测（fail-loud·防装到通用空目录）──────────────────────
 if [ ! -d "$MC" ] || [ ! -f "$MC/核心层/CORE.md" ]; then
   echo -e "${RED}[X] 记忆中心不存在或非布洛陀指纹: ${MC:-<未找到>}${NC}"
   echo -e "    请先完成布洛陀五层记忆系统安装，再跑本脚本（或显式传记忆中心绝对路径）。"; exit 1
@@ -122,10 +122,10 @@ fp_file "记忆规则/用户基本规则-铁律版.md" "行为规则" "铁律"
 if [ "$FP_FAIL" -gt 0 ]; then
   echo -e "${RED}[X] $MC 不是完整的布洛陀五层记忆系统（$FP_FAIL 项指纹缺失）${NC}"; exit 1
 fi
-echo -e "${GREEN}[1/6] 记忆中心指纹通过: $MC${NC}"
+echo -e "${GREEN}[1/8] 记忆中心指纹通过: $MC${NC}"
 
-# ── [2/6] 五系统文件模板落盘（已存在不覆盖·占位符替换）──────────────────────
-echo -e "${YELLOW}[2/6] 五系统文件模板落盘（SOUL/IDENTITY/USER/MEMORY/customPrompt）...${NC}"
+# ── [2/8] 五系统文件模板落盘（已存在不覆盖·占位符替换）──────────────────────
+echo -e "${YELLOW}[2/8] 五系统文件模板落盘（SOUL/IDENTITY/USER/MEMORY/customPrompt）...${NC}"
 run mkdir -p "$OUT"
 SYS_FAIL=0
 for t in SOUL.md IDENTITY.md USER.md MEMORY.md customPrompt.md; do
@@ -149,10 +149,10 @@ done
 if [ "$SYS_FAIL" -gt 0 ]; then
   echo -e "${RED}[X] 五系统文件模板缺 $SYS_FAIL 件——⛔ 拒绝装残（T0 指令会 Read 不存在的文件）${NC}"; exit 2
 fi
-echo -e "${GREEN}[2/6] 五系统文件就位（$OUT/）${NC}"
+echo -e "${GREEN}[2/8] 五系统文件就位（$OUT/）${NC}"
 
-# ── [3/6] paste.md 从模板生成（占位符替换·每次重新生成确保最新）──────────────
-echo -e "${YELLOW}[3/6] 待粘贴文本从模板生成...${NC}"
+# ── [3/8] paste.md 从模板生成（占位符替换·每次重新生成确保最新）──────────────
+echo -e "${YELLOW}[3/8] 待粘贴文本从模板生成...${NC}"
 PASTE_TPL="$AD/templates/paste.md"
 if [ ! -f "$PASTE_TPL" ]; then
   echo -e "${RED}[X] 包内 paste 模板缺失: $PASTE_TPL${NC}"; exit 2
@@ -207,13 +207,13 @@ paste.md 首条 T0 指令会强制 AI 每次新会话首条 Read 这五件。
 EOF
   bytes=$(wc -c < "$DST" | tr -d ' ')
 fi
-say "[3/6] 待粘贴文本 ${bytes} 字节（+ 同名 .readme 说明）"
+say "[3/8] 待粘贴文本 ${bytes} 字节（+ 同名 .readme 说明）"
 
-# ── [4/7] Skill 到点必装（端专属2个直部署S1 + 通用10个MC真源→S1软链）──
+# ── [4/8] Skill 到点必装（端专属2个直部署S1 + 通用10个MC真源→S1软链）──
 # 设计：端专属Skill=豆包端独有资产（compatibility: doubao-work），⛔DO NOT放MC/技能配置/共享目录
 #       ——其他端会扫描/软链MC/技能配置/，端专属Skill被误加载=混乱（2026-10-06 隔离令根治）
 #       端专属2个直接部署到S1（豆包user_skills），通用10个仍走MC/技能配置/真源→S1软链
-echo -e "${YELLOW}[4/7] Skill 到点必装（端专属2个直部署S1 + 通用10个MC真源→S1软链）...${NC}"
+echo -e "${YELLOW}[4/8] Skill 到点必装（端专属2个直部署S1 + 通用10个MC真源→S1软链）...${NC}"
 SK_OK=0
 MC_SKILLS="${MC}/技能配置"
 for s in "布洛陀-豆包办公规则" "doenglingz-slice-nav-doubao"; do
@@ -242,7 +242,7 @@ for s in "布洛陀-豆包办公规则" "doenglingz-slice-nav-doubao"; do
   fi
   SK_OK=$((SK_OK+1))
 done
-echo -e "${GREEN}[4/7] 端专属 Skill: ${SK_OK}/2（直部署S1·不进MC共享目录·其他端不可见）${NC}"
+echo -e "${GREEN}[4/8] 端专属 Skill: ${SK_OK}/2（直部署S1·不进MC共享目录·其他端不可见）${NC}"
 
 # ── 4c/4d. 通用 Skill 部署（10个·从 references/skills/ → MC/技能配置/ → user_skills 软链）──
 # 通用Skill=全端共用资产（awaken-memory-system/clock-loop/daily-buddy/good-good-study/
@@ -282,12 +282,12 @@ for s in "${GEN_SKILLS[@]}"; do
   fi
   GEN_OK=$((GEN_OK+1))
 done
-echo -e "${GREEN}[4/7] 通用 Skill: ${GEN_OK}/10（真源=MC/技能配置/·运行时=user_skills软链）${NC}"
+echo -e "${GREEN}[4/8] 通用 Skill: ${GEN_OK}/10（真源=MC/技能配置/·运行时=user_skills软链）${NC}"
 
-# ── [5/7] TSL机械校验脚本部署（构造权归脚本不归AI·童灵D3上岗时AI调用relay）──
+# ── [5/8] TSL机械校验脚本部署（构造权归脚本不归AI·童灵D3上岗时AI调用relay）──
 # 设计哲学：数字分身设计哲学/08-会话级L7验证清单.md §十——根治＝把构造权从AI手里拿走交给脚本
 # 豆包端无Stop钩子→AI主动调用脚本（非自绘），脚本机械检查L0-L7可验证部分，AI只许relay stdout
-echo -e "${YELLOW}[5/7] TSL机械校验脚本部署（doubaowork_tsl_verify.py → MC/脚本中心/）...${NC}"
+echo -e "${YELLOW}[5/8] TSL机械校验脚本部署（doubaowork_tsl_verify.py → MC/脚本中心/）...${NC}"
 TSL_SRC="${AD}/scripts/doubaowork_tsl_verify.py"
 TSL_DST="${MC}/脚本中心/doubaowork_tsl_verify.py"
 if [ ! -f "$TSL_SRC" ]; then
@@ -315,8 +315,61 @@ else
   fi
 fi
 
-# ── [6/7] 自检：五系统文件在位 + paste 非空/关键段/无私人内容 + Skill 可达 + TSL脚本可达 ────
-echo -e "${YELLOW}[6/7] 自检...${NC}"
+# ── [6/8] launchd 机械巡逻部署（巡逻脚本落盘 + plist 落位 + bootstrap·对齐 traework）──
+# 设计：launchd 是跨工具中立的机械保底（2026-10-09 新增，补豆包端唯独缺失的机械巡逻层）。
+PATROL_SRC="$AD/scripts/route_doubaowork_patrol.sh"
+PATROL_DST_DIR="$MC/开发工具/Skill路由引擎/scripts"
+PLIST_TMPL="$AD/scripts/com.buluotuo.doubaowork.patrol.plist"
+PLIST="$HOME/Library/LaunchAgents/com.buluotuo.doubaowork.patrol.plist"
+INSTALL_LD="$AD/scripts/install_launchd.sh"
+echo -e "${YELLOW}[6/8] launchd 机械巡逻部署（巡逻脚本 + plist + bootstrap）...${NC}"
+
+# 6a. 巡逻脚本落盘（plist ProgramArguments 指向此·缺则 launchd 跑空=守卫全死）
+#    已存在不覆盖：作者机该路径是作者态 v0.1（含 platform check 完整4腿），
+#    装机态 v0.2 只3腿，⛔不得用装机态覆盖作者真身（对齐 setup 增量哲学）。
+PATROL_DST="$PATROL_DST_DIR/route_doubaowork_patrol.sh"
+if [ ! -f "$PATROL_SRC" ]; then
+  echo -e "${RED}  [X] 包内巡逻脚本缺失: $PATROL_SRC${NC}"; FAIL=$((FAIL+1))
+elif [ "$DRY" = "1" ]; then
+  if [ -e "$PATROL_DST" ]; then say "  [dry] 巡逻脚本已存在·跳过（不覆盖真身）"; else say "  [dry] 落盘巡逻脚本 → $PATROL_DST"; fi
+elif [ -e "$PATROL_DST" ]; then
+  echo -e "  ${YELLOW}[keep] 巡逻脚本已存在，未覆盖（尊重作者态真身·如需更新手动比对）${NC}"
+else
+  run mkdir -p "$PATROL_DST_DIR"
+  sed -e "s|\[记忆共享中心\]|$MC|g" -e "s|{记忆共享中心}|$MC|g" "$PATROL_SRC" > "$PATROL_DST"
+  run chmod +x "$PATROL_DST"
+  echo -e "${GREEN}  [OK] 巡逻脚本已落盘（占位符已替换）${NC}"
+fi
+
+# 6b. plist 落位（幂等：已真实安装/不含占位符则跳过，防 sed 叠写）
+if [ ! -f "$PLIST_TMPL" ]; then
+  echo -e "${RED}  [X] 包内 plist 模板缺失: $PLIST_TMPL${NC}"; FAIL=$((FAIL+1))
+elif [ "$DRY" = "1" ]; then
+  say "  [dry] plist 落位 → $PLIST"
+elif [ -f "$PLIST" ] && ! grep -qF '[记忆共享中心]' "$PLIST"; then
+  echo -e "  ${YELLOW}[=] plist 已安装（占位符已替换）·跳过${NC}"
+else
+  run mkdir -p "$(dirname "$PLIST")"
+  sed -e "s|\[记忆共享中心\]|$MC|g" -e "s|{记忆共享中心}|$MC|g" "$PLIST_TMPL" > "$PLIST"
+  echo -e "${GREEN}  [OK] plist 已落位（占位符已替换）${NC}"
+fi
+
+# 6c. bootstrap（尽力自动·失败给手动指令·不假绿·需手动不计 FAIL 不阻塞）
+if [ "$DRY" = "1" ]; then
+  say "  [dry] 跳过 bootstrap"
+elif [ -f "$INSTALL_LD" ]; then
+  if bash "$INSTALL_LD" </dev/null; then
+    echo -e "${GREEN}  [OK] launchd patrol 已注册${NC}"
+  else
+    echo -e "${YELLOW}  [!] launchd 需手动注册（见上方命令）·文件已全量落盘·未假绿${NC}"
+  fi
+else
+  echo -e "${YELLOW}  [!] 缺 install_launchd.sh·手动: launchctl bootstrap gui/\$(id -u) $PLIST${NC}"
+fi
+echo -e "${GREEN}[6/8] launchd 机械巡逻部署完成（调度注册可能需手动 1 步）${NC}"
+
+# ── [7/8] 自检：五系统文件在位 + paste 非空/关键段/无私人内容 + Skill 可达 + TSL脚本可达 ────
+echo -e "${YELLOW}[7/8] 自检...${NC}"
 if [ "$DRY" = "1" ]; then say "  [dry] 跳过自检"; else
   V_FAIL=0
   # 五系统文件在位
@@ -357,11 +410,11 @@ if [ "$DRY" = "1" ]; then say "  [dry] 跳过自检"; else
   if [ "$V_FAIL" -gt 0 ]; then
     echo -e "${RED}[X] 自检 $V_FAIL 项未过——⛔ 不可视为安装成功${NC}"; exit 1
   fi
-  echo -e "${GREEN}[6/7] 自检 ✅（五系统文件在位·paste 关键段齐全·无私人内容·Skill 可达·TSL脚本可达）${NC}"
+  echo -e "${GREEN}[7/8] 自检 ✅（五系统文件在位·paste 关键段齐全·无私人内容·Skill 可达·TSL脚本可达）${NC}"
 fi
 
-# ── [7/7] 如实交付 ────────────────────────────────────────────────────────
-echo -e "${GREEN}[7/7] ✅ 就绪${NC}"
+# ── [8/8] 如实交付 ────────────────────────────────────────────────────────
+echo -e "${GREEN}[8/8] ✅ 就绪${NC}"
 if [ "$DRY" = "1" ]; then
   say ""
   say "[dry-run] 真实运行时：把 $DST 全部内容粘进「设置 → 工作模式任务设置 → 工作任务偏好指令」并保存。"
@@ -387,6 +440,11 @@ fi
 say ""
 say "   五系统文件已部署到 $OUT/（T0 指令强制每次新会话首条 Read）"
 say "   12 个 Skill（2端专属+10通用）已软链到 $US/"
+if launchctl print "gui/$(id -u)/com.buluotuo.doubaowork.patrol" >/dev/null 2>&1; then
+  say "   机械巡逻 launchd 已注册（每30分钟·跨工具保底）"
+else
+  say "   ⚠️ 机械巡逻待注册（1步·系统终端执行）：bash $INSTALL_LD"
+fi
 say ""
 say "   粘完请自检：随便问一句「你的准则第一条是什么」，答不上来 = 没生效。"
 exit 0

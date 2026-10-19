@@ -16,15 +16,15 @@
 - **🔴 断言绑实录两步法（v3.11.3新增·QD-014机制化·接触法）**：报告/交付文本中写"档位/分数/行数/版本"类数字断言前，✅DO 先独立跑实录命令（`wc -l`/Read `.kb_lint_last_run.json`或`.phaseX_last_run.json`/skill_eval JSON）把真值取到上下文，写入时括注来源；⛔DO NOT 凭分层框架/阈值印象推断数字——原因是2026-07-27一日二犯实测（"L1警告带内"与"回危险档"均为框架印象推断，实录d5_band皆为"不可接受"），条文对此族无效须物理位（约束投放时刻=写数字瞬间）。**覆盖边界如实声明**：本条仅覆盖Loop流程内产出物（评估报告/体检报告/交付文本）——流程外自由写入CHANGELOG的场景本条不在场，由skill_eval窄化advisory单防（✅已建v3.12.0·eval_assertion_advisory：行数+档位/分数两型无来源字样→提示·不计分人终判）。`[来源: 成长箱QD-20260727-014 | 三明智L2验证2026-07-27 | 负例证据=当日二犯实录偏差在案]`
 - 评估完成后,progress.md内容按 `references/report-template.md` 格式整理为评估报告（含YAML frontmatter 7必填字段）
 - **🔴 候选处置台账迁入（v3.22.0新增·M4可观测性·三明智L2验证）**：✅DO 归档时将progress.md「候选处置台账」段（含自评未采纳项）**原样迁入报告**（report-template「候选处置台账」段）——搬运非重写,七态+理由与不变。有候选才迁(无则写"本轮无候选")——原因是progress归档即删,不迁=七态处置事后无法审计(M4可观测性漏洞)。迁移靠门禁⑤ `--check-report-content` 机械兜底(有候选证据无台账段→提示),不靠AI自觉搬(防M4自我复制F2)
-- 归档路径:`~/[记忆共享中心]/评估知识库/test_results/{对象类型}_tests/{对象名}_{版本号}_评估报告_{YYYY-MM-DD}.md`
-- **写入前路径阻断（v3.0.3新增·Poka-Yoke接触法）**：✅DO 执行Write前校验目标路径——不以 `~/[记忆共享中心]/评估知识库/test_results/` 开头 → 🔴物理阻断，中止写入，弹回正确路径。⛔DO NOT在路径校验通过前执行Write——原因是Write到错误路径=归档数据分散=后续检索断裂，事后Glob补救成本远高于事前阻断
+- 归档路径:`[记忆共享中心]/评估知识库/test_results/{对象类型}_tests/{对象名}_{版本号}_评估报告_{YYYY-MM-DD}.md`
+- **写入前路径阻断（v3.0.3新增·Poka-Yoke接触法）**：✅DO 执行Write前校验目标路径——不以 `[记忆共享中心]/评估知识库/test_results/` 开头 → 🔴物理阻断，中止写入，弹回正确路径。⛔DO NOT在路径校验通过前执行Write——原因是Write到错误路径=归档数据分散=后续检索断裂，事后Glob补救成本远高于事前阻断
 - **归档后存在性验证**：✅DO 写入后 Glob `test_results/skill_tests/{对象名}_*评估报告*` 验证文件存在——不存在=交付未完成，退回补写
-- **🔴 归档封口物理锁（v3.23.0新增·防误层·治"门禁④⑤靠AI自觉跑"·三明智L2验证后冻结2026-07-29）**：报告Write后✅DO必调 `python3 scripts/finalize_report.py --skill {被评估SKILL.md} --report {报告绝对路径}` ——单入口内跑16道检查(存在性/路径守卫/纯净度/check-only/check-l1l2/check-report-content/grade_guard/verdict_guard/overdue_freeze/candidate_verdict/review_trail/delivery_summary/promise_overdue/evidence_precondition/pending_review_guard/smoke_evidence_guard，v4.12.3 硬门禁1-16三线对账看护（编号↔声明↔append）)，exit非零=拒绝封口→按detail修复重跑；exit 0=输出封口确认块JSON。⛔DO NOT AI自行编写封口确认块——数据必须取脚本JSON原样粘贴(report_sha8防伪锚·伪造须算对哈希+骗过双盲复现)——原因是daily-buddy 2026-07-26文本层门禁被整段跳过，脚本阻断+确认块数据锁死才是物理约束。**诚实边界**(架构规范§一1.1 v5.22)：本锁不"杜绝"绕过——链条尽头仍有"AI调不调脚本"自觉点，真实效果=绕过成本>遵守成本+全程留痕(.finalize_last_run.json)。honest_pass=false透传警示不阻断(双章归一自洽·报告消费纪律由check-report-content硬卡)
+- **🔴 归档封口物理锁（v3.23.0新增·防误层·治"门禁④⑤靠AI自觉跑"·三明智L2验证后冻结2026-07-29）**：报告Write后✅DO必调 `python3 scripts/finalize_report.py --skill {被评估SKILL.md} --report {报告绝对路径}` ——单入口内跑17道检查(存在性/路径守卫/纯净度/check-only/check-l1l2/check-report-content/grade_guard/verdict_guard/overdue_freeze/candidate_verdict/review_trail/delivery_summary/promise_overdue/evidence_precondition/pending_review_guard/smoke_evidence_guard/koujing_consumption_guard，v4.18.0 硬门禁1-17三线对账看护（编号↔声明↔append）)，exit非零=拒绝封口→按detail修复重跑；exit 0=输出封口确认块JSON。⛔DO NOT AI自行编写封口确认块——数据必须取脚本JSON原样粘贴(report_sha8防伪锚·伪造须算对哈希+骗过双盲复现)——原因是daily-buddy 2026-07-26文本层门禁被整段跳过，脚本阻断+确认块数据锁死才是物理约束。**诚实边界**(架构规范§一1.1 v5.22)：本锁不"杜绝"绕过——链条尽头仍有"AI调不调脚本"自觉点，真实效果=绕过成本>遵守成本+全程留痕(.finalize_last_run.json)。honest_pass=false透传警示不阻断(双章归一自洽·报告消费纪律由check-report-content硬卡)
 - 归档后progress.md删除,不残留在Skill目录（候选处置台账已迁入永久报告·v3.22.0：删前台账已落报告=删progress不丢审计证据）
 - ⛔DO NOT将评估报告存放在Skill目录--原因是Skill目录只放Skill自身文件,评估产物放在Skill目录会污染Skill的纯粹性且导致目录膨胀
 
 **评估结果沉淀**:
-- 沉淀判据（2026-09-02机械化·原0-1数值无生成定义属"凭感觉"）：机检诚实章passed=true 且 独立审查通过 → 写入 `~/[记忆共享中心]/评估知识库/test_results/`
+- 沉淀判据（2026-09-02机械化·原0-1数值无生成定义属"凭感觉"）：机检诚实章passed=true 且 独立审查通过 → 写入 `[记忆共享中心]/评估知识库/test_results/`
 - 机检passed=true 但 审查未过或存在未处置候选 → 会话缓存,7天后清理
 - 机检诚实章passed=false → 不归档（缺陷在身,入fix流程）
 - 自上次 L3 沉淀以来新增评估报告 ≥5 份时激活 L3 沉淀（跨周期模式提取，写入 evolution/ 目录；判定由 `check_selfimprove_gate.py` 的 l3_required 字段承担，非累计 5 的倍数）
@@ -32,7 +32,7 @@
 **L3沉淀触发逻辑**(v2.2.0新增):
 ```
 阶段4交付后自动检查:
-  ├─ 读取 ~/[记忆共享中心]/评估知识库/test_results/ 下的评估报告数量
+  ├─ 读取 [记忆共享中心]/评估知识库/test_results/ 下的评估报告数量
   ├─ 自上次 L3 沉淀以来新增报告数 ≥5（check_selfimprove_gate.py 的 l3_required=true）→ 触发L3沉淀
   └─ 数量 < 5 → 跳过,正常结束
 ```

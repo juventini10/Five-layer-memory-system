@@ -54,9 +54,9 @@ except Exception:
 
 
 # 包根=脚本自身位置推导（references/scripts/ → references/ → 包根）·可移植·无作者路径
-# 2026-09-30 件4 配套根治：原 else 兜底写死作者侧 `~/~/[记忆共享中心]/发布库/五层记忆系统/
+# 2026-09-30 件4 配套根治：原 else 兜底写死作者侧 `[记忆共享中心]/发布库/五层记忆系统/
 #   布洛陀-安装包` —— ① 作者侧绝对路径 ② 且为**已退役**旧包名 ⇒ 包内副本经镜像变换成
-#   `~/~/[记忆共享中心]/发布库/…`＝端用户侧 100% 不可达**死码**，且被发包自检 ⑪
+#   `[记忆共享中心]/发布库/…`＝端用户侧 100% 不可达**死码**，且被发包自检 ⑪
 #   （reference_path_check.py）判「引用落点断头」。改为**同源可移植推导**：非包内运行
 #   （如作者侧 开发工具/ 副本）时返回同式推导路径；确需包根时由调用方 `--pkg-root`
 #   显式传入（verify.sh / verify.ps1 均传）⇒ 包内不再出现任何作者侧字面量。
@@ -99,6 +99,13 @@ LABEL_PRIVATE_NAME = "私人称呼（作者口语称谓）"
 #   装机态出现署名词=公开署名，无隐私泄漏（无真名/无路径/无私域数据）。
 
 LABEL_USERNAME = "用户名（作者系统账户名·应转「用户名」）"
+
+# 畸形前缀判据（2026-10-10 十一轮·双拼病门禁）
+# 病：包内残留 tilde 前缀紧贴占位符，安装器纯 replace 后变 `~//Users/...`（Mac）/
+#   `~/C:/Users/...`（Win）⇒ expanduser 静默失效。
+# 判据串动态派生（chr 构造），源码零字面量 ⇒ 包内 relocate 兜底洗不掉本判据
+#   （防「检查器自己变成查替换后词→自检失效」·头部 L17 警告的同族病）。
+TILDE_PAT = "~/" + chr(0x5B) + "记忆共享中心" + chr(0x5D)
 
 
 def is_bak(name: str) -> bool:
@@ -162,11 +169,11 @@ def check_conffiles(pkg_root: Path):
             continue
         rel = e.replace(os.path.expanduser("~/"), "", 1)
         base = os.path.basename(rel)
-        # 腿①0（2026-10-05 补·假幽灵根治）：~/个人AI档案/ 前缀形态 → templates/<去前缀路径>。
-        #   实锤：conffiles 行 `~/[记忆共享中心]/记忆蓝图/04_…/01-品格设计通用规范.md`，
+        # 腿①0（2026-10-05 补·假幽灵根治）：[记忆共享中心]/ 前缀形态 → templates/<去前缀路径>。
+        #   实锤：conffiles 行 `[记忆共享中心]/记忆蓝图/04_…/01-品格设计通用规范.md`，
         #   包内源在 templates/记忆蓝图/04_…/ 子树——既非 rel 直拼（带前缀）也非 base 扁平
         #   （templates 直下无同名）⇒ 两腿全空判幽灵（verify 报 FAIL·实为清单-源映射盲区）。
-        rel_nc = rel.replace("~/个人AI档案/", "", 1)
+        rel_nc = rel.replace("[记忆共享中心]/", "", 1)
         if (tpl / rel).exists() or (tpl / base).exists() or (tpl / rel_nc).exists():
             continue                     # 腿①：包内模板
         if base in steps_txt or rel in steps_txt:
@@ -178,7 +185,7 @@ def check_conffiles(pkg_root: Path):
 
 
 def scan(pkg_root: Path) -> dict:
-    hits = {"private_name": [], "username": [], "bak": [], "tmp": [], "runtime": [], "log": [], "pycache": [], "conffiles": [], "author_side": []}
+    hits = {"private_name": [], "username": [], "bak": [], "tmp": [], "runtime": [], "log": [], "pycache": [], "conffiles": [], "author_side": [], "tilde_prefixed": []}
     for dp, dn, fn in os.walk(pkg_root):
         parts = Path(dp).parts
         if ".git" in parts:
@@ -225,7 +232,7 @@ def scan(pkg_root: Path) -> dict:
             if is_tmp(f):
                 hits["tmp"].append(rel)
                 continue
-            if f in RUNTIME_DOTFILES:
+            if f in RUNTIME_DOTFILES or (f.startswith('.') and f.endswith('_tmp')) or f.endswith('_runs.jsonl'):  # 2026-10-18 与 mirror-sync._source_skipped 同源补册
                 hits["runtime"].append(rel)
                 continue
             if is_log(f) and "fixtures" not in parts:
@@ -246,6 +253,8 @@ def scan(pkg_root: Path) -> dict:
                 hits["private_name"].append(rel)
             if PAT_USERNAME in t:
                 hits["username"].append(rel)
+            if TILDE_PAT in t:                # 十一轮：畸形前缀（双拼病门禁）
+                hits["tilde_prefixed"].append(rel)
     cf_bad = check_conffiles(pkg_root)
     if cf_bad:
         hits["conffiles"] = list(cf_bad)
@@ -313,6 +322,7 @@ def main():
         "runtime": "运行时状态点文件",
         "log": "运行时日志 *.log",
         "author_side": "作者侧实验/运营件（应移出包·端用户零用途）",
+        "tilde_prefixed": "畸形前缀占位符（双拼病·装后路径必坏，见 relocate_rules 十一轮注）",
     }
     total = sum(len(v) for v in hits.values())
     if total and not args.quiet:

@@ -33,24 +33,30 @@ Fail-Loud：有红即单行显形（Stop 钩子不阻断，守 Hook 三纪律）
 用法：
   python3 path_landing_truth_guard.py            # 人读报告
   python3 path_landing_truth_guard.py --json     # 机读
-  python3 path_landing_truth_guard.py --report   # Stop 钩子用：仅单行
+  python3 path_landing_truth_guard.py --report   # 同步全量判定（人跑/审计/验收）
+  python3 path_landing_truth_guard.py --hook     # Stop 钩子用 v1.11.0：零计算读最近判定+后台刷新
+  python3 path_landing_truth_guard.py --refresh  # 计算体：增量判定+留痕（--hook 的 spawn 目标）
   python3 path_landing_truth_guard.py --self-test
 """
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import ast
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 
 # ①-④ v1.9.0 增量注记见 scan_tree/_eval_path_expr/scan_raw_tilde/scan_rules_links 各段
-__version__ = "1.9.0"  # v1.9.0(2026-10-07 QoderCN 野根根治轮)：①判据①新增常量间接解析(MC=expanduser("~")+join(MC,档案子项)盲区·实证13件借此脱检致刷新链静默崩4小时)②裸~判定补多行 expanduser( 换行参数识别(假阳6处 platform_adaptation_check)③丢前缀文本线豁免#注释行(历史注记非fs落点)④rules面端实体化白名单(2026-10-07你定端哲学·Qoder CN core-soul/core-user)
+__version__ = "1.11.0"  # v1.11.0(2026-10-09 QoderCN 童灵·皮叔令「按符合愿景最优解处理」)：**形态分离**——Stop 同步链零计算（C-087 结构性瓶颈不可优化的形态层答案：60s 超时问题的生成器拆除，timeout 判据/豁免补丁族从此后继无人）。--hook=到达腿（spawn 后台刷新+读最近判定出单行 ≈0.1s），--refresh=计算体（增量判定+留痕），--report 原语义保留供人跑/审计。交付留痕协议移植 WB ups_aggregator v0.10 整合轮（判定滞后报龄·无判定静默放行⛔不谎称本轮·pid 锁互斥 600s 死锁兜底）。
+# 历史 v1.10.1(2026-10-09 QoderCN 童灵·皮叔问「跨端验证可否做完」实查轮)：filecache 原子写补强——temp+os.replace 同目录 rename，⛔不再直写目标文件（并发撕裂自愈虽在，但一次撕裂=一轮无谓冷扫；版本入指纹⇒发布后各缓存自动重建一次=设计内）。跨端实查三事实：filecache 在 .gitignore(**/logs/runtime/)=无跨机同步面；本机六端 settings 均未挂本件=无多端并发面；发布包 references/scripts/ 副本落后 v1.9.0=待发布管线重导出（挂账，⛔不手抄——手抄=绕过净化派生链）。
+# 历史 v1.10.0(2026-10-09 QoderCN 童灵D3·皮叔令「彻底根治·守卫不当绊脚石」)：逐文件增量缓存——冷路径(任一.py mtime 翻⇒全域 2944 文件重扫)AST 两线各走一遍+原 scan_tree 二次 parse，实测 27-38s，2026-10-09 08:04 被产品 Stop timeout=60s 击杀(真崩非假红)。修法=scan_tree/scan_raw_tilde 共用 _scan_all()，每文件判定结果按 (mtime,size) 入 filecache，域变更只重parse变更文件；判据逻辑逐字移植进 _scan_file ⛔一分不放宽(缓存的是计算不是判据·T21 双向钉死冷热一致+新注入必红)。自测走 _FC_DISABLED 纯直扫不碰真机缓存。
+# 历史 v1.9.0(2026-10-07 QoderCN 野根根治轮)：①判据①新增常量间接解析(MC=expanduser("~")+join(MC,档案子项)盲区·实证13件借此脱检致刷新链静默崩4小时)②裸~判定补多行 expanduser( 换行参数识别(假阳6处 platform_adaptation_check)③丢前缀文本线豁免#注释行(历史注记非fs落点)④rules面端实体化白名单(2026-10-07你定端哲学·Qoder CN core-soul/core-user)
 # 历史 v1.8.0(2026-10-05·P3/B3挂账)(2026-10-05·P3/B3挂账)：判据④扩面——认 Path.home() / "~/…" 拼接形与 home() 候选元组混入裸~（原只追模块级裸~常量赋值）
 # rules 面（判据⑤·v1.7）：断链类命中常属**他端** rules 资产（本端⛔不改他端文件），
 # 默认进 advisory_detail 显形不判红；--rules-strict 才计入 hits（由人确认后翻硬）。
@@ -64,6 +70,42 @@ LIVE_TREES = [os.path.join(ARCHIVE, "开发工具"), os.path.join(ARCHIVE, "脚�
 LEDGER = os.path.join(ARCHIVE, "开发工具", "logs", "runtime", "path_landing_truth.jsonl")
 CACHE = os.path.join(ARCHIVE, "开发工具", "logs", "runtime", "path_landing_truth.cache.json")  # 指纹缓存：域内无变更即复用上次判定
 FINGERPRINT = True
+# v1.10.0 逐文件增量缓存（与 verdict_cached 的全局指纹互补：全局指纹判"要不要重算"，
+# filecache 判"每个文件要不要重parse"——域内一改不再全量，成本随变更量收敛·愿景②）
+CACHE2 = os.path.join(ARCHIVE, "开发工具", "logs", "runtime", "path_landing_truth.filecache.json")
+_FC = {}
+_FC_LOADED = [False]
+_FC_DISABLED = False
+
+
+def _file_cache():
+    global _FC
+    if _FC_DISABLED:
+        return None
+    if not _FC_LOADED[0]:
+        _FC_LOADED[0] = True
+        try:
+            c = json.load(open(CACHE2, encoding="utf-8"))
+            if isinstance(c, dict) and c.get("v") == __version__:
+                _FC = c.get("files") or {}
+            else:
+                _FC = {}   # 判据改版=全体旧结果作废（版本入键·v1.6 缓存事故同族防御）
+        except (OSError, ValueError):
+            _FC = {}
+    return _FC
+
+
+def _file_cache_save():
+    if _FC_DISABLED:
+        return
+    try:
+        os.makedirs(os.path.dirname(CACHE2), exist_ok=True)
+        tmp = CACHE2 + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as _f:
+            json.dump({"v": __version__, "files": _FC}, _f)
+        os.replace(tmp, CACHE2)   # v1.10.1 原子落定：读者永不见半截 JSON
+    except OSError:
+        pass
 
 SKIP_DIR = {"__pycache__", ".venv", ".venv-st", "node_modules", ".git", "cache"}
 # 本守卫自身的字面量就是判据形态（检测器必须写着要检测的模式）
@@ -210,72 +252,159 @@ def _candidate_exprs(node):
 
 
 def scan_tree():
-    hits = []
-    rx = lost_prefix_re()
-    for tree in mount_domains():
-        if not os.path.isdir(tree):
+    """v1.10.0 委托 _scan_all()——判据本体在 _scan_file（自本版两线逐字移植）。"""
+    return _scan_all()[0]
+
+
+def _scan_file(fp, rx):
+    """v1.10.0 合并单元：原 scan_tree（判据①③）+ scan_raw_tilde（判据④）对单文件的
+    全部判定——一文件一读+**一次** ast.parse（原 scan_tree 内第二次 parse 已废）。
+    ⛔ 判定逻辑逐字移植自 v1.9.0，只改命中归属容器（th=①③ / rh=④），不改任何判据强度。"""
+    th, rh = [], []
+    try:
+        src = open(fp, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return th, rh
+    lines = src.split("\n")
+    try:
+        parsed = ast.parse(src)
+    except SyntaxError:
+        th.append({"file": fp, "line": 0, "form": "syntax-error(无法求值)",
+                   "path_value": "", "snippet": ""})
+        return th, rh
+    consts = _module_consts(parsed)
+    for node in ast.walk(parsed):
+        for e in _candidate_exprs(node):
+            got = _eval_path_expr(e, consts)
+            # 判据①扩 A 型（2026-10-04·Hermes 指控本件不认空参退化，指控成立）：
+            #   真特征 = 只有一个实参的 os.path.join(...)（join 单参恒等返回该参，本身无意义，
+            #   此族皆由「第二参被脱敏删空」造成）；⛔ 不得用「求值==HOME」当判据（那会把
+            #   `HOME = os.path.expanduser("~")` 这类合法写法全误报——首版实测假红 483 处即此错）
+            if isinstance(e, ast.Call) and getattr(e.func, "attr", "") == "join" and len(e.args) == 1:
+                # 根因修正：_eval_path_expr 对单参 join 直接返回 None（要求≥2段），
+                # 故必须先判形态、再对**内层实参**求值，否则本分支永不触发（实测首两版即如此）
+                g1 = _eval_path_expr(e.args[0], consts)
+                if g1 and g1[0] == HOME:
+                    ln = getattr(e, "lineno", 0) or getattr(node, "lineno", 0)
+                    th.append({"file": fp, "line": ln,
+                               "form": "落点退化为家目录(join 仅一参·疑参数被删空)",
+                               "path_value": g1[0],
+                               "snippet": (lines[ln - 1].strip() if ln else "")[:120]})
+                    continue
+            if got and _is_home_child(got[0]):
+                ln = getattr(e, "lineno", 0) or getattr(node, "lineno", 0)
+                th.append({"file": fp, "line": ln,
+                           "form": "落点解析到家根(%s)" % got[1],
+                           "path_value": got[0],
+                           "snippet": (lines[ln - 1].strip() if ln else "")[:120]})
+    _doclines = set()  # v1.6.1：docstring/示例块豁免（AST 路线本就正确，文本线补齐·N2错位防假阳 QCN清尾轮实证）
+    for _n in ast.walk(parsed):
+        if isinstance(_n, ast.Expr) and isinstance(_n.value, ast.Constant) and isinstance(_n.value.value, str):
+            _doclines.update(range(_n.value.lineno, (_n.value.end_lineno or _n.value.lineno) + 1))
+    for i, l in enumerate(lines, 1):
+        m = rx.search(l)
+        if m and i not in _doclines and not l.lstrip().startswith("#"):  # v1.9.0 历史注释非fs落点
+            th.append({"file": fp, "line": i, "form": "丢记忆根前缀字面量",
+                       "path_value": m.group(0), "snippet": l.strip()[:120]})
+    # ── 判据④（原 scan_raw_tilde 线逐字移植·v1.8.0 扩面两形态保留）──
+    t = parsed
+    for sub in ast.walk(t):
+        if isinstance(sub, ast.BinOp) and isinstance(sub.op, ast.Div):
+            for lhs, rhs in ((sub.left, sub.right), (sub.right, sub.left)):
+                if (_is_home_call(lhs) and isinstance(rhs, ast.Constant)
+                        and isinstance(rhs.value, str) and rhs.value.startswith("~")):
+                    rh.append({"file": fp, "line": sub.lineno,
+                               "form": "Path.home()拼接裸~(落家根幽灵目录~/)",
+                               "path_value": rhs.value,
+                               "snippet": (lines[sub.lineno - 1].strip() if sub.lineno <= len(lines) else "")[:120]})
+                    break
+        elif isinstance(sub, (ast.Tuple, ast.List)):
+            if any(any(_is_home_call(x) for x in ast.walk(e)) for e in sub.elts):
+                for e in sub.elts:
+                    if (isinstance(e, ast.Constant) and isinstance(e.value, str)
+                            and e.value.startswith("~")):
+                        rh.append({"file": fp, "line": e.lineno,
+                                   "form": "Path.home()候选元组混入裸~字符串",
+                                   "path_value": e.value,
+                                   "snippet": (lines[e.lineno - 1].strip() if e.lineno <= len(lines) else "")[:120]})
+    raw = {}
+    for n in t.body:
+        if not isinstance(n, (ast.Assign, ast.AnnAssign)) or n.value is None:
             continue
+        tgs = n.targets if isinstance(n, ast.Assign) else [n.target]
+        names = [x.id for x in tgs if isinstance(x, ast.Name)]
+        for sub in ast.walk(n.value):
+            if (isinstance(sub, ast.Constant) and isinstance(sub.value, str)
+                    and sub.value.startswith("~/")):
+                lo = sub.lineno - 1
+                hi = (sub.end_lineno or sub.lineno) - 1
+                if any("expanduser" in lines[k] for k in range(max(lo - 1, 0), hi + 1) if k < len(lines)):  # v1.9.0 多行调用首行
+                    continue
+                for nm in names:
+                    raw.setdefault(nm, (sub.value, sub.lineno))
+    if raw:
+        used = set()
+        for n in ast.walk(t):
+            if not isinstance(n, ast.Call):
+                continue
+            nm = getattr(n.func, "attr", None) or (n.func.id if isinstance(n.func, ast.Name) else None)
+            if nm in FS_OPS:
+                for sub in ast.walk(n):
+                    if isinstance(sub, ast.Name) and sub.id in raw:
+                        used.add(sub.id)
+        for name in sorted(used):
+            val, ln = raw[name]
+            rh.append({"file": fp, "line": ln, "form": "裸~常量进文件系统操作(静默失败)",
+                       "path_value": val,
+                       "snippet": (lines[ln - 1].strip() if ln <= len(lines) else "")[:120]})
+    return th, rh
+
+
+def _scan_all():
+    """v1.10.0 增量调度：两扫描线共用一次域遍历 + 逐文件 (mtime,size) 缓存。
+    缓存=计算结果不是判据——文件一动立即重parse（T21 双向钉死）；域缩小时顺手剪除
+    域外旧条目（防无界增长）。自测态 _FC_DISABLED=True 走纯直扫，⛔不碰真机缓存。"""
+    fc = _file_cache()
+    tree_hits, raw_hits = [], []
+    rx = lost_prefix_re()
+    doms = [t for t in mount_domains() if os.path.isdir(t)]
+    visited = set()
+    for tree in doms:
         for root, dirs, files in os.walk(tree):
             dirs[:] = [d for d in dirs if d not in SKIP_DIR]
             for fn in files:
                 if not fn.endswith(".py") or fn in SELF_EXEMPT:
                     continue
                 fp = os.path.join(root, fn)
-                try:
-                    src = open(fp, encoding="utf-8", errors="replace").read()
-                except OSError:
-                    continue
-                lines = src.split("\n")
-                try:
-                    parsed = ast.parse(src)
-                except SyntaxError:
-                    hits.append({"file": fp, "line": 0, "form": "syntax-error(无法求值)",
-                                 "path_value": "", "snippet": ""})
-                    continue
-                consts = _module_consts(parsed)
-                for node in ast.walk(parsed):
-                    for e in _candidate_exprs(node):
-                        got = _eval_path_expr(e, consts)
-                        # 判据①扩 A 型（2026-10-04·Hermes 指控本件不认空参退化，指控成立）：
-                        #   真特征 = 只有一个实参的 os.path.join(...)（join 单参恒等返回该参，本身无意义，
-                        #   此族皆由「第二参被脱敏删空」造成）；⛔ 不得用「求值==HOME」当判据（那会把
-                        #   `HOME = os.path.expanduser("~")` 这类合法写法全误报——首版实测假红 483 处即此错）
-                        if isinstance(e, ast.Call) and getattr(e.func, "attr", "") == "join" and len(e.args) == 1:
-                            # 根因修正：_eval_path_expr 对单参 join 直接返回 None（要求≥2段），
-                            # 故必须先判形态、再对**内层实参**求值，否则本分支永不触发（实测首两版即如此）
-                            g1 = _eval_path_expr(e.args[0], consts)
-                            if g1 and g1[0] == HOME:
-                                ln = getattr(e, "lineno", 0) or getattr(node, "lineno", 0)
-                                hits.append({"file": fp, "line": ln,
-                                             "form": "落点退化为家目录(join 仅一参·疑参数被删空)",
-                                             "path_value": g1[0],
-                                             "snippet": (lines[ln - 1].strip() if ln else "")[:120]})
-                                continue
-                        if got and _is_home_child(got[0]):
-                            ln = getattr(e, "lineno", 0) or getattr(node, "lineno", 0)
-                            hits.append({"file": fp, "line": ln,
-                                         "form": "落点解析到家根(%s)" % got[1],
-                                         "path_value": got[0],
-                                         "snippet": (lines[ln - 1].strip() if ln else "")[:120]})
-                _doclines = set()  # v1.6.1：docstring/示例块豁免（AST 路线本就正确，文本线补齐·N2错位防假阳 QCN清尾轮实证）
-                try:
-                    for _n in ast.walk(ast.parse(src)):
-                        if isinstance(_n, ast.Expr) and isinstance(_n.value, ast.Constant) and isinstance(_n.value.value, str):
-                            _doclines.update(range(_n.value.lineno, (_n.value.end_lineno or _n.value.lineno) + 1))
-                except SyntaxError:
-                    pass
-                for i, l in enumerate(lines, 1):
-                    m = rx.search(l)
-                    if m and i not in _doclines and not l.lstrip().startswith("#"):  # v1.9.0 历史注释非fs落点
-                        hits.append({"file": fp, "line": i, "form": "丢记忆根前缀字面量",
-                                     "path_value": m.group(0), "snippet": l.strip()[:120]})
+                visited.add(fp)
+                sig = None
+                if fc is not None:
+                    try:
+                        stt = os.stat(fp)
+                        sig = (stt.st_mtime, stt.st_size)
+                    except OSError:
+                        sig = None
+                ent = fc.get(fp) if fc is not None else None
+                if ent is not None and sig is not None and tuple(ent[:2]) == sig:
+                    th, rh = ent[2], ent[3]
+                else:
+                    th, rh = _scan_file(fp, rx)
+                    if fc is not None and sig is not None:
+                        fc[fp] = [sig[0], sig[1], th, rh]
+                tree_hits.extend(th)
+                raw_hits.extend(rh)
+    if fc is not None:
+        for k in list(fc):
+            if k not in visited and not any(k.startswith(d + os.sep) for d in doms):
+                del fc[k]
+        _file_cache_save()
     uniq, seen = [], set()
-    for h in hits:
+    for h in tree_hits:
         k = (h["file"], h["line"], h["form"])
         if k not in seen:
             seen.add(k)
             uniq.append(h)
-    return uniq
+    return uniq, raw_hits
 
 
 FS_OPS = {"open", "exists", "isfile", "isdir", "makedirs", "join", "Path",
@@ -289,88 +418,17 @@ def _is_home_call(node):
 
 
 def scan_raw_tilde():
-    """判据④：模块级常量值是裸 `~/...` 字符串（未经 expanduser），且该常量被文件系统操作引用。
-    `open("~/x")` 不展开 ~ ⇒ FileNotFoundError ⇒ 注入/检测静默失败。
-    实证：注入器 SLICES_DIR 被脱敏从绝对路径改成裸 ~/ 后，L2~L5 域切片注入静默降级约 7 小时，
-    判据①②③当时全部无感（不落家根，只是读不到）。
-    v1.8.0 扩面（台账B3）：原只认「模块级常量=裸~/字符串且被fs操作引用」；漏两种真形态——
-    A) `Path.home() / "~/…"` 拼接（解析成 家根/~/… 幽灵）；B) 候选元组混型：Path 与裸~字符串同列，
-    经 `/` 运算对 str 抛 TypeError 或静默永不匹配（实证 skill_version_check.py L164）。"""
-    out = []
-    for tree in mount_domains():
-        if not os.path.isdir(tree):
-            continue
-        for root, dirs, files in os.walk(tree):
-            dirs[:] = [d for d in dirs if d not in SKIP_DIR]
-            for fn in files:
-                if not fn.endswith(".py") or fn in SELF_EXEMPT:
-                    continue
-                fp = os.path.join(root, fn)
-                try:
-                    src = open(fp, encoding="utf-8", errors="replace").read()
-                except OSError:
-                    continue
-                lines = src.split("\n")
-                try:
-                    t = ast.parse(src)
-                except SyntaxError:
-                    continue
-                # v1.8.0 判据④扩面·两形态：A) Path.home() / "~…" 拼接 B) home() 元组混入裸~
-                for sub in ast.walk(t):
-                    if isinstance(sub, ast.BinOp) and isinstance(sub.op, ast.Div):
-                        for lhs, rhs in ((sub.left, sub.right), (sub.right, sub.left)):
-                            if (_is_home_call(lhs) and isinstance(rhs, ast.Constant)
-                                    and isinstance(rhs.value, str) and rhs.value.startswith("~")):
-                                out.append({"file": fp, "line": sub.lineno,
-                                            "form": "Path.home()拼接裸~(落家根幽灵目录~/)",
-                                            "path_value": rhs.value,
-                                            "snippet": (lines[sub.lineno - 1].strip() if sub.lineno <= len(lines) else "")[:120]})
-                                break
-                    elif isinstance(sub, (ast.Tuple, ast.List)):
-                        if any(any(_is_home_call(x) for x in ast.walk(e)) for e in sub.elts):
-                            for e in sub.elts:
-                                if (isinstance(e, ast.Constant) and isinstance(e.value, str)
-                                        and e.value.startswith("~")):
-                                    out.append({"file": fp, "line": e.lineno,
-                                                "form": "Path.home()候选元组混入裸~字符串",
-                                                "path_value": e.value,
-                                                "snippet": (lines[e.lineno - 1].strip() if e.lineno <= len(lines) else "")[:120]})
-                raw = {}
-                for n in t.body:
-                    if not isinstance(n, (ast.Assign, ast.AnnAssign)) or n.value is None:
-                        continue
-                    tgs = n.targets if isinstance(n, ast.Assign) else [n.target]
-                    names = [x.id for x in tgs if isinstance(x, ast.Name)]
-                    for sub in ast.walk(n.value):
-                        if (isinstance(sub, ast.Constant) and isinstance(sub.value, str)
-                                and sub.value.startswith("~/")):
-                            lo = sub.lineno - 1
-                            hi = (sub.end_lineno or sub.lineno) - 1
-                            if any("expanduser" in lines[k] for k in range(max(lo - 1, 0), hi + 1) if k < len(lines)):  # v1.9.0 多行调用首行
-                                continue
-                            for nm in names:
-                                raw.setdefault(nm, (sub.value, sub.lineno))
-                if not raw:
-                    continue
-                used = set()
-                for n in ast.walk(t):
-                    if not isinstance(n, ast.Call):
-                        continue
-                    nm = getattr(n.func, "attr", None) or (n.func.id if isinstance(n.func, ast.Name) else None)
-                    if nm in FS_OPS:
-                        for sub in ast.walk(n):
-                            if isinstance(sub, ast.Name) and sub.id in raw:
-                                used.add(sub.id)
-                for name in sorted(used):
-                    val, ln = raw[name]
-                    out.append({"file": fp, "line": ln, "form": "裸~常量进文件系统操作(静默失败)",
-                                "path_value": val,
-                                "snippet": (lines[ln - 1].strip() if ln <= len(lines) else "")[:120]})
-    return out
+    """v1.10.0 委托 _scan_all()——判据④本体在 _scan_file（逐字移植，含 v1.8.0 扩面注释史）。
+
+    判据④原义存档：模块级常量值是裸 `~/...` 字符串（未经 expanduser），且该常量被
+    文件系统操作引用。`open("~/x")` 不展开 ~ ⇒ FileNotFoundError ⇒ 注入/检测静默失败。
+    实证：注入器 SLICES_DIR 被脱敏从绝对路径改成裸 ~/ 后，L2~L5 域切片注入静默降级约 7 小时。
+    v1.8.0 扩面（台账B3）：A) `Path.home() / "~…"` 拼接 B) 候选元组混型（实证 skill_version_check.py L164）。"""
+    return _scan_all()[1]
 
 
 def scan_skill_links():
-    """判据⑤（2026-10-04 你定底线）：Skill 源唯一=~/[记忆共享中心]/技能配置；
+    """判据⑤（2026-10-04 你定底线）：Skill 源唯一=[记忆共享中心]/技能配置；
     各端 skills 目录 ⛔ 不得软链到 发布库（包内=给用户的投影）。
     实证：6 端 × 10 Skill 共 60 条链进包内 ⇒ 改源不抵端，作者端跑的是投影。"""
     out = []
@@ -570,6 +628,63 @@ def verdict():
             "rc": 1 if (hits or ghosts) else 0}
 
 
+def _spawn_refresh():
+    """v1.11.0 后台计算体派发 + 互斥锁（多会话并行不叠加重复全量扫描）。
+    锁语义：存在=有活在场→跳过；>600s=死锁（持有者被击杀）→可重派；
+    --refresh 收尾自清。⛔不是"片段+合并+锁"（铁律-014②禁的是写路径合并）——
+    这里缓存文件唯一写者=计算体本身，锁只做计算去重，不碰数据合并。"""
+    lock = CACHE2 + ".lock"
+    try:
+        if os.path.exists(lock):
+            if time.time() - os.path.getmtime(lock) < 600:
+                return
+            try:
+                os.remove(lock)
+            except OSError:
+                pass
+        with open(lock, "w") as _f:
+            _f.write(str(os.getpid()))
+        subprocess.Popen([sys.executable, os.path.realpath(__file__), "--refresh"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         stdin=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        pass
+
+
+def hook_line():
+    """v1.11.0 纯函数：由最近一次判定缓存生成 Stop 单行（可测无副作用）。
+    三态：rc≠0→⚠️行+滞后龄；rc=0 且有 advisory→⚪行；无缓存/异常→''（静默·
+    后台正在首算，下回合可见——ups_aggregator 交付留痕协议：沉默可查不谎称）。"""
+    try:
+        c = json.load(open(CACHE, encoding="utf-8"))
+        v = c.get("verdict")
+    except (OSError, ValueError):
+        return ""
+    if not isinstance(v, dict):
+        return ""
+    try:
+        age_min = int((time.time() - os.path.getmtime(CACHE)) / 60)
+    except OSError:
+        age_min = -1
+    out = []
+    if v.get("advisory_detail"):
+        home_pfx = HOME + os.sep
+        out.append("⚪[rules面·显形不判红] %d 条断链（⛔不代他端定红·翻硬请 --rules-strict）：%s"
+                   % (len(v["advisory_detail"]),
+                      ", ".join(h["file"].replace(home_pfx, "~/") for h in v["advisory_detail"][:3])))
+    if v.get("rc"):
+        line = "⚠️[落点真值守卫 v%s] 丢前缀残留%d处 / 家根幽灵目录%d个" % (
+            v.get("version", "?"), v.get("residue_hits", 0), v.get("ghost_dirs", 0))
+        if v.get("ghost_detail"):
+            line += "｜幽灵 %s" % " ".join(g["name"] for g in v["ghost_detail"])
+        if v.get("detail"):
+            t = v["detail"][0]
+            line += "｜首条 %s:%s" % (os.path.basename(t.get("file", "")), t.get("line", 0))
+        line += "｜判定滞后 %d 分钟（后台刷新中·非本轮全量）" % age_min
+        out.append(line)
+    return "\n".join(out)
+
+
 def self_test():
     """双向验证：正例必绿 + 三类负例必红 + 变异体（短路不变量后 T3 应消失=判据真在做事）。"""
     import shutil
@@ -578,7 +693,7 @@ def self_test():
     global HOME, ARCHIVE, LIVE_TREES
     backup = (HOME, ARCHIVE, LIVE_TREES)
     fake_home = os.path.join(base, "home")
-    fake_arc = os.path.join(fake_home, "~/个人AI档案")
+    fake_arc = os.path.join(fake_home, "[记忆共享中心]")
     center = os.path.join(fake_arc, "脚本中心")
     os.makedirs(os.path.join(center, "logs", "runtime"), exist_ok=True)
     # ⚠️ 必须连环境变量 HOME 一起重定向：os.path.expanduser("~") 走的是进程 HOME，
@@ -586,8 +701,9 @@ def self_test():
     _old_env_home = os.environ.get("HOME")
     os.environ["HOME"] = fake_home
     HOME, ARCHIVE, LIVE_TREES = fake_home, fake_arc, [center]
+    globals()["_FC_DISABLED"] = True   # v1.10.0：自测走纯直扫，⛔不碰真机 filecache
     ok = 0
-    FIXT = os.path.expanduser("~/脚本中心/_absent_x")
+    FIXT = "~/脚本中心/_absent_x"   # v1.10.0夹具腐烂修复：裸字面量（原被 expanduser 提前展开=判据④夹具永不可能红·T6假阴）
     results = []
     try:
         def write(rel, text):
@@ -596,7 +712,7 @@ def self_test():
             with open(p, "w", encoding="utf-8") as f:
                 f.write(text)
 
-        write("good/a.py", 'LEDGER = os.path.expanduser("~/脚本中心/logs/runtime/x.jsonl")\n')
+        write("good/a.py", 'LEDGER = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "logs", "runtime", "x.jsonl")\n')  # v1.10.0正例改正形（原内容与T2负例逐字相同=永红）
         n1 = len([h for h in scan_tree() if h["file"].endswith("good/a.py")])
         results.append(("T1 正例·合法落点零命中", n1 == 0, "命中%d" % n1))
 
@@ -639,10 +755,10 @@ def self_test():
         globals()["scan_raw_tilde"] = _o
         results.append(("T8 变异体·短路判据④后T6应消失", len(r8) == 0, "短路后命中" + str(len(r8))))
         # T17-T20 判据④ v1.8 扩面双向自测：注入必红 + 撤除必绿（交接卡§三·1 验收前置）
-        write("bad_concat.py", "from pathlib import Path\nP = Path.home() / \"~/~/[记忆共享中心]/工作日志/x.md\"\ndef load():\n    return P.read_text()\n")
+        write("bad_concat.py", "from pathlib import Path\nP = Path.home() / \"[记忆共享中心]/工作日志/x.md\"\ndef load():\n    return P.read_text()\n")
         r17 = [h for h in scan_raw_tilde() if h["file"].endswith("bad_concat.py")]
         results.append(("T17 负例·Path.home()拼接裸~必红", len(r17) >= 1, "命中" + str(len(r17))))
-        write("good_concat.py", "from pathlib import Path\nP = Path.home() / \"~/[记忆共享中心]/工作日志/x.md\"\ndef load():\n    return P.read_text()\n")
+        write("good_concat.py", "from pathlib import Path\nP = Path.home() / \"[记忆共享中心]/工作日志/x.md\"\ndef load():\n    return P.read_text()\n")
         r18 = [h for h in scan_raw_tilde() if h["file"].endswith("good_concat.py")]
         results.append(("T18 正例·home()合法拼接不误伤", len(r18) == 0, "命中" + str(len(r18))))
         write("bad_tuple.py", "from pathlib import Path\nCANDS = (Path.home() / \"记忆共享中心\", \"~/个人AI档案\")\ndef pick():\n    return [c for c in CANDS if c.is_dir()]\n")
@@ -681,7 +797,7 @@ def self_test():
         # T12-T16 判据⑤ rules 面（v1.7 新增·每种错形各一条负例 + 一条防误伤正例）
         def rules_fixture():
             rh = os.path.join(base, "rh%d" % len(results))
-            ra = os.path.join(rh, "~/个人AI档案")
+            ra = os.path.join(rh, "[记忆共享中心]")
             os.makedirs(os.path.join(ra, "记忆规则"), exist_ok=True)
             open(os.path.join(ra, "记忆规则", "shared.md"), "w", encoding="utf-8").write("# src")
             os.makedirs(os.path.join(rh, ".endA", "rules"), exist_ok=True)
@@ -724,11 +840,49 @@ def self_test():
         h16, s16 = scan_rules_links(rh, ra)
         results.append(("T16 正例·合规 rules 面不误伤", h16 == [] and s16 == [],
                         "hits%d/adv%d" % (len(h16), len(s16))))
+        # T21 v1.10.0 逐文件增量缓存·双向钉死：热扫=冷扫（缓存不假阳）+ 新注入必红
+        #（缓存不吞变更=不把假绿藏进陈旧结果）。夹具 CACHE2 重定向，⛔不碰真机缓存。
+        write("good_fc.py", 'LEDGER = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "logs", "runtime", "ok.jsonl")\n')
+        globals()["_FC"], globals()["_FC_LOADED"] = {}, [True]
+        _keep_dis21, _keep_c221 = globals()["_FC_DISABLED"], globals()["CACHE2"]
+        globals()["_FC_DISABLED"], globals()["CACHE2"] = False, os.path.join(base, "fc21.json")
+        try:
+            _cold = [h for h in scan_tree() if h["file"].startswith(center)]
+            _hot = [h for h in scan_tree() if h["file"].startswith(center)]
+            _r21a = _cold == _hot
+            write("bad_fc.py", 'LEDGER = os.path.expanduser("~/脚本中心/logs/runtime/x.jsonl")\n')
+            _r21b = len([h for h in scan_tree() if h["file"].endswith("bad_fc.py")]) >= 1
+        finally:
+            globals()["_FC_DISABLED"], globals()["CACHE2"] = _keep_dis21, _keep_c221
+            globals()["_FC"], globals()["_FC_LOADED"] = {}, [False]
+        results.append(("T21 双向·冷热一致+新注入必红(增量缓存不吞变更)", _r21a and _r21b,
+                        "一致=%s 注入红=%s" % (_r21a, _r21b)))
+        # T22-T24 v1.11.0 hook_line 三态（纯函数直测·CACHE 夹具重定向·⛔不 spawn 真进程）
+        _keep_cache = globals()["CACHE"]
+        _cf = os.path.join(base, "vc.json")
+        globals()["CACHE"] = _cf
+        try:
+            json.dump({"fp": "x", "verdict": {"version": "9.9.9", "rc": 1, "residue_hits": 3,
+                       "ghost_dirs": 1, "ghost_detail": [{"name": "脚本中心"}],
+                       "detail": [{"file": "/x/bad.py", "line": 9}], "advisory_detail": []}},
+                      open(_cf, "w", encoding="utf-8"))
+            _l22 = hook_line()
+            results.append(("T22 hook_line·红判定出⚠️单行含滞后标注（不谎称本轮全量）",
+                            "⚠️" in _l22 and "残留3处" in _l22 and "判定滞后" in _l22, _l22[:60]))
+            json.dump({"fp": "x", "verdict": {"rc": 0, "advisory_detail": [{"file": "~/.x/rules/a.md"}]}},
+                      open(_cf, "w", encoding="utf-8"))
+            _l23 = hook_line()
+            results.append(("T23 hook_line·绿判定+advisory 出⚪行", _l23.startswith("⚪") and "⚠️" not in _l23, _l23[:40]))
+            os.remove(_cf)
+            results.append(("T24 负例·无判定缓存→空串静默（首算在后台·⛔不现算不谎报）", hook_line() == "", "len=%d" % len(hook_line())))
+        finally:
+            globals()["CACHE"] = _keep_cache
         for name, passed, info in results:
             print("%s %s (%s)" % ("✅" if passed else "❌", name, info))
             ok += 1 if passed else 0
     finally:
         HOME, ARCHIVE, LIVE_TREES = backup
+        globals()["_FC_DISABLED"] = False
         if _old_env_home is not None:
             os.environ["HOME"] = _old_env_home
         else:
@@ -757,6 +911,20 @@ def main(argv):
     RULES_STRICT = "--rules-strict" in argv
     if "--self-test" in argv:
         return self_test()
+    if "--hook" in argv:            # v1.11.0 Stop 到达腿：零计算
+        _spawn_refresh()
+        line = hook_line()
+        if line:
+            print(line)
+        return 0
+    if "--refresh" in argv:         # 计算体（--hook 的 spawn 目标·也可独立跑）
+        v = verdict_cached()
+        _log(v)
+        try:
+            os.remove(CACHE2 + ".lock")
+        except OSError:
+            pass
+        return 0
     v = verdict_cached()
     if "--json" in argv:
         print(json.dumps(v, ensure_ascii=False))

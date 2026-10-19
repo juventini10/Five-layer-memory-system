@@ -55,8 +55,9 @@ rule_three_layer_guard.py — 守卫「记忆规则三层文件」版本号 + �
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import argparse
 import json
 import os
@@ -67,11 +68,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rule_triggers_loader import load_triggers, extract_tielu_index_ids
 
 HOME = os.path.expanduser("~")
-BASE = os.path.expanduser("[记忆共享中心]/记忆规则")  # v2.1.3(2026-10-07 Qoder CN e2e根治)：v2.1.1把绝对路径塞join第二位=join丢HOME，作者机侥幸可达而装机态脱敏投影拼出字面~/ 目录→④[ERR]+⑤exit2双红  # v2.1.1(2026-10-04) 根治旧根拼接错：BASE曾拼出~/记忆规则(不存在)→每轮[ERR]+exit2→GUI stderr未归因崩
+BASE = os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆规则")  # v2.1.5(2026-10-08 Qoder CN·Stop真红回修)：v2.1.4注释写HOME+相对段却塞了作者机绝对路径(v1.2.237③所罚之病·假绿藏形态)→脱敏投影通道剥段回写成~/记忆规则(v2.1.1病根)→D4真红。正解=HOME+相对段三例齐。
 _CFG_ROOT = os.environ.get("WORKBUDDY_CONFIG_DIR") or os.path.join(HOME, ".workbuddy")
 MEMORY_PATH = os.path.join(_CFG_ROOT, "MEMORY.md")
 # 豆包办公端 MEMORY（2026-09-11 P2 扩展：豆包端无钩子·静态常驻可跑同样适用·双端同巡）
-DOUBAO_MEMORY_PATH = os.path.expanduser("[记忆共享中心]/豆包办公系统文件/MEMORY.md")  # v2.1.3 同族修正  # v2.1.2(2026-10-04) 同族旧根根治：曾拼~/豆包办公系统文件(不存在)→D4豆包腿永久瞎
+DOUBAO_MEMORY_PATH = os.path.join(os.path.expanduser("[记忆共享中心]"), "豆包办公系统文件", "MEMORY.md")  # v2.1.5 剥段回修（真文件7460B在·10-08 ls实证）
 # ZCode 端注入通道（2026-09-12 接入：ZCode 实测 MEMORY.md 不注入·唯一常驻通道=AGENTS.md，
 # 故布线巡查落 AGENTS.md 而非 MEMORY.md——与童灵 K2 切片落点同构）
 ZCODE_AGENTS_PATH = os.path.join(HOME, ".zcode", "AGENTS.md")
@@ -173,7 +174,7 @@ def read_transcript(path):
     原自写实现已兼容双格式，此处替换为等价调用，端扩展只改共享层一处。
     """
     import sys as _sys
-    _root = os.path.expanduser("[记忆共享中心]/脚本中心")
+    _root = os.path.join(os.path.expanduser("[记忆共享中心]"), "脚本中心")  # v2.1.5 剥段回修
     if _root not in _sys.path:
         _sys.path.insert(0, _root)
     try:
@@ -503,6 +504,23 @@ def self_test():
     return 0 if npass == len(results) else 1
 
 
+def d7_dual_name():
+    """⑦ 双名并存巡查（2026-10-09 缺陷③根治·布洛陀2.1.0上游反馈·告警不裁决）。
+
+    根因：上游 10-02 把第三层权威名从「用户基本规则-详解存档.md」迁到
+    「用户基本规则-详解存档版.md」，安装器 RULE_FILES/守卫都改了，但**旧名没有
+    退役动作**——老用户升级后双名并存，守卫 _first_existing 按权威名优先读数，
+    旧名若才是更全的本机内容就被判「三层漂移」（假红·刚叔 r2 实测 v8.28/上界30 误报）。
+    处置：只显形告警（并入→归档是文件主/你的裁决，⛔守卫不代删——本机=唯一主源，
+    守卫对主源文件只做观察）。返回 (ok, msg)。"""
+    _n = os.path.join(BASE, "用户基本规则-详解存档版.md")
+    _o = os.path.join(BASE, "用户基本规则-详解存档.md")
+    if os.path.isfile(_n) and os.path.isfile(_o):
+        return False, ("双名并存：详解存档版.md(权威名)与详解存档.md(旧名)同时在——"
+                       "巡检以权威名为准；旧名含权威名没有的增量则先并入，再将旧名移入 记忆琥珀/ 归档")
+    return True, "单名·无双名并存"
+
+
 def main():
     ap = argparse.ArgumentParser(description="守卫 记忆规则三层 版本号+铁律集合 一致性")
     ap.add_argument("--strict", action="store_true", help="发现漂移时 exit 1（默认只告警 exit 0）")
@@ -561,6 +579,8 @@ def main():
     # ⑥ 规则触发规格覆盖守卫（yaml 条数 == 铁律版索引表条数·条数由代码派生）
     d6_ok, d6_msg = d6_coverage()
     d6_drift = (not d6_ok)  # 触发规格与真源脱钩=真漂移；预注入硬墙出现洞
+    # ⑦ 双名并存巡查（2026-10-09 缺陷③根治·只告警不进 drift——归档属人的裁决）
+    d7_ok, d7_msg = d7_dual_name()
 
     if args.json:
         print({
@@ -577,6 +597,7 @@ def main():
             "d5_static": {"ok": d5s_ok, "msg": d5s_msg},
             "d5_dynamic": {"ok": d5d_ok, "msg": d5d_msg},
             "d6_coverage": {"ok": d6_ok, "msg": d6_msg},
+            "d7_dual_name": {"ok": d7_ok, "msg": d7_msg},
         })
     else:
         print("记忆规则三层一致性巡检：")
@@ -612,6 +633,7 @@ def main():
         else:
             print(f"⑤ 冲突→详解版 动态：{'✅ ' if d5d_ok else '⚠️ '}{d5d_msg}")
         print(f"⑥ 触发规格覆盖：{'✅ ' if d6_ok else '⚠️ '}{d6_msg}")
+        print(f"⑦ 双名并存巡查：{'✅ ' if d7_ok else '⚠️ '}{d7_msg}")
 
     # drift 改为「漂移原因列表」：空列表 falsy / 非空 truthy（455/458 判真假不变），
     # 且 457 行 drift[:2] 可切片取前2条原因 join（原 bool 切片=TypeError 崩溃·2026-09-17 修复）
@@ -632,7 +654,7 @@ def main():
     # 送达律（2026-09-05·--deliver 仅本端 Stop 挂载启用）：漂移不只在 stdout 印一遍就算完——
     # 本端 Stop 的 stdout 不回灌模型，warn-only 等于没人听见（实证：三层 19≠22 红了 19 天）。
     if "--deliver" in sys.argv:
-        sys.path.insert(0, os.path.expanduser("[记忆共享中心]/脚本中心"))
+        sys.path.insert(0, os.path.join(os.path.expanduser("~"), "脚本中心"))  # v2.1.4 同族回正(hook_mode腿)
         try:
             import hook_protocol as _hp
         except Exception:

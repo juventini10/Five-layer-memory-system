@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
-audit_search_kb.py v0.1 — Stop 钩子审计：观测知识调用场景的 search_kb.py 漏检率
+audit_search_kb.py v0.4.1 — Stop 钩子审计：观测知识调用场景的 search_kb.py 漏检率
+  v0.4（2026-10-13·Qoder CN·皮叔令「立场卡检索总是由AI心情执行，那不行」）：新增引用溯源三判据
+    cited/fabricated/uncited_real/ran_not_used，把义务⑧从 prose 级升为机械级；self_test 扩至 11 例。
+  v0.4.1（同日）：_TRAIL_PATH 改同源解析（原指 脚本中心/logs/ 而真身在 知识联邦引擎/logs/ ⇒
+    v0.2「修复①」自写下起一直 fail-open 空转，属「声称已修、实未生效」）。
 
 挂为 Qoder CN 原生 Stop 钩子（~/.qoder-cn/settings.json）。
 每次主代理结束响应时，通过 stdin 传入 JSON，含 transcript_path（完整对话 JSONL）。
@@ -34,6 +34,10 @@ audit_search_kb.py v0.1 — Stop 钩子审计：观测知识调用场景的 sear
   python3 audit_search_kb.py --stats                                     # 统计 miss 率
   python3 audit_search_kb.py --self-test                                 # 内置自测（4 用例）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys
 import os
 import re
@@ -75,7 +79,7 @@ sys.path.insert(0, os.path.expanduser("[记忆共享中心]/脚本中心"))
 from search_kb import ROUTE_TABLE  # 单一真源：路由表改一处，审计跟着走
 import transcript_reader as _tr  # 跨端解析·单一真源（2026-09-23 童灵根治·WB端0/304实证）
 
-DEFAULT_LOG = os.path.expanduser("[记忆共享中心]/脚本中心/知识联邦引擎/logs/audit_log.jsonl")
+DEFAULT_LOG = os.path.expanduser("[记忆共享中心]/脚本中心/logs/audit_log.jsonl")
 LOG_PATH = os.environ.get("AUDIT_LOG", DEFAULT_LOG)  # 测试可重定向
 MAX_BACKTRACK = 3  # 延续任务回溯深度
 
@@ -111,7 +115,35 @@ _META_HEAD = re.compile(
     r"|\[[^\]]*system instructions|##\s*Local Time Context|Base directory for this skill"
     r"|<[a-zA-Z_-]+[ >])", re.I)
 
-_TRAIL_PATH = os.path.join(os.path.dirname(DEFAULT_LOG), "kb_query_trail.jsonl")
+# v0.4.1 路径同源修复（2026-10-13·Qoder CN）：原 `_TRAIL_PATH` = DEFAULT_LOG 同目录，
+#   而写方 kb_query_trail.py 的真源是 ENGINE_ROOT/logs/（由 __file__ 派生）——两处不同目录，
+#   实测 脚本中心/logs/kb_query_trail.jsonl 不存在 ⇒ v0.2「修复①」的 trail 判据自写下起
+#   一直返回 None 走 fail-open 旧口径（=声称已修、实未生效）。修法=优先 import 写方取其常量，
+#   取不到再按候选列表探测，⛔不在读侧另抄一条会漂的硬路径。
+def _resolve_trail_path():
+    cands = []
+    _env = os.environ.get("KB_TRAIL_PATH")
+    if _env:
+        cands.append(os.path.expanduser(_env))
+    try:
+        import kb_query_trail as _kt
+        _tl = getattr(_kt, "TRAIL_LOG", "")
+        if _tl:
+            cands.append(_tl)
+    except Exception:
+        pass
+    _home = os.path.expanduser("~")
+    cands += [
+        os.path.join(_home, "[记忆共享中心]/脚本中心/知识联邦引擎/logs/kb_query_trail.jsonl"),
+        os.path.join(os.path.dirname(DEFAULT_LOG), "kb_query_trail.jsonl"),
+    ]
+    for _c in cands:
+        if _c and os.path.isfile(_c):
+            return _c
+    return cands[-1]
+
+
+_TRAIL_PATH = _resolve_trail_path()
 
 
 def strip_meta(text):
@@ -299,6 +331,91 @@ def _real_run(transcript_path, scene_start):
         return "unknown"
 
 
+
+# ── v0.4 引用溯源判据（2026-10-13·Qoder CN·皮叔令「既然是启动D3标榜火力全开，
+#     立场卡检索总是由AI心情执行，那不行」）──────────────────────────────
+# 补的缺口：本件原判「注入送达 vs 使用」，card_id_guard 判「新卡编号防撞」，
+#   「回复里引用的卡号是否出自当次实跑 hits」此前**无任何机械消费者**（C-072 同型病）。
+# 三条判据（全部 fail-open，读不到即不判，⛔不阻断 Stop 链）：
+#   cited      = 回复文本中出现的卡号集合（S/C/K 前缀，3-4 位）
+#   fabricated = 卡号既不在当日 trail hits、KB 里也无实体卡文件 → 🔴 疑似编造
+#   uncited_real = 卡文件真实存在但本会话无实跑来源 → 🟡 凭记忆引用（未检索）
+#   ran_not_used = 本回合确有实跑(real_run=True) 而 cited 为空 → ⚠️ 跑而未用
+# 诚实边界（机械判不了的两件事，⛔不假装覆盖）：
+#   ①语义相关性——引了 A 卡但真正对症的是 B 卡（S917 漏引案）不报，
+#     机器只能管「可追溯 + 必须有」，不能管「用得对不对」（对齐 triwich §机械化边界）。
+#   ②引用形式不受控——AI 用自然语言转述卡义而不写卡号，判据会误报 ran_not_used，
+#     故此态只作 ⚠️ 显形，不进 miss 硬判、不改 exit 码。
+# (?<![\w-]) 排除 QCN-20261013/LRN- 等错误编号被误抓成卡号（假阳性源）；
+# \d{3,} 不设上限，使 S99991 这类超长编造号也能进校验（原 {3,4} 会静默放过）。
+_CARD_PTN = re.compile(r"(?<![\w-])([SCK]-?\d{3,})")
+_KB_LIB_DIRS = [os.path.expanduser(u) for u in (
+    "~/[日记仓库]/2-知识库/09-AI学习库",
+    "~/[日记仓库]/2-知识库/08-概念层",
+    "~/[日记仓库]/2-知识库/05-知识池",
+)]
+
+
+def norm_card(c):
+    """卡号规范化：大写 + 去内部横线（C-153 == C153）"""
+    return (c or "").upper().replace("-", "")
+
+
+def _trail_ids_of_day(day=None, limit=3000):
+    """当日 trail 全部 hits 的卡号集合；读不到/无当日行 → None（fail-open 不判溯源）"""
+    try:
+        if not os.path.isfile(_TRAIL_PATH):
+            return None
+        day = day or datetime.now().strftime("%Y-%m-%d")
+        with open(_TRAIL_PATH, encoding="utf-8", errors="replace") as f:
+            rows = [json.loads(l) for l in f.readlines()[-limit:] if l.strip()]
+        ids = set()
+        hit_today = False
+        for d in rows:
+            if not str(d.get("ts", "")).startswith(day):
+                continue
+            hit_today = True
+            for h in d.get("hits", []) or []:
+                for m in _CARD_PTN.findall(str(h.get("title", "")) + " " + str(h.get("path", ""))):
+                    ids.add(norm_card(m))
+        return ids if hit_today else None
+    except Exception:
+        return None
+
+
+def _card_file_exists(nc):
+    """KB 里是否有该卡的实体文件（S330 → 匹配 *S330* / C153 → 匹配 *C-153*）"""
+    for d in _KB_LIB_DIRS:
+        try:
+            if not os.path.isdir(d):
+                continue
+            pat = nc if "-" in nc else nc
+            for fn in os.listdir(d):
+                base = norm_card(fn)
+                if re.search(r"(?:^|[^0-9])" + re.escape(nc) + r"(?:[^0-9]|$)", base):
+                    return True
+        except Exception:
+            continue
+    return False
+
+
+def citation_provenance(after_text, day_ids, real_run):
+    """回复引用卡号 ↔ 当日实跑 hits 一致性。day_ids 为 None 时整体不判（fail-open）。"""
+    if day_ids is None:
+        return None
+    cited = {norm_card(m) for m in _CARD_PTN.findall(after_text or "")}
+    fabricated, uncited_real = [], []
+    for c in sorted(cited):
+        if c in day_ids:
+            continue
+        (uncited_real if _card_file_exists(c) else fabricated).append(c)
+    ran_not_used = bool(real_run is True) and not cited
+    if not cited and not ran_not_used:
+        return None
+    return {"cited": sorted(cited), "fabricated": fabricated,
+            "uncited_real": uncited_real, "ran_not_used": ran_not_used}
+
+
 def audit(transcript_path):
     if not transcript_path or not os.path.isfile(transcript_path):
         return 0
@@ -336,6 +453,25 @@ def audit(transcript_path):
             entry["mention_only"] = True   # 正文提及无宿主回执：保守不判miss（沿用旧口径），但落条目进分母
         else:
             entry["miss"] = True
+    # v0.4 引用溯源（fail-open：异常/无当日 trail 则不加字段、不报警）
+    try:
+        _quiet = bool(os.environ.get("AUDIT_SELFTEST"))   # 夹具静音：自测文本天然触发判据，⛔不混进真报警
+        prov = citation_provenance(after_text, _trail_ids_of_day(), real)
+        if prov and not _quiet:
+            entry["cited"] = prov["cited"]
+            entry["fabricated"] = prov["fabricated"]
+            entry["uncited_real"] = prov["uncited_real"]
+            entry["ran_not_used"] = prov["ran_not_used"]
+            if prov["fabricated"]:
+                sys.stderr.write("ALERT:CITATION-FABRICATED 回复引用了当日检索与KB均无的卡号: %s\n"
+                                 % ",".join(prov["fabricated"]))
+            if prov["uncited_real"]:
+                sys.stderr.write("ALERT:CITATION-UNTRACED 卡真实存在但本会话无实跑来源(凭记忆引用): %s\n"
+                                 % ",".join(prov["uncited_real"]))
+            if prov["ran_not_used"]:
+                sys.stderr.write("ALERT:CITATION-RAN-NOT-USED 本回合实跑了检索但回复零卡号引用(跑而未用)\n")
+    except Exception:
+        pass
     append_log(entry)
     return 0
 
@@ -383,6 +519,7 @@ def stats():
 
 
 def self_test():
+    os.environ["AUDIT_SELFTEST"] = "1"   # 夹具静音开关（详见 audit() 内 _quiet）
     """4 用例：回溯命中不记 / 场景无 search_kb 记 miss / 场景有 search_kb 不记 / 坏输入 exit 0"""
     import tempfile
     cases = []
@@ -429,7 +566,6 @@ def self_test():
     import subprocess
     p = subprocess.run([sys.executable, __file__], input="not json", capture_output=True, text=True)
     ok5 = p.returncode == 0
-
     # 用例6（v0.3·P5）：场景+宿主 tool_call 回执含 search_kb → 条目 real_run=True, miss=False
     t6 = tempfile.mktemp(suffix=".jsonl")
     with open(t6, "w", encoding="utf-8") as f:
@@ -451,6 +587,24 @@ def self_test():
     rows7 = [json.loads(l) for l in open(os.environ["AUDIT_LOG"], encoding="utf-8")]
     ok7 = len(rows7) == 1 and rows7[0].get("real_run") is False and rows7[0].get("miss") is True
     os.environ["AUDIT_LOG"] = LOG_SAVE
+
+    # ── 用例8-10：v0.4 引用溯源判据在册负例（2026-10-13·Qoder CN）──
+    _ids = {"C153", "S828", "S917"}          # 模拟当日 hits 集合
+    _r8 = citation_provenance("依据取自 C-153 与 立场卡#S828", _ids, True)
+    _ok8 = (_r8 is not None and _r8["cited"] == ["C153", "S828"]
+            and _r8["fabricated"] == [] and _r8["uncited_real"] == []
+            and _r8["ran_not_used"] is False)
+    _r9 = citation_provenance("依 S9999 与 S99991 判定", _ids, True)
+    _ok9 = _r9 is not None and set(_r9["fabricated"]) == {"S9999", "S99991"}
+    _r10 = citation_provenance("本轮结论全靠门禁 rc", _ids, True)
+    _ok10 = _r10 is not None and _r10["ran_not_used"] is True and _r10["fabricated"] == []
+    # 用例11 防误伤：错误编号 QCN-20261013-004 不得被当卡号；trail=None 时整体不判
+    _r11a = citation_provenance("见 QCN-20261013-004 与 内部记录", _ids, None)
+    _ok11 = (_r11a is None) and (citation_provenance("引用 C-153", None, True) is None)
+    print(f"用例8 引用在当日hits→fabricated/uncited均空: {'✅' if _ok8 else '❌'}")
+    print(f"用例9 编造号(含超5位)→fabricated 命中: {'✅' if _ok9 else '❌'}")
+    print(f"用例10 实跑零引用→ran_not_used=True: {'✅' if _ok10 else '❌'}")
+    print(f"用例11 错误编号不误抓+无trail不判(fail-open): {'✅' if _ok11 else '❌'}")
     print(f"用例1 回溯命中+已跑search_kb→不记: {'✅' if ok1 else '❌'}")
     print(f"用例2 场景判定（写作）: {'✅' if ok2 else '❌'}")
     print(f"用例3 场景判定: {'✅' if ok3 else '❌'}")
@@ -458,7 +612,7 @@ def self_test():
     print(f"用例5 坏输入 exit 0: {'✅' if ok5 else '❌'}")
     print(f"用例6 宿主回执含search_kb→real_run=True: {'✅' if ok6 else '❌'}")
     print(f"用例7 有工具调用未跑search_kb→miss=True: {'✅' if ok7 else '❌'}")
-    return 0 if all([ok1, ok2, ok3, ok4, ok5, ok6, ok7]) else 1
+    return 0 if all([ok1, ok2, ok3, ok4, ok5, ok6, ok7, _ok8, _ok9, _ok10, _ok11]) else 1
 
 
 def _main_entry():
@@ -467,6 +621,7 @@ def _main_entry():
     if len(sys.argv) > 1 and sys.argv[1] == "--self-test":
         return self_test()
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
     except (json.JSONDecodeError, ValueError):
@@ -483,11 +638,6 @@ if __name__ == "__main__":
         _rc = _main_entry()
     except SystemExit as _e:
         _rc = _e.code if isinstance(_e.code, int) else 0
-        # 步2(2026-10-07 v? 报警噪声根治卡·你令彻底做完):检红rc归0——平台契约下 exit≠0专留真崩,
-        #   检红可见性=输出红行+台账(_guard_log_exit/.out/patrol log);⛔不减一行红输出。
-        if _rc == 1:
-            _rc = 0
-
     except Exception:
         _rc = 0
     finally:

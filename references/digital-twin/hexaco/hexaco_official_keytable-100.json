@@ -1,0 +1,545 @@
+{
+ "$schema": "blt-hexaco100-keys-v1",
+ "source": "ScoringKeys_100.pdf",
+ "pdf_sha256": "bb8a8453005810f1d55763e9e053c74650c6ff4c8a97f31fbb3682ea1a0b8264",
+ "extracted_via": "pdftotext -layout（构建期一次性·运行时只核 sha 不重抽）",
+ "extracted_at": "2026-10-15",
+ "note": "本 json 是 PDF 的机器投影（hexaco_official_scorer.py --build-keytable 生成）。手改=自毁溯源，改量表请改 PDF 后重建。",
+ "aliases": {
+  "Forgiveness": "Forgivingness"
+ },
+ "domain_order": [
+  "Honesty-Humility",
+  "Emotionality",
+  "Extraversion",
+  "Agreeableness",
+  "Conscientiousness",
+  "Openness to Experience"
+ ],
+ "scales": {
+  "Sincerity": {
+   "domain": "Honesty-Humility",
+   "items": [
+    {
+     "q": 6,
+     "r": true
+    },
+    {
+     "q": 30,
+     "r": false
+    },
+    {
+     "q": 54,
+     "r": true
+    },
+    {
+     "q": 78,
+     "r": false
+    }
+   ]
+  },
+  "Fairness": {
+   "domain": "Honesty-Humility",
+   "items": [
+    {
+     "q": 12,
+     "r": true
+    },
+    {
+     "q": 36,
+     "r": true
+    },
+    {
+     "q": 60,
+     "r": false
+    },
+    {
+     "q": 84,
+     "r": true
+    }
+   ]
+  },
+  "Greed-Avoidance": {
+   "domain": "Honesty-Humility",
+   "items": [
+    {
+     "q": 18,
+     "r": false
+    },
+    {
+     "q": 42,
+     "r": true
+    },
+    {
+     "q": 66,
+     "r": true
+    },
+    {
+     "q": 90,
+     "r": true
+    }
+   ]
+  },
+  "Modesty": {
+   "domain": "Honesty-Humility",
+   "items": [
+    {
+     "q": 24,
+     "r": false
+    },
+    {
+     "q": 48,
+     "r": false
+    },
+    {
+     "q": 72,
+     "r": true
+    },
+    {
+     "q": 96,
+     "r": true
+    }
+   ]
+  },
+  "Fearfulness": {
+   "domain": "Emotionality",
+   "items": [
+    {
+     "q": 5,
+     "r": false
+    },
+    {
+     "q": 29,
+     "r": true
+    },
+    {
+     "q": 53,
+     "r": false
+    },
+    {
+     "q": 77,
+     "r": true
+    }
+   ]
+  },
+  "Anxiety": {
+   "domain": "Emotionality",
+   "items": [
+    {
+     "q": 11,
+     "r": false
+    },
+    {
+     "q": 35,
+     "r": true
+    },
+    {
+     "q": 59,
+     "r": true
+    },
+    {
+     "q": 83,
+     "r": false
+    }
+   ]
+  },
+  "Dependence": {
+   "domain": "Emotionality",
+   "items": [
+    {
+     "q": 17,
+     "r": false
+    },
+    {
+     "q": 41,
+     "r": true
+    },
+    {
+     "q": 65,
+     "r": false
+    },
+    {
+     "q": 89,
+     "r": true
+    }
+   ]
+  },
+  "Sentimentality": {
+   "domain": "Emotionality",
+   "items": [
+    {
+     "q": 23,
+     "r": false
+    },
+    {
+     "q": 47,
+     "r": false
+    },
+    {
+     "q": 71,
+     "r": false
+    },
+    {
+     "q": 95,
+     "r": true
+    }
+   ]
+  },
+  "Social Self-Esteem": {
+   "domain": "Extraversion",
+   "items": [
+    {
+     "q": 4,
+     "r": false
+    },
+    {
+     "q": 28,
+     "r": false
+    },
+    {
+     "q": 52,
+     "r": true
+    },
+    {
+     "q": 76,
+     "r": true
+    }
+   ]
+  },
+  "Social Boldness": {
+   "domain": "Extraversion",
+   "items": [
+    {
+     "q": 10,
+     "r": true
+    },
+    {
+     "q": 34,
+     "r": false
+    },
+    {
+     "q": 58,
+     "r": false
+    },
+    {
+     "q": 82,
+     "r": true
+    }
+   ]
+  },
+  "Sociability": {
+   "domain": "Extraversion",
+   "items": [
+    {
+     "q": 16,
+     "r": true
+    },
+    {
+     "q": 40,
+     "r": false
+    },
+    {
+     "q": 64,
+     "r": false
+    },
+    {
+     "q": 88,
+     "r": false
+    }
+   ]
+  },
+  "Liveliness": {
+   "domain": "Extraversion",
+   "items": [
+    {
+     "q": 22,
+     "r": false
+    },
+    {
+     "q": 46,
+     "r": false
+    },
+    {
+     "q": 70,
+     "r": true
+    },
+    {
+     "q": 94,
+     "r": true
+    }
+   ]
+  },
+  "Forgiveness": {
+   "domain": "Agreeableness",
+   "items": [
+    {
+     "q": 3,
+     "r": false
+    },
+    {
+     "q": 27,
+     "r": false
+    },
+    {
+     "q": 51,
+     "r": true
+    },
+    {
+     "q": 75,
+     "r": true
+    }
+   ]
+  },
+  "Gentleness": {
+   "domain": "Agreeableness",
+   "items": [
+    {
+     "q": 9,
+     "r": true
+    },
+    {
+     "q": 33,
+     "r": false
+    },
+    {
+     "q": 57,
+     "r": false
+    },
+    {
+     "q": 81,
+     "r": false
+    }
+   ]
+  },
+  "Flexibility": {
+   "domain": "Agreeableness",
+   "items": [
+    {
+     "q": 15,
+     "r": true
+    },
+    {
+     "q": 39,
+     "r": false
+    },
+    {
+     "q": 63,
+     "r": true
+    },
+    {
+     "q": 87,
+     "r": true
+    }
+   ]
+  },
+  "Patience": {
+   "domain": "Agreeableness",
+   "items": [
+    {
+     "q": 21,
+     "r": true
+    },
+    {
+     "q": 45,
+     "r": false
+    },
+    {
+     "q": 69,
+     "r": false
+    },
+    {
+     "q": 93,
+     "r": true
+    }
+   ]
+  },
+  "Organization": {
+   "domain": "Conscientiousness",
+   "items": [
+    {
+     "q": 2,
+     "r": false
+    },
+    {
+     "q": 26,
+     "r": false
+    },
+    {
+     "q": 50,
+     "r": true
+    },
+    {
+     "q": 74,
+     "r": true
+    }
+   ]
+  },
+  "Diligence": {
+   "domain": "Conscientiousness",
+   "items": [
+    {
+     "q": 8,
+     "r": false
+    },
+    {
+     "q": 32,
+     "r": false
+    },
+    {
+     "q": 56,
+     "r": true
+    },
+    {
+     "q": 80,
+     "r": true
+    }
+   ]
+  },
+  "Perfectionism": {
+   "domain": "Conscientiousness",
+   "items": [
+    {
+     "q": 14,
+     "r": false
+    },
+    {
+     "q": 38,
+     "r": true
+    },
+    {
+     "q": 62,
+     "r": false
+    },
+    {
+     "q": 86,
+     "r": false
+    }
+   ]
+  },
+  "Prudence": {
+   "domain": "Conscientiousness",
+   "items": [
+    {
+     "q": 20,
+     "r": true
+    },
+    {
+     "q": 44,
+     "r": true
+    },
+    {
+     "q": 68,
+     "r": false
+    },
+    {
+     "q": 92,
+     "r": true
+    }
+   ]
+  },
+  "Aesthetic Appreciation": {
+   "domain": "Openness to Experience",
+   "items": [
+    {
+     "q": 1,
+     "r": true
+    },
+    {
+     "q": 25,
+     "r": true
+    },
+    {
+     "q": 49,
+     "r": false
+    },
+    {
+     "q": 73,
+     "r": false
+    }
+   ]
+  },
+  "Inquisitiveness": {
+   "domain": "Openness to Experience",
+   "items": [
+    {
+     "q": 7,
+     "r": false
+    },
+    {
+     "q": 31,
+     "r": false
+    },
+    {
+     "q": 55,
+     "r": true
+    },
+    {
+     "q": 79,
+     "r": true
+    }
+   ]
+  },
+  "Creativity": {
+   "domain": "Openness to Experience",
+   "items": [
+    {
+     "q": 13,
+     "r": true
+    },
+    {
+     "q": 37,
+     "r": false
+    },
+    {
+     "q": 61,
+     "r": false
+    },
+    {
+     "q": 85,
+     "r": true
+    }
+   ]
+  },
+  "Unconventionality": {
+   "domain": "Openness to Experience",
+   "items": [
+    {
+     "q": 19,
+     "r": true
+    },
+    {
+     "q": 43,
+     "r": false
+    },
+    {
+     "q": 67,
+     "r": false
+    },
+    {
+     "q": 91,
+     "r": true
+    }
+   ]
+  }
+ },
+ "interstitial": {
+  "Altruism": [
+   {
+    "q": 97,
+    "r": false
+   },
+   {
+    "q": 98,
+    "r": false
+   },
+   {
+    "q": 99,
+    "r": true
+   },
+   {
+    "q": 100,
+    "r": true
+   }
+  ]
+ }
+}

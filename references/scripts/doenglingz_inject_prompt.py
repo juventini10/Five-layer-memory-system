@@ -33,6 +33,10 @@ doenglingz_inject_prompt.py — UserPromptSubmit 钩子：童灵完整化（W1 �
 try:
     import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
 except Exception: pass
+# ⚠️ 本件路径取持字面（⛔改 runtime_paths 出口）——2026-10-18 自纠：本件是 W1 每轮必注入
+#   关键路径，rp() 缺声明即 raise DeclNotFound（其 fail-loud 设计对普通脚本正确），
+#   但对注入器而言 raise＝钩子崩＝上岗声明整体消失（装机态沙箱实测 rc=1/输出 0B）。
+#   故本件豁免去硬码，理由与账见迁移卡 §四 发现14／§六 V1。
 import sys
 import os
 import json
@@ -50,17 +54,19 @@ _PAYLOAD = {}   # 本回合 stdin 载荷（供协议判定/留痕/端归属）
 _SRC_LABEL = ""  # --src argv 端标注（AutoClaw 等插件转发端·台账 src 字段用）
 # 版本机械载体：06 §1.6 与 CHANGELOG 长期以"v1.7"等手写号引用本件，但盘上无版本字段可对账
 # （=守卫编写规范 §3.5「版本悬空引用」同型）。自 v1.8 起版本以本常量为真源，文档引用须与之一致。
-__version__ = "v1.22"  # v1.18(2026-10-07·Qoder CN·你令按三明治推荐开工)：P4「全域」fallback 改名人话化=「未命中域（仅基底）」；P3①补载义务入契约①（宣告域≠词面域须真Read切片+显形「已补载：LN」·对账=level_declare_guard v1.8）
+__version__ = "v1.26"  # v1.26(2026-10-19·V2.2.4增量Loop对抗审查根治)：安静模式进入检测四修——①反向话术豁免(关闭/退出类不得翻转成开启·审查4.1)②疑问形态豁免(≤30字问句不当命令·审查4.2)③C类机器块过滤拉平(审查4.4)④全出现位判定(审查4.5)。新增安静用例组入w1_tier_regress。
+# v1.25(2026-10-19·安静模式实装·你定稿「D3只认启动童灵+事件腿不关」)：①新增quiet_mode.flag持久状态②w1_fired加安静模式门③_inject加进入检测。负例待跑：含安静模式消息不进D3/启动童灵穿透退出/成长箱事件腿不受影响。  # v1.23(2026-10-08·Hermes·皮叔质证「我没明确说启动童灵，你还是启动了」假触发根治轮)：四处判据精化——①W1_TRIGGERS 补「童灵上岗」(p7漏召实证) ②否定语境扩跨词(原只认紧贴trigger的否定⇒「不打算用童灵」漏网·加窗口内含否定字+句读隔断防跨句误豁免) ③宽松匹配⑤剔除单字动词「用/去」+只认「童灵」之后窗口(方向性：动词在前=童灵是宾语「帮我看下童灵的设计」) ④句尾直呼收紧(要求「童灵」前一字为句读/句首·宾语位「我想了解一下童灵」不再当呼唤)。预注册 6 新用例(n6-n10+p7)·回归器 11→16 全绿·原 dryrun 19/19 未破·扩展压测 38/38。
+# v1.18(2026-10-07·Qoder CN·你令按三明治推荐开工)：P4「全域」fallback 改名人话化=「未命中域（仅基底）」；P3①补载义务入契约①（宣告域≠词面域须真Read切片+显形「已补载：LN」·对账=level_declare_guard v1.8）
 #   v1.17（2026-10-06·你反馈「指令行太难看·没仪式感」）：确认块拆两层——AI 指令行（⛔不进回复）
 #   与仪式块（用户可见·自档位标签行起零改写照抄）；meta 括注（真源/守卫留痕）全部移入指令行。
 #   v1.16（2026-10-06·皮叔拍板「启动确认块·脚本拼装·AI 照抄」+三档正名）：根治档位漏贴 33 次
-#   （LRN-20261006-013·守卫只留痕不回灌·AI 侧显示义务全天 0 兑现）——①D1/D2/D3 三档确认块由
+#   （内部记录·守卫只留痕不回灌·AI 侧显示义务全天 0 兑现）——①D1/D2/D3 三档确认块由
 #   本脚本拼装（构造权移交·同 TSL 树哲学），义务=首段原样照抄；②正名：D2 域模式→**切片模式**
 #   （命中域切片→命中切片·对齐视频心智「规格书蒸馏后切片」）、D3 上岗模式→**全量模式**（上岗
 #   退居身份句·三档连成装备递进线：非全量→切片→全量）；③「N/N 条在位」动态计数（义务特征短语
 #   在位判定·⛔裸编号防假阳性）；④切片判定/已加载切片两行分立=标签≡实盘显形化（判定≠加载即露馅）。
 #   v1.15（2026-10-06·WB 童灵·L5 MISS 根治 + relay保真律入契约）：⑨扩 relay保真条款（缓存树原样
-#   零编辑·指针行与手绘同级违规·LRN-20261006-010/011/012 三犯实证）；新增⑩守护三查法定痕
+#   零编辑·指针行与手绘同级违规·内部记录/011/012 三犯实证）；新增⑩守护三查法定痕
 #   （🧪 8要素行义务入注入层·根治「义务住文档层+判据层、唯独不在契约层」的穿网结构）。
 
 
@@ -94,10 +100,76 @@ TIER_ORDER = ("D3", "D2", "D1")
 # DOENGLINGZ_CONFIG_DIR（install_scripts --platform 写进钩子命令）> WORKBUDDY_CONFIG_DIR（向后兼容缝·lobsterai 已在用）> ~/.workbuddy（旧默认行为）
 _DLZ_CFG = os.environ.get("DOENGLINGZ_CONFIG_DIR") or os.environ.get("WORKBUDDY_CONFIG_DIR") or os.path.expanduser("~/.workbuddy")
 STATE_FILE = os.path.join(_DLZ_CFG, "doenglingz_inject_state.json")
+# ── 安静模式（2026-10-19 你定稿·D3 只认"启动童灵"）──────────────────────────
+QUIET_MODE_FILE = os.path.join(_DLZ_CFG, "quiet_mode.flag")
+
+def _is_quiet_mode():
+    """flag 文件存在 = 安静模式激活。读不到=不激活（fail-open·Hook三纪律）。"""
+    return os.path.exists(QUIET_MODE_FILE)
+
+def _set_quiet_mode():
+    try:
+        os.makedirs(os.path.dirname(QUIET_MODE_FILE), exist_ok=True)
+        open(QUIET_MODE_FILE, "w").close()
+    except Exception:
+        pass
+
+def _clear_quiet_mode():
+    try:
+        os.remove(QUIET_MODE_FILE)
+    except FileNotFoundError:
+        pass
+    except Exception:
+        pass
+
+
+# 事件腿粘滞窗口（分钟）：同 session 内 Skill 启动升的 D3 在此窗口内不回落 D1/D2。
+# 取 180min＝覆盖一次连续施工（实证本轮 20:55→21:10 隔 15min），又不至于跨天误粘。
+EVENT_D3_STICKY_MIN = 180
+
+
+def _event_leg_d3_sticky(sid, now=None):
+    """同 session 内若存在事件腿（mode=skill_event）写的 D3 且未超窗口 → 档位粘滞为 D3。
+
+    设计约束：⛔不新建第二状态源，只回读事件腿已在写的那份 inject_state；
+    ⛔sid 为空一律 False（防跨会话串档·同 06「他会话产物不顶账」同型防御）；
+    读不到文件 fail-open 回落词面腿（Hook 三纪律：⛔不阻断注入）。
+    安静模式（2026-10-19）：flag 存在时粘滞全局压制——与词面腿同步关，
+    退出安静模式（"启动童灵"清 flag）后粘滞自动恢复。
+    """
+    if not sid:
+        return False
+    if _is_quiet_mode():
+        return False  # 安静模式期间事件腿粘滞压制（你定稿：安静=D3全关，含粘滞残留）
+    import json as _j
+    import datetime as _dt
+    now = now or _dt.datetime.now()
+    try:
+        raw = open(STATE_FILE, encoding="utf-8").read().splitlines()
+    except Exception:
+        return False
+    for line in reversed(raw):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            d = _j.loads(line)
+        except Exception:
+            continue
+        if d.get("mode") != "skill_event" or d.get("d_tier") != "D3":
+            continue
+        if str(d.get("session_id", "")) != str(sid):
+            continue
+        try:
+            ts = _dt.datetime.fromisoformat(str(d.get("ts")))
+        except Exception:
+            return False
+        return (now - ts).total_seconds() <= EVENT_D3_STICKY_MIN * 60
+    return False
 
 SLICES_DIR = os.environ.get("DONGLINGZ_SLICES_DIR") or \
-    os.path.expanduser("~/[记忆共享中心]/数字分身/K2切片蒸馏/slices")   # 环境变量=测试隔离缝（2026-09-26·守卫规范 §3.9 夹具须可指向空目录）
-SSOT_SPEC = os.path.expanduser("~/[记忆共享中心]/数字分身/童灵·人格规格书.md")
+    os.path.expanduser("[记忆共享中心]/数字分身/K2切片蒸馏/slices")   # 环境变量=测试隔离缝（2026-09-26·守卫规范 §3.9 夹具须可指向空目录）
+SSOT_SPEC = os.path.expanduser("[记忆共享中心]/数字分身/童灵·人格规格书.md")
 SSOT_HASH_FALLBACK = "70c917662765"  # 规格书不可读时的兜底（与 AutoClaw W1 同源旧值）
 
 def read_identity_sentence():
@@ -122,7 +194,7 @@ def compute_ssot_hash():
 
 # W1：童灵显式调用词（上岗自证触发）
 W1_TRIGGERS = [
-    "启动童灵", "用童灵", "童灵评估", "童灵帮我", "让童灵",
+    "启动童灵", "童灵上岗", "用童灵", "童灵评估", "童灵帮我", "让童灵",
     "童灵启动", "唤醒童灵", "童灵上线", "童灵上工", "童灵分析", "童灵判断",
     "童灵给意见", "童灵去", "童灵执行", "童灵给我",
     # 你常用动词型口令（2026-08-29 补·覆盖"童灵处理/做/安排/搞定/推进/负责/接手"等自然表达，治"有时没真启动"）
@@ -136,6 +208,11 @@ W1_TRIGGERS = [
     #   机制化（Skill 自声明 requires_twin_on_duty → 注入层读取·全端同源）挂 数字分身专项修改工单 P1/P2。
     "启动成长箱", "成长箱晋升", "检查晋升", "记到成长箱", "计入成长箱", "记入错误",
     "错误蒸馏", "成长箱蒸馏", "月度蒸馏", "执行反哺工作", "反哺追加", "正反哺",
+    # 2026-10-12 K007 接线（补 v1.3.2 纪律的机械面）：卡写明「你点名 K007 即自动等于启动 D3」，
+    #   而本表 50 项无一含 K007 ⇒ 说「启动K007」机械上不可能升档（本会话 20:30:26 实盘判 D1 为证）。
+    #   与 09-13 W1_SELF_WORDS 注释同族病：「规格书声明 ⊃ 实现」。取词保守：全写 K007 + 漏K形态 007卡；
+    #   ⛔不收裸 "007"（会误召 2007 年/编号类文本，代价=无事升 D3 全量契约）。
+    "K007", "007卡", "三源闭环",
 ]
 
 # W1 宽松匹配：用户消息含"童灵"且带任一动作动词即视为显式调用（覆盖"童灵来给意见/童灵都去执行"等带衬字变体）
@@ -148,6 +225,12 @@ W1_SELF_WORDS = ["介绍", "你是谁", "自我介绍", "在吗", "在不在", "
                  # 2026-09-13 补（WP2）：规格书 L48 声明「童灵有什么思考/发现/想法/收获/复盘」为触发词，
                  #   而本表此前一条都没实现 ⇒ A 类漏召根因之一＝**规格书声明 ⊃ 脚本实现**（双本账）。
                  "收获", "发现", "思考", "想法", "复盘", "有何", "怎么看"]
+# 宽松匹配（⑤）的两个精化常量（2026-10-08 v1.23·皮叔质证假触发根治）：
+#   ⛔ 单字动词剔除集——中文高频且常处否定/无关语境（不用/借用/去哪里），
+#     作为"召唤证据"精度远低于代价；指向童灵的「用童灵」已由 W1_TRIGGERS 覆盖。
+_W1_VERBS_SINGLE = ("用", "去")
+#   「紧邻」窗口：动词须落在「童灵」前后各 N 字内才算"指向童灵"（机械近似指向性）。
+_W1_VERB_NEAR = 4
 
 # W1 元讨论闸（B 类·2026-09-13 WP2 新增）：**提及≠调用**，命中即静默。
 #   依据：对账报告_2026-08-22.md §8.6「26 条残余 miss」B 类实证（≈15 条元讨论·应继续静默）。
@@ -195,6 +278,23 @@ def w1_fired(prompt):
     # ① C 类·机器块过滤（<internal-error> 类回显，不该进台账）
     if t.startswith("<") and ">" in t[:24]:
         return False
+    # ② 安静模式门（2026-10-19 你定稿·持久态开关）
+    #    激活时 D3 只认"启动童灵"肯定式，其余一律压制。
+    #    穿透时自动退出安静模式（启动童灵=解除安静+正式上岗）。
+    if _is_quiet_mode():
+        _qm_word = "启动童灵"
+        _qm_spans = []
+        _qm_start = 0
+        while True:
+            _qi = t.find(_qm_word, _qm_start)
+            if _qi < 0:
+                break
+            _qm_spans.append((_qi, _qi + len(_qm_word), _w1_mentioned_at(t, _qi, _qm_word)))
+            _qm_start = _qi + len(_qm_word)
+        if _qm_spans and not all(m for _, _, m in _qm_spans):
+            _clear_quiet_mode()  # 肯定式"启动童灵" → 退出安静 + 放行 D3
+            return True
+        return False  # 安静模式下其余全部关闭（事件腿不受本函数管辖）
     # ② 否定语境豁免（2026-10-01·皮叔质证「这一轮我没启动童灵，为什么还出现 D3/TSL」根治）：
     #    子串匹配不读否定语境——"我没有启动童灵"字面含"启动童灵"→误召 D3→连带 TSL 噪声。
     #    判据：所有强召唤词的全部出现都带否定前缀＝召唤证据只是"被谈论的召唤"→ 压制。
@@ -236,9 +336,39 @@ def w1_fired(prompt):
                 for x in W1_TRIGGERS
             )
             if not (not tail and _is_trigger_tail):
+                # 句尾直呼收紧（2026-10-08 v1.23·n7 实证「我想了解一下童灵」）：
+                #   原判据「句尾+非trigger尾 ⇒ 直呼」把**宾语位**也当呼唤——
+                #   「…了解一**下童灵**」「…看**下童灵**的设计」里「童灵」是宾语，前一字是补语（下/的）。
+                #   呼唤的机械特征＝「童灵」是**独立成分**：前一字为句读或句首（那童灵，…／童灵，…）。
+                #   ⚠️ 不改 p4「那童灵，你…」（tail[0]=逗号已走上面分支·不经过此）与 p1-p3（走 trigger）。
+                _pre_ch = t[i - 1] if i >= 1 else ""
+                if not tail and _pre_ch and _pre_ch not in _ADDRESS_SEP:
+                    pass          # 宾语位·非独立呼唤 ⇒ 不直呼
+                else:
+                    return True
+    # ⑤ 宽松匹配（2026-10-08 v1.23 精化·皮叔质证假触发根治）：
+    #   原判据 `"童灵" in t and any(v in t for v in W1_VERBS + W1_SELF_WORDS)`
+    #   —— 只看**句内是否同时出现**「童灵」和某个动词，**完全不验动词是否指向童灵**
+    #   ⇒ 假触发病灶（实证）：
+    #     ·「帮我看下童灵的设计」命中 W1_VERBS 的「帮我」→ 上岗（动词指向"我"，与童灵无关）
+    #     ·「童灵暂时不用」命中单字动词「用」→ 上岗（且是**否定**语境）
+    #   精化两刀：
+    #     刀1 ⛔ 剔除单字动词「用/去」——它们在中文里高频且常处否定/无关语境（不用/借用/去哪里），
+    #          作为"召唤证据"的精度远低于代价；指向童灵的「用童灵」已由 W1_TRIGGERS 覆盖。
+    #     刀2 动词须**紧邻**「童灵」（前后 _W1_VERB_NEAR 字内）——"指向性"的机械近似：
+    #          动词贴着童灵才可能是"对童灵下指令"；隔得远就是句内另一件事。
+    if "童灵" in t and not _negated_only:
+        _near_verbs = [v for v in W1_VERBS + W1_SELF_WORDS if v not in _W1_VERBS_SINGLE]
+        for _pos in range(len(t) - 1):
+            if t[_pos:_pos + 2] != "童灵":
+                continue
+            # 刀2-b 方向性（2026-10-08 v1.23 补·n6 实证）：动词只认落在「童灵」**之后**——
+            #   「童灵+动词」＝对童灵下指令（那童灵，你有什么收获吗 ✅）；
+            #   「动词+童灵」＝童灵是**宾语**（帮我看下**童灵**的设计 / 我想了解一下**童灵**）⇒ ⛔不是召唤。
+            #   动词在前的合法召唤（用童灵审一下）已由 W1_TRIGGERS 覆盖，不走本闸。
+            _win = t[_pos + 2:_pos + 2 + _W1_VERB_NEAR]
+            if any(v in _win for v in _near_verbs):
                 return True
-    if "童灵" in t and not _negated_only and any(v in t for v in W1_VERBS + W1_SELF_WORDS):
-        return True
     return False
 
 
@@ -267,6 +397,17 @@ def _w1_mentioned_at(t, i, word):
                 if pre.endswith(neg + q + a):
                     return True
     if pre and pre[-1] in _W1_NEG_UNIGRAMS:
+        return True
+    # ②-b 跨词否定（2026-10-08 v1.23·皮叔质证「我没明确说启动童灵，你还是启动了」根治）：
+    #   上两判据都要求否定词**紧贴**触发词（endswith）⇒ 「不打算用童灵」「暂时不用童灵」
+    #   这类否定词与触发词之间隔着「打算/暂时」的形态必漏网 ⇒ 触发词在否定语境内仍上岗。
+    #   修法：前 8 字窗口内**存在**否定字即算被谈论；⛔ 但窗口内含句读（。，！？；)即视为两句，
+    #   否定不跨句传递（防「这方案不成立。用童灵审一下」被误豁免＝矫枉过正）。
+    _clause = pre
+    for _bd in "。，！？；、":
+        if _bd in _clause:
+            _clause = _clause.rsplit(_bd, 1)[1]
+    if _clause and any(n in _clause for n in _W1_NEG_BIGRAMS + tuple(_W1_NEG_UNIGRAMS)):
         return True
     tail = t[i + len(word): i + len(word) + 14]
     if tail[:1] in ("？", "?"):
@@ -321,6 +462,10 @@ RUNTIME_TRIGGERS = {
         # 2026-09-03 增补·对齐豆包端 W3 铁律指针口径（L3 §3.6）·dry-run 验证低频：
         # 铁律冲突0/规则冲突3/底线判断2/授权边界2 次（近7天40万字符语料），噪声可忽略。
         "铁律冲突", "规则冲突", "底线判断", "授权边界",
+        # 2026-10-11 你实证补词（『我让你启动童灵，你的切片还是没有命中的…能不能统一…就不要写死嘛』
+        #   ——W3 台账 layers=[] 为证：裁决语义在、词面表缺中文疑问实形）。'能不能/是不是'=裁决确认问句高频形，
+        #   纯操作祈使偶发误注入 L3≈14KB 语境噪声，代价由你"该命中没命中"的明示不满覆盖，90天抽检可回收。
+        "能不能", "是不是",
     ],
     "L4_表达DNA": ["文案", "口播", "表达", "故事", "命名", "变现", "写作", "稿"],
     "L5_盲区与边界": ["盲区", "终审", "裁决归属", "不知道", "不确定"],
@@ -483,7 +628,20 @@ def _persona_sections():
     try:
         with open(W4_PERSONA_CLEAN, encoding="utf-8") as f:
             txt = f.read()
-    except Exception:
+    except Exception as _e:
+        # 容错对称（2026-10-11 批次6·端用户补充单 #2 根治）：此处原为静默 `return {}`，
+        # 而同文件 SSOT 读失败是 Fail-Loud（⚠️真源缺失显形）——同一文件一半会喊疼一半装死，
+        # 后果是 D1 常驻基座块静默消失多日无人察觉。现统一 Fail-Loud：stderr 显形 + runtime 留痕。
+        # 返回值语义不变（调用方无需配合），⛔不改注入正文以免污染上下文。
+        try:
+            sys.stderr.write("⚠️[基座切片缺失] %s 读取失败（%s）→ 本回合基座为空·显形不静默\n"
+                             % (os.path.basename(W4_PERSONA_CLEAN), type(_e).__name__))
+            _d = os.path.join(os.path.expanduser("[记忆共享中心]/脚本中心/logs"), "runtime")
+            os.makedirs(_d, exist_ok=True)
+            with open(os.path.join(_d, "persona_base_missing.log"), "a", encoding="utf-8") as _f:
+                _f.write("%s %s\n" % (datetime.datetime.now().isoformat(timespec="seconds"), _e))
+        except Exception:
+            pass
         return {}
     body = txt.split("---", 2)[-1] if txt.startswith("---") else txt
     secs, cur, buf = {}, "引言", []
@@ -535,6 +693,25 @@ def _inject(prompt: str) -> None:
         return
     parts = []
     layers = _match_layers(prompt)
+    # ── 观测字段（2026-10-12·K007 结论②落地·主线卡 T7）──────────────────────
+    #   治什么病：台账只记 layers=[片名]，事后无法回答"这轮到底进来了什么、多大、凭哪个词选的"
+    #   ——即《工程控制论》上册-卡片6 说的能观测性缺口（能否从输出反推内部状态）。
+    #   纪律：additive（⛔改既有键·本台账多端共写，workbuddy/qodercn 同文件）；
+    #         fail-open（观测自身失败⛔不阻断注入·Hook 三纪律·与下方留痕块同源）。
+    _obs = {"hit_words": {}, "slice_bytes": {}, "slice_sha": {}}
+    try:
+        import hashlib as _hl
+        for _ly in (layers or []):
+            _p = os.path.join(SLICES_DIR, _ly + ".md")
+            _byt = _sha = None
+            if os.path.exists(_p):
+                _raw = open(_p, "rb").read()
+                _byt, _sha = len(_raw), _hl.sha256(_raw).hexdigest()[:12]
+            _obs["hit_words"][_ly] = [w for w in (RUNTIME_TRIGGERS.get(_ly) or []) if w and w in prompt]
+            _obs["slice_bytes"][_ly] = _byt
+            _obs["slice_sha"][_ly] = _sha
+    except Exception:
+        pass
     # v0.x W3留痕台账（2026-09-23 皮叔令「欠装的两台检查机造出来」·TSL⚪欠装L4根治）：
     #   每轮注入机械落账（命中/未命中都记）——"W3到底跑没跑"从AI自报变成可抽检的账。
     #   纪律：fail-open（落账失败⛔不阻断注入·Hook三纪律）；路径持久目录（/tmp重启即失=岗位3判据②前车之鉴）。
@@ -547,13 +724,43 @@ def _inject(prompt: str) -> None:
                     # 2026-09-26 补：留痕行带会话号，消费端（tsl_verify L4）才能把
                     #   "真回合在跑" 与 "自测/探针灌的笔数" 分开——本日 L4 曾被我自己的
                     #   dryrun 从 20 笔灌到 180 笔＝指标被测试污染成虚高绿。
-                    "session_id": str((_PAYLOAD or {}).get("session_id", ""))},
+                    "session_id": str((_PAYLOAD or {}).get("session_id", "")),
+                    **_obs},
                               ensure_ascii=False) + "\n")
     except Exception:
         pass
 
     # W1 上岗自证行
-    if w1_fired(prompt):
+    # ── 事件腿粘滞（2026-10-11 你定底线：但凡启动成长箱⇒童灵上岗⇒必 D3，不随回合回落）──
+    #   病根：本件两处（此处门岗＋下方 _d3 档位裁决）只按**本轮 prompt 词面**判 D3，
+    #   而 PreToolUse 事件腿写进同一份 inject_state 的 D3 从不回读 ⇒ 升档只活一个 prompt。
+    #   实证 2026-10-11：20:55 mode=skill_event d_tier=D3 → 21:10 同 session 两条 mode=json 重写为 D1，
+    #   执行体据台账读数把档位降了（底线被仪器读数覆盖）。修法＝底线进机制，不靠 AI 记得（愿景①）。
+    # ── 安静模式进入检测（2026-10-19）──
+    #   触发词："安静模式"出现在消息中，且满足命令式条件：
+    #   - 当前不在安静模式（防重复激活）
+    #   - 消息含"安静模式"且非否定/引述
+    #   - 命令式判定：消息长度≤30字（防长段讨论误触），OR 前有动作动词（开/启动/进入/切/切换）
+    if not _is_quiet_mode() and "安静模式" in prompt \
+            and not (prompt.startswith("<") and ">" in prompt[:24]):  # C类机器块过滤（审查4.4：进入检测曾绕开w1_fired同款闸门）
+        # 全出现位判定（审查4.5：原只查第一个出现位，先否后肯形态判错方向）——任一非豁免出现位算召唤
+        _qm_spans = [i for i in range(len(prompt)) if prompt.startswith("安静模式", i)]
+        _qm_called = any(not _w1_mentioned_at(prompt, i, "安静模式") for i in _qm_spans)
+        # 反向话术豁免（审查4.1）：退出只认"启动童灵"（你定稿），"关闭/退出安静模式"等反向指令⛔不得翻转成开启
+        _qm_reverse = any(v in prompt for v in ("关闭安静", "关掉安静", "退出安静", "取消安静",
+                                                 "停止安静", "解除安静", "离开安静", "安静模式关",
+                                                 "安静模式退出", "安静模式取消"))
+        # 疑问/讨论形态豁免（审查4.2）：≤30字问句不得当命令
+        _qm_question = any(q in prompt for q in ("？", "?", "吗", "呢", "什么", "为什么", "怎么",
+                                                  "怎样", "如何", "区别", "哪个", "会不会", "能不能"))
+        _qm_cmd = any(v in prompt for v in ("开安静模式", "启动安静模式", "进入安静模式", "切换安静模式",
+                                             "开启安静模式", "切安静模式", "安静模式开")) or \
+                  (len(prompt.strip()) <= 30 and not _qm_question)
+        if _qm_called and not _qm_reverse and _qm_cmd and not _qm_question:
+            _set_quiet_mode()
+    _w1_word = w1_fired(prompt)
+    _sticky = _event_leg_d3_sticky(str((_PAYLOAD or {}).get("session_id", "")))
+    if _w1_word or _sticky:
         # ⑦反思沉淀的本端规范名（2026-09-05 根治：原硬编码"本端=Qoder CN"对 WB/ZCode/AutoClaw 全错
         # ——共脚本不得携带端专属值；优先 --src 标注，次选载荷指纹判出的 host，兜底通用指引）
         _probe_mode, _probe_host = (_probe()[0], _probe()[1]) if _PAYLOAD else ("", "")
@@ -562,23 +769,27 @@ def _inject(prompt: str) -> None:
         # 旧版模板曾写死"本端=黑鲸"（DSH 端名）跨端复制未改 → WB 端执行体照抄=签名串端（你定红线·2026-09-09）。
         # 端名由 --src/载荷指纹机械推导，徽标映射=各端示例（守卫编写规范 §十 合法形态·非写死单端身份）。
         _END_EMBLEMS = {"workbuddy": ("WorkBuddy", "⚡"), "dsh": ("黑鲸", "⛰️"),
-                        "traework": ("Trae Work", "🤖"), "traecode": ("TraeCode", "💡"),
+                        "traework": ("Trae Work", "🤖"), "traecode": ("Trae CN", "💡"),  # 2026-10-09 你令：合并单端更名 Trae CN（key 保留 traecode=台账兼容·图标待三选一）
                         "qodercn": ("Qoder CN", "🔮")}  # 仅收录有署名实证的端·新端按其署名规范增补（Trae 系两行=2026-09-30·真源 IDENTITY.md 判定表；qodercn=2026-09-30·真源 core-identity.md 署名行+钩子路径指纹 /.qoder-cn/）
         _src_key = (_SRC_LABEL or _probe_host or "").strip().lower()
         if _src_key in _END_EMBLEMS:
             _dn, _em = _END_EMBLEMS[_src_key]
             _identity_line = "本端署名=你的 %s %s（钩子机械注入·AI ⛔不自行猜端名）" % (_dn, _em)
+            _sig = "—— 你的 %s %s" % (_dn, _em)
         else:
             _identity_line = "本端署名按端自身规范（端名经 normalize_tool.py ALLOWLIST 归一·AI ⛔不猜拼）"
+            _sig = "—— 你的 {本端名 本端徽标}"  # 未登记端不代填：留显式槽位，⛔不拿他端签名顶替
         # 可见自证行：保留「童灵上岗」四字（Stop 守卫 check_w1_honor 据此判定契约兑现）
         # + 人类可读的 SSOT 缩写；裸 sha256[:12] 校验码不打印在对话面（对人类无用），
         # 仅存于台账 /tmp/doenglingz_inject_state.json 与 --selfcheck 输出（机器侧可抽检）。
         _d3_contract = (
             "【童灵·D3 全量模式（全量+上岗契约，按 TSL 清单干活·事事留痕）·童灵上岗】已绑定 SSOT 人格规格书（校验码 sha256[:12] 存于台账/--selfcheck，不显式打印）。本回合为童灵在场回合，执行侧义务："
             "⓪回复首段**最先**输出 D 轴档位标记（真源=06-跨端适配规范 §1.6 强制交代义务＋互斥律）——**本回合唯一档位＝D3**：写『童灵·D3』或『【童灵·D3 上岗模式】』，⛔不再另贴 D1/D2 标签（命中域情况由义务①报告·基座已含在 D3 全量内）；各档写法对照仅用于非 D3 回合：D1 照抄注入标签『【童灵·D1 常驻模式（非全量，仅人格基底）】』·D2 主动报告『【童灵·D2 切片模式（命中切片：LN·注释 · 非上岗）】』，⛔DO NOT 省略（D≠L 两者并列·不互替）；漏声明＝Stop 守卫 doenglingz_level_declare_guard 台账留痕＋入岗位3周报。（2026-09-20 你质证『昨天不是修了吗？怎么还是这样』根治——义务原先只写在 06 §1.6／08 §七 文档层，**未进注入层 → AI 读不到即自由发挥**；同轮实测该守卫 v1.0 因键名不含 last_assistant_message 而全程空转，已随本轮 v1.1 同修。2026-09-26 补：本条原文把三档写法并列摆在 D3 回合里，等于用散文教模型「一档回合写三档标签」，与 §1.6 互斥律相反——现显式绑定「本回合唯一档位」。）。"
-            f"①回复首段显式输出完整上岗仪式信息——『" + read_identity_sentence() + "』（身份声明全文·对齐切片导航 Skill §一 Step1·2026-09-16 你令根治）＋本回合任务域判定一句话（属 L2认知风格/L3行为规则/L4表达DNA/L5盲区边界 哪域·复用 W3 _match_layers 结果·无命中标『未命中域（仅基底）』）；补载义务（v1.18·错位可恢复律）：若你实读的语义域与W3词面判定不一致，可宣告该域（如『任务域判定：L3行为规则域』），但MUST当回合真Read该域切片（~/[记忆共享中心]/数字分身/K2切片蒸馏/slices/ 下对应LN_*.md）并在首段显形一行『已补载：LN』，宣告域而不补载＝Stop守卫错位对账台账留痕；身份分层（SSOT：06-跨端适配规范「身份分层模型」节·2026-09-07 根治）："
+            f"①回复首段显式输出完整上岗仪式信息——『" + read_identity_sentence() + "』（身份声明全文·对齐切片导航 Skill §一 Step1·2026-09-16 你令根治）＋本回合任务域判定一句话（属 L2认知风格/L3行为规则/L4表达DNA/L5盲区边界 哪域·复用 W3 _match_layers 结果·无命中标『未命中域（仅基底）』）；补载义务（v1.18·错位可恢复律）：若你实读的语义域与W3词面判定不一致，可宣告该域（如『任务域判定：L3行为规则域』），但MUST当回合真Read该域切片（[记忆共享中心]/数字分身/K2切片蒸馏/slices/ 下对应LN_*.md）并在首段显形一行『已补载：LN』，宣告域而不补载＝Stop守卫错位对账台账留痕；身份分层（SSOT：06-跨端适配规范「身份分层模型」节·2026-09-07 根治）："
             "布洛陀=五层记忆系统（系统层·品牌·非人格名）·童灵=你在布洛陀系统中的数字分身（分身层·身份宣言明文「童灵是你在布洛陀系统中的数字分身」）·端署名=端徽标（端层·%s）；"
             "上岗=系统内职能激活**非身份切换**——端署名保持·'童灵上岗'自证行=童灵在场声明·两者分层并存⛔不冲突·⛔不因端默认署名/默认姿态含糊童灵在场；"
+            "**首段构成（对齐 06 §1.6 首段构成澄清 2026-10-09·Qoder CN 实证）**：D3 首段＝档位自证块（前瞻交代）＋模板头（意图分类→问题本质→已知事实→方案→验证→产出签名），块在前、模板头紧随、两者完整共存、⛔不得以仪式替模板头／⛔不得因上岗省略模板头；"
+            "**端署名须为每轮最后一行**（在 TSL 审计区代码块之后）·⛔因童灵在岗而省略——端署名=系统代言不变，童灵在场以自证行显式呈现，两层不冲突（对齐 06 §1.6 身份分层模型·端署名每轮最后一行）。**回复格式精确模板（真源=SOUL.md v1.3·⛔paraphrasing/改写/挪位·对齐 2026-10-09 你「回复格式须按 SOUL 彻底钉死」根治）**：`—— 你的 WorkBuddy ⚡` 为唯一末行（⛔加「端署名」等引申词·⛔写「WorkBuddy 你」之类编造署名）；每轮完整结构＝`【意图分类】[类型]（假设：___）`→`1.【问题本质】：[结构模式] → 一句主要矛盾`→`2.【已知事实】：[一句话]`→`3.【从零开始】：[一句话]`→`4.【Skill触发】：[Skill名✅，无则写\"无\"]`→（正文）→`[图标 | 摘要 | YYYY-MM-DD HH:MM]`（无实质产出则 `[—— 本轮无实质产出 ——]`）→（空一行）→`—— 你的 WorkBuddy ⚡`。"
             "【呈现分层·2026-09-23 你质证「好混乱·用用户经理视角评估」】三要素与 TSL 按**三层披露**呈现（真源=06-跨端适配规范 §1.6）——①状态行（档位+域+切片·1行）②健康行（三要素✓+TSL计数·1行）③审计区（TSL 原样 stdout 收文末代码块）；"
             "⛔审计料一条不删只换位置——收进代码块只改位置不改内容（仍须 relay tsl_verify 原样 stdout 含🔏stamp），⛔不得以「收起来了」为由省略 TSL；⛔跨端内容不进任一层（运行时只呈现本端口径·06 §1.4 A 层）；"
             "②以 SSOT 内核（人格规格书）裁决，triwich 等工具是童灵的手非替代者；"
@@ -586,7 +797,7 @@ def _inject(prompt: str) -> None:
             "④交付自主化（落实你'充分授权·只给结果'）：本回合收尾不列选项、不写'需你拍板/待你定/待确认'等选择题，直接以「做了什么+结果+风险」Summary 结束，不抛回待裁决项。"
             "⑤交付前自检 G2 四条硬红线（健康线 / 愿景黑箱 / 铁律001·002·005 / 隐私）：仅当判定撞线才显式上交你裁决，否则不上交、不抛回选择题（G2 判定由 gate_runner 挂 Stop 钩子机械兜底）。"
             "⑥蒸馏调度（2026-09-03 对齐豆包端 W1 第9条·三层架构 L2 调度层·PAT-047 授权≠流程豁免）："
-            "每月1号或皮叔问「有什么要蒸馏的/做蒸馏/月度蒸馏」时，✅DO读取 ~/[记忆共享中心]/记忆蒸馏/蒸馏中心.md 的"
+            "每月1号或皮叔问「有什么要蒸馏的/做蒸馏/月度蒸馏」时，✅DO读取 [记忆共享中心]/记忆蒸馏/蒸馏中心.md 的"
             "「🔔待做蒸馏」区域（<!-- DISTILLATION-TODO:START/END --> 之间·由 distillation_scheduler.py 每月1号"
             "launchd 机械生成·⛔禁手改标记间内容），发现⏳待执行项→在对话中说对应触发词激活对应 Skill 执行："
             "系统日志蒸馏→说「启动系统日志月度蒸馏」→system-logger；日记月报→说「启动每日伙伴月报」→daily-buddy；"
@@ -609,17 +820,22 @@ def _inject(prompt: str) -> None:
             "形态说明：本契约由 W1 钩子在 prompt 前注入（行为时强制），各端 Stop 守卫 `check_w1_honor` "
             "事后对账——注入未兑现即登记 w1_not_honored 供岗位3周报（台账端专属·⛔不跨端复用）。"
             "⑨TSL 会话执行验证清单强制输出（对齐 08-会话级L7验证清单 v1.4.11·含机器锚人话化判据：🧮口径行对人类读者要么翻译要么隐藏·根治'用TIML冒充TSL谎称L7'+'AI手绘美化'双判例）：**TSL 树唯一合法来源=`tsl_verify.py --since <本回合起点> --full` 的 stdout 逐行 relay（含🔏stamp 行与 📌 归因总览行·无锚层如实显⚪）**——手绘状态行/自填✅/改脚本输出=Stop 守卫 tsl_closeout 留痕（缺stamp=手绘·假stamp=伪造·三态实测）。08 升 v1.4.1 构造权全层扩面。"
-            "**relay保真律（2026-10-06 WB 端落地·真源=06 §补充节 relay保真律 v1.3.110＋§1.6 呈现点唯一性②）：relay ≡ 缓存树原样零编辑——Stop 钩子注入的树块（=tsl_last_tree.md 内容）逐行原样转贴进审计区，⛔任何合并/压缩/改写/摘要/截断/锚点删除/状态符号篡改——「L0-L3 压一行」「只贴指针行」与手绘同级违规，🔴改✅=伪造；每行判据=『我贴的是缓存文件原文还是我的转述？』（实证：上会话三犯·LRN-20261006-010/011/012）。**"
+            "**同回合产出纪律（2026-10-09 你质证『D3 启动回合就是没有 TSL／延迟／说下次补』·根治·对齐 Qoder CN 同回合标准）：义务⑨的 TSL 树 MUST 由 AI 在**本 D3 回合收口前**主动实跑 `tsl_verify.py --since <本回合起点> --full` 取 stdout **同回合** relay 进末段审计区——⛔等 Stop 钩子下一回合 inject 再补·⛔说『我下一次再补/下回合补』·⛔以『待补』『稍后』搪塞；Stop 钩子 tsl_last_tree 是**对账留痕备份**非产出依赖，AI 同回合自跑才是义务⑨的硬执行路径（Qoder 端即此模型·WB 端须同标对齐，⛔因运行态差异降标）。缺件（tsl_verify 不在装机态）时按本纪律⚪显形+告警，⛔静默省略 TSL＝义务⑨未兑现＝w1_not_honored 留痕。**"
+            "**relay保真律（2026-10-06 WB 端落地·真源=06 §补充节 relay保真律 v1.3.110＋§1.6 呈现点唯一性②）：relay ≡ 缓存树原样零编辑——Stop 钩子注入的树块（=tsl_last_tree.md 内容）逐行原样转贴进审计区，⛔任何合并/压缩/改写/摘要/截断/锚点删除/状态符号篡改——「L0-L3 压一行」「只贴指针行」与手绘同级违规，🔴改✅=伪造；每行判据=『我贴的是缓存文件原文还是我的转述？』（实证：上会话三犯·内部记录/011/012）。**"
             "⑩守护三查法定痕（2026-10-06 立法落注入层·根治 L5 连续 MISS）：病根=🧪痕义务原只住 08 §L5-1 v1.4.2 文档层+closeout 判据层，**W1 契约从未携带=AI 读不到义务即穿网**（上会话 122 回复 0 痕行实锤·同 06 §1.6 D1义务曾漏注入层同病）；修法：童灵在场回合收口前 ✅DO 输出固定格式行 `🧪 8要素|①..⑧|结论`（8要素自检的🧪机械痕·档位只分形态不分做不做）——Stop 守卫 closeout 据此记 L5 账、tsl_verify v0.11.5 据守卫当轮行判 L5，缺痕=L5🔴+violations 留痕；"
             "⚠️ 环境标注：`tsl_verify.py` 为作者侧增强件；**装机态由安装器投递（install_scripts 投递清单实含本件·2026-10-05 实盘对账修订本句）**，缺件时须显形告警而非静默降级（同下方 level_declare_guard 口径）。端用户态 TSL 树改由端侧观察层台账 + 报告器产出，或按本纪律**人工执行**（缺层如实显 ⚪、⛔不手绘）；作者侧照旧。"
             "童灵上岗回合回复须显式输出 TSL 验证清单——默认树状展开版（跨端固定视觉标准·见 08 §七 档位二）：L0-L7 每层独立 ├─ 节点+✅状态+可验证产出物指针，缺任一层=该层未执行=TSL截断；"
-            "**位置纪律（2026-09-30 修正·皮叔质证「TSL 有时在顶部有时在底部·一开始就显示很多工作没做·有什么审计效果」并要求机制级根治）：TSL 树＝后验对账产物（Stop 钩子回合末扫账本产出），恒定放回复**末段**（即呈现分层③审计区）；首段只放前瞻——档位标记+上岗仪式三要素+本回合计划，写『树见末段』即可，⛔不把树搬进首段**（后验产物进前瞻位＝拿上一回合的账审本回合的活＝零审计效力）。真源=08 §七 执行时机 + 06 §1.6 呈现时机注记；**作者侧**另有 Stop 守卫 level_declare_guard v1.5 树位置判据机械校验（树块起始偏移<50%%→台账留痕+alarm）——⚠️ 该守卫属**作者侧机制**，端用户装机态无此件（⛔不承诺端用户侧存在·端用户态按本纪律人工执行即可）。"
+            "**位置纪律（2026-09-30 修正·皮叔质证「TSL 有时在顶部有时在底部·一开始就显示很多工作没做·有什么审计效果」并要求机制级根治）：TSL 树＝后验对账产物（作者侧由 Stop 钩子回合末扫账本产出·**端用户态由 AI 同回合自跑 `tsl_verify.py --since <本回合起点> --full` 产出·两者皆置末段·⛔不进首段·见义务⑨同回合产出纪律**），恒定放回复**末段**（即呈现分层③审计区）；首段只放前瞻——档位标记+上岗仪式三要素+本回合计划，写『树见末段』即可，⛔不把树搬进首段**（后验产物进前瞻位＝拿上一回合的账审本回合的活＝零审计效力）。真源=08 §七 执行时机 + 06 §1.6 呈现时机注记；**作者侧**另有 Stop 守卫 level_declare_guard v1.5 树位置判据机械校验（树块起始偏移<50%%→台账留痕+alarm）——⚠️ 该守卫属**作者侧机制**，端用户装机态无此件（⛔不承诺端用户侧存在·端用户态按本纪律人工执行即可）。"
             "⛔DO NOT 不列清单就声称'童灵已上岗/L7全支持'。格式三档（单行摘要版/展开版/完整版·见 08 §七），树状展开版为跨端固定默认视觉——各端统一渲染├─│└─树+正典L0-L7层名+✅状态，⛔各端自造树形/改层级名；异常或审计升完整版。"
             "L4-2 自律（对齐 08 §三）：域切片加载遵循'一次一域≤2切片'——若本轮 W3 命中切片 >2，TSL 输出须显式标 🟡执行缺口型（注意力稀释风险）并升级完整版，不静默批量全载；"
             "L3-3 域判定须复用 W3 路由的 _match_layers 结果（域切片加载与 L3-3 域判定同源，不另起一套判断，避免 L3-3 与 L4-1 切片列表自相矛盾）。"
             "本清单是上岗仪式一部分，非可选；Stop 守卫 tsl_hits 观察层机械记录各层命中，未输出清单的回合在台账留痕。"
             % (_identity_line, reflection_end)
         )
+        # 2026-10-11 皮叔令「签名行不要写死·哪个端自行鉴别」根治：义务①模板的末行签名
+        #   原两处硬编码 WB 示例值（2026-09-09 签名串端案设了 _END_EMBLEMS 却漏接模板行——
+        #   判据未随对象演化同族）。统一在此用本端 _sig 机械替换；replace 全量命中=2 处。
+        _d3_contract = _d3_contract.replace("—— 你的 WorkBuddy ⚡", _sig)
         parts.append(_d3_contract)
 
     # W4 人格层（基线+增量·直读 live 纯净版切片 → 新鲜度天然满足·免部署链）
@@ -632,7 +848,7 @@ def _inject(prompt: str) -> None:
     #     「启动童灵，分析…本质」→ D3段 + D2义务 并存（无裁决段管这一对）
     #   本件改为**先定档再贴标**：档位由脚本算出唯一值 _d_tier，标签随档位单选，
     #   基座段按 §1.6「D2 = 基座 + 命中切片」保留（⛔别顺手把基座也 gate 掉＝D2 会变成裸切片）。
-    _d3 = w1_fired(prompt)
+    _d3 = bool(_w1_word) or _sticky
     # 切片正文先读一遍（2026-09-26 三修）：D2 的定义是"基座 + **已注入的**命中切片"，
     # ⛔不是"词表命中"——命中却读不到正文（文件缺失/为空/编码异常）时若仍贴 D2，
     # 就是标签声称在场而内容不在场（实证见本文件下方"档位不变量"注释与 06 §1.6 二修段）。
@@ -653,7 +869,7 @@ def _inject(prompt: str) -> None:
     _d2 = bool(_injected)
     _tier_map = {"D3": _d3, "D2": _d2, "D1": bool(p_txt)}
     _d_tier = next((t for t in TIER_ORDER if _tier_map[t]), "")   # 高档优先·唯一值
-    # ── 启动确认块（v1.16·2026-10-06 你拍板「脚本拼装·AI 照抄」根治档位漏贴 33 次/LRN-20261006-013）──
+    # ── 启动确认块（v1.16·2026-10-06 你拍板「脚本拼装·AI 照抄」根治档位漏贴 33 次/内部记录）──
     # 构造权移交脚本（同 TSL 树哲学·呈现点唯一性②）：确认块由本脚本拼装，AI 义务=首段原样照抄。
     # 「N/N 条在位」动态计数——义务条目会增（今天刚加⑩），硬编码数字=下轮漂移；
     # 每条在位判据=契约正文含该义务的特征短语（⛔非裸编号——⑩内文含"①..⑧"会假阳性）。
@@ -782,7 +998,8 @@ def _inject(prompt: str) -> None:
             with open(STATE_FILE, "a", encoding="utf-8") as f:
                 f.write(json.dumps({
                     "ts": datetime.datetime.now().isoformat(timespec="seconds"),
-                    "w1": w1_fired(prompt),
+                    "w1": bool(_w1_word),      # 词面腿原值（粘滞不算词面命中·不抹平两腿差异）
+                    "d3_sticky": bool(_sticky),   # True=本轮 D3 由事件腿粘滞撑起（2026-10-11 新增）
                     "d_tier": _d_tier,
                     "slices_injected": _injected,   # 2026-09-26 三修：标签实盘绑定的证据字段
                     "slices_failed": _slice_fail,  # 2026-09-26：档位由脚本算出的唯一值·Stop 守卫可比对"回复声明的档==台账档"

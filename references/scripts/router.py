@@ -9,12 +9,18 @@ v3.0.0 (2026-08-24 · 根治)：
   根治：新增 semantic_tags() 从触发短语拆出核心名词标签（"写文案"→"文案"、"口播稿"→"口播"），
         hit() 高置信短语通道未命中时，降级走语义标签散列通道（散字即命中），消除自然语言离散结构盲区。
         对齐《知识库设计通用规范》原则3·确定性触发：机制兜底替代 AI 凭记忆兜底。
+v3.1.0 (2026-10-18 · 实体管理域闸)：
+  根因：宽词宾语域闸只治工程施工对象，真机病例「《毛泽东书信选集》也有重复的呀…
+        评估哪个是最好的，就留一个」宾语是**具体实体**（书目×留一个），对象/动作
+        两词表均不在场 ⇒ 「评估」独木命中放行 triwich（QCN-20261018-001）。
+  根治：新增平行闸 _entity_mgmt_veto，三条件结构同既有闸（全宽词×实体宾语×管理动作，
+        复用④日记豁免/⑤自家触发面豁免），⛔不动 _broad_object_veto 老逻辑（零回归）。
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
-import re, os
+import re, os, sys, json
 
 BASE = os.path.expanduser("[记忆共享中心]/技能配置")
 SKILLS = ["awaken-memory-system","chrold","clock-loop","daily-buddy","excavator","good-good-study",
@@ -120,6 +126,21 @@ _SEMANTIC_CORES = [
     "PPT", "演示", "幻灯片",
     "日历", "规划", "专注",
 ]
+
+
+# 语义散列豁免表 v1（2026-10-11 队列④②段·triggers清查·内部台账）：
+#   数据源=route_audit 审计账本123行全miss词频（miss≥5·词素与skill域客观错位·通道衍生类）——
+#   判定层否决（router.py 2026-10-02 教训正解：不改提取·只在hit()加否决·零回归）。
+#   ⚠️ 只拦**通道衍生语素**（t not in trig）；desc明写词（clock-loop×loop/win-ps1×钩子）
+#   归desc批处理不走本表。skill-forge×skill曾入表后撤出（正例依赖泛词素·挂账desc补自名）。
+#   你终审（2026-10-11）：system-logger×系统日志=提及即触发·保留不豁免。
+_SEMANTIC_EXEMPT = {
+    ("good-good-study", "评估"), ("daily-buddy", "记忆"),
+    ("clock-loop", "工程"), ("素然启镜", "文案"),
+    # v1.1（2026-10-11 22:3x）：win-ps1 desc明写"钩子"单项已删（desc批处理）·
+    # 剩余衍生源=长短语"Stop 钩子不触发"——通用钩子讨论仍全域命中→豁免对加回
+    ("win-ps1-python-resolution", "钩子"),
+}
 
 
 def semantic_tags(trig):
@@ -294,6 +315,92 @@ def _question_only_hit(hit_words):
     return bool(hit_words) and all(w in _QUESTION_ONLY for w in hit_words)
 
 
+# ── 宽词宾语域闸（2026-10-15·皮叔令「真要治，是在路由表给这些宽词加宾语域判定，
+#    不是每次靠我自觉拒绝」·同 _QUESTION_ONLY 裸奔族的扩面）────────────────
+# 病灶：事务宽词（记录进度/完成了/复盘/分析/评估…）任何工作流都会说出口，命中即拉 Skill。
+#   实证本会话：修包回合说「认可，任务卡记录进度，继续推进」⇒ 硬匹配 daily-buddy（日记），
+#   于是只有两条路：AI 误跑日记 Skill，或 AI 自觉拒绝（自觉=不可机械验证，Stop 侧记不下违规）。
+# 判据（三条件同时成立才否决·缺一不否决，⛔不放宽成"见到工程词就一律不路由"）：
+#   ① 本次命中词**全部**属宽词（存在任一实义触发词共现即放行——「记录今天的日记」不受影响）
+#   ② 文本含**工程宾语**信号（被当作施工对象的物名）
+#   ③ 文本含**工程动作/交付/续做**信号
+#   ④ 且文本**不含日记域名词**（今天/今晚/昨天/日记/番茄…）——出现即说明"被记账的对象是这一天"
+#      双向实证（真机原话·⛔转写）：
+#        「认可，2、记录进度，然后继续下一张卡，启动童灵执行」 ⇒ ①②③齐·无④ ⇒ 否决 ✅
+#        「今晚复盘一下，脚本改了一半」                      ⇒ 含④          ⇒ 不否决 ✅
+#   ⑤ 且该 Skill 没把这些工程宾语写在自己的触发面上（写了=它的合法域，见 _domain_declared）
+#      实证分歧点：「那脚本体系的搭建工作现在算完成了吗？」②③不齐（问完成状态）⇒ 记账域·不否决
+# ⚠️ ②里的『下一张卡/这张卡』与④是**真机复测补入**：第一版只收了语料里的「任务卡」，
+#    而真机那条原话不含任何既有工程词 ⇒ 自测全绿却没治到病＝假绿，被"拿真原话回跑"逮回。
+# 标定与回归：词表由 route_audit 真语料（155 条去重 task）＋真机双向夹具标定。
+#   ⛔ 改任一表须跑 `python3 router.py --gate-regression`（判据一律复用本文件函数）。
+_BROAD_WORDS = frozenset({
+    "记录进度", "完成了", "记账", "总结", "复盘", "分析", "对比", "分类",
+    "模式", "规划", "检查", "评审", "评估", "优化", "同步", "梳理", "验证",
+})
+_ENG_OBJECTS = (
+    "卡集", "任务卡", "下一张卡", "这张卡", "那张卡", "下一张", "修包", "安装包", "发布库",
+    "manifest", "脚本", "正则", "钩子", "门禁", "守卫", "仓库", "提交", "commit",
+    "装机", "部署", "验收", "回归", "字段", "参数", "接口", "用例", "自测", "夹具", "@file:",
+)
+_ENG_ACTIONS = (
+    "根治", "修复", "修包", "改动", "改造", "推进", "执行", "落地", "部署", "装机",
+    "重构", "编写", "写一版", "跑一遍", "跑完", "提交", "验收", "回归",
+    "补齐", "收口", "开工", "施工", "继续",
+)
+# ④ 日记域名词：出现即说明"被记账的对象是这一天"，不是施工对象（双向夹具实测位）
+_DIARY_DOMAIN = ("日记", "今天", "今晚", "昨天", "早上", "晨报", "早报", "晚安",
+                 "番茄", "睡眠", "周报", "月报", "本月", "这周")
+
+
+def _domain_declared(trig, signals):
+    """该 Skill 的触发面是否自带这些工程宾语（自带=合法域，⛔不吃否决）。
+    判据取数=被检对象自身的 trig，⛔不在引擎里维护"哪个 Skill 算工程域"的名单（名单必漂移）。"""
+    tl = [w for w in trig if w]
+    return any(any(o in w for w in tl) for o in signals)
+
+
+def _broad_object_veto(hit_words, text, trig):
+    """返回否决证据（list·空=不否决）。①②③成立且④⑤不成立才否决。"""
+    if not hit_words or not all(w in _BROAD_WORDS for w in hit_words):
+        return []
+    sig = [o for o in _ENG_OBJECTS if o in text]
+    act = [a for a in _ENG_ACTIONS if a in text]
+    if not sig or not act:
+        return []
+    if any(d in text for d in _DIARY_DOMAIN):
+        return []                                   # ④ 这一天本身在被记账
+    if _domain_declared(trig, sig):
+        return []                                   # ⑤ 工程宾语写在该 Skill 自家触发面上
+    return ["宽词%s·工程宾语%s·工程动作%s·无日记域名词" % (hit_words, sig[:3], act[:3])]
+
+
+# ── ②' 实体管理域闸（v3.1.0 · QCN-20261018-001 病例根治）─────────────────
+# 病：既有闸宾语表只收工程施工词，"这本书重复了留一个"类**实体管理**语句不吃。
+# 结构照抄三条件：①全宽词 ②实体宾语 ③管理动作；④⑤豁免复用既有函数。
+# 词表纪律：宾语=可数的具体实体标记，⛔ 不收「这份/这个」等泛化指代（误杀真分析）。
+_ENTITY_OBJECTS = ("《", "这本", "那本", "这册", "两本", "几本", "多本",
+                   "两份", "几份", "副本", "重复件", "同版", "书目")
+_ENTITY_ACTIONS = ("留一个", "留一份", "留哪", "删掉", "删了", "清理", "清掉",
+                   "查重", "去重", "归档", "合并", "移走", "改名", "重命名",
+                   "核对一下", "对账")
+
+
+def _entity_mgmt_veto(hit_words, text, trig):
+    """实体管理域否决：全宽词 且 实体宾语 且 管理动作 ⇒ 不归分析类 Skill。"""
+    if not hit_words or not all(w in _BROAD_WORDS for w in hit_words):
+        return []
+    sig = [o for o in _ENTITY_OBJECTS if o in text]
+    act = [a for a in _ENTITY_ACTIONS if a in text]
+    if not sig or not act:
+        return []
+    if any(d in text for d in _DIARY_DOMAIN):
+        return []                                   # ④ 日记域豁免（同既有闸）
+    if _domain_declared(trig, sig) or _domain_declared(trig, act):
+        return []                                   # ⑤ 写在自家触发面=合法域
+    return ["宽词%s·实体宾语%s·管理动作%s" % (hit_words, sig[:3], act[:3])]
+
+
 def hit(skill, text):
     desc = get_desc(skill)
     trig, excl = extract_words(desc)
@@ -302,7 +409,8 @@ def hit(skill, text):
     if not hit_words:
         # 降级：语义标签散列通道（自然语言离散结构兜底）
         tags = semantic_tags(trig)
-        hit_words = [t for t in tags if t and t in text]
+        hit_words = [t for t in tags if t and t in text
+                     and not (t not in trig and (skill, t) in _SEMANTIC_EXEMPT)]
     if not hit_words:
         return False, [], []
     # 「纯提问」还需**句中无实义宾语**——否则「为什么这个设计有问题」会被误杀
@@ -313,6 +421,13 @@ def hit(skill, text):
         residue = re.sub(r"为什么|原因|什么|怎么|如何|吗|呢|吧|啥", "", residue)
         if len(residue) < 2:            # 剥掉疑问词后几乎无内容 ⇒ 纯提问
             return False, [], hit_words
+    # 宽词宾语域闸（同上族·事务词裸奔）：命中全为宽词且宾语是工程施工对象 ⇒ 不归本 Skill
+    veto = _broad_object_veto(hit_words, text, trig)
+    if veto:
+        return False, hit_words, veto
+    veto2 = _entity_mgmt_veto(hit_words, text, trig)   # v3.1.0 实体管理域闸
+    if veto2:
+        return False, hit_words, veto2
     excl_hit = [w for w in excl if w and w in text]
     if excl_hit:
         return False, hit_words, excl_hit
@@ -331,3 +446,98 @@ def route(text):
     if not text:
         return []
     return [s for s in SKILLS if hit(s, text)[0] and hit(s, text)[1]]
+
+
+# ── 宽词宾语域闸回归自检（`python3 router.py --gate-regression`·改三张表必跑）──────
+# ⛔ 判据取数一律走本文件的 hit()/_broad_object_veto()——⛔ 在测试里另写一套否决/归一
+#    （实证病：QCN-20261015-002，验证脚本自写归一函数 ⇒ 量出"33 题全不符"的假结论）。
+# 四类断言：P 正例必留／N 负例必拦／C 真语料零日记类误杀／M 变异必失效（闸真在被算而非恒真）。
+_CORPUS = os.path.expanduser("[记忆共享中心]/脚本中心/logs/route_audit.jsonl")
+_GATE_POS = [
+    ("daily-buddy", "帮我写今天的日记，晚上复盘一下", "日记＋复盘=合法域"),
+    ("daily-buddy", "那脚本体系的搭建工作现在算完成了吗？", "问完成状态=记账域（②③不齐）"),
+    ("daily-buddy", "今晚复盘一下，脚本改了一半", "含工程宾语但有日记域名词=④豁免"),
+    ("daily-buddy", "记录进度，今天番茄 16 个", "真·进度记账（有日记域名词）"),
+    ("clock-loop", "loop 安装包，检查发布包", "宾语写在自家触发面=⑤域内自声明豁免"),
+    ("triwich", "分析一下这个方案的风险，靠谱吗", "宽词外还有实义词=不否决"),
+    ("triwich", "帮我评估这两份方案的优劣，哪个更靠谱", "实体宾语'两份'在但无管理动作=三条件不齐·必留"),
+    ("triwich", "分析一下这本书的思想脉络", "有'这本'无管理动作·必留"),
+]
+_GATE_NEG = [
+    # ⛔ 用真机原话当夹具（第一版用转写「认可，任务卡记录进度」⇒ 自测全绿却漏治真病例）
+    ("daily-buddy", "认可，2、记录进度，然后继续下一张卡，启动童灵执行"),
+    ("daily-buddy", "记录，在任务卡记录进度之后，就启动童灵继续推进 r4"),
+    ("meta-aletheia", "帮我分析一下这两个 git 提交是否还存在，存在就按愿景根治"),
+    ("triwich", "《毛泽东书信选集》也有重复的呀，那你检查一下。如果是重复的，你就评估哪个是最好的，就留一个。"),
+]
+_DIARY_MARKS = _DIARY_DOMAIN       # ⛔ 回归器另写一份日记词表＝两把尺子（同 QCN-20261015-002 病）
+
+
+def _gate_regression():
+    ok = True
+
+    def ck(name, cond, detail=""):
+        nonlocal ok
+        print("  %s %s%s" % ("✅" if cond else "❌", name, "" if cond else " ← " + detail))
+        ok = ok and bool(cond)
+
+    for skill, t, why in _GATE_POS:
+        ck("P %s｜%s" % (skill, why), hit(skill, _sanitize(t))[0], "正例被误杀")
+    for skill, t in _GATE_NEG:
+        hit_ok, hw, ev = hit(skill, _sanitize(t))
+        ck("N %s 必拦｜%s" % (skill, t[:22]), (not hit_ok) and bool(hw), "未被否决（闸失明）→ %s" % ev)
+
+    if not os.path.isfile(_CORPUS):
+        print("  ⚪ C 真语料回归跳过（语料不存在：%s·⛔静默当过）" % _CORPUS)
+    else:
+        tasks, seen = [], set()
+        with open(_CORPUS, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    t = (json.loads(line).get("task") or "").strip()
+                except ValueError:
+                    continue
+                if t and t not in seen:
+                    seen.add(t)
+                    tasks.append(t)
+        killed_diary, vetoed = [], []
+        for t in tasks:
+            txt = _sanitize(t)
+            for skill in SKILLS:
+                was_ok = hit(skill, txt)[0]
+                hw = hit(skill, txt)[1]
+                if was_ok:
+                    continue
+                if hw and (_broad_object_veto(hw, txt, extract_words(get_desc(skill))[0])
+                           or _entity_mgmt_veto(hw, txt, extract_words(get_desc(skill))[0])):
+                    vetoed.append((skill, t))
+                    if any(m in t for m in _DIARY_MARKS) and skill == "daily-buddy":
+                        killed_diary.append(t)
+        ck("C 真语料 %d 条·daily-buddy 日记类误杀=0" % len(tasks),
+           not killed_diary, "误杀 %d 条：%s" % (len(killed_diary), killed_diary[:2]))
+        print("     （语料内本闸共否决 %d 处·抽样：%s）"
+              % (len(vetoed), "; ".join("%s‹%s›" % (s, t[:18]) for s, t in vetoed[:3])))
+
+    orig = globals()["_broad_object_veto"]
+    orig2 = globals()["_entity_mgmt_veto"]
+    globals()["_broad_object_veto"] = lambda *a, **k: []      # 变异：短路双闸
+    globals()["_entity_mgmt_veto"] = lambda *a, **k: []
+    try:
+        back = [hit(s, _sanitize(t))[0] for s, t in _GATE_NEG]
+    finally:
+        globals()["_broad_object_veto"] = orig
+        globals()["_entity_mgmt_veto"] = orig2
+    ck("M 变异（短路否决）后负例全部复活 ⇒ 否决真在被算", all(back), str(back))
+    print("自检结论：%s" % ("全绿 ✅" if ok else "有红 ❌（改表后未过回归=不得上线）"))
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    if "--gate-regression" in sys.argv[1:]:
+        sys.exit(_gate_regression())
+    import json as _j
+    txt = sys.stdin.read() if not sys.stdin.isatty() else ""
+    print(route(txt))

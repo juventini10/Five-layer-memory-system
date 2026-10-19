@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # TRUTH_OF: 脚本中心/tsl_echo_hook.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
-# version: v1.1 → v1.2
+# version: v1.1 → v1.2 → v1.3（2026-10-09 Qoder CN WB端TSL树时相根治任务卡·六改点⑤）
 """
-tsl_echo_hook.py — TSL 树回显钩子（UserPromptSubmit·v1.1）
+tsl_echo_hook.py — TSL 树回显钩子（UserPromptSubmit·v1.3）
 LRN-20260929-01 根治·闭环末环：
   Stop 钩子 tsl_tree_hook 机械产树至 ~/.workbuddy/tsl_last_tree.md
   → 本钩子（UserPromptSubmit）读树·未消费则 additionalContext 注入 → AI 被迫逐行 relay
@@ -25,11 +25,18 @@ WB 端 UPS 实挂 11 条钩子，多条同发 envelope ⇒ 排前面的注入块
 
 v1.2 修法：①输出形态委托 `hook_protocol` 单一真源（WB=text 裸文本）；
 ②空闲时**零输出**（⛔ 不再吐 `{}`），符合 `emit()` 空 ctx 只留痕不输出的既有语义。
+
+## v1.3（2026-10-09 Qoder CN 任务卡·六改点⑤）：下回合注入语义根治
+原 v1.2 把 **tsl_last_tree.md 树全文**注入下回合 → 与 Stop 钩子同 round 踢回路径**重复呈现**，
+且树全篇出现在「非被踢回回合」＝违反 §3.9d 呈现点唯一性（树只该出现在被踢回那回合末段）。
+v1.3 改：下回合 UPS **不再注入树本体**，仅当「上回合 fire 后仍缺树」（FIRE_STATE 存在且近期）时
+注入**一行缺账提醒**（⛔每轮刷屏·提示后即清状态）。树全文唯一出现处＝被 Stop 钩子踢回的那一回合末段。
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import os, re, sys, json
 
 # 输出协议单一真源（2026-10-07·与注入钩子家族同源·WB 端必须 text）
@@ -66,12 +73,44 @@ TREE = os.environ.get("TSL_TREE_OUT") or os.path.join(os.path.expanduser("~"), "
 DONE = TREE + ".consumed"
 STATE = os.environ.get("TSL_INJECT_STATE") or os.path.join(os.path.expanduser("~"), ".workbuddy", "doenglingz_inject_state.json")  # env=测试隔离缝（同 tsl_tree_hook v1.2）
 
+# v1.3（2026-10-09）：FIRE_STATE 与 tree_hook 同源共享——记录「上回合是否 fire 后仍缺树」
+FIRE_STATE = os.environ.get("TSL_FIRE_STATE") or os.path.join(os.path.expanduser("~"), ".workbuddy", "tsl_tree_fire_state.json")
+
+
 def _stdin_session_id():
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         d = json.loads(sys.stdin.read() or "{}")
         return d.get("session_id", "") if isinstance(d, dict) else ""
     except Exception:
         return ""
+
+
+def _fire_state_get():
+    try:
+        with open(FIRE_STATE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _fire_state_clear():
+    try:
+        os.remove(FIRE_STATE)
+    except Exception:
+        pass
+
+
+def _fire_recent(fs, window=600):
+    if not isinstance(fs, dict):
+        return False
+    try:
+        from datetime import datetime as _dt
+        _ts = _dt.strptime(fs.get("ts", ""), "%Y-%m-%d %H:%M:%S")
+        return (_dt.now() - _ts).total_seconds() <= window
+    except Exception:
+        return False
+
 
 def session_d_tier(sid):
     """本会话最新档位——TSL 呈现义务仅 D3（08 §七·06 v1.89 档位门控）。
@@ -81,7 +120,10 @@ def session_d_tier(sid):
             lines = [l for l in f if l.strip()]
         for line in reversed(lines):
             d = json.loads(line)
-            if sid and d.get("session_id") and d.get("session_id") != sid:
+            # 🔴 2026-10-08 空值漏洞根治（与 tsl_tree_hook 同源同修）：
+            #   原式第三条件 `d.get("session_id")` 空值时为假 ⇒ 空 sid 行绕过本会话过滤
+            #   ⇒ 非 D3 回合被回判 D3（实测本机 161 行空 sid+D3 噪声）。判据**收窄**·⛔非放宽。
+            if sid and d.get("session_id") != sid:
                 continue
             if d.get("d_tier"):
                 return d.get("d_tier")
@@ -95,43 +137,25 @@ def session_d_tier(sid):
         pass
     return ""
 
+
 def main():
     sid = _stdin_session_id()
     if session_d_tier(sid) != "D3":
         _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）  # ⛔档位门控：仅 D3 回合注入 TSL 树
         return
-    if not os.path.exists(TREE):
-        _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）
+    # v1.3（2026-10-09 Qoder 任务卡·六改点⑤）：下回合 UPS **不再注入树本体**
+    # （§3.9d 呈现点唯一性：树全篇只出现在被 Stop 钩子踹回的那一回合末段）。
+    # 仅当「上回合 fire 后仍缺树」（FIRE_STATE 存在·status∈{kicked,missing}·近期）时，
+    # 注入**一行缺账提醒**（⛔每轮刷屏：提示后即清状态·下回合不再提示）。
+    fs = _fire_state_get()
+    if fs.get("status") in ("kicked", "missing") and _fire_recent(fs):
+        ctx = ("⚠️ 上回合 D3 上岗回合 TSL 核验树未被 relay——Stop 钩子已机械产出并踢回，但末段仍无树。"
+               "本回合末段请原样粘贴 TSL 核验树（⛔省略＝违反义务⑨·relay保真律·童灵在岗契约）。")
+        _fire_state_clear()   # 只提示一次·⛔每轮刷屏
+        _emit(ctx)
         return
-    try:
-        tree = open(TREE, encoding="utf-8").read()
-    except Exception:
-        _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）
-        return
-    m = re.search(r"stamp=(\w+)", tree)
-    stamp = m.group(1) if m else ""
-    if not stamp:
-        _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）
-        return
-    consumed = ""
-    if os.path.exists(DONE):
-        try:
-            consumed = open(DONE, encoding="utf-8").read().strip()
-        except Exception:
-            consumed = ""
-    ms = re.search(r"session=([\w\-]+)", tree)
-    tree_sid = ms.group(1) if ms else ""
-    if tree_sid and tree_sid != "legacy" and sid and tree_sid != sid:
-        _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）  # v1.1：树是别的会话产的（跨端/跨会话）→ 本会话不回显
-        return
-    if stamp == consumed:
-        _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）  # 已回显过·不重复灌
-        return
-    with open(DONE, "w", encoding="utf-8") as f:
-        f.write(stamp)
-    ctx = ("【TSL 上回合核验树·Stop 钩子机械产出·⛔必须在回复中逐行 relay 后方可视为已呈报·AI 无省略权】\n"
-           + tree)
-    _emit(ctx)
+    _emit("")   # v1.2：空闲零输出（⛔ 不再吐 `{}` 污染上下文）
+
 
 if __name__ == "__main__":
     main()

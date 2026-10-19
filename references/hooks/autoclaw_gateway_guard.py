@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 autoclaw_gateway_guard.py — AutoClaw 网关守护（AutoClaw 专属守卫）
 =================================================================
@@ -37,6 +33,10 @@ autoclaw_gateway_guard.py — AutoClaw 网关守护（AutoClaw 专属守卫）
 路径可经 env 覆盖（self-test 用临时目录·不碰真实文件）：
   AUTOCLAW_GATEWAY_CONFIG / AUTOCLAW_INJECT_LOG / AUTOCLAW_PATROL_TS
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import json
 import os
 import sys
@@ -50,7 +50,7 @@ DEFAULT_INJECT_LOG = Path("/tmp/buluotuo_inject_debug.log")
 PERSISTENT_INJECT_LOG = HOME / ".openclaw-autoclaw" / "logs" / "buluotuo_inject_debug.log"
 PERSISTENT_INJECT_LOG_BAK = HOME / ".openclaw-autoclaw" / "logs" / "buluotuo_inject_debug.log.bak-*"
 GATEWAY_LOG = HOME / ".openclaw-autoclaw" / "logs" / "gateway.log"
-DEFAULT_PATROL_TS = HOME / "[记忆共享中心]" / "自定义层" / "待完成工作" / "路由家族" / ".patrol" / "last_run.ts"
+DEFAULT_PATROL_TS = HOME / Path('[记忆共享中心]') / "自定义层" / "待完成工作" / "路由家族" / ".patrol" / "last_run.ts"
 
 # 核心登记清单（与 SSOT §二·七 AutoClaw 列对齐·2026-08-22）
 # 布洛陀三件套（hooks/plugins 实挂）+ evolution 写保护（防 openclaw.json 被写坏）

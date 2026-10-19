@@ -31,7 +31,7 @@
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 # version: v1.1.1（2026-10-02 Qoder CN 童灵·出包台账治理工单 T4）：main() 前置 fail-loud——manifest 不存在时 stderr 指名路径 + return 2，⛔不再把 FileNotFoundError 吞成 [SKIP]+rc=0（病例①根因：默认 MANIFEST=BASE/scripts_manifest.json，仅作者机同目录掩盖，任何非同目录安装如 脚本中心/ 派生副本解析到不存在 sibling→静默空转·真身同样带此设计病只是被掩盖）。病例② T6 夹具已随 v1.1.0 绿·本次不重复改（不越界）。验收：--self-test 6/6 + 正常 --dry-run 0 SKIP + 缺 manifest rc=2。
@@ -39,6 +39,7 @@ except Exception: pass
 #   扫描根写死 开发工具/，路由家族/scripts 的新脚本结构上入不了册（实测 registrar 报「无增无撤」=仪器不测该项）。
 #   ⛔未直接扩域：ZCode Stop 挂 `manifest_registrar --apply`，扩域会让下次 Stop 批量自动写共享台账
 #   （不可控批量写·§3.5 越界条）⇒ 先给显式口，扩域与否连存量 42 项一并交归属端裁决。
+# version: v1.2（2026-10-15 Qoder CN 批D：新增 --dev-retire 腿——主线批次搬迁产生的 manifest 死径机械撤账，判据=死径∧中心git跟踪层有同名落点（宁红不误撤·仪器故障输出 stderr）·T7 夹具三态+变异负例×2·真跑撤16留1(待裁 soul_format_guard)·T6 17→1 合计171→155 与批A前持平恢复。⛔不挂 Stop 自动跑（沿用 v1.1 扩域顾虑）手动批用。）
 import os
 import sys
 import json
@@ -47,6 +48,7 @@ import shutil
 import hashlib
 import datetime
 import argparse
+import subprocess  # v1.2 dev-retire 腿（本行曾因缺失被宽 except 吞成 None·教训=仪器异常宁炸不默）
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 # 🆕 2026-10-03 病例①根治（脚本自己 2026-10-02 在版本注释里写了根因·但没修）：
@@ -95,7 +97,7 @@ def sha8(path):
 
 
 def build_entry_at(full, today):
-    """显式入册：任意「~/个人AI档案/ 之内」的脚本路径 → 机械构造条目。
+    """显式入册：任意「[记忆共享中心]/ 之内」的脚本路径 → 机械构造条目。
 
     为什么需要（2026-09-18 Qoder CN 端实测）：发现域 `check_script_center()` 把扫描根
     写死为 `[记忆共享中心]/脚本中心`（guard_doc_consistency.py L513），而 manifest 本身
@@ -289,6 +291,34 @@ def run_selftest():
     results.append(("T5 显式入册·域内路径机械构造（含副作用自清理）", 1, t5))
     results.append(("T6 负例·域外路径拒绝（不猜写地址）", 1, t6))
 
+    def t7():   # dev-retire 腿夹具（注入假仪器·⛔不碰真 git/真 manifest·v1.2）
+        doc = {"scripts": [
+            {"path": "[记忆共享中心]/脚本中心/gone_guard.py"},
+            {"path": "[记忆共享中心]/脚本中心/alive.py"},
+            {"path": "[记忆共享中心]/脚本中心/orphan_x.py"},
+        ]}
+        fake_alive = lambda x: "alive" in x
+        fake_ev = lambda b: ["脚本中心/守卫/gone_guard.py"] if b == "gone_guard.py" else []
+        ret, held = dev_retire_plan(doc, alive_fn=fake_alive, evidence_fn=fake_ev,
+                                    repo_wide_fn=lambda b: 5)  # orphan_x 实体在别处=5·保持"无落点有实体→留"
+        if not ([q for q, _ in ret] == ["[记忆共享中心]/脚本中心/gone_guard.py"] and held == ["[记忆共享中心]/脚本中心/orphan_x.py"]):
+            raise AssertionError("基础三态错(撤有证据/活不动/无证据保留)")
+        ret2, _ = dev_retire_plan(doc, alive_fn=fake_alive, evidence_fn=lambda b: ["x"])
+        if not (len(ret2) == 2 and all("alive" not in q for q, _ in ret2)):
+            raise AssertionError("变异负例1失守(证据恒真时活件仍须不动)")
+        ret3, held3 = dev_retire_plan(doc, alive_fn=fake_alive, evidence_fn=lambda b: None)
+        if not (ret3 == [] and len(held3) == 2):
+            raise AssertionError("变异负例2失守(仪器没跑成须全保留零撤)")
+        return 1
+    results.append(("T7 dev-retire 腿（有证据撤/无证据留报警/仪器未跑成零撤×变异负例×2）", 1, t7))
+    def t8():   # v1.3 三态裁级夹具
+        doc = {"scripts": [{"path": "[记忆共享中心]/脚本中心/ghost_a.py"}, {"path": "[记忆共享中心]/脚本中心/ghost_b.py"}]}
+        ret, held = dev_retire_plan(doc, alive_fn=lambda x: False,
+                                    evidence_fn=lambda b: [], repo_wide_fn=lambda b: 0 if b == "ghost_a.py" else 3)
+        return ([q for q, _ in ret] == ["[记忆共享中心]/脚本中心/ghost_a.py"] and held == ["[记忆共享中心]/脚本中心/ghost_b.py"]
+                and ret[0][1].startswith("RETIRED"))
+    results.append(("T8 三态裁级（零实体退役撤/实体在别处留）", 1, t8))
+
     ok = 0
     for title, expect, fn in results:
         try:
@@ -304,6 +334,68 @@ def run_selftest():
     return 0 if ok == len(results) else 1
 
 
+
+# ── dev-retire 腿（v1.2 · 2026-10-15 批D机制缺口：registrar 原扫描域=中心易失件，
+#    主线批次搬迁产生的 manifest 死径无人管辖→T6 常红。本腿只撤「有搬家证据」的死径：
+#    basename 在 中心 git 跟踪层存在＝搬迁落点实证→撤；无证据→保留报警（需裁面 ⛔误撤）。
+#    ⛔不挂 Stop 自动跑（沿用 v1.1 备注「扩域会让下次 Stop 批量自动写共享台账」之顾虑）——手动批用。──
+def _dialect_alive(p):
+    """manifest path 方言感知存活判据（ABS→HOME→档案根 三 base 全试·⛔单一base假死径·台账L0 609假数先例）。"""
+    cands = [os.path.expanduser(p)]
+    if not p.startswith(("~", "/")):
+        cands += [os.path.join(os.path.expanduser("~"), p),
+                  os.path.join(os.path.expanduser("~"), "[记忆共享中心]", p)]
+    return any(os.path.exists(c) for c in cands)
+
+def _center_evidence(basename, repo=None):
+    """中心 git 跟踪层里 basename 的落点列表（空=无证据；None=仪器没跑成⛔当无证据用）。"""
+    repo = repo or os.path.expanduser("[记忆共享中心]")
+    try:
+        r = subprocess.run(["git", "-C", repo, "-c", "core.quotepath=false",
+                            "ls-files", "脚本中心"], capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.TimeoutExpired) as ex:
+        print("[dev-retire] 证据仪器故障（按零撤处理·宁红不误撤）: %s" % ex, file=sys.stderr)
+        return None
+    if r.returncode != 0:
+        return None
+    return [x for x in r.stdout.splitlines() if os.path.basename(x) == basename]
+
+def _repo_wide_entities(basename):
+    """全仓（含未跟踪）数同名活文件（排除 .bak/备份/缓存/台账文档）。"""
+    n = 0
+    for dp, dns, fns in os.walk(os.path.expanduser("[记忆共享中心]")):
+        dns[:] = [d for d in dns if d not in ('.git', '__pycache__', 'node_modules', '记忆琥珀', '发布库') and not d.startswith('.')]
+        if basename in fns:
+            f = os.path.join(dp, basename)
+            if '.bak' not in f and '/bak' not in dp and '/_backup' not in dp:
+                n += 1
+    return n
+
+
+def dev_retire_plan(doc, alive_fn=None, evidence_fn=None, repo_wide_fn=None):
+    """返回 (可撤[(path,dst)], 保留报警[path])。证据不齐一律保留——宁红不误撤。"""
+    alive_fn = alive_fn or _dialect_alive
+    evidence_fn = evidence_fn or _center_evidence
+    repo_wide_fn = repo_wide_fn or _repo_wide_entities
+    retired, held = [], []
+    for e in doc.get("scripts", []):
+        path = e.get("path", "") if isinstance(e, dict) else ""
+        if not path or alive_fn(path):
+            continue
+        dst = evidence_fn(os.path.basename(path))
+        if dst is None:
+            held.append(path)  # 仪器没跑成≠确认无落点·按保留处理（⛔把"没测到"判成"确认没有"）
+        elif dst:
+            retired.append((path, dst[0]))
+        elif repo_wide_fn(os.path.basename(path)) == 0:
+            # v1.3 三态裁级（2026-10-15 你令愿景最优根治）：无落点且**全仓零实体**＝已退役件
+            # （如 soul_format_guard 全域无实体=登记幽灵）→ 可撤；实体在别处未归位 → 保留报警。
+            retired.append((path, "RETIRED:全仓零实体(退役裁级)"))
+        else:
+            held.append(path)
+    return retired, held
+
+
 def main():
     ap = argparse.ArgumentParser(description="scripts_manifest 机械登记器（孤儿→入册 / 易失件→退役）")
     ap.add_argument("--apply", action="store_true", help="写入 manifest（默认 dry-run 只看不动）")
@@ -314,6 +406,8 @@ def main():
     ap.add_argument("--manifest", default=MANIFEST)
     ap.add_argument("--add", nargs="*", default=[],
                     help="显式入册指定脚本路径（补偿发现域写死 开发工具/ 的盲区·默认 dry-run）")
+    ap.add_argument("--dev-retire", action="store_true",
+                    help="撤「死径且中心有搬家证据」条目（默认 dry-run·配 --apply 写盘·⛔不挂Hook自动跑）")
     ap.add_argument("--self-test", action="store_true", dest="self_test")
     args = ap.parse_args()
 
@@ -352,6 +446,23 @@ def main():
             return 0
         n_add, _ = apply_changes(args.manifest, doc, todo, [])
         print("✅ 显式入册 %d 条" % n_add)
+        return 0
+
+    if args.dev_retire:
+        doc = json.load(open(args.manifest, encoding="utf-8"))
+        retired, held = dev_retire_plan(doc)
+        print("dev-retire：待撤 %d（有搬家证据）/ 保留报警 %d（无证据·待裁）" % (len(retired), len(held)))
+        for pth, dst in retired:
+            print("   - %s → %s" % (pth[:70], dst[:56]))
+        for pth in held:
+            print("   ⚠️保留 %s（中心无落点证据·⛔不撤）" % pth[:70])
+        if not retired:
+            return 0
+        if not args.apply:
+            print("（dry-run·加 --apply 才写盘）")
+            return 0
+        _, n = apply_changes(args.manifest, doc, [], [p for p, _ in retired])
+        print("✅ dev-retire 写盘：撤 %d 条（.bak-autoreg+台账 jsonl 随 apply_changes 三件套）" % n)
         return 0
 
     if G is None:

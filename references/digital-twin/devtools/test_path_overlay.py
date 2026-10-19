@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """test_path_overlay.py —— O1–O14 承重验收
 
 核心承重点：**覆盖层会不会"看起来在工作、其实啥也没改"**。
 这是覆盖层这类机制的典型死法（键名对不上 → 静默跳过 → 脚本仍指作者路径）。
 ⇒ O9/O10 专门造这个错。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import importlib.util as il
 import os

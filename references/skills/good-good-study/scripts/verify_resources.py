@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-good-good-study 资源字段校验脚本（v0.8.7 · 出图必跑）
+good-good-study 资源字段校验脚本（v1.1.8 · 出图必跑·创建v0.8.7）
 =====================================================
 治"资料出错"三关中的第①关（机器拦截）+ 第③关（留痕检查）：
   - ISBN-10/13 校验位算法（拦随机编造/抄错）
@@ -10,7 +10,7 @@ good-good-study 资源字段校验脚本（v0.8.7 · 出图必跑）
   - 留痕检查（"已核验" 或 ⚠️ 至少其一，无留痕=未核验）
 用法：
   python3 verify_resources.py <路径图.md 或 .html>
-退出码：0=全部通过  1=存在缺陷（列出清单）
+退出码：0=全部通过  1=存在缺陷（列出清单）  2=用法/输入异常（路径缺失或不可读·视为未跑，⛔不当作通过）
 注意：本脚本是第①关机器拦截。第②关"字段同源核验"（ISBN与书名/出版社/年份
 必须来自同一条检索结果）无法纯脚本化，仍需出图时逐条 WebSearch + 留痕——
 v0.8.6 三层契约的第②层。脚本防的是"明显编造"，防不了"张冠李戴"。
@@ -63,7 +63,7 @@ def check_isbn(raw: str) -> bool | None:
             results.append(isbn10_check(d))
     if not results:
         return None
-    return any(results)
+    return all(results)  # v1.1.1 fail-closed：同行任一非法ISBN即判非法（旧any()被合法值掩盖非法值=fail-open·审查P8实证）
 
 
 # ---------- 可定位标识 / 违规字眼 / 留痕 ----------

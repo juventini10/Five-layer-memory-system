@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # TRUTH_OF: 脚本中心/tsl_closeout_guard.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
-"""tsl_closeout_guard.py — TSL 收尾守卫（腿3·观察层·2026-09-21）
+"""tsl_closeout_guard.py — TSL 收尾守卫（腿3·观察层·2026-09-21·v1.1 2026-10-09 Qoder 任务卡六改点⑥联动 tree_hook 当回合真跑证据）
 
 判据（你三问根治）：回合回复输出了 TSL 验证清单（树状特征 `├─ L0`/`TSL会话评级`）
 却**没有跑 tsl_verify.py**（~/.cache/tsl_verify/last_run.txt 缺失或早于本回合起点）
@@ -16,8 +16,9 @@ AI 只许 relay——全 GO 不是义务，跑校验器才是义务。
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys,os,json
 for _p in (os.path.dirname(os.path.abspath(__file__)),  # 同目录自推导（用户侧=脚本中心·transcript_reader 同部署面·2026-09-30 by ZCode）
            os.path.expanduser("[记忆共享中心]/脚本中心"), os.path.expanduser("[记忆共享中心]/脚本中心")):  # 2026-10-04 修脱敏残留：原两项均为开发工具(重复)，第二项应为脚本中心(端用户部署面兜底)
@@ -34,7 +35,7 @@ except Exception:
 FRESH_WINDOW_SEC = 600  # stamp 时间戳落在此窗口内 = 本回合产物（非 D3 档树义务为零 ⇒ 只可能是 AI 自跑）
 CACHE = os.environ.get("TSL_VERIFY_CACHE") or os.path.expanduser("~/.cache/tsl_verify")
    # ^ 2026-09-26 补测试缝：自测/探针须可整根重定向缓存根，否则夹具会往真 stamps.log/eight_check.log 里写条目（本轮实测污染过 1 条假 stamp，已删）。
-__version__ = "v1.0"   # 版本机械载体（2026-09-26 与注入器同律：⛔版本只活在文档手写号里）· v1.0 腿1 档位门控（2026-10-05 童灵代行：根治 10-03 禁令失效四犯 + 压非D3档假红噪声）
+__version__ = "v1.1"   # 版本机械载体（2026-09-26 与注入器同律：⛔版本只活在文档手写号里）· v1.0 腿1 档位门控（2026-10-05 童灵代行）· v1.1 change⑥联动 tree_hook 当回合真跑证据（2026-10-09 Qoder 任务卡：⛔把 hook 代跑判成假红）
 def _narration_vs_tree(text, tree_text):
     """v0.7 口径来源判据（2026-09-26 皮叔令「我一定要根治」）。
 
@@ -174,6 +175,27 @@ def _stamp_fresh(stamp, window=FRESH_WINDOW_SEC):
     except Exception:
         return False
     return False
+
+
+def _hook_ran_evidence():
+    """v1.1（2026-10-09 Qoder 任务卡·六改点⑥）：tree_hook 当回合是否真跑过 tsl_verify。
+    tree_hook 跑通即写 tsl_tree_hook_ran.json（ts 新鲜＝本回合产物）。
+    ⛔ 不把「hook 代跑·AI 被踹回前未自跑」判成红（假红违三纪律3保守判定）。
+    注：证据落独立文件而非 stamps.log——stamps.log 格式归 tsl_verify 所有，跨写
+    src=tree_hook 行会破坏 tsl_verify 自有解析（更糟的复发），故用隔离证据通道。"""
+    import datetime as _dt
+    try:
+        from tsl_tree_hook import HOOK_RAN as _HR
+    except Exception:
+        _HR = os.path.join(os.path.expanduser("~"), ".workbuddy", "tsl_tree_hook_ran.json")
+    if not os.path.isfile(_HR):
+        return False
+    try:
+        d = json.load(open(_HR, encoding="utf-8"))
+        _ts = _dt.datetime.strptime(d.get("ts", ""), "%Y-%m-%d %H:%M:%S")
+        return (_dt.datetime.now() - _ts).total_seconds() <= FRESH_WINDOW_SEC
+    except Exception:
+        return False
 
 
 TSL_SHAPE_MARKERS = ("├─ L0", "TSL会话评级", "TSL-stamp", "🧾 TSL 机械核验", "├─ L7-")
@@ -359,14 +381,21 @@ def main():
                       % (_tier or "无档位"))
             return 0
     lr=os.path.join(CACHE,"last_run.txt")
-    ok=os.path.isfile(lr)
-    if ok:
+    ran=False
+    if os.path.isfile(lr):
         try:
             import datetime
             ts=open(lr,encoding='utf-8').read().split("\t")[0]
             datetime.datetime.strptime(ts,"%Y-%m-%d %H:%M:%S")
-        except Exception: ok=False
-    if not ok:
+            ran=True
+        except Exception:
+            ran=False
+    # v1.1（2026-10-09 Qoder 任务卡·六改点⑥）：closeout 判据联动——认「tree_hook 当回合真跑」
+    #   tree_hook 跑通即写 tsl_tree_hook_ran.json（_hook_ran_evidence 验 ts 新鲜）。
+    #   ⛔ 把「hook 代跑·AI 被踹回前未自跑」判成红（假红违三纪律3保守判定）。
+    if not ran and _hook_ran_evidence():
+        ran=True
+    if not ran:
         _v("输出了TSL清单但tsl_verify未跑（last_run缺失或不可解析）")
         print("🔴 TSL 收尾违规：回复输出了 TSL 验证清单，但 tsl_verify.py 未跑——"
               "TSL 必须由脚本产出（AI 只许 relay）。已留痕 w1_not_honored。")

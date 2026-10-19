@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # TRUTH_OF: 脚本中心/release_privacy_guard.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """release_privacy_guard.py — 发布包隐私门禁（零容忍项·2026-10-05 皮叔令"隐私入库必须彻底根治，不能再犯"）
 
 唯一真源（2026-10-05 你定·写死）：
-  ~/[记忆共享中心]/发布库/五层记忆系统/布洛陀-全平台安装包
+  [记忆共享中心]/发布库/五层记忆系统/布洛陀-全平台安装包
 其他包（存档包/备份版/旧安装包/DSH完整版）不在本门禁职责内，⛔ 不得跨包合计报账。
 
 三档判定（防把机制引用误报成隐私）：
@@ -19,6 +15,10 @@ except Exception: pass
 自检 --self-test：注入伪隐私必须 RED、撤除必须转绿（出厂自证，防恒绿）。
 退出码：0 干净 / 1 有 RED / 2 路径或用法错。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os, re, sys, argparse, hashlib, json
 
 __version__ = "1.1.0"  # 2026-10-05 建成：发布包隐私门禁（零容忍项·唯一真源=布洛陀-全平台安装包）
@@ -131,6 +131,35 @@ def scan(pkg):
                 amber.append({"path": rel, "size": len(txt), "note": "结构件/模板"})
             else:
                 amber.append({"path": rel, "size": len(txt), "note": "无条目证据"})
+    # 成就系统专项扫描（2026-10-13 隐私红线根治·皮叔令「只清我不清用户」配套）：
+    #   成就 md = auto-regen 展示文件，判据用**内容**（书名/✅已完成/已填达成日期），
+    #   ⛔不用同指纹（作者骨架可能与包内字节相同⇒指纹假阳）；只扫真在「成就系统」目录段下的
+    #   *成就.md，⛔不误伤 02_设计理念/成就系统设计哲学.md 这类非成就数据文档（不在该目录段）。
+    for root, dirs, files in os.walk(pkg):
+        if "__pycache__" in root or os.sep + ".git" in root or ".bak" in root:
+            continue
+        if "成就系统" not in os.path.relpath(root, pkg).split(os.sep):
+            continue
+        for f in files:
+            if not f.endswith("成就.md"):
+                continue
+            p = os.path.join(root, f); rel = os.path.relpath(p, pkg)
+            try:
+                txt = open(p, encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            body = txt.split("---", 2)[-1] if txt.startswith("---") else txt
+            why = None
+            if re.search(r"《(?!待填写|示例|书名)[^》]{1,60}》", body):
+                why = "成就含真实书名《…》（作者个人数据）"
+            elif re.search(r"✅ ?已完成", body):
+                why = "成就含✅已完成达成状态（作者个人数据）"
+            else:
+                recs = _record_lines(body)
+                if recs:
+                    why = "成就含已填达成日期 %d 行（例：%s）" % (len(recs), recs[0][:30])
+            if why:
+                red.append({"path": rel, "size": len(txt), "sha": hashlib.md5(txt.encode()).hexdigest()[:8], "why": why})
     return red, amber
 
 
@@ -173,6 +202,19 @@ def selftest():
         "---\ntitle: 文件格式约定\n---\n\n| 字段 | 示例 |\n|---|---|\n| source | `2026-07-18 对话` |\n" + ("约定说明正文。" * 60) + "\n")
     r7, _ = scan(pkg)
     res.append(("T7 结构文档示例值不误报", r7 == [], "red=%d" % len(r7)))
+    # T8/T9 成就专项（2026-10-13 隐私红线根治防恒绿）：净骨架不误报·脏成就(书名/已完成)必红
+    ad = os.path.join(pkg, "references", "成就系统"); os.makedirs(ad, exist_ok=True)
+    open(os.path.join(ad, "阅读成就.md"), "w", encoding="utf-8").write(
+        "---\ncreated: {YYYY-MM-DD}\n---\n\n# 阅读成就系统\n\n| 指标 | 数值 | 说明 |\n|---|---|---|\n"
+        "| **阅读总量** | 未追踪 | 《待填写》 |\n| 🌱 萌芽 | 1 本 | ⏳ |\n")
+    rc, _ = scan(pkg)
+    res.append(("T8 干净成就骨架不误报", all("成就系统" not in x["path"] for x in rc), "red=%d" % len(rc)))
+    open(os.path.join(ad, "阅读成就.md"), "w", encoding="utf-8").write(
+        "---\ncreated: 2026-08-08\n---\n\n# 阅读成就系统\n\n| **阅读总量** | 9 本 | 《卢浮宫的猫》 |\n"
+        "| �� 萌芽 | 1 本 | ✅ 已完成 |\n" + ("正文补充避免长度判模板。" * 30) + "\n")
+    rd, _ = scan(pkg)
+    res.append(("T9 脏成就(书名/已完成)必 RED", any("成就系统" in x["path"] for x in rd), "red=%d" % len(rd)))
+    shutil.rmtree(ad, ignore_errors=True)
     shutil.rmtree(base, ignore_errors=True)
 
     ok = 0

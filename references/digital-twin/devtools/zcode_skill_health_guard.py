@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v1.0.0
 """ZCode 端 Skill 生态健康度守卫（端薄适配器·判据 import 公共原语 skill_health_common）。
 ## 存在理由（T0 方案 B3·G0 裁决「接」·吸收 WB v1.0.0 先例协议）
@@ -16,6 +12,10 @@ symlink_guard=跨端 ENDS 清单断链面（已岗·ENDS 含 ~/.zcode/skills）�
 检测项：1 断链 RED / 2 SKILL.md 缺 WARN / 3 frontmatter 缺 name WARN / 4 重名遮蔽 WARN（.agents 同名被 .zcode 遮蔽）。
 挂载：Stop 报告制·恒 exit 0（--strict 有 RED 才 1）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys, os, json, ast, argparse
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
 from skill_health_common import classify, fm_name, new_report, add, finalize  # noqa: E402

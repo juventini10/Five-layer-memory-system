@@ -161,7 +161,12 @@ def main():
         if _mc_env:
             _cands.append(Path(_mc_env))
         else:
-            for _c in (Path.home() / "记忆共享中心", "[记忆共享中心]",
+            # 2026-10-11 G2-2 同型残bug修：裸 str 混进 Path 候选元组 ⇒ str/"技能配置" TypeError。
+            # 且弃 "[记忆共享中心]" 字面候选——Win 装机态 _fill 把反斜杠路径填进 .py 字符串
+            # = 转义雷（见「_fill转义面」另立卡）；真源自定位改 __file__ 上导
+            # （脚本中心/x.py → parent.parent = MC；包投影件落位失败候选无害，is_dir 假→顺延）。
+            _self_mc = Path(__file__).resolve().parent.parent
+            for _c in (_self_mc, Path.home() / "记忆共享中心",
                        Path.home() / "共享中心", Path.home() / "记忆中心", Path.home() / "布洛陀记忆中心"):
                 _cands.append(_c)
         user_root = next((c / "技能配置" for c in _cands if (c / "技能配置").is_dir()), None)

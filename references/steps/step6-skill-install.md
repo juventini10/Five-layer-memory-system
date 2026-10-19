@@ -1,4 +1,5 @@
 # 步骤6：Skill安装
+> 🔊 收口播报（P31/P22）：本站收口 MUST 播 INSTALL.md〈段间播报表〉对应行（8/8 口径）；非 T9 终点站⛔禁说"完成/装好了"，只说"这站就位"；进度数字读 .install/stepN-done.md。
 
 📦 **产出物**：全部 Skill 已安装（数量=包内 `references/skills/` 含 SKILL.md 的目录数·动态计数为唯一真源，⛔文档不硬写数字·G2-2走查教训：硬写"9个"与版本表10个漂移漏装 good-good-study）+ 软链接自愈脚本，软链接生效
 
@@ -21,7 +22,7 @@
 ---
 
 > **⚡ 步骤锁定协议**
-> ① 导航锁：每次回复首行输出 `步骤6/7`
+> ① 导航锁：每次回复首行输出 `步骤6/8`
 > ② 偏离锁：用户问无关问题 → 记到待办列表，继续安装
 > ③ 检查点前置依赖：Read `[记忆共享中心]/.install/step5-done.md` — 不存在则阻塞
 > ④ 检查点写入：末尾 Write `[记忆共享中心]/.install/step6-done.md`
@@ -101,7 +102,16 @@ fi
    ```bash
    SKILL_NAME="daily-buddy"
    
-   # 升级用户：覆盖前先备份旧版
+   > **主路径（2026-10-11 批次8·程序化部署腿）**：本步骤整体交由安装器完成，⛔手工 `cp -r` + perl 逐件替换
+> （那是把机制外包给「人记得」——真机演练实测装后 12 件占位符残留即由此而来）：
+> ```bash
+> python3 install_scripts.py --platform <端ID> --deploy-skills "$MEMORY_CENTER"
+> ```
+> 该腿做三件事：逐件复制并对每个落盘件跑占位符本地化（含 .ps1/.plist/.template）、
+> 覆盖前把「本机改动件」写进 `<MC>/.install/upgrade-losses.md` 并备份进 `<MC>/记忆琥珀/升级前备份_<ts>/`、
+> 幂等（内容一致即跳过，不刷 mtime）。下面的手工段仅作安装器不可用时的兜底核对表。
+
+# 升级用户：覆盖前先备份旧版
    if [ -d "$MEMORY_CENTER/技能配置/$SKILL_NAME" ]; then
      mkdir -p "$MEMORY_CENTER/记忆琥珀/升级前备份_$(date +%Y%m%d_%H%M%S)"
      cp -r "$MEMORY_CENTER/技能配置/$SKILL_NAME" "$MEMORY_CENTER/记忆琥珀/升级前备份_$(date +%Y%m%d_%H%M%S)/"
@@ -134,7 +144,10 @@ fi
 
 6. 替换路径占位符（同时处理方括号和花括号两种格式）：
    ```bash
-   find "$MEMORY_CENTER/技能配置/" \( -name "*.md" -o -name "*.sh" \) | while read -r file; do
+   # F4b 根治（2026-10-17·沙箱实测 16 处残留）：旧 glob 只含 .md/.sh，漏 .py ⇒ 13 个技能 .py 的
+   #   [日记仓库] 残留，主路径和手工腿都补不上。安装器 _fill_text 已扩三占位符（V2.2.1），
+   #   此处为文档手工兜底腿·必须与安装器同覆盖。
+   find "$MEMORY_CENTER/技能配置/" \( -name "*.md" -o -name "*.py" -o -name "*.sh" \) | while read -r file; do
      perl -i -pe "s|\[记忆共享中心\]|$MEMORY_CENTER|g; s|\{记忆共享中心\}|$MEMORY_CENTER|g; s|\[日记仓库\]|$DIARY_VAULT|g; s|\[知识库\]|$KNOWLEDGE_POOL|g; s|\[日记子目录\]|$DIARY_SUBDIR|g" "$file"
    done
 
@@ -155,6 +168,10 @@ fi
    # 动态扫描所有端：从 adapters/*/capability.yaml 读取 skill_symlink=true 的端
    # 不写死任何端名——新增端只需加 capability.yaml，此处自动覆盖
    PKG_ROOT="$(pwd)"  # 安装包根目录
+   # C15(2026-10-15)：建链域=当前安装端（step3-done CONFIG_ROOT）——旧"全端扫描"会把
+   #   所有声明 skill_symlink:true 的他端 skills 目录 mkdir 到用户机（装 qodercn 长出
+   #   ~/.workbuddy/skills、~/.openclaw-autoclaw/skills…=越界副作用；他端到达由该端自装恢复）
+   CFG_DIR="$(grep -m1 '^CONFIG_ROOT=' "$MEMORY_CENTER/.install/step3-done.md" | cut -d= -f2 | sed "s#^~#$HOME#")"
    for cap in "$PKG_ROOT/adapters"/*/capability.yaml; do
      [ -f "$cap" ] || continue
      pid=$(basename "$(dirname "$cap")")
@@ -164,6 +181,7 @@ fi
      # 读 config_root 并展开 ~
      cr=$(grep -m1 "^config_root" "$cap" | sed 's/.*config_root[[:space:]]*:[[:space:]]*//' | tr -d '"' | cut -d'#' -f1 | sed 's/[[:space:]]*$//')
      cr="${cr/#\~/$HOME}"
+     [ "$cr" != "$CFG_DIR" ] && continue   # C15：他端跳过（⛔不为其建目录/建链）
      TARGET_SKILLS="$cr/skills"
      mkdir -p "$TARGET_SKILLS"
 
@@ -256,6 +274,10 @@ Get-ChildItem "$pkgRoot\adapters\*\capability.yaml" | ForEach-Object {
         # 读 config_root
         if ($content -match 'config_root\s*:\s*"?([^"#\r\n]+)"?') {
             $cr = $matches[1].Trim() -replace '^~', $env:USERPROFILE
+            # C15(2026-10-15)：只为当前安装端建链（step3-done CONFIG_ROOT）——旧全端扫描
+            #   New-Item 他端 skills 目录=越界副作用；他端到达由该端自装恢复
+            $cfgRaw = if ((Get-Content "$MEMORY_CENTER\.install\step3-done.md" -Raw) -match '(?m)^CONFIG_ROOT=(.+)$') { $matches[1].Trim() -replace '^~', $env:USERPROFILE } else { "" }
+            if ($cr -ne $cfgRaw) { return }
             $targetSkills = "$cr\skills"
             if (-not (Test-Path $targetSkills)) { New-Item -ItemType Directory -Path $targetSkills -Force | Out-Null }
             Write-Host "── 建立软链：$pid → $targetSkills ──"
@@ -291,7 +313,7 @@ Get-ChildItem "$pkgRoot\adapters\*\capability.yaml" | ForEach-Object {
 3. `restore-my-skills.sh` 存在且可执行（`[记忆共享中心]/技能配置/restore-my-skills.sh`）
 4. `[记忆共享中心]/成就系统/` 存在且 `scripts/` 下有 .py 文件
 
-5. 运行 `python3 references/scripts/skill_version_check.py` 确认全部 Skill 版本与包一致（防漏装/版本不对）
+5. 运行 `python3 references/scripts/skill_version_check.py --user-root "$MEMORY_CENTER/技能配置"` 确认全部 Skill 版本与包一致（防漏装/版本不对；⛔省参数=脚本按默认根找用户技能目录，非 WB 端会错域比对——--user-root 参数脚本已支持·L143 实证）
 
 缺任一项或版本不一致 → 补装后重验。
 

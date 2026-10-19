@@ -21,13 +21,14 @@ import sys
 import re
 from pathlib import Path
 
-DEFAULT = ("[记忆共享中心]" / "成长箱" / "learnings").expanduser()
+DEFAULT = (Path('[记忆共享中心]') / "成长箱" / "learnings").expanduser()
 LEARNINGS = Path(sys.argv[1]).expanduser() if len(sys.argv) > 1 else DEFAULT
 RECORD_ID_PTN = re.compile(r'\d{8}-\d{1,3}')
 PATTERNS = sorted(set(['*_errors.md', 'LEARNINGS.md', 'ERRORS.md']))  # 审查P1-1：去重——skill_errors.md 被 *_errors.md 覆盖，双列曾致计双
 
 violations = []
 files = []
+defined_ids = {}  # v1.3 全局唯一性：定义层同一编号跨文件>1处=撞号（2026-10-11 双006事故反哺）
 for pat in PATTERNS:
     files.extend(LEARNINGS.glob(pat))
 
@@ -41,6 +42,26 @@ for f in files:
             continue  # 模板骨架占位，非真实条目
         if not RECORD_ID_PTN.search(line):
             violations.append(f"{f.name}:{i}: {line.strip()}")
+        m = re.match(r'## \[([A-Z]{2,4}-\d{8}-\d{1,3})\]', line)
+        if m:
+            defined_ids.setdefault(m.group(1), []).append(f"{f.name}:{i}")
+
+import datetime as _dt
+_today = _dt.date.today().strftime('%Y%m%d')
+dup = {k: v for k, v in defined_ids.items() if len(v) > 1}
+# STOCK 口径（承抗体巡检 v1.7 先例·2026-10-11 首轮实跑即翻出2笔历史案实证必要）：
+#   当日撞号=增量必红阻断；历史存量=显形不阻断（⛔旧账拦新工，但逐轮显形直到归位）
+_today_dup = {k: v for k, v in dup.items() if _today in k}
+_hist_dup = {k: v for k, v in dup.items() if _today not in k}
+if _today_dup:
+    print("\u274c 定义层编号撞车（当日增量·同 ID 多重定义·引用链污染·必须归位后才可过闸）：")
+    for k, v in sorted(_today_dup.items()):
+        print("  " + k + " @ " + " | ".join(v))
+    sys.exit(1)
+if _hist_dup:
+    print("\u26a0\ufe0f 历史存量撞号（非本轮引入·显形待归位·不阻断增量闸门）：")
+    for k, v in sorted(_hist_dup.items()):
+        print("  [存量] " + k + " @ " + " | ".join(v))
 
 if not LEARNINGS.is_dir():
     print(f"❌ learnings 目录不存在: {LEARNINGS}（路径错误非通过）")

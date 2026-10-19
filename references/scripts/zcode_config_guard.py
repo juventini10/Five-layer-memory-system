@@ -37,7 +37,7 @@ zcode_config_guard.py — ZCode 专属守卫：配置完整性 + 钩子活性检
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import json
 import os
@@ -94,7 +94,7 @@ BASELINE = {
         "edit_heading_guard.py",
         # 2026-09-26 补录（Skill管辖目录写入门卫）
         "skill_write_gate_guard.py",
-        # 2026-10-04 补录（A3-P0①·grep沙箱语法闸·LRN-20260920-009·matcher=Bash 预过滤）
+        # 2026-10-04 补录（A3-P0①·grep沙箱语法闸·内部记录·matcher=Bash 预过滤）
         "grep_sandbox_guard.py",
     ],
     "UserPromptSubmit": [
@@ -271,6 +271,7 @@ def cmd_hook():
 def cmd_postedit():
     """PostToolUse 即时闸：守卫文件被编辑→自动聚合器回归→红=当场反馈。"""
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         payload = json.loads(sys.stdin.read() or "{}")
     except Exception:
         return 0
@@ -334,7 +335,7 @@ def self_test():
         # T6 守卫文件签名匹配
         m = GUARD_FILE_RE.search("/Users/x/[记忆共享中心]/脚本中心/card_id_guard.py")
         assert m, "T6"
-        m2 = GUARD_FILE_RE.search("/Users/x/~/[记忆共享中心]/技能配置/system-logger/scripts/systemlog_watch.sh")
+        m2 = GUARD_FILE_RE.search("/Users/x/[记忆共享中心]/技能配置/system-logger/scripts/systemlog_watch.sh")
         assert m2, "T6b"
         ok += 1; print("✅ T6 守卫文件正则双例匹配")
         # T7 哨兵新鲜→活性实证（B1 加腿·env 覆盖走动态读）

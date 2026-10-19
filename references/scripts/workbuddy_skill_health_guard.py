@@ -5,7 +5,7 @@
 ## 存在理由（§二·七·〇 动作 3「先查可复用」+ 动作 2「逐面对表」）
 
 族内四端（catpaw/doubaowork/teleagent/hermes）各有 skill_health_guard，
-**唯独 WB 端没有**——而 WB 恰是 `~/[记忆共享中心]/技能配置/`（Skill 安装唯一真相源）
+**唯独 WB 端没有**——而 WB 恰是 `[记忆共享中心]/技能配置/`（Skill 安装唯一真相源）
 所在端 = 族内唯一「主人端裸奔」。本件按协议先抽公共原语再写端适配器，
 ⛔ 不 fork、不复制四端实现。
 
@@ -13,7 +13,7 @@
 
 | 面 | 路径 | 形态 |
 |---|---|---|
-| 真相源 | `~/[记忆共享中心]/技能配置/` | 实目录（66 项·2026-10-02 实查） |
+| 真相源 | `[记忆共享中心]/技能配置/` | 实目录（66 项·2026-10-02 实查） |
 | 消费面 | `~/.workbuddy/skills/` | 软链 → 真相源（81 项） |
 
 ⇒ 别端四检测**不够用**：它们只扫一个根，看不见「真源改名/删除 ⇒ 消费面链残留」
@@ -43,7 +43,7 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse

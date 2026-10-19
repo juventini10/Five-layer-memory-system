@@ -20,7 +20,11 @@ from datetime import date
 from collections import Counter
 
 HOME = os.path.expanduser("~")
-SYSLOG_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "工作日志", "系统日志")
+# MC 由脚本落点向上推导（scripts→system-logger→技能配置→MC）：⛔"HOME+目录名"字面量形态
+# ——Win 装机态 _fill 会把反斜杠路径填进 .py 源码字符串，\a/\b 等被 Python 转义语义吃掉
+#（真机实证 2026-10-11：OSError WinError 123 'D:\x07'·任务卡 Win对等 T19 逮出）
+_MC = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, os.pardir))
+SYSLOG_DIR = os.path.join(_MC, "工作日志", "系统日志")
 
 # allowlist 规范名（⚠️ 本文件=工具表的唯一物理住所·机器真源。systemlog_normalize_fix.py 经 import
 # 消费本表；SKILL.md「工具名规范」表格仅为文档投影。新增端只改这里+SKILL.md投影，⛔DO NOT 在其他脚本内联副本）
@@ -34,6 +38,7 @@ ALLOWLIST = {
     "WorkBuddy AI",  # v3.15.0 2026-09-11：WorkBuddy AI 国际版端规范名（第18端·与国内版同代码双发行版·数据根 ~/.workbuddy-ai/）
     "CatPaw",  # v3.14.1 2026-09-06：CatPaw 端（第17端·布洛陀能力基座端·美团 CatPaw 桌面端·L7 ✅·无 Hook 走 Skill 软约束·k2_core_path=USER.md）
     "Zwork",  # v3.16.0 2026-09-24：Zwork 端（AutoClaw 新客户端·zwork 运行时·你定名·软约束端·平台 Memory 为唯一机制级跨会话记忆·端徽标🧠·宪法=记忆蓝图/02_设计理念/02-平台端适配类/Zwork布洛陀设计哲学/）
+    "Trae CN",  # 2026-10-09 你令：合并单端定名 Trae CN（原 TraeCode/历史组"Trae"保留·新条目用本名）
 }
 
 # 归一判定：小写+去空格+去emoji/符号 → 匹配即视为合规变体（脚本校验允许变体存在但提示）
@@ -46,7 +51,7 @@ VARIANTS = {
     "workbuddy": "WorkBuddy", "wb": "WorkBuddy",
     "workbuddyai": "WorkBuddy AI", "wbai": "WorkBuddy AI",
     "qoderdesktop": "Qoder Desktop", "qoder": "Qoder Desktop",
-    "qclaw": "Qclaw", "trae": "Trae", "traesolo": "Trae",
+    "qclaw": "Qclaw", "trae": "Trae", "traesolo": "Trae", "traecn": "Trae CN",  # traecn=2026-10-09 合并单端定名
     "traework": "Trae Work", "traeworksolo": "Trae Work",
     "qoderwork": "QoderWork", "qodercn": "Qoder CN",
     "qwenwork": "Qwen Work", "千问办公": "Qwen Work",

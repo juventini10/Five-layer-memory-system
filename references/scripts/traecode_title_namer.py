@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """traecode_title_namer.py — TraeCode 专属适配器：新会话首轮自动命名对话标题。
 
@@ -10,8 +6,8 @@ except Exception: pass
     标题格式 = YYMMDD | 类型 | 主题（原语来自 session_title_utils.py·跨工具中立·与 WB/DSH 同源）
 
 落库目标（2026-09-16 定案·对齐 DSH 先例——TraeCode 会话库 database.db 非标准 sqlite 不可写）:
-    ~/个人AI档案/Trae记忆/session-titles.jsonl —— append 一行 {"session_id","title","created_at","at"}。
-    只写新会话首轮（防重入 state 文件 ~/个人AI档案/Trae记忆/cache/title-namer/<session_id>.json）。
+    [记忆共享中心]/Trae记忆/session-titles.jsonl —— append 一行 {"session_id","title","created_at","at"}。
+    只写新会话首轮（防重入 state 文件 [记忆共享中心]/Trae记忆/cache/title-namer/<session_id>.json）。
     ⚠️ 纯索引文件，⛔DO NOT 改 TraeCode 会话存储本体（宿主私有格式）。
 
 数据链路:
@@ -29,6 +25,10 @@ except Exception: pass
     python3 traecode_title_namer.py --prompt "修复搜索超时问题"                      # 钩子模式（参数）
     python3 traecode_title_namer.py --dry-run --prompt "修复搜索超时问题"           # 只看生成的标题不写
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import os
@@ -38,7 +38,7 @@ from pathlib import Path
 
 from session_title_utils import make_title
 
-TRAE_DIR = "[记忆共享中心]" / "Trae记忆"
+TRAE_DIR = Path('[记忆共享中心]') / "Trae记忆"
 TITLES_FILE = TRAE_DIR / "session-titles.jsonl"
 STATE_DIR = TRAE_DIR / "cache" / "title-namer"
 

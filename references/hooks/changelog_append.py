@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # TRUTH_OF: 脚本中心/changelog_append.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """changelog_append.py v1.0.1 — 变更日志唯一合法写入口（append-only 账本协议）
@@ -25,6 +21,10 @@ except Exception: pass
 退出码：0 成功 | 2 输入校验拒绝（未触碰账本） | 3 IO/回锁失败（大声报错+手动恢复指引）
 设计约束：纯 stdlib 零依赖（铁律-014 写入工具安全·append-only；坏不得堵死最后的人工通道）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import datetime
 import os
@@ -53,14 +53,34 @@ def main():
     ap.add_argument("--tool", required=True, help="执行端工具名（规范名·如 DeepSeek Harness）")
     ap.add_argument("--file", required=True, help="本次变更涉及的主文件/范围（表内第3列）")
     ap.add_argument("--version", default="—", help="版本变化（表内第4列·无则填 —）")
-    ap.add_argument("--desc", required=True, help="一句话说明（表内第5列）")
+    ap.add_argument("--desc", required=False, help="一句话说明（表内第5列）")
+    ap.add_argument("--desc-file", default=None,
+                  help="从文件读取说明（含 emoji／长文本优先用它·绕开 argv 传输层丢字符）")
     ap.add_argument("--target", default=DEFAULT_TARGET, help="账本路径（默认中央变更日志·可用于隔离压测）")
     a = ap.parse_args()
 
     # ① 输入校验（不合格 exit 2·此时账本一个字节都没动）
     today = datetime.date.today().isoformat()
-    tool, file_, desc = a.tool.strip(), a.file.strip(), " ".join(str(a.desc).split())
+    if bool(a.desc) == bool(a.desc_file):
+        fail(2, "[拒写] --desc 与 --desc-file 必须二选一")
+    _raw_desc = a.desc
+    if a.desc_file:
+        _p = os.path.expanduser(a.desc_file)
+        if not os.path.exists(_p):
+            fail(2, "[拒写] --desc-file 不存在: {}".format(_p))
+        with open(_p, encoding="utf-8") as _f:
+            _raw_desc = _f.read()
+    tool, file_, desc = a.tool.strip(), a.file.strip(), " ".join(str(_raw_desc).split())
     version = (a.version or "—").strip() or "—"
+    # v1.5.4 U+FFFD 写前闸（2026-10-12 成长箱 Loop 亲造实证）：命令行 argv 经传输层会把 astral emoji
+    # 打成两个 U+FFFD 落进账本＝静默 mojibake；同一病已让 反哺日志 R-20261012-03 的 📅 隐身、
+    # 整条条目躲过全部闸门校验（schema_check v2.2.2 首跑才逮住）。拒写不照收——坏字节进不了 444 账本；
+    # 正路是长文本走 --desc-file（读文件不走 argv）。
+    for _nm, _v in (("tool", tool), ("file", file_), ("version", version), ("desc", desc)):
+        if "\ufffd" in _v:
+            fail(2, "[拒写] {} 字段含 U+FFFD 替换符（传输层 mojibake）——含 emoji 的说明请改走 "
+                    "--desc-file <路径>，或去掉 emoji 重跑".format(_nm))
+
     if not tool or not file_ or not desc:
         fail(2, "[拒写] --tool/--file/--desc 均不能为空")
     row = "| {} | {} | {} | {} | {} |".format(today, tool, file_, version, desc)

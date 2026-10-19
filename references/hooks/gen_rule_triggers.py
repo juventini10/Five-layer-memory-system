@@ -25,7 +25,7 @@ gen_rule_triggers.py — 铁律版「加载时机索引表」→ rule_triggers.y
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import os
 import re
@@ -35,7 +35,7 @@ import subprocess
 HOME = os.path.expanduser("~")
 TIELU_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "记忆规则", "用户基本规则-铁律版.md")
 YAML_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "记忆规则", "rule_triggers.yaml")
-GUARD_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "rule_three_layer_guard.py")
+GUARD_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "守卫", "rule_three_layer_guard.py")
 
 TABLE_RE = re.compile(r"^\|\s*(\d{3})\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*$")
 RESIDENT_RE = re.compile(r"已通过.*强启动|已常驻|已合并入")
@@ -123,7 +123,7 @@ def render_yaml(rows, existing):
     header = f"""# rule_triggers.yaml — 用户基本规则「加载时机」机器可执行触发规格
 #
 # ⚠️ 编译产物声明：本文件由 gen_rule_triggers.py 从 SSOT 编译生成——
-#   SSOT = ~/[记忆共享中心]/记忆规则/用户基本规则-铁律版.md 头部「加载时机索引表」
+#   SSOT = [记忆共享中心]/记忆规则/用户基本规则-铁律版.md 头部「加载时机索引表」
 #   ⛔DO NOT 手工编辑本文件的 id/name/resident/source_anchor（编译时会被 SSOT 覆盖）
 #   ✅DO match 正则调优可直接编辑本文件（调优资产·铁律-020：改匹配先 dry-run 看命中）
 #   重新编译：python3 [记忆共享中心]/脚本中心/gen_rule_triggers.py（dry-run 预览）→ --write 落盘

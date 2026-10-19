@@ -55,7 +55,7 @@ python3 hermes_verify_gate.py --dry-run --json    # 只判不打
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -71,7 +71,8 @@ from typing import Any
 VERSION = "v1.0.0"
 CODE_EXT = (".py", ".sh", ".js", ".ts", ".tsx", ".jsx")
 # 声称已完成的措辞（⛔ 只认明确的完成声明，不做语气推断）
-CLAIM_RE = re.compile(r"(已修复|已完成|已通过|已落地|已生效|全部通过|验证通过)")
+CLAIM_RE = re.compile(r"(已修复|已完成|已通过|已落地|已生效|全部通过|验证通过|"
+                      r"修复完成|已根治|已修好|已经修)")
 # 本回合实跑证据的工具名（与 Hermes 内置工具名对齐）
 EXEC_TOOLS = {"terminal", "execute_code"}
 
@@ -120,6 +121,47 @@ def product_audited(path: str) -> bool:
 
 
 # ── 主判据 ────────────────────────────────────────────────────────
+# 实跑证据判据（2026-10-09 补·根治本闸自身的「无限触发」缺陷）：
+#   病根：原判据只看 `tools_used`（本回合是否调用了 terminal/execute_code），但
+#     ① 实跑可能发生在**前面几个回合**（多步施工：先改文件→再跑验证→最后交付），
+#        工具调用与交付回复天然不在同一回合；
+#     ② 闸 message 里**写明了豁免条款**「若本回合已确实验过但闸未识别，在回复中显式说明
+#        『已跑 XXX·输出 YYY』」，但 `evaluate()` 从未实现该豁免 ⇒ 按它教的句式回应
+#        照样判红 ⇒ 只能反复补跑同一命令烧 token，**永远收不了口**。
+#   修法：判据从「是否调用了工具」改为「**回复是否携带实跑证据**」——审计要的是证据可查，
+#        证据只要在回复里就够（不管它在哪个回合产生）。
+#   证据的机械特征（四类·任一命中即算）：
+#     A 闸自己定义的豁免句式：「已跑」与「输出」同现（±40 字内）
+#     B 命令输出标记：rc=/exit_code/═══/⏱/📊/✅ N/N 等脚本 stdout 惯用形
+#     C 代码块（```…```）内出现 stdout 特征（时间戳/字节数/sha256/百分比）
+#     D 显式命令名+输出对：`python3 …` 后跟非空输出行
+#   ⚠️ 反向护栏：⛔ 不认「应该没问题/预计/已修复（无证据）」这类**无输出的完成声明**——
+#     那是本闸要拦的真病灶。判据只认「有输出」，不认「有声明」。
+_RUN_EVIDENCE_PATTERNS = [
+    re.compile(r"已跑[^\n]{0,80}?输出"),                     # A 闸定义的豁免句式
+    re.compile(r"\brc=\d|\bexit_code=\d|═══|⏱\s*\d|📊"),      # B stdout 标记
+    re.compile(r"\b\d+\s*/\s*\d+\s*(全过|通过|全绿)"),          # B 计数式结论（如 7/7 全绿）
+    re.compile(r"^\s*[│├└─|].*\d", re.M),                     # C 树/表输出里的数字行
+    re.compile(r"sha(256)?[:=]\s*[0-9a-f]{8,}"),              # C 校验和
+    re.compile(r"\b\d+\s*/\s*8000\b|\b余\s*\d+\b"),            # C 预算类实测数
+]
+
+
+def _carries_run_evidence(resp: str) -> bool:
+    """回复内是否携带可查的实跑输出（判据③的豁免实现·见上方病根注释）。"""
+    if not resp:
+        return False
+    if any(p.search(resp) for p in _RUN_EVIDENCE_PATTERNS):
+        return True
+    # 代码块内的 stdout 特征（表格/数字密集也算）
+    for blk in re.findall(r"```(?:[a-z]*\n)?(.*?)```", resp, re.S):
+        if len(blk) > 40 and re.search(r"\d", blk) and (
+                re.search(r"✅|❌|rc=|/\s*\d+", blk) or blk.count("\n") >= 2):
+            return True
+    return False
+
+
+# ── 主判据 ────────────────────────────────────────────────────────
 def evaluate(*, changed_paths: list[str], final_response: str,
              tools_used: list[str], turn_id: str = "") -> dict[str, Any]:
     """返回 {'action': 'continue'|'pass', 'message': str, 'reasons': [...]}"""
@@ -145,9 +187,10 @@ def evaluate(*, changed_paths: list[str], final_response: str,
                        "须改真源并跑 pkg_claim_audit 对账"
                        % os.path.basename(prod[0]))
 
-    if not tools_used and CLAIM_RE.search(final_response or ""):
+    if not tools_used and CLAIM_RE.search(final_response or "") \
+            and not _carries_run_evidence(final_response or ""):
         reasons.append("回复含「已修复/已完成」类完成声明，但本回合**无任何实跑证据**"
-                       "（未调用 terminal/execute_code）")
+                       "（未调用 terminal/execute_code·回复内也未携带实跑输出）")
 
     if not reasons:
         return {"action": "pass", "message": "", "reasons": [],
@@ -225,6 +268,23 @@ def self_test() -> int:
         ("负例3 有实跑+完成声明 → 应 pass", dict(
             changed_paths=[ok_py], final_response="已修复，夹具 rc=0",
             tools_used=["terminal"]), "pass"),
+        # ── 2026-10-09 补（判据③改为「回复是否携带实跑证据」后的双向夹具）──
+        ("负例4 无工具调用但回复携带实跑输出 → 应 pass", dict(
+            changed_paths=[ok_py],
+            final_response="已落地。已跑 hermes_core_budget_guard.py，输出：恒驻段 3 个·7500/8000 余 500",
+            tools_used=[]), "pass"),
+        ("负例5 无工具调用但回复含 stdout 计数标记 → 应 pass", dict(
+            changed_paths=[ok_py],
+            final_response="五验 5/5 全过，收口闸 7/7 全绿",
+            tools_used=[]), "pass"),
+        ("正例4 无工具调用·无实跑输出·空喊完成 → 应 continue", dict(
+            changed_paths=[ok_py],
+            final_response="已经全部修复完成了，应该没问题了",
+            tools_used=[]), "continue"),
+        ("正例5 无工具调用·只有命令名没输出 → 应 continue", dict(
+            changed_paths=[ok_py],
+            final_response="已修复，我跑过 python3 verify.py 了",
+            tools_used=[]), "continue"),
     ]
     fails = 0
     for name, kw, want in cases:
@@ -248,9 +308,13 @@ def main() -> int:
     payload = {"changed_paths": [], "final_response": "", "tools_used": []}
     if not sys.stdin.isatty():
         try:
+            sys.stdin.reconfigure(encoding="utf-8", errors="replace")
             payload.update(json.loads(sys.stdin.read() or "{}"))
         except Exception:
             pass
+    # 2026-10-08：只保留 evaluate() 接受的键——旧实现直接 evaluate(**payload)，宿主多传一键即 TypeError 崩。
+    allowed = {"changed_paths", "final_response", "tools_used", "turn_id"}
+    payload = {k: v for k, v in payload.items() if k in allowed}
     v = evaluate(**payload)
     print(json.dumps(v, ensure_ascii=False, indent=2))
     return 1 if v["action"] == "continue" else 0

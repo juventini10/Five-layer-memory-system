@@ -10,6 +10,9 @@ distillation_scheduler.py — 蒸馏任务调度器（L1机械发现层）
 - 逾期项写入系统日志提醒
 - 童灵是调度器不是执行者（PAT-047授权≠流程豁免）——本脚本只发现+提醒，不执行蒸馏
 
+Version: 1.2.0 (2026-10-10 · FU-81 丙方案落地：判定口径第三要素「阈值」上移收口——
+                     check_overdue 委托 distill_due_core.classify，到期日当天(days==0)不再计逾期红，
+                     根治月初巡检半天结构性假红（10-01实锤·不修则11-01必复现）；core 装载函数化 _load_core）
 Version: 1.0.0 (2026-09-03)
 """
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
@@ -23,9 +26,9 @@ import subprocess
 from pathlib import Path
 from datetime import datetime, date
 
-DISTILLATION_CENTER = "[记忆共享中心]/记忆蒸馏/蒸馏中心.md"
-LOG_SCRIPT = "[记忆共享中心]/技能配置/system-logger/scripts/append_log_entry.py"
-BANNER_SCRIPT = "[记忆共享中心]/技能配置/system-logger/scripts/render_mode_banner.py"
+DISTILLATION_CENTER = Path('[记忆共享中心]') / "记忆蒸馏" / "蒸馏中心.md"
+LOG_SCRIPT = Path('[记忆共享中心]') / "技能配置" / "system-logger" / "scripts" / "append_log_entry.py"
+BANNER_SCRIPT = Path.home() / "[记忆共享中心]/技能配置/system-logger/scripts/render_mode_banner.py"
 
 START_MARKER = "<!-- DISTILLATION-TODO:START -->"
 END_MARKER = "<!-- DISTILLATION-TODO:END -->"
@@ -52,7 +55,49 @@ DISTILLATION_TYPES = {
         "skill": "unified-distillation",
         "match": "统一蒸馏管道",
     },
+    # 任务C·高频卡→人格切片管道（皮叔 2026-10-13 令「我要打通」）：飞轮第三条腿挂月度节拍
+    #   执行体=童灵D3（机械候选清单脚本 kb_slice_candidates.py 待建·首拍前落）+你逐卡终审
+    #   ⛔不新建调度件——寄生本调度器月拍（S030 机制重构非镀金）
+    "🧬 切片管道复检": {
+        "trigger": "启动切片管道复检",
+        "skill": "童灵D3+你终审（切片候选/衰减出册）",
+        "match": "切片管道复检",
+    },
 }
+
+
+_core_cache = None
+
+
+def _load_core():
+    """装载 distill_due_core（FU-81 丙方案落地 2026-10-10：取行+阈值两消费处共用·单模块实例）。
+
+    🔴 2026-10-03 位置根治（triwich L2 裁决落地）：core 随 awaken Skill 分发到
+       $MC/技能配置/awaken-memory-system/scripts/（INSTALL.md:420-421 实测落点）·
+       ⛔ 原 `Path.home()/Path('[记忆共享中心]') / "开发工具"/...` 指向作者侧资产、不入包 ⇒ 端用户必崩。
+       launchd 经软链执行时 __file__.resolve() 落在 $MC/脚本中心/ ⇒ 候选1（数字分身相对路径）不命中，
+       由候选2 home 形态兜底命中·两候选指向同一实体文件。找不到即 FAIL，绝不静默跳过。
+    """
+    global _core_cache
+    if _core_cache is not None:
+        return _core_cache
+    import importlib.util
+    _here = Path(__file__).resolve()
+    _cands = [
+        _here.parents[2] / "技能配置" / "awaken-memory-system" / "scripts" / "distill_due_core.py",
+        Path('[记忆共享中心]') / "技能配置" / "awaken-memory-system" / "scripts" / "distill_due_core.py",
+    ]
+    _p = next((c for c in _cands if c.exists()), None)
+    if _p is None:
+        raise FileNotFoundError(
+            "蒸馏判定公共口径模块未找到，候选路径: " + " | ".join(str(c) for c in _cands)
+            + " —— 端用户请先安装 awaken-memory-system Skill"
+        )
+    _spec = importlib.util.spec_from_file_location("distill_due_core", _p)
+    _core = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_core)
+    _core_cache = _core
+    return _core
 
 
 def parse_latest_expected_dates(content: str) -> dict:
@@ -77,43 +122,27 @@ def parse_latest_expected_dates(content: str) -> dict:
     #   原实现为本文件私有一份，与 awaken_distill_due_check.py 各写各的，
     #   抄文档的那个抄错（详见 awaken_distill_due_check.py 同日修复记录）。
     #   依据：指令编写规范 §6.1 单一来源原则（同口径两处实现=必漂移）。
-    import importlib.util
-    # 🔴 2026-10-03 位置根治（triwich L2 裁决落地）：core 随 awaken Skill 分发到
-    #    $MC/技能配置/awaken-memory-system/scripts/（INSTALL.md:420-421 实测落点）·
-    #    ⛔ 原 `Path.home()/"[记忆共享中心]" / "开发工具"/...` 指向作者侧资产、不入包 ⇒ 端用户必崩。
-    #    本脚本在 $MC/数字分身/scripts/ ⇒ 向上两级到 $MC 再进 技能配置/ 走同树相对路径；
-    #    回退保留 Path.home() 形态以兼容非标准部署。找不到即 FAIL，绝不静默跳过。
-    _here = Path(__file__).resolve()
-    _cands = [
-        _here.parents[2] / "技能配置" / "awaken-memory-system" / "scripts" / "distill_due_core.py",
-        "[记忆共享中心]" / "技能配置" / "awaken-memory-system" / "scripts" / "distill_due_core.py",
-    ]
-    _p = next((c for c in _cands if c.exists()), None)
-    if _p is None:
-        raise FileNotFoundError(
-            "蒸馏判定公共口径模块未找到，候选路径: " + " | ".join(str(c) for c in _cands)
-            + " —— 端用户请先安装 awaken-memory-system Skill"
-        )
-    _spec = importlib.util.spec_from_file_location("distill_due_core", _p)
-    _core = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_core)
-    return _core.extract_expected(content, DISTILLATION_TYPES)
+    # 装载与阈值判定共用 _load_core()（FU-81 丙方案落地 2026-10-10·单模块实例·位置根治注释见该函数）
+    return _load_core().extract_expected(content, DISTILLATION_TYPES)
 
 
 def check_overdue(expected_dates: dict, today: date = None) -> list:
-    """检查哪些蒸馏逾期了。返回 [(类型, 预期日期字符串), ...]"""
+    """逾期检查 · 口径真源 = distill_due_core.classify（FU-81 丙方案落地 2026-10-10）。
+
+    v1.0 私有口径 today >= expected：到期日当天即逾期红。实害（2026-10-01 实锤）——
+    月度蒸馏本就定在 N 日跑，晨间巡检先于当日执行 → 必报逾期🟡，当日跑完销账又静默
+    = 结构性半天假红，每月1号必复现（11-01/12-01…）。
+    落地后：仅 🟡/🔴（days<0·真逾期）入列；到期当天（days==0）= 🔵即将到期，不提醒。
+    非日期串由 core.classify 返回 (None, None) 自然跳过（与原 ValueError 分支等价）。
+    """
     if today is None:
         today = date.today()
-
+    core = _load_core()
     overdue = []
     for dtype, expected_str in expected_dates.items():
-        try:
-            expected = datetime.strptime(expected_str, "%Y-%m-%d").date()
-            if today >= expected:
-                overdue.append((dtype, expected_str))
-        except ValueError:
-            continue
-
+        level, _detail = core.classify(expected_str, today)
+        if level in ("🟡已逾期", "🔴严重逾期"):
+            overdue.append((dtype, expected_str))
     return overdue
 
 
@@ -188,7 +217,7 @@ def update_distillation_center(content: str, todo_section: str) -> str:
 # 判据：去重键＝**(逾期项集合 × 逾期周档)**，⛔按日去重（同日只一条 ≠ 整月只一条）。
 #       同集合同周档 → 只提醒一次；跨过 7/14/21 天档视为升级、允许再提醒一次；
 #       集合变化（新增逾期项／某项被清）→ 立即再提醒。留痕状态文件与被提醒对象同目录，可删可回收。
-REMINDER_STATE = Path.home() / "~/[记忆共享中心]/数字分身/scripts/distillation_scheduler_state.json"
+REMINDER_STATE = Path.home() / "[记忆共享中心]/数字分身/scripts/distillation_scheduler_state.json"
 
 
 def reminder_signature(overdue, today=None):
@@ -240,7 +269,7 @@ def write_system_log(overdue: list) -> bool:
 - **工具**：豆包
 - **完成**：<NOW>
 - **类型**：提醒
-- **涉及文件**：~/[记忆共享中心]/记忆蒸馏/蒸馏中心.md（待做蒸馏区域已更新）
+- **涉及文件**：[记忆共享中心]/记忆蒸馏/蒸馏中心.md（待做蒸馏区域已更新）
 - **对话摘要**：每日检查蒸馏中心逾期项（L1机械发现层·v1.2 起同「逾期集合×周档」去重，⛔每日刷同一条提醒）
 - **结论**：⚠️ 发现{len(overdue)}项蒸馏逾期：{summary}。童灵可读取蒸馏中心待做区域，说对应触发词激活Skill执行。童灵是调度器不是执行者（PAT-047），蒸馏由对应Skill按完整流程执行。
 - **来源**：🟢验证

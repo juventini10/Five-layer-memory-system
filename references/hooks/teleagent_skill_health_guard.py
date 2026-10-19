@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 TeleAgent 端 Skill 生态健康度守卫 v0.3
 功能: 检测 TeleAgent skills 目录下 Skill 软链接的健康度
@@ -22,6 +18,10 @@ v0.3 变更: 移除 v0.2 第5项版本漂移检测——TeleAgent 端 Skill 普�
   软链场景本地与基线为同一文件版本永远一致, 且使用者本地版本普遍高于发布口径属正常升级状态。
   版本号缺失不再报 warning(对齐守卫原则'守卫不阻塞业务')。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import sys
 import argparse

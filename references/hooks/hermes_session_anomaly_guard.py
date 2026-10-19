@@ -60,7 +60,7 @@ python3 hermes_session_anomaly_guard.py --self-test
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
@@ -72,7 +72,7 @@ import time
 VERSION = "v1.0.0"
 DB = os.path.expanduser("~/.hermes/state.db")
 DL_DIR = os.path.expanduser("~/.hermes/doenglingz")
-SLICE_DIR = os.path.expanduser("~/[记忆共享中心]/数字分身/K2切片蒸馏/slices")
+SLICE_DIR = os.path.expanduser("[记忆共享中心]/数字分身/K2切片蒸馏/slices")
 CORE_SECTION = os.path.join(DL_DIR, "core_slice.md")
 L6_SECTION = os.path.join(DL_DIR, "L6_反向约束.md")
 INJECT_LEDGER = os.path.join(DL_DIR, "doenglingz_inject_state.json")

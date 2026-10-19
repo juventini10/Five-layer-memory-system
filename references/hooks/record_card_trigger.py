@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 record_card_trigger.py — Stop 钩子：立场卡"触发事件"自动登记（2026-09-22 童灵落地）
 
 v0.2（2026-09-22 童灵 D3 根治）：适配产品 Stop 真实 transcript=`session.execution.jsonl`（顶层 type、role 在 message）——v0.1 误按 conversation-history 顶层 role 判 assistant，真实格式下恒不命中=静默空转假绿（自检拿错格式样例掩盖）。现 read 兼容双格式 + fixture 用真实格式 + 补 thinking/progress 负例。
 
-职责：每轮对话结束(Stop)时，扫 transcript 的 assistant 正文里提及的立场卡号(S0XX)，
+职责：每轮对话结束(Stop)时，扫 transcript 的 assistant 正文里提及的卡号(立场卡S/技能卡K/概念卡C)，
      按 (卡号,日期,session) 幂等追加到 触发台账.md。
 判据边界（锚 知识库设计哲学 原则15 / S1056 / S815）：
      本脚本记的是"AI 回应中提及了这张卡"= 可观测触发事件，⛔不判"采纳"——
@@ -18,12 +14,16 @@ v0.2（2026-09-22 童灵 D3 根治）：适配产品 Stop 真实 transcript=`ses
 自反馈污染防护（复用 audit_search_kb.strip_inject 精神）：
      注入块的 Top-3 卡号不得计入触发（否则"注入过"被虚报成"用了"）→ 先 strip_inject 再扫。
 设计纪律（Hook 三纪律）：只记录不拦截(exit0) / 失败默认放行(全 try) / 保守判定(仅 assistant 正文+strip 注入)。
-跨工具中立：公共脚本住 开发工具/知识联邦引擎/scripts/，各端 Stop 钩子接入即生效。
+跨工具中立：公共脚本住 知识联邦引擎/scripts/（顶层·2026-10-12 迁顶层），各端 Stop 钩子接入即生效。
 
 用法：
   echo '{"transcript_path":"..."}' | python3 record_card_trigger.py
   python3 record_card_trigger.py --self-test
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import sys, os, re, json
 # 🆕 2026-10-03 跨平台根治：fcntl 是 Unix-only，Windows 无此模块 ⇒ 原
 #   `import ..., fcntl` 在 Windows 上 **ImportError 直接崩**（platform_compat
@@ -47,9 +47,22 @@ sys.path.insert(0, os.path.expanduser("[记忆共享中心]/脚本中心"))
 import transcript_reader as _tr  # 跨端解析·单一真源（2026-09-23 童灵根治）
 
 LEDGER = os.environ.get("TRIGGER_LEDGER",
-    os.path.expanduser("[记忆共享中心]/知识库/AI学习库/触发台账.md"))
-CARD_RE = re.compile(r"(?:立场卡#|#)?(S\d{3,4})")
+    os.path.expanduser("~/[日记仓库]/2-知识库/09-AI学习库/触发台账.md"))  # 2026-10-13 C''波次2迁移后路径同步·旧位 [记忆共享中心]/知识库/AI学习库/ 已退役
+# 2026-10-13 Qoder CN 扩面（皮叔令「凡引用皆引用」·水台缺口修复）：+技能卡K +概念卡C
+#   (?<![A-Za-z0-9-]) 防连字符/复合词误抓（TS-123/WS456 不是卡）；Y=蓝图索引卡（2026-10-13你定·编号批已落#Y001-047）；Z族待知识卡路线裁决后接入
+CARD_RE = re.compile(r"(?<![A-Za-z0-9-])(?:立场卡#|技能卡#|概念卡#|蓝图索引卡#|#)?(S\d{3,4}|K\d{3,4}|C-?\d{2,4}|Y\d{3})")
+KEY_RE = re.compile(r"#(?:S\d{3,4}|K\d{3,4}|C-?\d{2,4}|Y\d{3}|Z\d{4})")  # Z须在册否则归一出的#Z行幂等防不住（2026-10-13 self_test 7行实锤）
 INJECT_MARK = "【知识库激活·确定性注入】"
+# 任务C打通第一件（2026-10-13 皮叔令「我要打通」）：书名提及→kb_no 归一（Z族入台账）
+KB_MAP = os.environ.get("KB_NO_MAP",
+    os.path.expanduser("[记忆共享中心]/脚本中心/data/kb_no_map.json"))
+BOOK_RE = re.compile(r"《[^》]{1,40}》-卡片\d+")
+def _load_kbmap():
+    try:
+        with open(KB_MAP, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None   # 缺失/损坏=Z族fail-open跳过（⛔不猜号——键位不变式同族纪律）
 
 # 端识别（2026-09-23 童灵·跨端累计诉求）：按 transcript 路径片段判端——
 # 端专属路径是唯一可靠来源（session 名格式会漂）。台账因此看得见"哪端贡献"。
@@ -65,7 +78,7 @@ HOST_FRAGMENTS = [
 ]
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:
@@ -113,9 +126,9 @@ def load_keys():
         return keys
     with open(LEDGER, encoding="utf-8") as f:
         for line in f:
-            if line.startswith("|") and "#S" in line:
+            if line.startswith("|") and KEY_RE.search(line):
                 cells = [c.strip() for c in line.strip().strip("|").split("|")]
-                if len(cells) >= 3 and cells[0].startswith("#S"):
+                if len(cells) >= 3 and KEY_RE.match(cells[0]):
                     keys.add((cells[0], cells[1], cells[2]))
     return keys
 
@@ -129,6 +142,12 @@ def run(transcript_path, session_hint=""):
     date = datetime.now().strftime("%Y-%m-%d")
     session = session_hint or os.path.splitext(os.path.basename(transcript_path))[0][:16]
     cnt = Counter("#" + c for c in CARD_RE.findall(body))
+    _kb = _load_kbmap()
+    if _kb:
+        for _mt in BOOK_RE.findall(body):
+            _z = _kb.get(_mt)
+            if _z:
+                cnt[_z] += 1
     if not cnt:
         return 0
     keys = load_keys()
@@ -166,7 +185,7 @@ def self_test():
     with open(tp, "w", encoding="utf-8") as f:
         # 真实 session.execution.jsonl 格式：role 在 message、type 在顶层
         f.write(json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
-            {"type": "text", "text": "这也印证了 S922 的正向应用和 #S815 的边界。"}]}}) + "\n")
+            {"type": "text", "text": "这也印证了 S922 的正向应用和 #S815 的边界，技能卡#K007 的三源闭环与概念卡C-048 的同步文档闸，蓝图索引卡#Y001 的格式规范，还引用了《借势》-卡片1 的借定势。不涉及 TS-123 或 WS456。"}]}}) + "\n")
         # thinking 元素（无 text）不算对外输出 → S888 不得计入
         f.write(json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [
             {"type": "thinking", "thinking": "内部想到 S888"}]}}) + "\n")
@@ -176,10 +195,17 @@ def self_test():
         f.write(json.dumps({"type": "user", "message": {"role": "user", "content": [
             {"type": "text", "text": "【知识库激活·确定性注入】命中 立场卡#S777 \n实际正文"}]}}) + "\n")
     globals()["LEDGER"] = os.path.join(d, "t.md")
+    _mapfix = os.path.join(d, "kbmap.json")
+    json.dump({"《借势》-卡片1": "#Z0001"}, open(_mapfix, "w", encoding="utf-8"))
+    globals()["KB_MAP"] = _mapfix
     run(tp, "selftest")
     run(tp, "selftest")  # 第二次应幂等·不重复追加
     txt = open(LEDGER, encoding="utf-8").read()
     assert "#S922" in txt and "#S815" in txt, "应记录正文提及的卡"
+    assert "#K007" in txt and "#C-048" in txt, "扩面：技能卡/概念卡应记录（你口径2026-10-13）"
+    assert "#Y001" in txt, "蓝图索引卡Y族应记录（编号批2026-10-13）"
+    assert "#Z0001" in txt, "书名提及应归一为kb_no入账（任务C遗留①2026-10-13）"
+    assert "#S123" not in txt and "#S456" not in txt and "#C-123" not in txt, "TS-123/WS456 类连字符词不得误记"
     assert "#S777" not in txt, "注入块卡号不得计入触发(strip_inject)"
     assert "#S888" not in txt, "thinking 内部思考不得计入对外提及"
     assert "#S999" not in txt, "progress/非assistant 行不得计入"
@@ -188,7 +214,7 @@ def self_test():
     assert detect_host("/x/.workbuddy/projects/a.jsonl") == "workbuddy"
     assert detect_host("/x/.qoder-cn/sess.jsonl") == "qoder-cn"
     assert detect_host("/tmp/none.jsonl") == "unknown"
-    assert txt.count("输出提及") == 2, "两张卡应各写一行"
+    assert txt.count("输出提及") == 6, "六张卡应各写一行"
     assert "| unknown |" in txt, "端列应落盘（tempfile 路径非端专属）"
     # ── §3.9 变异自检（守卫编写规范·出厂第一个跑的是变异测试）──────────────────────
     #   可置假对象=strip_inject（自反馈污染防护的唯一执行位）。置哑后注入块里的 #S777
@@ -284,6 +310,7 @@ if __name__ == "__main__":
             sys.exit(self_test())
         if "--doctor" in sys.argv:
             sys.exit(doctor())
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         try:
             payload = json.loads(raw) if raw.strip() else {}

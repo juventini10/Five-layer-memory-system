@@ -165,10 +165,17 @@ def check_end(end_def: dict, state_bus: dict) -> dict:
 
     if k2_core_type == "file":
         # 独立文件类型：判据=分发基线(只读)，观测=机器拥有区段+整文件（台账职责）
-        actual_hash = file_hash(k2_core_path)
+        # v2.1.1 2026-10-09·SSOT演化跟随：06 v1.130 起 k2_core_path 可为双文件数组（LobsterAI分家案），
+        #   消费端逐件哈希拼接成组合指纹；单文件str路径行为逐字不变（⛔改判据不跟消费端=本崩案复发结构）
+        if isinstance(k2_core_path, list):
+            parts = [file_hash(p) for p in k2_core_path]
+            actual_hash = "+".join(p for p in parts if p) if any(parts) else ""
+        else:
+            actual_hash = file_hash(k2_core_path)
         actual_hashes["k2_core"] = actual_hash
-        actual_hashes["k2_region"] = _w2.k2_region_hash(os.path.expanduser(k2_core_path)) if actual_hash else ""
-        covered = _w2.dispatch_covered(k2_core_path)
+        _paths = k2_core_path if isinstance(k2_core_path, list) else [k2_core_path]
+        actual_hashes["k2_region"] = "+".join(_w2.k2_region_hash(os.path.expanduser(p)) for p in _paths) if actual_hash else ""
+        covered = all(_w2.dispatch_covered(p) for p in _paths)
         w2_covered = covered
 
         if not actual_hash:
@@ -247,7 +254,7 @@ def refresh_header_blocks(state_bus: dict) -> None:
     m_ver = re.search(r"版本：(v[\d.]+)", iron_text)
     m_upd = re.search(r"更新：(\d{4}-\d{2}-\d{2})", iron_text)
     state_bus["iron_rules"] = {
-        "ssot_path": "~/[记忆共享中心]/记忆规则/用户基本规则-铁律版.md",
+        "ssot_path": "[记忆共享中心]/记忆规则/用户基本规则-铁律版.md",
         "ssot_version": m_ver.group(1) if m_ver else "",
         "content_hash": file_hash(IRON_PATH),
         "count": len(re.findall(r"(?m)^### 铁律-\d+", iron_text)),
@@ -260,7 +267,7 @@ def refresh_header_blocks(state_bus: dict) -> None:
     except (OSError, json.JSONDecodeError):
         man = {}
     state_bus["k2_slices"] = {
-        "slices_path": "~/[记忆共享中心]/数字分身/K2切片蒸馏/slices/",
+        "slices_path": "[记忆共享中心]/数字分身/K2切片蒸馏/slices/",
         "src_hash": man.get("src_hash", ""),
         "generated": man.get("generated", ""),
         "count": len(man.get("slices", [])),
@@ -268,7 +275,7 @@ def refresh_header_blocks(state_bus: dict) -> None:
     }
 
     state_bus["personality_spec"] = {
-        "path": "~/[记忆共享中心]/数字分身/童灵·人格规格书.md",
+        "path": "[记忆共享中心]/数字分身/童灵·人格规格书.md",
         "content_hash": file_hash(SPEC_PATH),
         "last_updated": _updated(SPEC_PATH),
     }

@@ -336,7 +336,7 @@ class TestRealSkills(unittest.TestCase):
     def test_clock_loop_score(self):
         """clock-loop自评：v3.31.3根改后 d5仅标注不否决 → passed=True / honest_flags=[]（v3.31.6等级根治后含grade字段）"""
         skill_dir = os.path.expanduser(
-            '~/[记忆共享中心]/技能配置/clock-loop'
+            '[记忆共享中心]/技能配置/clock-loop'
         )
         if not os.path.exists(skill_dir):
             self.skipTest('clock-loop目录不存在')
@@ -365,7 +365,7 @@ class TestRealSkills(unittest.TestCase):
     def test_triwich_score(self):
         """triwich评分应该=99"""
         skill_dir = os.path.expanduser(
-            '~/[记忆共享中心]/技能配置/triwich'
+            '[记忆共享中心]/技能配置/triwich'
         )
         if not os.path.exists(skill_dir):
             self.skipTest('triwich目录不存在')
@@ -2277,6 +2277,23 @@ class TestV4121CLFixes(unittest.TestCase):
             nums = set(_re.findall(pat, txt))
             self.assertTrue(nums and all(int(n) == n_impl for n in nums),
                             f'{os.path.basename(path)} 道数声明{sorted(nums)}≠实现{n_impl}（F-GATE13回归哨兵·v4.12.2全域版）')
+
+    def test_tests_stamp_declared_semantics_not_false_alarm(self):
+        """C-20 回归：tests 戳带「版本戳语义声明」注记时，warnings 不得再报"漏改信号"（无注记时仍须报）。"""
+        import tempfile
+        for declared, want in ((True, "非漏改信号"), (False, "漏改信号")):
+            d = tempfile.mkdtemp()
+            os.makedirs(os.path.join(d, "tests"))
+            os.makedirs(os.path.join(d, "references"))
+            open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8").write("---\nversion: \"9.9.9\"\n---\n# x\n")
+            open(os.path.join(d, "references", "CHANGELOG.md"), "w", encoding="utf-8").write("### v9.9.9 — x\n\n- y\n")
+            note = "\n> **版本戳语义声明（虚构夹具）**：本戳＝最近一次实校对时点主版本，不随主版本空刷。\n" if declared else "\n"
+            open(os.path.join(d, "tests", "trigger-positive.md"), "w", encoding="utf-8").write(
+                "# t\n\n> 版本戳：v1.2.3 | 校对\n" + note)
+            r = eval_version_uniform(os.path.join(d, "SKILL.md"))
+            hits = [w for w in r["warnings"] if "trigger-positive" in w]
+            self.assertTrue(hits, f"declared={declared} 应仍产生一条可见 warning")
+            self.assertIn(want, hits[0], f"declared={declared} 期望文案含『{want}』，实得：{hits[0][:110]}")
 
     def test_clutter_catches_scripts_bak(self):
         """F-CLUTTER：scripts/ 下 .bak 残留须被扩展后的扫描域逮到"""

@@ -5,6 +5,8 @@
 #       $env:MEMORY_CENTER="D:\path" ; powershell ... -File verify.ps1 (自定义记忆中心)
 # 检查项: 0)数据污染(Find-Python 解析真实 python.exe) 1)系统文件 2)规则三层
 #         3)记忆Skill 4)安装包干净度 5)版本锚点
+#         3.1c)33 题两源对账(题库↔答题页逐字相等·C06)
+#         3.1d)自陈待办在位对账(承诺面「写入 X.py→随包」必须有实物·C32 通用闸)
 #         3.6)派发心跳(advisory 显形·不计分·注册≠派发)
 #         3.7)分身链路(抽卡→落卡→碰撞 dry-run·包能力检查·隔离沙箱)
 # 退出码 0=全过 非0=有问题
@@ -118,6 +120,27 @@ foreach ($rel in @("SOUL.md", "IDENTITY.md", "USER.md")) {
   if ((Test-Path $p) -and ((Get-Item $p).Length -gt 0)) { ok "平台系统文件: $CONFIG_ROOT/$rel" } else { no "平台系统文件: $CONFIG_ROOT/$rel (缺失)" }
 }
 
+# 1.6) 端功能面 twin_surface（条文33·fail-closed·与 verify.sh §1.6 同口径·2026-10-11 Q1补Win验收对等）
+#   null-safe：$capYml 仅 -Platform 分支赋值，不带 platform 时为 null→Test-Path 抛(真机T2实证)，故自算默认端路径
+$twinPlat = $(if ($Platform -ne '') { $Platform } else { 'workbuddy' })
+$twinCap = if ($capYml) { $capYml } else { Join-Path $PKG_ROOT ("adapters\" + $twinPlat + "\capability.yaml") }
+if ($twinCap -and (Test-Path $twinCap)) {
+  $capTxt = Get-Content $twinCap -Raw -Encoding UTF8
+  if ($capTxt -match "twin_surface:") { ok "分身功能面: twin_surface 已声明" } else { no "分身功能面: twin_surface 未声明（条文33·fail-closed）" }
+} else { no "分身功能面: capability.yaml 缺失（$twinCap）" }
+
+# 1.7) 接入率漂移附加检查（platform_adaptation_check.py --src·与 verify.sh §1.7 同口径·漂移advisory不拦）
+$pac = Join-Path $PKG_ROOT "platform_adaptation_check.py"
+if ($py -and (Test-Path $pac)) {
+  $platArg = $(if ($Platform -ne '') { $Platform } else { 'workbuddy' })
+  $pacOut = & $py $pac --src $platArg 2>&1
+  if ($LASTEXITCODE -eq 0) { ok "接入率漂移: 无漂移（platform_adaptation_check.py --src $platArg）" }
+  else {
+    Write-Host "  [i] 接入率漂移: 有漂移（rc=$LASTEXITCODE）—— 不影响本文件三面判据；发布前请核对" -ForegroundColor Yellow
+    ($pacOut -split "`n") | Where-Object { $_.Trim() } | Select-Object -First 8 | ForEach-Object { Write-Host "      $_" -ForegroundColor Yellow }
+  }
+}
+
 # 2) 规则三层
 foreach ($rel in @("记忆规则/用户基本规则-铁律版.md", "记忆规则/用户基本规则-摘要版.md")) {
   $rp = Join-Path $MC $rel; if ((Test-Path $rp) -and ((Get-Item $rp).Length -gt 0)) { ok "规则三层 $rel" } else { no "规则三层 $rel (缺失/为空)" }
@@ -138,6 +161,46 @@ foreach ($s in $names) {
 if ($SKILLS_TOTAL -gt 0 -and $FSK -eq $SKILLS_TOTAL) { ok "记忆Skill: $FSK/$SKILLS_TOTAL（名单源=包内 references/skills/）" }
 elseif ($SKILLS_TOTAL -eq 0) { no "记忆Skill: 包内 references/skills/ 无可枚举 Skill（包结构异常）" }
 else { no "记忆Skill仅 $FSK/$SKILLS_TOTAL（比对包内 references/skills/ 与 技能配置/）" }
+
+# 3.1) systemlog 写时守护双轨在位（2026-10-11 Win对等任务卡·mac .sh + Win .ps1 配对）
+$SLD = Join-Path $PKG_ROOT "references\skills\system-logger\scripts"
+$slMiss = @()
+foreach ($f in @("systemlog_watch.sh","install_watch.sh","systemlog-watch.ps1","systemlog-install-task.ps1")) {
+  if (-not (Test-Path (Join-Path $SLD $f))) { $slMiss += $f }
+}
+if ($slMiss.Count -eq 0) { ok "systemlog看守双轨: 包内 4/4 在位（mac .sh ×2 + Win .ps1 ×2）" }
+else { no "systemlog看守缺包内件: $($slMiss -join ',')" }
+$slDst = Join-Path $MC "技能配置\system-logger\scripts"
+if (-not (Test-Path (Join-Path $MC "技能配置\system-logger\SKILL.md"))) { Write-Host "  [i] system-logger 未装此记忆中心——跳过 Win 件落盘检查" }
+elseif (-not (Test-Path (Join-Path $slDst "append_log_entry.py"))) { Write-Host "  [i] system-logger scripts 面未部署（桩/装机中途态）——跳过 Win 件落盘检查（T2 仿真守卫·2026-10-19 Win真机腿反例根治）" }
+elseif ((Test-Path (Join-Path $slDst "systemlog-watch.ps1")) -and (Test-Path (Join-Path $slDst "systemlog-install-task.ps1"))) { ok "systemlog看守 Win 件装机落盘 2/2（deploy_skills 逐目录复制实证）" }
+else { no "systemlog看守 Win 件装机未落盘（$slDst 缺 .ps1）" }
+
+# 3.1b) 装后语法面全量扫描（2026-10-11 _fill转义地雷根治卡 R2 verify腿·存量面）
+if ($py -and (Test-Path (Join-Path $PKG_ROOT "fill_syntax_scan.py"))) {
+  & $py (Join-Path $PKG_ROOT "fill_syntax_scan.py") "$MC" --quiet *> $null
+  if ($LASTEXITCODE -eq 0) { ok "装后语法面: 装机面 .py/.json 编译级全绿" }
+  else { no "装后语法面有雷（跑 fill_syntax_scan.py $MC 看逐行明细）" }
+} elseif (-not (Test-Path (Join-Path $PKG_ROOT "fill_syntax_scan.py"))) { no "fill_syntax_scan.py 缺件（根治卡 R2 腿未入包）" }
+else { Write-Host "  [i] 装后语法扫描: 跳过（无 python）" -ForegroundColor Cyan }
+
+# 3.1c) 33 题两源对账（C06·与 verify.sh §3.1c 同口径——⛔只挂 mac 端＝Windows 端零防线，
+#       先例教训见 pkg_cleanliness_check 头注「原 PS 侧只查 1 类」）
+if ($py -and (Test-Path (Join-Path $PKG_ROOT "questionnaire_sync_check.py"))) {
+  & $py (Join-Path $PKG_ROOT "questionnaire_sync_check.py") --quiet *> $null
+  if ($LASTEXITCODE -eq 0) { ok "33 题两源对账: 题库↔答题页 33/33 逐字相等" }
+  else { no "33 题两源分叉（跑 questionnaire_sync_check.py 看逐题明细·修完前 step4 第1关不可信）" }
+} elseif (-not (Test-Path (Join-Path $PKG_ROOT "questionnaire_sync_check.py"))) { no "questionnaire_sync_check.py 缺件（C06 对账腿未入包）" }
+else { Write-Host "  [i] 33 题两源对账: 跳过（无 python）" -ForegroundColor Cyan }
+
+# 3.1d) 自陈待办在位对账（C32·与 verify.sh §3.1d 同口径——通用闸：承诺面 md 写「写入 X.py→随包」
+#       则 X 必须在包内；CHANGELOG／golden_samples／fixtures＝记录面跳过并计数显形）
+if ($py -and (Test-Path (Join-Path $PKG_ROOT "todo_landing_check.py"))) {
+  & $py (Join-Path $PKG_ROOT "todo_landing_check.py") --quiet *> $null
+  if ($LASTEXITCODE -eq 0) { ok "自陈待办对账: 承诺面待办全部有实物（或已带 reason 登记）" }
+  else { no "自陈待办无实物（跑 todo_landing_check.py 看逐条·待办挂空＝文档与实盘脱钩）" }
+} elseif (-not (Test-Path (Join-Path $PKG_ROOT "todo_landing_check.py"))) { no "todo_landing_check.py 缺件（C32 通用闸未入包）" }
+else { Write-Host "  [i] 自陈待办对账: 跳过（无 python）" -ForegroundColor Cyan }
 
 # 3.2) Skill 软链接（step7 检查清单 #12·N6）
 #      2026-09-17 新增：原双端均不验，契约与验证器脱节。
@@ -207,6 +270,21 @@ if ($py -and (Test-Path $TCC)) {
   no "分身链路检查器缺失: references/scripts/twin_chain_check.py"
 }
 
+# 3.7b) 数字分身·恒驻切片链 dry-run（2026-10-11 包自检⑬·与 verify.sh §3.7b 同口径·同病同治）
+$SCC = Join-Path $PKG_ROOT "references\scripts\slice_chain_check.py"
+if ($py -and (Test-Path $SCC)) {
+  & $py $SCC --pkg-root $PKG_ROOT --quiet | Out-Null
+  $sccRc = $LASTEXITCODE
+  switch ($sccRc) {
+    0 { ok "切片链: 规格书→生成器→六片 ⑬ dry-run 五断言全绿（包骨架沙箱·零触真实档案）" }
+    3 { no "切片链: 包内生成器/骨架模板缺失——包结构缺陷" }
+    1 { no "切片链: ⑬ 五断言未全绿（跑 python references/scripts/slice_chain_check.py --pkg-root `"$PKG_ROOT`" 看明细）" }
+    default { no "切片链: 检查器异常退出 rc=$sccRc" }
+  }
+} else {
+  no "切片链检查器缺失: references/scripts/slice_chain_check.py"
+}
+
 # 3.8) 养成链在位（答题→计分→蒸馏→上线·五要素静态断言·与 verify.sh §3.8 同口径）
 $lcm = 0
 if (-not (Test-Path (Join-Path $pkgN "references/digital-twin/hexaco/自建100题-答题页-v1.html"))) { $lcm = 1 }
@@ -215,8 +293,46 @@ $is = Join-Path $pkgN "install_scripts.py"
 if (-not (Test-Path $is) -or -not (Select-String -Path $is -Pattern '"hexaco":' -Quiet)) { $lcm = 1 }
 $im = Join-Path $pkgN "INSTALL.md"
 if (-not (Test-Path $im) -or -not ((Select-String -Path $im -Pattern '分身养成链' -Quiet) -and (Select-String -Path $im -Pattern '蒸馏目标层' -Quiet))) { $lcm = 1 }
+# 2026-10-10 hexaco 终态穷举断言（与 verify.sh §3.8 同口径·防作者侧回流）
+# P28裁决(2026-10-18)：官方壳页移出包面——Win腿清单同步7件（注释⛔入 @() 单行表达式，PS 无行中括号内注释·T1 实证）
+$hx = Join-Path $pkgN "references/digital-twin/hexaco"
+$hxExp = @('自建100题-分身版-题库-v1.md','自建100题-答题页-v1.html','HEXACO-100完整版-官方中文-答题卡.md','ScoringKeys_100.pdf','hexaco_selfbuild_scorer.py','hexaco_official_scorer.py','hexaco_official_keytable-100.json')
+if (Test-Path $hx) {
+  # 双向对账（与 verify.sh §3.8 同口径）：清单里有→包内必须在位；包内有→清单里必须声明
+  $hxBad = @(Get-ChildItem $hx -File | Where-Object { $hxExp -notcontains $_.Name } | ForEach-Object { "白名单外:$($_.Name)" })
+  foreach ($hd in $hxExp) { if (-not (Test-Path (Join-Path $hx $hd))) { $hxBad += "缺:$hd" } }
+  # 引导面断言：脚本在包但没人被引导去跑=死件
+  # ⚠️ 计分器「在位」不再在此逐件硬编码——题库 §八 第4条那句自陈待办已由 §3.1d 通用闸覆盖，
+  #    此处的清单是**终态声明表**（回流防线），两份并存各管各的判据，⛔不重复记同一本账
+  if (-not (Select-String -Path $im -Pattern 'hexaco_selfbuild_scorer' -Quiet)) { $hxBad += '缺:INSTALL.md 未引导跑自建计分器' }
+  if (-not (Select-String -Path $im -Pattern 'hexaco_official_scorer' -Quiet)) { $hxBad += '缺:INSTALL.md 未引导跑官方计分器' }
+  if ($hxBad.Count -gt 0) { $lcm = 1; no ("hexaco终态对账: " + ($hxBad -join ' ')) }
+}
 if ($lcm -eq 0) { ok "养成链在位: 答题页+造芯件+部署声明+INSTALL指引+蒸馏清单 五要素齐" }
 else { no "养成链缺件: 答题页/造芯件/部署声明/INSTALL指引/蒸馏清单 有缺失" }
+
+# 3.9) 检查点链完整性（改造③·2026-10-13·补条文39 明载欠账——与 verify.sh §3.9 同口径镜像·条文61 L1 脚本配对腿）
+#      判据=$MC\.install\stepN-done.md 链（step1~step8 含 6.5）连续：
+#      中段断裂=no() 报红列断裂点（进度不可信）；尾部缺失=[i] advisory（verify 跑在 step7 时点·step8 未到=防假红）
+#      无 .install=主线未开工显形跳过；占位防（39§4）done<16字节=advisory（⛔无实证不升硬判）
+#      ⛔AI 对话段内容 quality 不脚本化（39§3）——本节只对账检查点文件存在性与连续性
+$chain = @('step1','step2','step3','step4','step5','step6','step6.5','step7','step8')
+$instDir = Join-Path $MC '.install'
+if (Test-Path $instDir) {
+  $present = @($chain | Where-Object { Test-Path (Join-Path $instDir ($_ + '-done.md')) })
+  $lastIdx = -1
+  for ($ci = 0; $ci -lt $chain.Count; $ci++) { if ($present -contains $chain[$ci]) { $lastIdx = $ci } }
+  $gaps = @()
+  for ($ci = 0; $ci -lt $lastIdx; $ci++) { if (-not ($present -contains $chain[$ci])) { $gaps += $chain[$ci] } }
+  if ($gaps.Count -gt 0) { no ("检查点链断裂: 主线缺 " + ($gaps -join ',') + "（后续步骤已落 done 而前置缺失=进度不可信·补做缺失步骤后重验·判据源=条文39）") }
+  elseif ($lastIdx -lt 0) { Write-Host "  [i] 检查点链: .install 未落任何步骤检查点（安装主线未开跑·零步落账——条文39①）" -ForegroundColor Cyan }
+  elseif ($lastIdx -lt 8) { Write-Host ("  [i] 检查点链: 连续至 " + $chain[$lastIdx] + "（尾部未落=step7 跑 verify 时 step8 尚未来·正常时点）") -ForegroundColor Cyan }
+  else { ok "检查点链完整性: step1~step8 含 6.5 九段全在·无断裂" }
+  $tiny = @(Get-ChildItem $instDir -Filter 'step*-done.md' -File | Where-Object { $_.Length -lt 16 } | ForEach-Object { $_.Name })
+  if ($tiny.Count -gt 0) { Write-Host ("  [i] 检查点疑似占位（条文39§2: 须为实查结果非「已完成」三字）: " + ($tiny -join ' ')) -ForegroundColor Cyan }
+} else {
+  Write-Host ("  [i] 检查点链: 未见 " + $instDir + "（安装主线未开始·对账跳过）") -ForegroundColor Cyan
+}
 
 # 4) 安装包干净度（发布卫生·单一真源=pkg_cleanliness_check.py·与 verify.sh §4 同口径）
 #    2026-09-17 童灵根治：原仅查 1 类（公开署名）且 PS5.1 无BOM中文易假阴性 → 改调 python 单源。
@@ -235,8 +351,18 @@ if ($py -and (Test-Path $compat)) {
 }
 if ($DIRT -eq 0) { ok "安装包干净度: 8 类卫生项全过 + 无未声明作者侧路径" }
 
+# 4.5) 装后双拼产物扫描（2026-10-10 十一轮·与 verify.sh §4.5 同口径·装机面）
+$integrity = Join-Path $PKG_ROOT "references\scripts\path_integrity_check.py"
+if ($py -and (Test-Path $integrity)) {
+  & $py $integrity --root $MC --quiet | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    & $py $integrity --root $MC | Out-Host
+    no "装后产物含双拼/占位符残留（上方 [FAIL] 行=明细）"
+  } else { ok "装后产物路径完整性: 无双拼形态、无占位符残留" }
+}
+
 # 5) 版本锚点（不计分·信息）
-$BV = if (Test-Path (Join-Path $MC ".install\version")) { Get-Content (Join-Path $MC ".install\version") -Raw | ForEach-Object { $_.Trim() } } else { "未知(未完成安装或无锚点)" }
+$BV = if (Test-Path (Join-Path $MC ".install\version")) { Get-Content (Join-Path $MC ".install\version") -Encoding UTF8 -Raw | ForEach-Object { $_.Trim() } } else { "未知(未完成安装或无锚点)" }
 Write-Host "  [i] 布洛陀版本: $BV" -ForegroundColor Cyan
 
 # 5.5) Windows 平台差异告知（不参与评分·信息项）

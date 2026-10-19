@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 doenglingz_guard_dsh.py — DSH 端童灵守护三查适配器（B 方案·06规范§2.2各端自行适配）。
@@ -18,6 +14,11 @@ doenglingz_guard_dsh.py — DSH 端童灵守护三查适配器（B 方案·06规
 
 来源：你授权「按符合愿景第一性原理做完工作」·2026-09-07。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import os
 import json
@@ -26,7 +27,36 @@ from datetime import datetime
 from pathlib import Path
 
 STATE_FILE = os.path.expanduser("~/.dsh/doenglingz_guard_state.json")
-GUARD_CORE = os.path.expanduser("[记忆共享中心]/脚本中心/doenglingz_guard.py")
+
+
+def _resolve_guard_core():
+    """解析 doenglingz_guard.py（判据=verifier_target_fidelity_guard.py：须自 runtime_paths）。
+
+    2026-10-08：原式硬编码 `[记忆共享中心]/脚本中心/doenglingz_guard.py`
+      ⇒ 换落点后测的是另一份。改为 ① runtime_paths.devtools → ② 同目录 → ③ 双候选显形。
+    """
+    import json as _json
+    name = "doenglingz_guard.py"
+    cands = []
+    rp = os.path.expanduser("~/.hermes/doenglingz/runtime_paths.json")
+    if os.path.isfile(rp):
+        try:
+            with open(rp, encoding="utf-8") as fh:
+                base = _json.load(fh).get("devtools")
+            if base:
+                cands.append(os.path.join(base, name))
+        except Exception:
+            pass
+    cands.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), name))
+    cands += [os.path.expanduser("[记忆共享中心]/脚本中心/" + name),
+              os.path.expanduser("[记忆共享中心]/脚本中心/" + name)]
+    for c in cands:
+        if os.path.isfile(c):
+            return c
+    return cands[0]
+
+
+GUARD_CORE = _resolve_guard_core()
 
 
 def extract_last_assistant_text(transcript_path):

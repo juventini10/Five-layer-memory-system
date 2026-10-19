@@ -11,13 +11,13 @@
 ### §1.1 版本门禁（1c）
 
 🔌 熔断器（关键）
-├─ 成功条件：`python3 ~/[记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py` 返回 exit 0
+├─ 成功条件：`python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py` 返回 exit 0
 ├─ 失败处理：中止
-├─ 可修正参数：SKILL.md路径 → 检查权威源 `~/[记忆共享中心]/技能配置/awaken-memory-system/SKILL.md` 是否存在（脚本 AUTHORITY 即此路径·审查P3-6修正）
+├─ 可修正参数：SKILL.md路径 → 检查权威源 `[记忆共享中心]/技能配置/awaken-memory-system/SKILL.md` 是否存在（脚本 AUTHORITY 即此路径·审查P3-6修正）
 ├─ 重试次数：0
 └─ 降级方案：无——中止全量模式并报告
 
-✅DO — 运行 `python3 ~/[记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py`（v7.22 脚本闸门·双查合一·绝对路径调用——cwd 无关）
+✅DO — 运行 `python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py`（v7.22 脚本闸门·双查合一·绝对路径调用——cwd 无关）
 - **调用预检**：运行前 `ls` 确认脚本文件存在；脚本文件不存在时 python 解释器也会 exit 2（与"缓存不一致"语义碰撞·审查P1-1）——故 exit 2 判定前必须先确认脚本自身可达，不可达按 exit 1 降级处理
 - exit 0 = 版本门禁过（权威源可达 + 真实独立副本全部一致）+ 规则.mdc 无过期
   - ⚠️ 脚本按 realpath 去重：与权威源同 inode 的软链路径记为「软链同源」而非验证样本。1e 自愈后各平台通常全为软链 → 独立副本为 0，此时本项**只等价于权威源可达性**，脚本会明确声明"不构成跨平台一致性验证"（v7.25 修 D① 可比对性）
@@ -49,7 +49,7 @@
 
 ```bash
 # macOS / Linux
-bash ~/[记忆共享中心]/技能配置/restore-my-skills.sh
+bash [记忆共享中心]/技能配置/restore-my-skills.sh
 ```
 
 ```powershell
@@ -78,7 +78,7 @@ bash ~/[记忆共享中心]/技能配置/restore-my-skills.sh
 
 **为什么需要这一步**：`.workbuddy/rules/` 下的 `.mdc` 文件设置了 `alwaysApply: true`，每次会话自动注入。如果内容过期（旧版铁律/旧格式模板），会与当前规则文件打架且AI不自知。2026-06-15发现了 `用户基本规则.mdc` 在v5.0.0停留22天未同步。
 
-**执行方式**：`python3 ~/[记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py`（绝对路径·cwd无关·v7.22 脚本闸门·exit 3=规则.mdc 过期，见 §1.1 退出码语义）：
+**执行方式**：`python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_version_gate_check.py`（绝对路径·cwd无关·v7.22 脚本闸门·exit 3=规则.mdc 过期，见 §1.1 退出码语义）：
 
 | 状态 | 动作 |
 |:---:|------|

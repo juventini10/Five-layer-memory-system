@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """环节维护台账.py v1.0 — 环节维护成本信息源（git log 派生·免人工·免自评）
 
 你的挑战（愿景仪表盘 §10.5）：独立台账谁做？跨天跨月怎么统计？
@@ -19,6 +15,10 @@ v1.1 2026-09-02：从系统日志目录迁出，根治运行时日志污染系�
 
 设计原则（守卫三纪律）：git 读不到 → 产空 JSON + 记错误日志 + exit 0（不卡主流程）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import os
 import sys

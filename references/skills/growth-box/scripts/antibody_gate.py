@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 antibody_gate.py —— 抗体写入端机械门禁 + 标准生成器
-Version: 1.0.0 (2026-09-15)
+Version: 1.8.0（首版 1.0.0·2026-09-15；现行判据 C1~C12·真值取本件 VERSION 常量，v4.12.3 补历史注）
 
 定位：抗体（反哺日志 `🛡 复发检测条件` 字段）的**唯一校验器**——
       写入端（E4/E5）拦截 + 巡检端（growth_box_check / Stop 守卫）复核，三处共用本实现（单一真相源）。
@@ -29,6 +29,13 @@ Version: 1.0.0 (2026-09-15)
                        （两端一致）。范围：仅末段·仅大写 -L（`-l/-rl` 两端一致不拦；-L 落管道中段
                        而退出码来自末段 `grep -q .` 者不拦——防过宽，实测既有 77 条零误伤）。
 
+    C11 否定式提及独占命中 —— 决定段单文件 grep 的模式在目标文件只以"非…"前缀出现=词面假红（S1061 同案·写入端拦）
+                       ※ v1.7.0 落地时漏登记本清单，2026-10-12 随 C12 同批补入（预存缺口·非新病）。
+    C12 登记态与声明不符（v1.8.0）—— --expect clean|hit：写入端登记时实跑抗体，实测态≠声明态拦。
+                       治"方向反抗体"：反断言配坑词（! grep 已被清除的陈旧词）＝坑修好后恒红。
+                       实证 2026-10-12 R-20261012-02 初版抗体，语义方向 C1~C11 全检不出；
+                       而"本条落地后坑应已干净"是登记侧已知事实，声明与实盘对撞即可机械判定（承 C7 同源思想）。
+
 设计边界（诚实声明）：
   本门禁只做**静态**判定，⛔不执行抗体命令（抗体由不可靠起草者产出，执行=风险；
   且反断言形态在"路径不存在"时天然 exit 0，动态探针会误报——见 tests 负例）。
@@ -38,7 +45,7 @@ Version: 1.0.0 (2026-09-15)
   validate_cmd(cmd, label="") -> list[Violation]
 
 用法：
-  antibody_gate.py --check-cmd '<cmd>' [--label 标题]     # 单条校验（写入端·E4 前）
+  antibody_gate.py --check-cmd '<cmd>' [--label 标题] [--expect clean|hit]   # 单条校验（写入端·E4 前；--expect=登记态自证 C12）
   antibody_gate.py --scan [文件...]                        # 全量扫描（默认双源）
   antibody_gate.py --gen file-missing <绝对路径> [--label 标题]   # 生成标准抗体
   antibody_gate.py --selftest                              # 门禁自检（负例夹具）
@@ -58,7 +65,8 @@ import re
 import subprocess
 import sys
 
-VERSION = "1.7.0"   # v1.7.0（2026-10-01 否定假红根治）：+C11 否定式提及独占命中（决定段单文件 grep 的模式在目标文件只以"非…"前缀出现=词面假红·S1061 同案·写入端拦）
+VERSION = "1.8.1"   # v1.8.1（2026-10-12·B-2 承接）：selftest 去生产依赖——C8/C11 用例自建临时夹具（原写死生产绝对路径且两条判据会读文件；换根实测 rc 0→1，夹具化后换根仍 rc=0）
+                  # v1.8.0（2026-10-12 方向反抗体根治）：+C12 登记态自证——--check-cmd 配 --expect clean|hit 时实跑抗体对撞声明（实跑态≠声明=拦；坑词用正断言/正词用反断言的方向语义不可机械判，但登记时点期望态是写侧已知事实）   # v1.7.0（2026-10-01 否定假红根治）：+C11 否定式提及独占命中（决定段单文件 grep 的模式在目标文件只以"非…"前缀出现=词面假红·S1061 同案·写入端拦）
                   # v1.6.0（2026-09-23 免疫验真）：+C10 平台反转形态（`grep -L` 作退出码源·GNU=有文件被选中0／BSD·macOS=全部含锚0，两端相反→Mac 端假命中+真复发漏报；8 条抗体已改 `! grep -q` 反断言并 9/9 双向可证伪）
                   # v1.5.0（2026-09-19）：+C9 检测对象错位（抗体问「账本里是否还有未结案条目提到该词」而非「行为是否复发」→永不免疫）
                     #   根治「未命名抗体」刷屏（CAND-20260918-001 重复9次·不可点名＝死数据）；自测 29→30 例
@@ -376,6 +384,24 @@ def _relpath_hits(cmd):
 
 # ── 六项校验 ─────────────────────────────────────────────────
 
+def polarity_check(cmd, expect, label="", timeout=30.0):
+    """C12（v1.8.0）：登记态自证——实跑抗体，把 实测态(hit/clean) 与 声明期望态 对撞。
+    不判"命令里 grep 的是正词还是坑词"（语义不可机械判），只判"你以为的现态对不对"。
+    rc==0=hit（坑在）／rc!=0=clean（干净）。仅静态判据全过后才被调用（坏命令不跑）。"""
+    try:
+        r = subprocess.run(["bash", "-c", cmd], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return [Violation("C12", "抗体实跑超时（>%ss），无法验证现态" % int(timeout),
+                          "抗体应为轻量只读命令；先手动跑通再来登记", label=label, cmd=cmd)]
+    actual = "hit" if r.returncode == 0 else "clean"
+    if actual != expect:
+        return [Violation("C12", "抗体实测态=%s，与登记声明 --expect %s 不符" % (actual, expect),
+                          "二选一核：①方向写反了——检测『在场=安全』的正词用反断言 `! grep`，检测『在场=坑』的坑词用正断言 `grep`（本条现态若=hit 而你声明 clean，多半是①）；②坑其实还没修好——去目标文件确认后再定期望态",
+                          label=label, cmd=cmd)]
+    return []
+
+
 def validate_cmd(cmd, label=""):
     """静态校验单条抗体命令，返回 Violation 列表（空=通过）。"""
     v = []
@@ -656,6 +682,22 @@ def _q(pat):
 # ── 自检夹具（负例驱动·防"门禁自身退化"） ────────────────────
 
 def selftest():
+    # ── v1.8.1 自测去生产依赖（B-2 承接·换根探针实证）───────────────────────────
+    #   C8/C11 两条判据会读文件（C8 看存在与执行位、C11 看模式是否只以否定式出现），原用例把目标路径
+    #   写死成生产绝对路径 → 换机/换根/卡片改名即假红。实证：把 $HOME/个人AI档案 整体替换为不存在目录
+    #   后 selftest 由 rc=0 变 rc=1（2/42 不通过·恰为 C8+C11 两条）。现自建临时夹具，判据本体零改动。
+    import tempfile as _tf3
+    _box = _tf3.mkdtemp(prefix='antibody_selftest_')
+    _bare = os.path.join(_box, "bare_script.py")        # 存在·644 无执行位 → C8 应拦
+    with open(_bare, "w", encoding="utf-8") as _bh:
+        _bh.write("#!/bin/sh" + chr(10) + "exit 0" + chr(10))
+    os.chmod(_bare, 0o644)
+    _card_neg = os.path.join(_box, "card_neg_only.md")  # 模式只以「非…」出现 → C11 应拦
+    with open(_card_neg, "w", encoding="utf-8") as _ch:
+        _ch.write("# 卡" + chr(10) * 2 + "本卡结论非你已质证，系 AI 初判待审。" + chr(10))
+    _card_pos = os.path.join(_box, "card_plain.md")     # 肯定式出现 → C11 不拦
+    with open(_card_pos, "w", encoding="utf-8") as _ph:
+        _ph.write("# 卡" + chr(10) * 2 + "你已质证：结论成立。" + chr(10))
     bad = [
         ("C1", ""),
         ("C1", "..."),
@@ -676,7 +718,7 @@ def selftest():
         # C7（v1.2.0·恒假形态）：取数格式不同源——实测 53 次假红的 setup.ps1 BOM 抗体
         ("C7", 'head -c3 "$HOME/x/setup.ps1" | od -An -tx1 | grep -q "ef bb bf"'),
         ("C7", 'xxd -p "$HOME/x/a.ps1" | grep -q "efbbbf"'),
-        ("C8", '! "[记忆共享中心]/技能配置/growth-box/scripts/antibody_gate.py" --selftest >/dev/null 2>&1'),
+        ("C8", '! "%s" --selftest >/dev/null 2>&1' % _bare),
         ("C7", 'hexdump -C "$HOME/x/a.ps1" | grep -q "ef bb bf"'),
         # C7 嵌套引号（v1.2.0）：`sh -c '... grep -q "ef bb bf"'`——只解一层会漏抓，
         # 实测 3 条已证实的 BOM 假红抗体就是此形。
@@ -691,7 +733,7 @@ def selftest():
         ("C10", 'grep -L "a" "$HOME/个人AI档案/x.md"'),
         ("C10", '! grep -L "a" "$HOME/个人AI档案/x.md"'),
         # C11（v1.7.0·否定假红）：S1061 真实文件——"你已质证"只以"非你已质证"出现
-        ("C11", '! grep -q "你已质证" "[记忆共享中心]/知识库/AI学习库/立场卡#S1061-只读锁不等于无写入通道.md"'),
+        ("C11", '! grep -q "你已质证" "%s"' % _card_neg),
 
     ]
     good = [
@@ -699,8 +741,8 @@ def selftest():
         # 它本身即 53 次假红的源头，旧版把假红抗体当"正例"=**测试固化了错误行为**；
         # 现已在 bad 列表以 C7 嵌套引号用例覆盖。
         'test ! -f "[记忆共享中心]/脚本中心/content-gate.py"',
-        '! grep -q -- \'/-卡片\\[\' "[记忆共享中心]/脚本中心/kb_index_guard.sh"',
-        "grep -q 'len(int' \"[记忆共享中心]/脚本中心/kb_index_sync.py\"",
+        '! grep -q -- \'/-卡片\\[\' "[记忆共享中心]/脚本中心/changelog-guard/kb_index_guard.sh"',
+        "grep -q 'len(int' \"[记忆共享中心]/脚本中心/changelog-guard/kb_index_sync.py\"",
         'bash -c \'for f in $(find "[记忆共享中心]/脚本中心" -maxdepth 1 -name "*.sh"); do bash -n "$f" || exit 0; done; exit 1\'',
         '! diff <(ls "[记忆共享中心]/发布库/A") <(ls "[记忆共享中心]/发布库/B") >/dev/null',
         # C9 的两侧正例（防"见 learnings 就拦"的过宽实现）：
@@ -712,13 +754,21 @@ def selftest():
         'bash -c \'! grep -q "写读对同源" "[记忆共享中心]/技能配置/clock-loop/references/evaluation-framework.md"\'',
         # C10 正例②：-L 落在管道中段、退出码来自末段 grep -q → 不违规（3074 真实形态·防过宽）
         'bash -c \'grep -l "终检清单" ~/x/*.md 2>/dev/null | xargs grep -L "finalize" 2>/dev/null | head -1 | grep -q .\'',
-        # C11 正例①：目标文件中模式以非否定式真实出现（铁律-028 在铁律版正文）
-        '! grep -q "铁律-028：否定断言先扫全载体" "[记忆共享中心]/记忆规则/用户基本规则-铁律版.md"',
+        # C11 正例①（v1.8.1 夹具化）：模式以肯定式出现在自建夹具文件中 → C11 不拦
+        '! grep -q "你已质证" "%s"' % _card_pos,
         # C11 正例②：否定式提及已被管道下游排除（决定段=grep -q .，C11 不查中段·同 C10 掩蔽）
-        'bash -c \'grep "你已质证" "[记忆共享中心]/知识库/AI学习库/立场卡#S1061-只读锁不等于无写入通道.md" | grep -v "非你已质证" | grep -q .\'',
+        'bash -c \'grep "你已质证" "%s" | grep -v "非你已质证" | grep -q .\'' % _card_neg,
 
     ]
     fails = 0
+    # ── C12 双向夹具（v1.8.0·防 S323 自设自验：正反例互锁，短路判据必红其中一侧）──
+    # `false`→rc1=clean；`true`→rc0=hit。声明与实跑相符放、不符拦。
+    pol = [("clean", "false", 0), ("hit", "true", 0), ("hit", "false", 1), ("clean", "true", 1)]
+    for exp, cmd, want_n in pol:
+        got = len(polarity_check(cmd, exp, "selftest-C12"))
+        if got != want_n:
+            fails += 1
+            print("❌ C12 夹具 %s exp=%s 期望violation=%d 实得=%d" % (cmd, exp, want_n, got))
     for want, cmd in bad:
         got = validate_cmd(cmd)
         codes = [x.code for x in got]
@@ -871,6 +921,8 @@ def main(argv=None):
     ap.add_argument("--scan", nargs="*", metavar="FILE")
     ap.add_argument("--gen", nargs="+", metavar="KIND [ARGS...]")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--expect", choices=["clean", "hit"], default=None,
+                    help="C12 登记态自证：与 --check-cmd 连用，声明本抗体在登记时点应有的现态")
     ap.add_argument("--list", nargs="*", metavar="FILE", dest="list_mode",
                     help="TSV 导出（\\x1f 分隔）供 shell 消费者读取·缺省扫双源")
     ap.add_argument("--run", action="store_true",
@@ -899,6 +951,8 @@ def main(argv=None):
 
     if a.check_cmd is not None:
         vs = validate_cmd(a.check_cmd, a.label)
+        if a.expect and not vs:  # 静态判据全过才实跑（坏命令不执行·防副作用）
+            vs = polarity_check(a.check_cmd, a.expect, a.label)
         _emit(vs, 1, a.as_json, a.quiet)
         return 1 if vs else 0
 

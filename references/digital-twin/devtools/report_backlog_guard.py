@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """
 report_backlog_guard.py — 评估报告积压自动检测守卫
 
@@ -34,7 +30,12 @@ report_backlog_guard.py — 评估报告积压自动检测守卫
   --threshold-warn    告警阈值（默认 3，自上次 L3 起新增 ≥3 份报告→⚠️提醒）
   --threshold-trigger L3 沉淀触发阈值（默认 5，≥5 触发 check_selfimprove_gate）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import json
 import os
 import sys
@@ -50,7 +51,7 @@ L3_EVOLUTION_DIR = os.path.join(os.path.expanduser("[记忆共享中心]/评估�
 SKILL_EVAL_SCRIPT = os.path.join(os.path.expanduser("[记忆共享中心]/技能配置/clock-loop/scripts/check_selfimprove_gate.py"),)
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

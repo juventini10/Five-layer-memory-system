@@ -14,7 +14,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 知识池(卡片) | `{{OBSIDIAN_VAULT}}/2-知识库/05-知识池/` |
 | 知识池索引 | `{{OBSIDIAN_VAULT}}/2-知识库/05-知识池/INDEX.md` |
 | 电子书目录(只读) | `{{EBOOK_DIR}}/` |
-| 个人AI档案 | `~/个人AI档案/` |
+| 个人AI档案 | `[记忆共享中心]/` |
 
 ## 占位符解析约定
 

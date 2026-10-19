@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """evolution_deviation.py v0.8 — 自主进化活系统·误差量化信号层（引擎类·stats）
 v0.8（2026-10-07 Qoder CN 童灵·野根根治轮）：②join 率读侧重写——复用写侧同一提取器 antibody_gate.extract_antibodies（双载体池80·原只扫反哺39=N0扫描域半缺），主键=抗体标题+命令深归一回退；修 split 位置错位与管道截断（81%→8% 静默塌陷根因）。免疫命中数与闭环流同径（带日期行），治 1043/1040/1039 三名字。
 
@@ -61,7 +57,12 @@ v0.3（2026-08-22·愿景仪表盘 v3 峰终体验）：
 跨工具中立（脚本哲学 §二·五）：本脚本是公共设施，住 [记忆共享中心]/脚本中心/，
 各工具 hook（Hermes on_session_end / WorkBuddy Stop）只调用不拥有。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import os
 import sys
 import json
@@ -922,7 +923,7 @@ if __name__ == "__main__":
 
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

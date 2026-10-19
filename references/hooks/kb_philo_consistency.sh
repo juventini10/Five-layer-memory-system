@@ -63,11 +63,11 @@ check_version_sync() {
   fm_v_norm=$(printf '%s' "$fm_v" | sed 's/^v//')
   [ -z "$fm_v_norm" ] || [ -z "$log_v" ] && return
   if [ "$fm_v_norm" != "$log_v" ]; then
-    # 2026-08-29 根治: 原 "$log_v（"同款全角吞名 → RED(有漂移)路径亦崩;与下方 GREEN 路径合计=
+    # 2026-08-29 根治: 原 "${log_v}（"同款全角吞名 → RED(有漂移)路径亦崩;与下方 GREEN 路径合计=
     # check_version_sync 两条分支全崩,该函数自建起从未跑通(实测 line 63 崩)。
     findings+=("RED|$label|frontmatter version=${fm_v} ≠ 变更记录最新=${log_v}（版本头悬停）")
   else
-    # 2026-08-29 根治: 原写 "$fm_v）"——中文全角括号(EF BC 89)紧贴变量名,bash 3.2 把多字节
+    # 2026-08-29 根治: 原 "${log_v}（"同款全角吞名 → RED(有漂移)路径亦崩;与下方 GREEN 路径合计=
     # 字节当标识符字符 → 变量名被吃成 fm_v\xef... → set -u unbound → 全绿路径崩死(挂30min循环=沉默死)。
     # 修: ${fm_v} 花括号显式界定变量名边界。凡变量后紧跟中文标点,必须用 ${var}。
     findings+=("GREEN|$label|version 同步（${fm_v}）")
@@ -127,4 +127,3 @@ printf '{"ts":"%s","green":%d,"yellow":%d,"red":%d,"findings":"%s"}\n' \
 
 # 退出码：0=无RED（失败放行纪律·不拦 patrol 链）；1=有RED（仅供上游日志观察，不阻断）
 [ "$red" -eq 0 ] && exit 0 || exit 1
-

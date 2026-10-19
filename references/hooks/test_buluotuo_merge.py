@@ -26,7 +26,7 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import importlib.util
@@ -363,12 +363,59 @@ def t11_frontmatter_falsification():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+RX_FILL = r"\[Q\d+·(?:答案待注入|规则待派生)\]"
+
+
+def t12_injection_exempt():
+    print("T12 step5 注入预期态豁免（C14）：纯占位格填充不报冲突·真改动/升级照报")
+    tmp = tempfile.mkdtemp()
+    try:
+        tpl = ('---\nversion: v1\n---\n\n# 摘要版\n\n| Q8 | 失败归因 | [Q8·答案待注入] | [Q8·规则待派生] |\n'
+               '| Q9 | 改变主意 | [Q9·答案待注入] | [Q9·规则待派生] |\n')
+        p = _fixture(tmp)
+        ok0, st0, _ = bm.upsert_file_body(p, "rules.summary", tpl)
+        _t("T12a 首装成功", ok0, st0)
+        # 模拟 step5 注入：占位格逐行被真实答案替换（行结构不变）
+        txt = bm.read_text(p).replace("[Q8·答案待注入]", "内部不稳定归因") \
+            .replace("[Q8·规则待派生]", "方法不对就改方法") \
+            .replace("[Q9·答案待注入]", "认知升级驱动") \
+            .replace("[Q9·规则待派生]", "先想通关键逻辑点")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(txt)
+        ok1, st1, msg1 = bm.upsert_file_body(p, "rules.summary", tpl,
+                                             template_full=tpl, inject_exempt_re=RX_FILL)
+        _t("T12a 注入后重装=预期态不报冲突", ok1 and st1 == bm.STATUS_UNCHANGED, "%s %s" % (st1, msg1))
+        _t("T12a 注入内容未被覆盖", "内部不稳定归因" in bm.read_text(p))
+
+        # T12b 真手改（改的是行名 Q9→自加行）⇒ 照报 CONFLICT（豁免不是总闸）
+        txt2 = bm.read_text(p).replace("| Q9 | 改变主意 |", "| Q9 | 我自己改的行名 |")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(txt2)
+        ok2, st2, _ = bm.upsert_file_body(p, "rules.summary", tpl,
+                                          template_full=tpl, inject_exempt_re=RX_FILL)
+        _t("T12b 真手改照报 CONFLICT", (not ok2) and st2 == bm.STATUS_CONFLICT, st2)
+
+        # T12c 包升级（body≠template）+已注入 ⇒ 照报（注入豁免让位升级冲突人工裁决）
+        txt3 = bm.read_text(p).replace("| Q9 | 我自己改的行名 |", "| Q9 | 改变主意 |")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(txt3)
+        new_pkg = tpl.replace("[Q9·答案待注入]", "[Q9·答案待注入]") + "\n> v2 升级注记\n"
+        ok3, st3, _ = bm.upsert_file_body(p, "rules.summary", new_pkg,
+                                          template_full=tpl, inject_exempt_re=RX_FILL)
+        _t("T12c 升级撞注入照报 CONFLICT", (not ok3) and st3 == bm.STATUS_CONFLICT, st3)
+        # 负例收尾：不给 exempt 时注入态仍报冲突（豁免必须显式授予·默认行为不变）
+        ok4, st4, _ = bm.upsert_file_body(p, "rules.summary", tpl, template_full=tpl)
+        _t("T12d 不传豁免参数=行为不变仍报冲突", (not ok4) and st4 == bm.STATUS_CONFLICT, st4)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     print("=== 断章增量引擎 · 承重验收（宪法 §2.0）===\n")
     for fn in (t1_new_file, t2_user_bytes_untouched, t3_upgrade_segment_only,
                t4_user_edit_survives, t5_idempotent, t6_conflict,
                t7_broken_markers, t8_backup_failure_blocks, t9_falsification,
-               t10_frontmatter, t11_frontmatter_falsification):
+               t10_frontmatter, t11_frontmatter_falsification, t12_injection_exempt):
         fn()
         print("")
     print("=" * 52)

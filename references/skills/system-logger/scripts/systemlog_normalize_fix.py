@@ -26,7 +26,11 @@ import sys, os, re, shutil
 from datetime import date, datetime
 
 HOME = os.path.expanduser("~")
-SYSLOG_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "工作日志", "系统日志")
+# MC 由脚本落点向上推导（scripts→system-logger→技能配置→MC）：⛔"HOME+目录名"字面量形态
+# ——Win 装机态 _fill 会把反斜杠路径填进 .py 源码字符串，\a/\b 等被 Python 转义语义吃掉
+#（真机实证 2026-10-11：OSError WinError 123 'D:\x07'·任务卡 Win对等 T19 逮出）
+_MC = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, os.pardir))
+SYSLOG_DIR = os.path.join(_MC, "工作日志", "系统日志")
 
 # ── 备份落点=记忆琥珀 + 留存封顶（2026-10-06 皮叔令「统一放记忆琥珀·不要在原文件备份」）──
 # 旧认知已作废：原实现 bak = "<原路径>.bak-<时间戳>"，即备份写在**原文件旁边**。
@@ -36,7 +40,7 @@ SYSLOG_DIR = os.path.join(os.path.expanduser("[记忆共享中心]"), "工作日
 # 新契约：① 备份一律落 记忆琥珀/<用途>/<日期>/，⛔ 原文件旁零 .bak
 #        ② 同一文件同一日期桶内最多留 AMBER_KEEP_PER_DAY 份，超出=废弃件 → trash（⛔不 rm）
 #        ③ 废弃件不是备份，不进琥珀（琥珀只装值得追溯的快照）
-AMBER_ROOT = os.path.join(os.path.expanduser("[记忆共享中心]"), "记忆琥珀", "系统日志备份")
+AMBER_ROOT = os.path.join(_MC, "记忆琥珀", "系统日志备份")
 AMBER_KEEP_PER_DAY = 3
 # 跨天上限：与记忆琥珀引擎的 `amber-backup.sh` RETENTION_DAYS=7 **同口径**（2026-10-06 补）。
 # 病根实证：①记忆琥珀引擎的 7 天清理走 `find 全目录 -name "*.bak"` 但只清文件名匹配

@@ -59,7 +59,7 @@ UTF-8，见文件头）。
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import datetime
@@ -94,6 +94,36 @@ STATUS_CONFLICT = "CONFLICT"
 
 class MergeError(RuntimeError):
     """写盘前的硬失败（备份失败 / 段 id 非法 / 段结构损坏）——调用方必须中止。"""
+
+
+def _diff_is_injection_only(user_sec: str, tpl_sec: str, rx) -> bool:
+    """C14（2026-10-15）：用户段 vs 模板段的差异是否**纯属 step5 注入**。
+
+    判据（逐行对齐·两行均先过 _cmp_norm 口径）：行数相等；每个差异行对上，
+    模板行必须命中占位格模式（[Qn·答案待注入]/[Qn·规则待派生]）且用户行不再含占位
+    ⇒ 该行差异=注入填充；任何其它差异（表头/行名/缩进外实质行）⇒ False（照报冲突）。
+    无差异返回 False（交幂等腿，不消耗豁免）。
+    """
+    import re as _re
+    us = [l.rstrip() for l in (user_sec or "").splitlines() if l.strip()]
+    ts = [l.rstrip() for l in (tpl_sec or "").splitlines() if l.strip()]
+    if len(us) != len(ts):
+        return False
+    seen = False
+    for u, t in zip(us, ts):
+        if u == t:
+            continue
+        # 收紧（T12b 教训）：不是「模板行含占位+用户行无占位」就放行——
+        # 必须用户行=模板行的占位格被非空填充、其余片段逐段原样，否则=真改动照报。
+        parts = rx.split(t)
+        if len(parts) < 2:
+            return False
+        import re as _r2
+        pat = "^" + "(.+?)".join(_r2.escape(x) for x in parts) + "$"
+        if not _r2.match(pat, u):
+            return False
+        seen = True
+    return seen
 
 
 def _cmp_norm(s: str) -> str:
@@ -357,11 +387,16 @@ def upsert_file_body(
     full_text: str,
     *,
     template_full: Optional[str] = None,
+    inject_exempt_re: Optional[str] = None,
     do_backup: bool = True,
     backup_dir: Optional[str] = None,
     dry: bool = False,
 ) -> Tuple[bool, str, str]:
     """带 frontmatter 的整file增量写。返回 (ok, status, msg)。
+
+    `inject_exempt_re`（C14）：step5 注入位占位格的行模式（如摘要版 `[Qn·答案待注入]`）。
+    给出时，「纯注入差异」不判用户手改（UNCHANGED 预期态·⛔ 覆盖注入内容）；
+    仅在包正文与模板一致（重装无升级）时生效——包升级撞上已注入格=真冲突照报，交人工。
 
     形态：**frontmatter 留在文件首位（用户已有则保留用户的）· 正文走标记段**。
 
@@ -396,6 +431,13 @@ def upsert_file_body(
         _tpl_sec = read_section(_tpl_all, sid)
         _tpl_cmp = _tpl_sec if _tpl_sec is not None else _tpl_all
         if _cmp_norm(old_section) != _cmp_norm(_tpl_cmp):
+            # C14 注入预期态豁免：纯占位格填充不算用户手改（重装场景）；包升级照报
+            if (inject_exempt_re
+                    and _cmp_norm(pkg_body) == _cmp_norm(_tpl_cmp)
+                    and _diff_is_injection_only(old_section, _tpl_cmp,
+                                                __import__("re").compile(inject_exempt_re))):
+                return True, STATUS_UNCHANGED, (
+                    "段 %r 为 step5 注入预期态（占位格已填·纯注入差分）·幂等不写·⛔ 覆盖注入内容" % (sid,))
             return (
                 False,
                 STATUS_CONFLICT,

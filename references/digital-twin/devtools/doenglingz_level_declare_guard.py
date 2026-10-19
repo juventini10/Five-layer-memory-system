@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # TRUTH_OF: 脚本中心/doenglingz_level_declare_guard.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
+# version: v1.10 → v1.11（2026-10-16 Qoder CN·假红结构定案根治：_expected_tier 按"最大ts组内max"
+#   实现注释本意，堵"同会话历史 D3 被无下界窗口永久继承"；负例三例自测见系统日志 10-16）
+# version: v1.8 → v1.9（2026-10-09 Qoder CN·皮叔令「按符合愿景的最优解去根治处理」·位置性假红根治：
+#   声明类判据（档位/档位对账/域判定）加 transcript 本回合回退读面·仅在读面判不出时启用·树位置等判据零变更；
+#   ⛔不取 tool_use 字（防假红换假绿）·切片以末条有正文 user 行为界（防上回合声明顶替本回合）；
+#   台账新增 round_used 可见性；自测 +T17/T18/T19 +MUT3（置哑 _round_text→T17 必红·可证伪））
 # version: v1.7 → v1.8（2026-10-07 Qoder CN·你令按三明治推荐开工·P3②错位对账落地：
 #   D3 回合 AI 宣告域⊄W3机器词面域 且 无补载痕(显形行/transcript读slices动作) → alarm+台账；
 #   痕在=已恢复仅台账不报警；W3无当会话行=不判⛔不假红。判据源可证伪：MUT2 置哑 _machine_layers → T13 必哑。
@@ -48,13 +54,33 @@ doenglingz_level_declare_guard.py —— Stop 钩子·童灵档位声明对账�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import sys
 import os
 import json
 import re
 from datetime import datetime
+
+# v1.9：transcript_reader 装载（同 doenglingz_guard._fallback_transcript_text 惯例·端中立件）
+_TR_LIB = None
+def _load_tr():
+    global _TR_LIB
+    if _TR_LIB is not None:
+        return _TR_LIB
+    for _p in (os.path.dirname(os.path.realpath(__file__)),
+               os.path.dirname(os.path.abspath(__file__)),
+               os.path.expanduser("[记忆共享中心]/脚本中心"),
+               os.path.expanduser("[记忆共享中心]/脚本中心")):
+        if os.path.isdir(_p) and _p not in sys.path:
+            sys.path.insert(0, _p)
+    try:
+        import transcript_reader as _tr
+        _TR_LIB = _tr
+    except Exception:
+        _TR_LIB = False
+    return _TR_LIB
 
 STATE = os.path.join(os.environ.get("DOENGLINGZ_CONFIG_DIR") or os.environ.get("WORKBUDDY_CONFIG_DIR") or os.path.expanduser("~/.workbuddy"),
                      "doenglingz_level_declare_state.json")
@@ -116,6 +142,35 @@ def _get_text(obj):
     return ""
 
 
+def _round_text(obj):
+    """v1.9（2026-10-09 Qoder CN·皮叔令「按符合愿景的最优解根治」）：本回合全部 assistant 正文（时间序）。
+
+    病根＝**位置性假红**：Stop payload 的 last_assistant_message 只含**最后一段**回复。档位块若落在
+    工具调用之前的分段（「先交代→再取证→再交付」这一正常工作形态），payload 文本看不见它 →
+    declared=false＋alarm=true。本端台账 2026-10-09 18:56 实证（head 以【意图分类】开头而实际首行有档位块）。
+    判据未随对象演化：本守卫该判的对象是「**这一回合**有没有交代」，不是「最后一条消息有没有」。
+
+    三条读面纪律（⛔不得放宽）：
+    ① 只取 role==assistant 的正文——flatten_content 对 tool_use/thinking 取不到 text 天然剥离，
+       从工具参数里捞「童灵·D3」＝把假红换成假绿，比原病更糟；
+    ② 切片以「最后一条有正文的 user 行」为界——⛔不取整份 transcript，否则上一回合的声明会顶替本回合的漏交代（假绿）；
+    ③ transcript 不可得/reader 缺件 → 返空串＝维持 v1.8 原判定（宁可不判不猜·保守不冤枉）。
+    """
+    tp = obj.get("transcript_path") if isinstance(obj, dict) else None
+    tr = _load_tr()
+    if not tp or not os.path.isfile(tp) or not tr:
+        return ""
+    try:
+        msgs = tr.iter_messages(tp)
+    except Exception:
+        return ""
+    cut = 0
+    for i, (role, text) in enumerate(msgs):
+        if role == "user" and text.strip():
+            cut = i + 1
+    return "\n".join(t for role, t in msgs[cut:] if role == "assistant" and t.strip())
+
+
 def _norm_sid(s):
     """sid 归一（FU-116·2026-10-05 判假线实证）：ZCode payload sid 三代格式并存
     （sess_* / task-*.session.execution / 裸 UUID）且 UPS 与 Stop 同会话不同形
@@ -128,8 +183,44 @@ def _norm_sid(s):
     return s.split(".", 1)[0].strip().lower()
 
 
-def _expected_tier(session_id, inject_path=None):
-    """取本会话最近一次注入算出的档位。无 d_tier 字段（v1.8 前的老台账行）→ None＝不判·⛔不假红。"""
+def _tsnorm(v):
+    """时间串归一为 "YYYY-MM-DD HH:MM:SS" 可字典序比较；解不了给空串＝不参与窗口。"""
+    s = str(v or "").strip()
+    if not s:
+        return ""
+    s = s.replace("T", " ").replace("Z", "").split(".")[0].split("+")[0]
+    return s[:19] if len(s) >= 19 else ""
+
+
+def _round_ts(obj):
+    """被审回合最后一条 assistant 正文的时刻（=本回合回复时刻），作对账窗口上界。
+    取不到→空串＝调用方退回旧行为（保守不放松·⛔不因此新造假红）。"""
+    tp = obj.get("transcript_path") if isinstance(obj, dict) else None
+    tr = _load_tr()
+    if not tp or not tr or not hasattr(tr, "iter_messages_with_ts"):
+        return ""
+    try:
+        rows = tr.iter_messages_with_ts(tp)
+    except Exception:
+        return ""
+    cut = 0
+    for i, (role, text, _ts) in enumerate(rows):
+        if role == "user" and text.strip():
+            cut = i + 1
+    for role, text, ts in reversed(rows[cut:]):
+        if role == "assistant" and text.strip():
+            return _tsnorm(ts)
+    return ""
+
+
+def _expected_tier(session_id, inject_path=None, as_of=""):
+    """取本回合注入算出的档位。
+
+    v1.10（2026-10-10·PAT-087·Qoder CN）：as_of 给定时按**窗口**取（ts<=as_of 的最后一组行里
+    的最大档），⛔再用"全会话最后一行"代表本回合——原因是事件腿让一个回合可有多行，
+    且下一回合的 UPS 行会在 Stop 评估前落盘，旧取法把"下一回合的 D1"当"本回合的期望档"，
+    使真红（惯性高报）与假红（合法升档）同形。as_of 空＝退回 v1.9 行为（保守·不新增假红）。
+    无 d_tier 字段（v1.8 前的老台账行）→ None＝不判·⛔不假红。"""
     # PAT-081 根治（2026-10-06·皮叔令「每端做自己端的·不要互通造成假象」）：
     #   旧只认 WORKBUDDY_CONFIG_DIR→默认 ~/.workbuddy，与 injector 写 inject_state 的
     #   三段解析(DOENGLINGZ>WORKBUDDY>默认)不同根 ⇒ 非 WB 端 inject 写本端根、declare_guard
@@ -147,7 +238,21 @@ def _expected_tier(session_id, inject_path=None):
     if not want:
         return None          # 无会话号＝对不上归属，宁可不判也不猜（防跨会话错配）
     cand = [r for r in rows if r.get("d_tier") and _norm_sid(r.get("session_id")) == want]
-    return cand[-1].get("d_tier") if cand else None
+    if not cand:
+        return None
+    _as = _tsnorm(as_of)
+    if _as:
+        win = [r for r in cand if (_tsnorm(r.get("ts")) or "9999") <= _as]
+        if win:
+            _ord = {"D1": 1, "D2": 2, "D3": 3}
+            # v1.11 归真（2026-10-16·Qoder CN·会话task-acf6c假红实锤）：docstring 说
+            # "最后一组行里的最大档"，实现却拿整个无下界窗口的 max ⇒ 同会话历史上出现过
+            # D3 后，其后每一轮都被永久继承成期望 D3（昨日 13 行 D3 咬中今日 D2 轮）。
+            # 组=最大 ts 的那一组行：max 只横向往（事件腿同轮多行取最高档），⛔纵向跨时间继承。
+            _mx = max(_tsnorm(r.get("ts")) or "9999" for r in win)
+            grp = [r for r in win if (_tsnorm(r.get("ts")) or "9999") == _mx]
+            return max((r.get("d_tier") for r in grp), key=lambda t: _ord.get(t, 0))
+    return cand[-1].get("d_tier")
 
 
 def _machine_layers(session_id, ledger_path=None):
@@ -208,10 +313,17 @@ def check():
                  "stdin_keys": ",".join(sorted(obj.keys())) if isinstance(obj, dict) else ""})
         return 0
     declared = bool(DECL.search(txt[:HEAD]))
+    # v1.9 分段回退腿（位置性假红根治）：**仅在 payload 读面判不出声明时**才启用 transcript 读面，
+    #   已绿回合路径零变更＝不牵连出新红；树位置/TSL/非D3越界三判据继续读 payload txt（⛔不扩大改动面）。
+    dcl_src, round_used = txt, False
+    if not declared:
+        _rnd = _round_text(obj)
+        if _rnd.strip() and DECL.search(_rnd[:HEAD]):
+            dcl_src, declared, round_used = _rnd, True, True
     # v1.3 档位"对不对"（声明集合 vs 注入器算出的唯一档位）
     _sid = str((obj if isinstance(obj, dict) else {}).get("session_id", "") or "")
-    got_tiers = sorted({"D" + m for m in TIER_DECL.findall(txt[:HEAD])})
-    exp_tier = _expected_tier(_sid)
+    got_tiers = sorted({"D" + m for m in TIER_DECL.findall(dcl_src[:HEAD])})
+    exp_tier = _expected_tier(_sid, as_of=_round_ts(obj))
     # 只在「童灵在场」的回合判定（防非童灵回合噪声）
     tongling_turn = MENTION in txt
     alarm = bool(tongling_turn and not declared)
@@ -263,7 +375,7 @@ def check():
 
     # ── 域判定错位对账（v1.8）：仅 D3 回合判；宣告⊄机器 且无痕=报警，有痕=已恢复不报警 ──
     machine = _machine_layers(_sid) if exp_tier == "D3" else None
-    declared_l = set(DECL_LAYER.findall(txt[:HEAD]))
+    declared_l = set(DECL_LAYER.findall(dcl_src[:HEAD]))
     drift_recovered, drift_alarm = set(), ""
     if exp_tier == "D3" and machine is not None and declared_l:
         drift_missing = declared_l - machine
@@ -284,7 +396,10 @@ def check():
              "declared_layers": sorted(declared_l),
              "machine_layers": (sorted(machine) if machine is not None else None),
              "drift_recovered": sorted(drift_recovered), "drift_alarm": bool(drift_alarm),
-             "head": txt[:80]})
+             "head": txt[:80], "round_used": round_used,
+             # v1.9.1 自证字段：本端载荷是否携带 transcript_path（不带=回退腿死代码·⛔不靠猜）
+             "tp_present": bool(isinstance(obj, dict) and
+                               str(obj.get("transcript_path") or "").strip())})
 
     if alarm:
         print(json.dumps({"alarm": True,
@@ -368,10 +483,22 @@ def _self_test():
 
     orig = _expected_tier
 
-    def run(msg, sid, stub=None):
-        payload = json.dumps({"last_assistant_message": msg, "session_id": sid},
-                             ensure_ascii=False)
-        globals()["_expected_tier"] = stub or (lambda s2, inject_path=None: orig(s2, inject_path=inj))
+    # v1.9 夹具：本回合 transcript（分段形态＝档位块在前一段、最终消息只剩正文）
+    def mk_transcript(name, segs):
+        """segs=[(role, text 或 content列表)] → 写 jsonl，返回路径。"""
+        path = os.path.join(tmp, name)
+        with open(path, "w", encoding="utf-8") as f:
+            for role, cont in segs:
+                f.write(json.dumps({"message": {"role": role, "content": cont}},
+                                   ensure_ascii=False) + "\n")
+        return path
+
+    def run(msg, sid, stub=None, tp=None):
+        _pl = {"last_assistant_message": msg, "session_id": sid}
+        if tp:
+            _pl["transcript_path"] = tp
+        payload = json.dumps(_pl, ensure_ascii=False)
+        globals()["_expected_tier"] = stub or (lambda s2, inject_path=None, as_of="": orig(s2, inject_path=inj, as_of=as_of))
         buf = _io.StringIO()
         old = sys.stdin
         sys.stdin = _io.StringIO(payload)
@@ -409,17 +536,47 @@ def _self_test():
         ("T16 D1回合宣告域 → 不参与错位判(仅D3)", "【童灵·D1 常驻模式（非全量，仅人格基底）】任务域判定：L3行为规则域。" + "正文" * 130, "S1", False),
     ]
     bad = 0
-    print("=== doenglingz_level_declare_guard v1.8 档位对账自测（含树位置+非D3越界+域错位判据）===")
+    print("=== doenglingz_level_declare_guard v1.9 档位对账自测（含树位置+非D3越界+域错位判据）===")
     for name, msg, sid, want in CASES:
         got = run(msg, sid)
         ok = (got == want)
         bad += 0 if ok else 1
         print("  %s %-32s 期望报警=%-5s 实得=%s" % ("\u2705" if ok else "\u274c", name, want, got))
-    mute = lambda s2, inject_path=None: None
+    # ── v1.9 位置性假红用例（分段形态·transcript 读面）──
+    tp_seg = mk_transcript("tp_seg.jsonl", [
+        ("user", "帮我看下这个方案"),
+        ("assistant", "【童灵·D1 常驻模式（非全量，仅人格基底）】\n我在。先取证再答。"),
+        ("assistant", [{"type": "tool_use", "name": "Bash",
+                        "input": {"command": "grep 童灵·D3 x"}}]),
+        ("assistant", "【意图分类】评估类。\n结论如上。童灵在岗。"),
+    ])
+    tp_none = mk_transcript("tp_none.jsonl", [
+        ("user", "帮我看下"),
+        ("assistant", "【意图分类】评估类。正文里提到童灵。"),
+    ])
+    tp_tool = mk_transcript("tp_tool.jsonl", [
+        ("user", "帮我看下"),
+        ("assistant", [{"type": "tool_use", "name": "Bash",
+                        "input": {"command": "echo 童灵·D1 常驻模式"}}]),
+        ("assistant", "【意图分类】评估类。正文里提到童灵。"),
+    ])
+    tp_stale = mk_transcript("tp_stale.jsonl", [
+        ("assistant", "【童灵·D1 常驻模式（非全量，仅人格基底）】上一回合的声明"),
+        ("user", "新指令"),
+        ("assistant", "【意图分类】评估类。正文里提到童灵，本回合没交代档位。"),
+    ])
+    EXTRA = [
+        ("T17 档位块在分段前·payload看不见 → 不报(根治)", "【意图分类】评估类。\n结论如上。童灵在岗。", "S1", tp_seg, False),
+        ("T18 两处都无档位 → 仍必报(防恒真)", "【意图分类】评估类。童灵在岗。", "S1", tp_none, True),
+        ("T19 档位只在tool_use里 → 必报(防假绿)", "【意图分类】评估类。童灵在岗。", "S1", tp_tool, True),
+        ("T20 上回合声明不顶本回合 → 必报(切片界)", "【意图分类】评估类。童灵在岗。", "S1", tp_stale, True),
+        ("T21 payload自身有档位 → 回退腿不启用(不过界)", "【童灵·D1 常驻模式（非全量，仅人格基底）】正文", "S1", tp_none, False),
+    ]
+    mute = lambda s2, inject_path=None, as_of="": None
     m2, m3 = run("【童灵·D2 域模式】正文", "S1", mute), run("童灵·D1 / 童灵·D2 正文", "S2", mute)
     mut_ok = (not m2) and (not m3)
     print("  %s MUT 判据源置哑 → T2/T3 必同时变哑（实得 T2=%s T3=%s）" % ("\u2705" if mut_ok else "\u274c", m2, m3))
-    print("合计 %d/%d 过＋变异%s（分母由 len(CASES) 实算）" % (len(CASES) - bad, len(CASES),
+    print("合计 %d/%d 过＋变异%s（分母由 len(CASES) 实算·不含 v1.9 新用例）" % (len(CASES) - bad, len(CASES),
                                                           "被抓" if mut_ok else "未抓·探针作废"))
     # §3.9 承接标记（guard_selftest_check classify_mut 消费）：探针一直在跑，⛔未按标记留痕＝聚合器看不见
     #   ⇒ 该 🔴"新守卫缺变异自检"按设计正确（无标记＝无证据），本次补的是本件欠的承接，不是纠错。
@@ -432,6 +589,21 @@ def _self_test():
     print("  %s MUT:%s 判据源置哑 → T2/T3 同时变哑（探针在岗且可证伪）"
           % ("✅" if mut_ok else "❌", "OK" if mut_ok else "FAIL"))
     # MUT2（v1.8）：置哑 _machine_layers → T13 必哑（证明错位判据确实吃 W3 台账这个源）
+    # ── v1.9 新用例实跑（分母计入·⛔不另起小计糊弄）──
+    for name, msg, sid, tp, want in EXTRA:
+        got = run(msg, sid, tp=tp)
+        ok = (got == want)
+        bad += 0 if ok else 1
+        print("  %s %-46s 期望报警=%-5s 实得=%s" % ("\u2705" if ok else "\u274c", name, want, got))
+    # MUT3：置哑 _round_text → T17 必须变红（证明 T17 真吃回退腿，非恒绿）
+    orig_rt = _round_text
+    globals()["_round_text"] = lambda o: ""
+    m17 = run("【意图分类】评估类。\n结论如上。童灵在岗。", "S1", tp=tp_seg)
+    globals()["_round_text"] = orig_rt
+    mut3_ok = bool(m17)
+    print("  %s MUT3:回退腿置哑 → T17 必红（实得 T17=%s）" % ("\u2705" if mut3_ok else "\u274c", m17))
+    print("  %s MUT3:%s 回退腿置哑 → T17 转红（探针在岗且可证伪）" % ("MUT:OK" if mut3_ok else "MUT:FAIL", "OK" if mut3_ok else "FAIL"))
+    total = len(CASES) + len(EXTRA)
     orig_ml = _machine_layers
     globals()["_machine_layers"] = lambda sid, ledger_path=None: None
     m13 = run("【童灵·D3 上岗模式】任务域判定：L3行为规则域。" + "正文" * 130
@@ -439,7 +611,8 @@ def _self_test():
     globals()["_machine_layers"] = orig_ml
     mut2_ok = not m13
     print("  %s MUT2:W3台账源置哑 → T13 必哑（实得 T13=%s）" % ("✅" if mut2_ok else "❌", m13))
-    return 0 if (bad == 0 and mut_ok and mut2_ok) else 1
+    print("合计 %d/%d 过（含 v1.9 新用例 %d 条·分母实算）" % (total - bad, total, len(EXTRA)))
+    return 0 if (bad == 0 and mut_ok and mut2_ok and mut3_ok) else 1
 
 
 if __name__ == "__main__":

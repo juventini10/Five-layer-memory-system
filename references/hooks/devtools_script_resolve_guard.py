@@ -21,17 +21,20 @@
 用法：python3 devtools_script_resolve_guard.py [--strict]
 """
 from __future__ import annotations
+
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 HOME = os.path.expanduser("~")
 HG = os.path.join(HOME, ".hermes")
@@ -106,8 +109,12 @@ def main() -> int:
     inj = os.path.join(root, "doenglingz_inject_prompt.py")
     if os.path.isfile(inj):
         env = dict(os.environ)
-        env["DOENGLINGZ_CONFIG_DIR"] = os.path.join(HG, "doenglingz")
-        env["WORKBUDDY_CONFIG_DIR"] = os.path.join(HG, "doenglingz")
+        # 🔴 2026-10-08 探针**不得写被测对象的生产台账**（实测：本端台账 722 行里 290 行=40% 是它造的噪声；
+        #   且本件排在 hermes_session_anomaly_guard 之前 ⇒ 探针的写把注入链死活盖成假绿）。
+        #   修法=探针落隔离根（守卫规范 §3.9「夹具须可指向空目录」推广）·⛔判据不放松（仍要求 stdout 含「童灵」）。
+        _iso = tempfile.mkdtemp(prefix="dsrg_probe_")
+        env["DOENGLINGZ_CONFIG_DIR"] = _iso
+        env["WORKBUDDY_CONFIG_DIR"] = _iso
         try:
             # 🔴 2026-10-04 根治探针用词错误（实测·假红）：
             #   旧探针喂 prompt="探测"，而注入器的门是 w1_fired(prompt)——
@@ -126,6 +133,8 @@ def main() -> int:
         except Exception as exc:
             print(f"  ❌ 注入器实跑异常：{exc!r}")
             gaps.append(f"doenglingz_inject_prompt.py 实跑异常 {exc!r}")
+        finally:
+            shutil.rmtree(_iso, ignore_errors=True)
     else:
         print("  ❌ 注入器缺失：doenglingz_inject_prompt.py")
         gaps.append("doenglingz_inject_prompt.py 缺失")

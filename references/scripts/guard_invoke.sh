@@ -4,7 +4,7 @@
 #   例: guard_invoke.sh changelog_guard bash 开发工具/changelog-guard/changelog_guard.sh --check
 # 语义: 经此包装的调用记 manual; 执行完成后写exit码; 埋点失败不影响执行(fail-open)。
 # v2.0变更: 从"执行前后台写日志(无exit码)"改为"执行后写日志(含exit码)"——
-#   原设计exec "$@"替换进程无法捕获exit码; v2.0直接执行"$@"捕获$?后写日志再exit $RC。
+#   原设计exec "$@"替换进程无法捕获exit码; v2.0 直接执行"$@"捕获$?后写日志再exit $RC。
 #   代价: 不再用exec(信号传递略不同), 但exit码保真优先; 埋点仍后台异步不阻塞。
 N="$1"; if [ -z "$N" ]; then echo "usage: guard_invoke.sh <guard名> <命令...>" >&2; exit 2; fi
 shift

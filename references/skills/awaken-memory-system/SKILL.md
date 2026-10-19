@@ -11,7 +11,7 @@ allowed-tools: [Read, Write, Bash, Grep, Glob]
 dependencies: [scripts/distill_due_core.py, scripts/awaken_version_gate_check.py, scripts/update_snapshot_from_diary.py, scripts/awaken_patrol.sh, scripts/awaken_distill_due_check.py, scripts/awaken_health_dashboard.py, ../daily-buddy/scripts/distill_containers.py]
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/awaken-memory-system/
+upstream: [记忆共享中心]/技能配置/awaken-memory-system/
 modifiable: true
 version: "8.3.3"
 license: Proprietary
@@ -224,8 +224,8 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 **作者侧工具脚本与兄弟 Skill 脚本**（消费处 dual-mode.md 全量 1e 软链接自愈、独立触发自画像补跑；restore-my-skills.sh 失败→降级"报告失败信息不阻塞"，distill_containers.py 失败→输出错误信息+建议手动检查，不阻塞）：
 
-- ~/[记忆共享中心]/技能配置/restore-my-skills.sh
-- ~/[记忆共享中心]/技能配置/daily-buddy/scripts/distill_containers.py
+- [记忆共享中心]/技能配置/restore-my-skills.sh
+- [记忆共享中心]/技能配置/daily-buddy/scripts/distill_containers.py
 
 **自动巡检宿主依赖（8.0 阶段③·macOS 端·消费处 patrol.md §3）**：launchd（StartInterval 定时）+ osascript（系统通知）+ `~/buluotuo_bin/log/`（巡检日志）——均为 macOS 系统能力/本机路径，非 macOS 端自动巡检不生效（⛔不迁移·兼容性如实声明）；缺省时双模式会话内巡检（patrol.md §1/§2）仍可用，不阻断主流程。
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.buluotuo.doubaowork.patrol</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>[记忆共享中心]/开发工具/Skill路由引擎/scripts/route_doubaowork_patrol.sh</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>1800</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>[记忆共享中心]/脚本中心/.patrol/launchd_doubaowork.log</string>
+    <key>StandardErrorPath</key>
+    <string>[记忆共享中心]/脚本中心/.patrol/launchd_doubaowork.err</string>
+</dict>
+</plist>

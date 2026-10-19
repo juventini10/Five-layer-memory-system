@@ -9,9 +9,9 @@ allowed-tools: [Read, Write, Bash, Grep]
 dependencies: [scripts/create_skeleton.py, scripts/finalize_diary.py, scripts/achievement_tracker.py, scripts/update_diary_achievement.py, scripts/verify_achievement_seal.py, scripts/monthly_data_snapshot.py, scripts/verify_report_data.py, scripts/distill_containers.py, scripts/finalize_report.py]
 author: 皮叔
 source: self-built
-upstream: ~/[记忆共享中心]/技能配置/daily-buddy/
+upstream: [记忆共享中心]/技能配置/daily-buddy/
 modifiable: true
-version: "3.50.0"
+version: "3.51.6"
 license: MIT
 complies_with: 文件格式规范 v2.0.0
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
@@ -20,7 +20,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ## 🔗 外部依赖路径表（集中声明 · 变更只改此处）
 
 > 本 Skill 跨 skill 引用以下绝对路径，集中声明以避免散落硬编码导致静默断裂，并降低评估器误报。
-> 变量化约定：`$SKILL_ROOT` = `~/[记忆共享中心]/技能配置/daily-buddy/`（即 frontmatter `upstream`）。
+> 变量化约定：`$SKILL_ROOT` = `[记忆共享中心]/技能配置/daily-buddy/`（即 frontmatter `upstream`）。
 
 ## ✅DO 脚本调用规范（环境自愈·第一性原理根治·2026-08-20 加固）
 
@@ -40,18 +40,18 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 | 变量 | 绝对路径（目录以 `/` 结尾）| 用途 | 何时 Read |
 |:---|:---|:---|:---|
-| `$SKILL_ROOT` | `~/[记忆共享中心]/技能配置/daily-buddy/` | 本 Skill 权威源（各平台软链同步）| 始终 |
-| `$SPEC` | `~/[记忆共享中心]/记忆蓝图/03_开发规范/指令编写规范.md` | 指令质量要求依据 | 编写指令时 |
-| `$ACHIEVE_SCRIPTS` | `~/[记忆共享中心]/成就系统/scripts/` | 成就系统脚本目录（含 `check_concept_achievement.py`）| 工作流C 封口后 |
-| `$GREATEST` | `~/[记忆共享中心]/最伟大的我/` | 自画像蒸馏源 | 月报工作流F |
-| `$DISTILL` | `~/[记忆共享中心]/记忆蒸馏/蒸馏中心.md` | 工作模式信号 PULL 总线 | 月报工作流F 第1.1步 |
+| `$SKILL_ROOT` | `[记忆共享中心]/技能配置/daily-buddy/` | 本 Skill 权威源（各平台软链同步）| 始终 |
+| `$SPEC` | `[记忆共享中心]/记忆蓝图/03_开发规范/指令编写规范.md` | 指令质量要求依据 | 编写指令时 |
+| `$ACHIEVE_SCRIPTS` | `[记忆共享中心]/成就系统/scripts/` | 成就系统脚本目录（含 `check_concept_achievement.py`）| 工作流C 封口后 |
+| `$GREATEST` | `[记忆共享中心]/最伟大的我/` | 自画像蒸馏源 | 月报工作流F |
+| `$DISTILL` | `[记忆共享中心]/记忆蒸馏/蒸馏中心.md` | 工作模式信号 PULL 总线 | 月报工作流F 第1.1步 |
 | `$DIARY` | `~/Local_Obsidian_Vault/1-每日计划/01-日记` | 日记文件根（含 `YYYY-MM/` 月层·与 `scripts/create_skeleton.py` 的 `DIARY_BASE` 同源）| 工作流A 存在性检查 |
-| `$SYSTEM_LOG` | `~/[记忆共享中心]/工作日志/系统日志/` | 系统日志写入（工作流C 封口后）| 工作流C |
-| `$UNKNOWN` | `~/[记忆共享中心]/未知未知/` | 悬置区/断言台账（工作流C 反哺路由）| 工作流C |
-| `$SITUATION` | `~/[记忆共享中心]/情境层/` | 动态状态快照读写（工作流C 收尾）| 工作流C |
+| `$SYSTEM_LOG` | `[记忆共享中心]/工作日志/系统日志/` | 系统日志写入（工作流C 封口后）| 工作流C |
+| `$UNKNOWN` | `[记忆共享中心]/未知未知/` | 悬置区/断言台账（工作流C 反哺路由）| 工作流C |
+| `$SITUATION` | `[记忆共享中心]/情境层/` | 动态状态快照读写（工作流C 收尾）| 工作流C |
 | `$HEURISTIC` | 知识池「✅核心启发」标签子集（虚拟集合·非实体目录·deep-dive-protocol L97/100：先扫✅标签卡→无则扫知识池全部卡片） | 启发条目检索（工作流C 复盘引用）| 工作流C |
-| `$KB_ENGINE` | `[记忆共享中心]/脚本中心/知识联邦引擎/` | 知识检索脚本（工作流C 引用）| 工作流C |
-> 🔻 **降级声明**：上列/本节涉及的知识联邦引擎及其脚本属**发布者工具**，安装包不携带该目录——端用户无此引擎时，相关步骤**跳过·不阻塞**。
+| `$KB_ENGINE` | `[记忆共享中心]/知识联邦引擎/` | 知识检索脚本（工作流C 引用）| 工作流C |
+> 🔻 **降级声明**：上列/本节涉及的知识联邦引擎及其脚本属**发布者工具**，端用户最小集随包分发（references/知识联邦引擎-min→装至 [记忆共享中心]/知识联邦引擎/·2026-10-10 按实盘修正旧表述）——端用户无此引擎时，相关步骤**跳过·不阻塞**。
 
 ---
 
@@ -209,9 +209,9 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 > 1. **格式即法律**：输出✅DO严格遵循文末的【SSOT 日记模板】，包含全部 HTML 注释标记（如 `<!-- SECTION: 模块名 -->`），严格保留模板的标题层级结构。——原因是格式漂移=跨天数据不可比对，模板一致性是月报/周报数据源可靠的前提。
 > 2. **数据有出处**：每项数据从日记原文、`date` 命令输出、脚本结果或用户回答中提取。空值留空。——原因是AI记忆可能过时或幻觉，无出处的数据=不可信的数据。
 > 3. **文件唯一性**：每天只有 1 个文件，格式为 `YYYY-MM-DD.md`。文件已存在时追加/更新局部内容。需要新内容时写入当天文件，只使用 `YYYY-MM-DD.md` 格式。——原因是多文件=数据分散=同步冲突+统计遗漏。
-> 4. **时间真相**：所有时间戳通过 `date` 命令获取真实系统时间。——原因是AI推算时间=确定性计算走概率路径=日期连错3天的根因（LRN-20260702-001）。
+> 4. **时间真相**：所有时间戳通过 `date` 命令获取真实系统时间。——原因是AI推算时间=确定性计算走概率路径=日期连错3天的根因（内部记录）。
 > 5. **复盘真相源**：晚上生成建议时，从日记"实际完成区"取值——不看"早晨计划区"的数据。——原因是早晨计划=预期而非事实，从计划区取值=用期望代替现实=自我欺骗。
-> 6. **本文件唯一可信源**：本 SKILL.md 的唯一可信源路径为 `~/[记忆共享中心]/技能配置/daily-buddy/SKILL.md`。各平台（`.trae-cn/skills/daily-buddy/`、`/workbuddy/skills/daily-buddy/`）均为指向权威源的目录级软链接，权威源更新后自动同步，无需手动 cp 或 md5 校验。所有修改在权威源路径执行后自动同步到缓存目录。——原因是多副本=版本漂移=不同平台执行不同逻辑。
+> 6. **本文件唯一可信源**：本 SKILL.md 的唯一可信源路径为 `[记忆共享中心]/技能配置/daily-buddy/SKILL.md`。各平台（`.trae-cn/skills/daily-buddy/`、`/workbuddy/skills/daily-buddy/`）均为指向权威源的目录级软链接，权威源更新后自动同步，无需手动 cp 或 md5 校验。所有修改在权威源路径执行后自动同步到缓存目录。——原因是多副本=版本漂移=不同平台执行不同逻辑。
 >
 > **✅DO — 做对了什么样**：6条P0全部遵守时，日记=可信的时间胶囊——每条数据可溯源、每个格式可跨天比对、每次复盘基于事实而非期望。
 
@@ -296,7 +296,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | `scripts/verify_achievement_seal.py` | 成就封口签名独立校验 | 签名 == 当日真实数据 → 通过；否则阻断 |
 | `$ACHIEVE_SCRIPTS/check_concept_achievement.py` | 概念碰撞成就日结对账（二道防线）| 幂等可重复跑；缺口 + 漏封检测 |
 
-> 🔗 **软链归属声明（2026-09-11 收口·发布视角）**：`scripts/achievement_tracker.py` 为**软链** → `~/[记忆共享中心]/成就系统/scripts/achievement_tracker.py`（成就系统真身·单一真源·双入口设计——本 Skill 与成就系统共用一份逻辑，改一处全生效）。⛔DO NOT 改为独立副本（=双本账漂移）。调用须经 `dbbin.sh`（注入权威 HOME → `Path.home()` 正确解析）；发布包构建时软链已复制为普通文件（同族共享组件·成就系统属五层记忆发布家族）。
+> 🔗 **软链归属声明（2026-09-11 收口·发布视角）**：`scripts/achievement_tracker.py` 为**软链** → `[记忆共享中心]/成就系统/scripts/achievement_tracker.py`（成就系统真身·单一真源·双入口设计——本 Skill 与成就系统共用一份逻辑，改一处全生效）。⛔DO NOT 改为独立副本（=双本账漂移）。调用须经 `dbbin.sh`（注入权威 HOME → `Path.home()` 正确解析）；发布包构建时软链已复制为普通文件（同族共享组件·成就系统属五层记忆发布家族）。
 > 🚦 **exit 码族统一规范（2026-09-11 收口·单一真相源 `scripts/dbenv.py` docstring）**：0=成功 / 1=参数错误 / 2=内容不完整 / 3=依赖文件缺失 / 4=依赖字段缺失 / **9=环境自检失败（全脚本 self_check 统一·原 1/2/7 三族分叉收净）**。
 
 ✅ 验证：本 Skill 触发后工作流声明首行含版本号（`📋 每日伙伴 v{版本} · {工作流名}`——版本自愈与工作流声明合一，2026-08-10 复审统一），各拦截脚本（finalize_diary/create_skeleton/verify_achievement_seal）exit code 即物理拦截（等价于 hook 强制层），QA 工具（check_diary_titles/test_context_sync）为纯报告不阻断——2026-08-10 复审精确化，AI 不替代脚本判定。
@@ -374,7 +374,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
    >   ```
 
    > 💡 **错误候选提醒（每天触发·P1-1错误记录半自动化L2人工确认层）**：
-   > - 读取 `~/[记忆共享中心]/成长箱/错误候选待确认.md`（由error_candidate_miner.py每天7:30自动生成·L1机械发现层）
+   > - 读取 `[记忆共享中心]/成长箱/错误候选待确认.md`（由error_candidate_miner.py每天7:30自动生成·L1机械发现层）
    > - 如果有⏳待确认候选（≤5条），输出提醒：
    >   ```
    >   🔔 错误候选待确认（自动挖掘·从近7天系统日志粗筛）
@@ -403,7 +403,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 <example>
 用户：早上好
-AI：📋 每日伙伴 v3.48.2 · 早晨规划
+AI：📋 每日伙伴 v3.51.6 · 早晨规划
 🧭 早晨规划 · 2026-06-04
 ■ 运行 `bash scripts/dbbin.sh create_skeleton.py --date 2026-06-04` → 骨架已生成（day_of_week=周三·脚本注入）
 ■ 未完成结转：昨日日记的"完成视频素材粗剪"未完成，是否移入今日？（需确认优先级和🍅数）
@@ -484,7 +484,7 @@ AI：（打开今日日记 → 找到"视频剪辑"行 → 实际列 +2 → 累�
 > - ✅DO 保留：推翻旧认知/发现新模式/有可操作的新结论/可复用的模式/根治性方案
 > - ✅DO 重复卡处理：不是简单归档——先提取价值合并到更完整的那张卡里，再归档
 > - ✅DO 思维顺序动态调整：主题熟悉→先第一性原理；主题不熟悉→先抽象建模
-> - ✅DO 预筛记录追加 `~/[记忆共享中心]/数字分身/steps/step3-first-review-log.md` 的**概念卡预筛段**（与 JOB-001 立场卡初审同文件分区·独立小节：含卡名/判定/一句理由/日期；⛔不占 JOB-001 推翻率台账分母——概念卡预筛无对应 record 义务，与立场卡初审双账制分属两岗）
+> - ✅DO 预筛记录追加 `[记忆共享中心]/数字分身/steps/step3-first-review-log.md` 的**概念卡预筛段**（与 JOB-001 立场卡初审同文件分区·独立小节：含卡名/判定/一句理由/日期；⛔不占 JOB-001 推翻率台账分母——概念卡预筛无对应 record 义务，与立场卡初审双账制分属两岗）
 > - ⛔DO NOT 查格式——格式检查不是预筛职责，格式问题由提取脚本自检
 > - ⛔DO NOT 替皮叔做价值判断——预筛是"初筛"不是"终审"，皮叔保留最终决定权
 >
@@ -590,22 +590,22 @@ AI：（打开今日日记 → 找到"视频剪辑"行 → 实际列 +2 → 累�
 
 **宿主共享引擎——知识联邦引擎**（消费处 SKILL.md 环境表、references/工作流C-晚间复盘.md 5.5 概念抽取管道、references/weekly-review-sop.md 概念快览、references/monthly-review-sop.md 概念层月度产出+引用台账扫描、references/工具与参考.md、scripts/dbenv.py FED_DIR、data_snapshots/ 溯源行；缺失→工作流C 5.5 熔断器降级"概念抽取不可用"，月报降级"人工复核清单"，不阻塞）：
 
-- [记忆共享中心]/脚本中心/知识联邦引擎/
-- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/extract_concepts.py
-- [记忆共享中心]/脚本中心/知识联邦引擎/pending_bundle.md
-- [记忆共享中心]/脚本中心/知识联邦引擎/concepts_out.json
-- [记忆共享中心]/脚本中心/知识联邦引擎/log.md
-- [记忆共享中心]/脚本中心/知识联邦引擎/collision_candidates.json
-- [记忆共享中心]/脚本中心/知识联邦引擎/restill_pending.json
+- [记忆共享中心]/知识联邦引擎/
+- [记忆共享中心]/知识联邦引擎/scripts/extract_concepts.py
+- [记忆共享中心]/知识联邦引擎/pending_bundle.md
+- [记忆共享中心]/知识联邦引擎/concepts_out.json
+- [记忆共享中心]/知识联邦引擎/log.md
+- [记忆共享中心]/知识联邦引擎/collision_candidates.json
+- [记忆共享中心]/知识联邦引擎/restill_pending.json
 
 **兄弟 Skill 脚本——clock-loop**（消费处 references/monthly-review-sop.md 断言台账监控；已有降级声明"clock-loop 未安装则跳过并标注"）：
 
-- ~/[记忆共享中心]/技能配置/clock-loop/scripts/load_claim_index.py
-- ~/[记忆共享中心]/技能配置/clock-loop/scripts/append_claim.py
+- [记忆共享中心]/技能配置/clock-loop/scripts/load_claim_index.py
+- [记忆共享中心]/技能配置/clock-loop/scripts/append_claim.py
 
 **兄弟 Skill 健康检查——good-good-study**（消费处 references/monthly-review-sop.md 升版待办四闸；文件缺失→标注"还差哪闸"降级，不阻塞）：
 
-- ~/[记忆共享中心]/技能配置/good-good-study/references/ROADMAP.md
+- [记忆共享中心]/技能配置/good-good-study/references/ROADMAP.md
 
 ## 🌀 未知未知写入前置（自包含引导）
 

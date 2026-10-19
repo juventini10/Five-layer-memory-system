@@ -30,7 +30,7 @@ from pathlib import Path
 from datetime import datetime
 
 HOME = Path.home()
-LEDGER_PATH = HOME / "~/[记忆共享中心]/数字分身/job_probation_ledger.json"
+LEDGER_PATH = HOME / "[记忆共享中心]/数字分身/job_probation_ledger.json"
 ID_RE = re.compile(r"JOB-\d{3}-\d{8}-\d{3}")
 # v1.5·批量简写展开（2026-09-22 假红根治）。载体被明文允许"按批登记·批次ID范围"写法
 # （good-good-study SKILL.md JOB-001 段：批量初审按批登记·决策ID连续·每批末尾汇总一条含批次ID范围），
@@ -76,16 +76,20 @@ def collect_ids(text):
 # 新增岗位时在此登记载体路径，否则该岗位日志ID=0（只能单向对账）
 JOB_LOG_SOURCES = {
     "JOB-001": [
-        HOME / "~/[记忆共享中心]/数字分身/steps/step3-first-review-log.md",
+        HOME / "[记忆共享中心]/数字分身/steps/step3-first-review-log.md",
     ],
     "JOB-003": [
-        HOME / "~/[记忆共享中心]/成长箱/experience/规范反哺日志.md",
-        HOME / "~/[记忆共享中心]/成长箱/learnings/LEARNINGS.md",
-        HOME / "~/[记忆共享中心]/工作日志/系统日志",   # 目录：递归扫当日+归档
+        HOME / "[记忆共享中心]/成长箱/experience/规范反哺日志.md",
+        HOME / "[记忆共享中心]/成长箱/learnings/LEARNINGS.md",
+        HOME / "[记忆共享中心]/工作日志/系统日志",   # 目录：递归扫当日+归档
     ],
     "JOB-004": [
-        HOME / "~/[记忆共享中心]/数字分身/steps/step3-first-review-log.md",
+        HOME / "[记忆共享中心]/数字分身/steps/step3-first-review-log.md",
     ],  # 技能卡审核岗（七闸）·与 JOB-001 共用同一初审台账载体（卡号 KXXX/SXXX 区分）·2026-09-22 上岗同轮登记
+    "JOB-005": [
+        HOME / "[记忆共享中心]/工作日志/系统日志",              # Loop 交付条目须带决策ID（clock-loop SKILL.md 阶段4 岗位决策记录条款）
+        HOME / "[记忆共享中心]/评估知识库/test_results",        # 双盲评估报告·clock-loop_*.md 载体
+    ],  # Loop 标准确认岗·2026-10-13 追溯登记同轮登记载体（⛔留空=单向对账·新岗漏登记正是本文件要防的病）
     "JOB-002": [],  # 蒸馏调度岗·载体未登记（登记前该岗位仅单向对账）
 }
 

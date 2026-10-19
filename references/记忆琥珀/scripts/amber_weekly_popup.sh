@@ -16,7 +16,29 @@ fi
 #     行动指引必须带位置：说了怎么存，就要说存在哪（大白话文案规范）
 #   ⚠️ 只提醒不代判：收藏与否永远由人决定
 set -u
-AMBER_DIR="$HOME/记忆共享中心/记忆琥珀"
+# 记忆中心定位（C03·2026-10-14 E2E 实跑根治·与 amber_checkup.sh 同型同判据）：
+# 本行原写死 `$HOME/记忆共享中心/记忆琥珀`——是「字面目录名」而非占位符 `[记忆共享中心]`，
+# step6.5b 的 sed 命中不了它；用户中心改名同样落空 → 周报永远读不到 永久收藏 数据。
+# 口径：环境变量 > 真源自定位 > 具名候选 > 结构兜底 > 全落空 fail-loud（⛔不静默兜底假路径）
+_is_center() { [ -d "$1/记忆琥珀/engine" ] && [ -d "$1/记忆规则" ]; }   # 同时具备才认定，防撞名误命中
+_MC=""
+for _c in "${AMBER_MC:-}" "${MEMORY_CENTER:-}" \
+          "$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)" \
+          "$HOME/记忆共享中心" "$HOME/共享中心" "$HOME/记忆中心" "$HOME/布洛陀记忆中心"; do
+  # ⛔ 具名候选只放「端用户可能起的通用名」，不放作者侧目录名（作者目录名进包=占位化链路孤儿，
+  #   manifest_coverage_check 判红；且下面 $HOME/*/ 结构兜底本就按**结构特征**认中心，与目录叫什么无关）
+  [ -n "$_c" ] && _is_center "$_c" && { _MC="$_c"; break; }
+done
+if [ -z "$_MC" ]; then
+  for _d in "$HOME"/*/; do                        # 结构兜底：扫 $HOME 一层子目录
+    _d="${_d%/}"; [ -d "$_d" ] && _is_center "$_d" && { _MC="$_d"; break; }
+  done
+fi
+if [ -z "$_MC" ]; then
+  echo "❌ $(basename "$0")：未探测到记忆中心（须同时含 记忆琥珀/engine 与 记忆规则）——请设 AMBER_MC=<绝对路径> 或 MEMORY_CENTER=<绝对路径> 后重跑；⛔不静默兜底假路径（防弹窗文案与数据错位）" >&2
+  exit 2
+fi
+AMBER_DIR="$_MC/记忆琥珀"
 PERM_DIR="$AMBER_DIR/永久收藏"
 
 # 临时备份：本周（7天内）新增数

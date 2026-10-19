@@ -68,6 +68,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 一句话 | {按结果状态从「一句话·温度话术库」选一条填} |
 | 双章诚实 | honest_pass={true\|false} —— false=红字不达标（d5/固化漂移/capped<70）→⛔不得写'机械验证通过'；honest_flags=[{d5\|固化漂移\|capped<70}]（v3.19.0双章制·v3.21.0门禁⑤ --check-report-content 硬卡此行存在） |
 | 关键数字实录源 | {行数=wc -l实测 / 档位=.phaseX_last_run.json d5_band实录 / 分数=skill_eval JSON输出}——⛔凭框架印象推断的数字不得入表 |
+| 口径复扫凭证 | `口径复扫凭证 run_id=<8位hex>`（v4.18.0 门禁17·**有修复批的评估报告必填**·取 `python3 scripts/koujing_audit.py` 末行输出；无修复批写 `N/A（本轮无修复批）`）——⛔手写 id 无效，账本比对在 finalize 门禁17 |
 | Phase X 机检 | ✅通过（honest_pass=true）/ ❌未通过（honest_pass=false）——⛔不显示raw分数（v3.33.0双轨呈现） |
 | T5 对抗性 | ✅ {项数}项{全填/核心}（⛔不显示/20分数·v3.33.0双轨呈现） |
 | 版本号一致性 | ✅/❌ YAML {版本} = CHANGELOG {版本} |

@@ -96,7 +96,21 @@ while true; do
             echo "[watch $(date '+%F %T')] 🚨 塌缩熔断(无git好版本·保留隔离): $base 条目 ${last}→${now}——已隔离现场·待人工或 git 恢复" >>"$LOGFILE"
           fi
         else
-          /usr/bin/python3 "$ENGINE" "$f" >>"$LOGFILE" 2>&1
+          # python 解释器运行期解析（2026-10-13 跨平台根治·同 fswatch 定位模式）：
+          # 原写死 /usr/bin/python3 在 Homebrew-only 机器/Windows Git Bash 不存在→静默失效。
+          # PATH 优先·平台常见位兜底（Apple Silicon /opt/homebrew·Intel /usr/local）·py launcher 收尾。
+          PY_BIN="$(command -v python3 2>/dev/null || true)"
+          if [ -z "$PY_BIN" ]; then
+            for _cand in /usr/bin/python3 /usr/local/bin/python3 /opt/homebrew/bin/python3; do
+              [ -x "$_cand" ] && PY_BIN="$_cand" && break
+            done
+          fi
+          [ -z "$PY_BIN" ] && PY_BIN="$(command -v py 2>/dev/null || true)"
+          if [ -n "$PY_BIN" ]; then
+            "$PY_BIN" "$ENGINE" "$f" >>"$LOGFILE" 2>&1
+          else
+            echo "[watch $(date '+%F %T')] 🔴 未找到 python 解释器（PATH/常见位/py 均未命中）——归一化跳过" >>"$LOGFILE"
+          fi
           # B埋点(2026-08-23·你令): 守卫调用留痕 trigger_source=hook_auto（失败放行·不阻塞守护）
           [ -f "[记忆共享中心]/脚本中心/guard_invocation_logger.py" ] && \
             python3 "[记忆共享中心]/脚本中心/guard_invocation_logger.py" --guard systemlog_normalize_fix --source hook_auto --detail "fswatch:$base" >/dev/null 2>&1

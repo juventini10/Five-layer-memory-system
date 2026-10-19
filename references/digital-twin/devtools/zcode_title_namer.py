@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.4
 """zcode_title_namer.py — ZCode 专属适配器：UserPromptSubmit 钩子新会话首轮自动命名对话标题。
 
@@ -38,6 +34,10 @@ except Exception: pass
     echo '{"session_id":"<id>","prompt":"..."}' | python3 zcode_title_namer.py UserPromptSubmit   # 钩子模式
     python3 zcode_title_namer.py --dry-run --prompt "修复搜索超时问题" [--created-at-ms ...]      # 只看标题不写库
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import json
 import sqlite3
@@ -110,6 +110,7 @@ def set_title(session_id: str, title: str, created_ms: int) -> bool:
 
 def hook_mode() -> None:
     try:
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip().startswith("{") else {}
     except Exception:

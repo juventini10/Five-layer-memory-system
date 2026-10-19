@@ -50,7 +50,7 @@ case "${mode}" in
       echo "| 平台硬上限(截断) | ${HARD} |"
       echo "| 超出红线 | $((s - LIMIT)) |"
       echo ""
-      echo "> 处置：须指针化——完整细则移归档 ~/[记忆共享中心]/记忆规则/MEMORY-完整细则归档.md 再写，⛔DO NOT 直接塞。"
+      echo "> 处置：须指针化——完整细则移归档 [记忆共享中心]/记忆规则/MEMORY-完整细则归档.md 再写，⛔DO NOT 直接塞。"
       echo "> 机械报警已触发；修正动作(腾挪内容/指针化)须 AI 执行。"
     else
       echo "MEMORY.md ${s} 字符 ≤ 红线 ${LIMIT}（缓冲 $((HARD - s)) 至硬上限 ${HARD}），守卫通过"

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # REG: family=守卫 | registry=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/守卫编写规范.md§四 | board=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/03-进度看板.md
 # -*- coding: utf-8 -*-
 """stamp_precheck_guard.py v1.1 — 「变更记录时间戳」事前钩子（PreToolUse·落笔那一刻就拦）。
@@ -24,6 +20,10 @@ v1.1（2026-09-19 08:40·Qoder CN 童灵·皮叔令「根治这个风险」）�
 挂法：`~/.qoder-cn/settings.json` → PreToolUse（本端实证 exit 2 拦得住工具调用；机器本地，⛔不宣称跨端覆盖）。
 用法：stdin 收 payload；`--self-test` 跑夹具；`--check-time TEXT` 把同一判据用在非钩子场合（自测/巡检复用）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import datetime
 import json
 import os
@@ -120,6 +120,7 @@ def main(argv):
         return self_test()
     if "--check-time" in argv:
         i = argv.index("--check-time")
+        if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         txt = argv[i + 1] if i + 1 < len(argv) else sys.stdin.read()
         bad = judge(txt)
         print(_msg(bad) if bad else "✅ 时间戳实取无异常")

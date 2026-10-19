@@ -16,9 +16,10 @@
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import ast
 import os
 import re
@@ -40,8 +41,11 @@ try:
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.dirname(
         _os.path.abspath(__file__))), "scripts"))
     from runtime_paths import rp
-except Exception:            # ⛔ 不静默：解析器不可达时留痕交守卫报
-    rp = None
+except Exception as _rp_exc:   # ⛔ 解析器不可用 = 安装不完整·必须显形（2026-10-09 根治）
+    raise RuntimeError(
+        "布洛陀运行路径解析器（runtime_paths）不可用：%s: %s ⇒ 运行路径声明缺失/损坏或解析器不在探测路径，运行安装器重新生成。⛔ 不回落 rp=None——否则下游只报 NoneType（不指向根因）。"
+        % (type(_rp_exc).__name__, _rp_exc)
+    ) from _rp_exc
 # ── /BULUOTUO-PATH-PARAM ──────────────────────────────────────
 '''
 

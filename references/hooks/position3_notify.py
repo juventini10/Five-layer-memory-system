@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # TRUTH_OF: 脚本中心/position3_notify.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """position3_notify.py — 岗位3 对账异常的对话主动触达钩子（UserPromptSubmit）。
@@ -17,6 +13,11 @@ except Exception: pass
 节流：无状态每次注入一行（一行成本·异常清零即消失——处置激励内建）。
 纪律：失败默认放行 exit 0 · 只读不改 · 端感知输出（ZCode=additionalContext JSON·其他端=纯文本）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import json
 import os
 import sys

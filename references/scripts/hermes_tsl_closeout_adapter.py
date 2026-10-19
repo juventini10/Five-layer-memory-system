@@ -30,7 +30,7 @@ JSONL 夹具**，再调用共用守卫本体。
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import json
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     if "--selftest" in sys.argv:
         raise SystemExit(selftest())
     # 调试用：把 stdin 当作 assistant_response 灌进去
+    sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     _in = sys.stdin.read()
     _r = run(assistant_response=_in, session_id="cli")
     print(_r.stdout if _r else "")

@@ -12,7 +12,9 @@ set -euo pipefail
 AMBER_DIR="[记忆共享中心]/记忆琥珀"
 WHITELIST="[记忆共享中心]/记忆琥珀/engine/amber-whitelist.txt"
 LOG_FILE="[记忆共享中心]/记忆琥珀/engine/logs/amber.log"
-LOCK_FILE="/tmp/amber_backup.lock"
+# C04（2026-10-15）：锁名带被守护实例的身份指纹——旧全局单锁把"两套记忆中心"当一台机器管
+# （沙箱实证：新用户首备被本机既有实例 pid 挡住=生产系统级互斥域划错）。资源=AMBER_DIR，锁身份=其指纹。
+LOCK_FILE="/tmp/amber_backup_$(printf '%s' "$AMBER_DIR" | shasum -a 256 | cut -c1-8).lock"
 RETENTION_DAYS=7
 
 mkdir -p "$AMBER_DIR"
@@ -235,10 +237,39 @@ main() {
     exit 1
   fi
 
+
+  # P13#1 根治（2026-10-19）：系统文件白名单端映射——`[端配置根]/X` 按 step3-done
+  #   CONFIG_ROOT + rules/core-*.md 端形态解析（谁调用谁定根，⛔裸写 ~/.workbuddy 全端默认）
+  _CFGROOT=""
+  _step3done="${WHITELIST%/*}/../step3-done.md"
+  for _s3 in "$_step3done" "[记忆共享中心]/.install/step3-done.md"; do
+    [ -f "$_s3" ] && _CFGROOT="$(grep -m1 '^CONFIG_ROOT=' "$_s3" 2>/dev/null | cut -d= -f2)" && break
+  done
+  _CFGROOT="${_CFGROOT/#\~/$HOME}"
+
   while IFS= read -r line || [ -n "$line" ]; do
     # 跳过注释和空行
     line=$(echo "$line" | sed 's/#.*//' | xargs)
     [ -z "$line" ] && continue
+
+    # 路径归一（2026-10-14 E2E 实跑发现·C01）：白名单条目里的 `~/xxx` 在双引号内不做 tilde
+    # 展开，下方 [ -d ] / [ -f ] 永远为假 → 端系统文件被误记「文件不存在」，守护面谎报。
+    # 仅归一路径前缀，不触碰备份逻辑。
+    line="${line/#\~/$HOME}"
+
+    # P13#1：[端配置根] token 解析（WB 端=展开后同旧行为；qodercn 端→rules/core-*.md）
+    case "$line" in
+      *"[端配置根]/"*)
+        _wl_name="${line##*/}"
+        _wl_root="${_CFGROOT:-$HOME/.workbuddy}"
+        _wl_hit="$_wl_root/$_wl_name"
+        if [ ! -f "$_wl_hit" ]; then
+          _wl_lc="$(printf '%s' "$_wl_name" | tr 'A-Z' 'a-z')"
+          [ -f "$_wl_root/rules/core-$_wl_lc" ] && _wl_hit="$_wl_root/rules/core-$_wl_lc"
+        fi
+        line="$_wl_hit"
+        ;;
+    esac
 
     # 目录条目：递归备份内部所有文件（支持记忆蓝图等目录级守护）
     if [ -d "$line" ]; then

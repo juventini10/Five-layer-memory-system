@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 # 件端覆盖矩阵生成器（试点v0 · 仅ZCode列实扫）
 import json, re, os
@@ -133,7 +133,7 @@ C_ITEMS = [
     ("post_change_guard.py", "Stop·AI改文件后同步遗漏检测·WB+QCN已挂·ZCode零承载"),
     ("reply_tail_guard.py", "Stop advisory·回复留尾巴检测(注册表L695)·WB承载·ZCode零承载"),
     ("skill_spec_read_guard.py", "PreToolUse硬拦·改SKILL.md前必读规范(注册表L696)·ZCode有PreToolUse同位件skill_write_gate_guard可并挂"),
-    ("grep_sandbox_guard.py", "PreToolUse物理阻断·沙箱grep转义防护(LRN-20260920-009)·ZCode沙箱grep盲区为本轮试点实证痛点·优先级最高"),
+    ("grep_sandbox_guard.py", "PreToolUse物理阻断·沙箱grep转义防护(内部记录)·ZCode沙箱grep盲区为本轮试点实证痛点·优先级最高"),
     ("twin_changelog_guard.py", "Stop·分身域变更日志完整性(注册表L680)·ZCode为分身入驻端·零承载"),
     ("registry_precheck_guard.py", "PreToolUse·治理域新建脚本须带REG头(注册表L667)·QCN挂载·ZCode有PreToolUse未挂"),
     ("philosophy_radar_inject.py", "UPS到达腿·读哲学雷达会话首轮注入(注册表L662)·QCN挂载·ZCode会话无哲学雷达注入"),

@@ -7,20 +7,20 @@ compatibility: workbuddy, qclaw, trae, trae-work, wukong, qoderwork, qoder-cn
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, Agent, TaskCreate, TaskUpdate, TaskList, TaskOutput, WebFetch, WebSearch]
 dependencies:
   - name: triwich
-    version: "4.5.1"
-    path: ~/[记忆共享中心]/技能配置/triwich/
+    version: "4.5.4"
+    path: [记忆共享中心]/技能配置/triwich/
     mode: reference
   - name: meta-aletheia
     version: "3.6.0"
-    path: ~/[记忆共享中心]/技能配置/meta-aletheia/
+    path: [记忆共享中心]/技能配置/meta-aletheia/
     mode: reference
   - name: skill-arch-standard
-    version: "5.39"
+    version: "5.41"
     path: references/skill-arch-standard.md
     mode: reference
     note: "固化副本·自包含--源在记忆蓝图/03_开发规范/Skill架构规范/,改源后须重新固化到此并升version"
   - name: instruction-standard
-    version: "4.10"
+    version: "4.11"
     path: references/instruction-standard.md
     mode: reference
     note: "固化副本·自包含--源在记忆蓝图/03_开发规范/,改源后须重新固化到此并升version"
@@ -28,13 +28,20 @@ author: 皮叔
 source: self-built
 upstream: self(主源·本目录)
 modifiable: true
-version: "4.17.2"
+requires_twin_on_duty: true
+version: "4.18.7"
 license: MIT
 complies_with: 文件格式规范(⛔本处不写版本号·以源 frontmatter 为唯一真相源=#142·2026-09-05批5清零#2148滞后:曾写v2.0.0而源实盘v2.4.0)
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 # 反方向的钟 · Clock Loop
+
+<!-- DUTY_HEAD_START（投影件·由 doenglingz_skill_head_watch.py 生成·禁手改禁手加·改则下次重投影覆盖） -->
+
+> ⚡ **上岗自证（投影件·真源见指针）**：本 Skill 声明 `requires_twin_on_duty: true`——启动即视为童灵上岗，不分该回合此前档位（义务随执行事实生效，档位是上岗的结果不是前提）。与外部指令「启动童灵，走本Skill」并存时**幂等**：认领一次、义务一份，不叠加两次上岗，不冲突。装机态（无本守卫/无规格书）：本行为提示件非硬依赖——义务不消失，按四态表第二行换合法来源执行。指针：身份句=童灵·人格规格书 §1.1｜条款=06-跨端适配规范 TSL上岗联动节（词面腿/事件腿/执行腿）｜降级=成长箱 SKILL.md 四态表。
+
+<!-- DUTY_HEAD_END -->
 
 > **灵感来源**:Addy Osmani Loop Engineering + Peter Steinberger + Boris Cherny + 叶小钗实践笔记
 > **中文名寓意**:周杰伦《反方向的钟》--评估就是站在反方向看,不顺着来。普通循环原地打转,钟有节律地前行;正常走顺时针,评估走逆时针,质疑、拆解、不盲从。
@@ -65,6 +72,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 **✅DO - 修改评估器(skill_eval.py)前必须 snapshot 冻结,改后必须跑自举回归且不降分(回归=test_skill_eval.py + 对 clock-loop 自身跑一遍评估)。⛔DO NOT无版本记录地顺手改评估器--原因是:评估器是规范的"可执行镜像"(标准规范§6.7),无版本记录的改动=静默事故,自举分失去意义;评估维度变更后必须重固化 skill-arch-standard.md(按其头部 cured_snapshot.reference 的 sync_rule 执行)。**
 
+**✅DO - 升版级联收口(v4.18.7·署名Skill队列B-5实证 皮叔令"按符合愿景最优解处理"):任何被评 Skill 升版后，收尾前 ✅DO 全树 grep `name: <该skill>` 回扫下游 dependencies 声明位并同批跟随升版+记账条--原因是实证(daily-buddy 3.51.6 抬版当场致 sucair 声明掉红):升版不追下游=给明天的 Loop 造新脱节，级联责任归升版方。
 **✅DO - 开工基线确认·版本水位线(v4.1.0 C07 #184):跨会话/并发开工时,先跑 `python3 scripts/skill_eval.py --check-only <本SKILL.md>` 看 `watermark_advisory` 字段--🔴检测到跨会话/并发推进(载体版本<实盘)时,⛔DO NOT直接动手:先读 references/CHANGELOG.md 最新条目+跑回归确认基线,再继续。⛔DO NOT修改他人会话推进中的文件而不先同步--原因是:09-05 并发会话实锤(两会话同时改资产,发现时版本已被并发方推进·git 6 文件未提交)。载体 `steps/version_watermark.md` 初始化/更新: `python3 scripts/skill_eval.py --update-watermark <本SKILL.md>`(同步完成后显式调用·⛔不自动写)。**
 
 ---
@@ -185,7 +193,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | **输入契约** | 用户以"循环/loop"开头的任务描述 + 首次某类任务时用户选的标准 |
 | **输出契约** | 达标后交付最终结果 + 执行履历 + 多维评分表;超限/卡死时交付当前版 + 原因说明 |
 | **行为契约** | 后台自闭环,不自查完成前不交付。可逆性分级:🟢自主(读文件/写progress/写JSON/跑自查/spawn子Agent)🟡确认(覆盖已存在交付物)🔴阻止(执行未授权操作/发布外部/修改非本任务文件)。**四场景显式定色(v3.19.0·双盲C3补缝)**:删progress.md=🟢(仅限归档验证通过后·阶段4既定流程);修改被评估文件=🟡(且备份前置·禁止行为#11);写悬置区.md=🟢(仅限追加·§1.6 schema约束+批次查重·⛔改写既有条目) |
-| **演化契约** | 同类任务自动复用历史标准(references/task-standards.json)。评估结果写入评估知识库(~/[记忆共享中心]/评估知识库/)。标准可随每次交付微调 |
+| **演化契约** | 同类任务自动复用历史标准(references/task-standards.json)。评估结果写入评估知识库([记忆共享中心]/评估知识库/)。标准可随每次交付微调 |
 
 ---
 
@@ -227,6 +235,8 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 > ⚠️ **诚实边界（仍在）**：该 advisory ⛔ **不判定「方向问得对不对」**——A1/A2/A3 的**实际执行质量仍靠 AI 自觉**。机检只保证「声明了就有、防护没被摘」。
 
 ### 阶段1:标准收集(每次触发必走,不可跳过)
+
+> 🧭 **岗位归属（2026-10-13 追溯登记）**：本阶段的「标准拟定＋确认二分判类＋收结果最终评估」已登记为童灵岗位 **JOB-005 Loop 标准确认岗**（09-童灵上岗岗位登记表.md §JOB-005）。生效档＝L2 备料级：出评估与判类留痕，终判与判停待你确认（追认实态 L3）。灰度 2026-10-13→11-12，决策按 `JOB-005-{YYYYMMDD}-{NNN}` 记 ID 进 `job_probation_ledger.json`。判据本体不变，仍以下方 L63 确认二分为准。
 
 📦 产出物:任务标准清单(写入 references/task-standards.json)+用户明确确认
 
@@ -287,9 +297,15 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 ### 阶段4:后续处理(收尾门禁=交付定义本身)
 
+📦 **岗位决策记录（JOB-005·2026-10-13 追溯登记·⛔不可跳）**：本次 Loop 每产生一项对标准/专项/轮次/判类的裁决，收尾前 ✅DO 执行
+`python3 [记忆共享中心]/数字分身/scripts/job_probation_check.py record --job JOB-005 --decision-id JOB-005-{YYYYMMDD}-{NNN} --content "<裁决一句话>" --response <approved|rejected|modified|questioned> --actor <ge|self> --reason "<依据>"`
+-- 原因是转正评估只认台账样本：无记录则到期判 🔴 不判过闸（job_probation_check v2.0 样本闸·total=0 不算 0% 合格）。皮叔 2026-09-30 立的确认二分（L63）是本岗判据本体，本条只负责把它的使用痕迹落账。
+⛔DO NOT 只写台账不写日志：决策ID 须同时出现在本次交付的系统日志条目内（job_audit_check.py 按双向对账判缺口·单向即红）。
+
+
 📦 产出物:task-standards.json更新+评估报告归档(评估知识库)+封口确认块+progress.md归档后删除
 
-**核心动作**:标准持久化(同类型覆盖旧配置)→报告归档(🔴断言绑实录两步法+写入前路径阻断+归档后存在性验证)→**finalize_report.py封口物理锁**(16道检查·exit非零拒绝封口→按detail修复重跑)→🔒收尾门禁七步(0报告存在性Glob1悬置区探针五类残差2对话冲突检测管道3L3沉淀[自上次增量≥5·check_selfimprove_gate.py判]+双盲到期检测+校准聚合[overdue_n≥2→🔴版本升级冻结]4L1/L2实质验证5报告内容完整性6CHANGELOG置顶校验[仅本Skill自身升版·批6d=#192统一七步0-6])--**不跑完七步不许说"✅交付完成"**(门禁级·非建议级)。
+**核心动作**:标准持久化(同类型覆盖旧配置)→报告归档(🔴断言绑实录两步法+写入前路径阻断+归档后存在性验证)→**finalize_report.py封口物理锁**(17道检查·exit非零拒绝封口→按detail修复重跑)→🔒收尾门禁七步(0报告存在性Glob1悬置区探针五类残差2对话冲突检测管道3L3沉淀[自上次增量≥5·check_selfimprove_gate.py判]+双盲到期检测+校准聚合[overdue_n≥2→🔴版本升级冻结]4L1/L2实质验证5报告内容完整性6CHANGELOG置顶校验[仅本Skill自身升版·批6d=#192统一七步0-6])--**不跑完七步不许说"✅交付完成"**(门禁级·非建议级)。
 
 ✅DO Read `references/phase4-followup.md` 执行细则(归档全链+收尾门禁七步0-6+推拉分离联动+路径适用性·批6d步数统一=#192)
 ✅DO Read `references/phase4-pipelines.md`(L3沉淀13步+悬置区探针7规则+对话冲突管道3步)
@@ -331,7 +347,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 8 | ⛔DO NOT跳过阶段1.5知识网络构建直接执行 | 没知识网络=多维评分没有依据=退回凭感觉打分 |
 | 9 | ⛔DO NOT在多维评分中跳过L1拆解直接打分 | "凭感觉打分"是评估最大陷阱,L1拆解强制先理解再评分 |
 | 10 | ⛔DO NOT在多维评分完成后跳过L2自检 | 高分可能是锚定效应,L2自检是评分可信度的最后保障 |
-| 11 | ⛔DO NOT在未备份的情况下修改被评估文件--原因是:修改不可逆,无备份=改崩了无法还原。✅DO先将目标文件备份到 `~/[记忆共享中心]/记忆琥珀/技能升级备份/{文件名}_{YYMMDD_HHMM}.bak` 再执行修改。 | 防误层;备份=修改前置条件 |
+| 11 | ⛔DO NOT在未备份的情况下修改被评估文件--原因是:修改不可逆,无备份=改崩了无法还原。✅DO先将目标文件备份到 `[记忆共享中心]/记忆琥珀/技能升级备份/{Skill名}_{文件名}_{YYMMDD_HHMM}.bak`（⛔裸basename：多树同名件扁平备份互相挤覆盖·B-5实锤triwich改前态零备份） 再执行修改。 | 防误层;备份=修改前置条件 |
 | 12 | ⛔DO NOT将评估报告或progress.md存放在Skill目录 | Skill目录只放Skill自身文件,评估产物残留在Skill目录会污染纯粹性且导致目录膨胀 |
 | 13 | ⛔DO NOT 评估器自行增删考题--原因是:自著考卷=自指偏差(Q3-3),考题跟着分数走=Goodhart。✅DO 评测标准动态演进但须有锚:新增/删改检查项仅限三条授权通道--你批准(如评估Skill(clock-loop)条目12项·2026-07-29首例)/L3反哺派生L1低风险项/双盲审计整改。clock-loop自评估用task-standards.json「评估Skill(clock-loop)」条目(你授权版),外审专属项在其 `external_audit_checklist` 字段(双盲+人类锚专用) | 自评估回避制·v3.0.0新增·v3.17.1授权通道化(你裁决:旧标准测新版本=假绿灯,标准须随功能演进但锚在授权) |
 
@@ -387,7 +403,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | `CHANGELOG.md` | 变更历史 | 版本追溯时 |
 | `circuit-breaker-spec.md` | 熔断器降级完整规范(外显信号格式+降级链路图) | 阶段2熔断器触发时 |
 | `scripts/skill_eval.py` | Skill S级合规静态检查脚本(Phase X机检可调用·权威唯一副本在scripts/) | Phase X机检时 |
-| `scripts/finalize_report.py` | 归档封口物理锁(16道检查单入口·封口确认块JSON+report_sha8防伪锚·v3.23.0建/v3.24.0加纯净度门禁/v1.8.0加promise_overdue门禁13) | 阶段4报告Write后封口时 |
+| `scripts/finalize_report.py` | 归档封口物理锁(17道检查单入口·封口确认块JSON+report_sha8防伪锚·v3.23.0建/v3.24.0加纯净度门禁/v1.8.0加promise_overdue门禁13) | 阶段4报告Write后封口时 |
 | `tests/` | 触发词正负例用例(trigger-positive.md 正例10 / trigger-negative.md 负例8·v3.30.0新增) | 触发判定验证 |
 
 ---
@@ -410,7 +426,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | Skill | 方向 | 机制 | 依据 |
 |-------|:---:|------|------|
 | 系统日志 | **推** | 阶段3达标交付后自动触发系统日志记录(任务记录推送点) | 系统日志SKILL.md:"实质性任务完成后自动触发" |
-| 悬置区.md | **推** | Phase 4悬置区探针:评估完成后扫描五类残差触发,有匹配则写入`~/[记忆共享中心]/未知未知/悬置区.md`(盲区信号推送点,v2.4.0新增) | 悬置区.md §1.6 schema + 未知未知前置容器阶段1 |
+| 悬置区.md | **推** | Phase 4悬置区探针:评估完成后扫描五类残差触发,有匹配则写入`[记忆共享中心]/未知未知/悬置区.md`(盲区信号推送点,v2.4.0新增) | 悬置区.md §1.6 schema + 未知未知前置容器阶段1 |
 | 成长箱 | **拉** | 成长箱做晋升检查时从评估知识库test_results/拉反复问题数据 | 成长箱晋升机制:pending(N/3) AND N≥3 |
 | 每日伙伴 | **拉**(间接) | 每日伙伴月报读系统日志→体现Skill健康度 | 系统日志SKILL.md:"每日伙伴月报读取系统日志" |
 | Shall We Talk | **拉** | Shall We Talk从系统日志拉评估发现作为钩子 | Shall We Talk SKILL.md:"系统日志(当天)选读" |
@@ -433,17 +449,17 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 - [记忆共享中心]/脚本中心/mirror-sync.py
 - [记忆共享中心]/脚本中心/generate_release.py
-- ~/[记忆共享中心]/发布库/五层记忆系统/布洛陀-安装包/(发布产物本体·含 references/scripts/;privacy_check.py 默认包根)
+- [记忆共享中心]/发布库/五层记忆系统/布洛陀-安装包/(发布产物本体·含 references/scripts/;privacy_check.py 默认包根)
 
 **兄弟 Skill 固化引用源**(仅版本核对用--固化副本本地可执行,缺失→版本核对降级"无法核对",不阻塞):
 
-- ~/[记忆共享中心]/技能配置/triwich/(消费处 references/triwich-integration.md、references/eval-knowledge/second_brain_links.yaml、golden_samples/GS-2 样例)
-- ~/[记忆共享中心]/技能配置/meta-aletheia/(消费处 references/philosophical-evaluation.md、references/eval-knowledge/second_brain_links.yaml)
+- [记忆共享中心]/技能配置/triwich/(消费处 references/triwich-integration.md、references/eval-knowledge/second_brain_links.yaml、golden_samples/GS-2 样例)
+- [记忆共享中心]/技能配置/meta-aletheia/(消费处 references/philosophical-evaluation.md、references/eval-knowledge/second_brain_links.yaml)
 
 **约定根占位符(非实体依赖·文档约定与 docstring 示例)**:
 
-- ~/[记忆共享中心]/技能配置/{name}(references/eval-set.md dependencies path 解析约定)
-- ~/[记忆共享中心]/技能配置/xxx(scripts/check_cured_snapshot.py docstring 路径解析示例)
+- [记忆共享中心]/技能配置/{name}(references/eval-set.md dependencies path 解析约定)
+- [记忆共享中心]/技能配置/xxx(scripts/check_cured_snapshot.py docstring 路径解析示例)
 
 ## 行动倾向
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """build_blind_eval_v28.py -- Step 2.8 retest round builder (spec v1.1.0).
 Reuses build_blind_eval.py machinery; overrides: seed 20260823, N=20
 (10 in-spec from CURRENT v1.1.0 citations not blind-tested before,
 10 fresh out-of-spec), excludes all 62 cards used in rounds 2/2.5/2.6
 plus protocol hard-excludes S812/S813. History script untouched."""
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import io, os, re, sys, random
 from pathlib import Path
 
@@ -40,7 +40,12 @@ def main():
     base.SPEC_CITED = sorted(set(cited) | USED)
     base.READ_EXCLUDE_KEYS = {"S%03d" % s for s in HARD}
     base.READ_EXCLUDE = HARD
-    base.OUT_FILE = HERE.parent / "steps" / "step2.8-blind-items.md"
+    # 2026-10-14 A7 同族根治：原写法 `HERE.parent / "steps"` 把输出落点绑在"自身目录的父目录"上——
+    # 本件从 脚本中心 根层搬进 记忆蒸馏/ 后，落点会由 `个人AI档案/steps/` 静默漂移成 `脚本中心/steps/`（不存在）。
+    # 病名与 install_script_center / k2 生成器同族：路径语义绑自身位置 ⇒ 搬家即漂移。
+    # 改为绝对锚：与兄弟件 build_blind_eval.py 的 OUT_FILE 口径一致，且与盘上在存产物同址
+    # （实测真件 = [记忆共享中心]/数字分身/steps/step2.8-blind-items.md·本行取数于 2026-10-14 find 结果）。
+    base.OUT_FILE = Path('[记忆共享中心]') / "数字分身" / "steps" / "step2.8-blind-items.md"
     base.main()
 
     # post-fix header to step2.8 identity (main() hardcodes round-1 header)

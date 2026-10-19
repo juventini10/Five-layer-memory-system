@@ -19,23 +19,23 @@
 > ✅=端声明支持 · ❌=端声明不支持 · `—<br>无声明`=**该端没有 capability.yaml**
 > （不是「不支持」，是**没测过**——两者混同会诱导端 AI 去修不存在的问题）
 
-生成时间口径：随包内 `capability.yaml` 变化即变·⛔ 不写死日期（避免二次漂移源）
+生成时间口径：随包内 `capability.yaml` 变��即变·⛔ 不写死日期（避免二次漂移源）
 
 ## 一、能力矩阵（`capabilities` 段 × 各端）
 
-| 能力 | AutoClaw | 豆包办公 | Hermes | LobsterAI | Qoder CN | qwen | teleagent | Trae Work | WorkBuddy | ZCode |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| hooks 事件驱动 | ❌ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ❌ |
-| 非标准钩子机制 | ✅ | ❌ | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | ✅ |
-| settings.json 注册 | ❌ | ❌ | ❌ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ❌ |
-| rules/ 常驻文件注入 | ✅ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ❌ |
-| AGENTS.md 导航 | ✅ | ❌ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ✅ |
-| 自定义指令 | ✅ | ✅ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ✅ |
-| 钩子返回值注入 | ❌ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ✅ |
-| 系统提示分段注入 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 |
-| 记忆支点（session 检索等） | ✅ | ❌ | ✅ | ❌ | ❌ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ❌ |
-| Skill 软链 | ✅ | ❌ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ✅ |
-| 定时巡逻 | ✅ | ❌ | ❌ | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 |
+| 能力 | AutoClaw | 豆包办公 | Hermes | LobsterAI | Qoder CN | qwen | teleagent | Trae Work | WorkBuddy | ZCode | Zwork（AutoClaw 新客户端） |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| hooks 事件驱动 | ❌ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ❌ | ❌ |
+| 非标准钩子机制 | ✅ | ❌ | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | ✅ | ❌ |
+| settings.json 注册 | ❌ | ❌ | ❌ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ❌ | ❌ |
+| rules/ 常驻文件注入 | ✅ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ❌ | ❌ |
+| AGENTS.md 导航 | ✅ | ❌ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ✅ | ❌ |
+| 自定义指令 | ✅ | ✅ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ✅ | ✅ |
+| 钩子返回值注入 | ❌ | ❌ | ✅ | ❌ | ✅ | —<br>无声明 | —<br>无声明 | ❌ | ✅ | ✅ | ❌ |
+| 系统提示分段注入 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 |
+| 记忆支点（session 检索等） | ✅ | ❌ | ✅ | ❌ | ❌ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ❌ | ✅ |
+| Skill 软链 | ✅ | ❌ | ✅ | ✅ | ✅ | —<br>无声明 | —<br>无声明 | ✅ | ✅ | ✅ | ❌ |
+| 定时巡逻 | ✅ | ❌ | ❌ | —<br>无声明 | —<br>无声明 | —<br>无声明 | —<br>无声明 | ✅ | —<br>无声明 | —<br>无声明 | ❌ |
 
 ## 二、端清单与声明状态
 
@@ -51,6 +51,7 @@
 | Trae Work | ✅ | 10 | 10 | `~/.trae-cn` |
 | WorkBuddy | ✅ | 9 | 8 | `~/.workbuddy` |
 | ZCode | ✅ | 9 | 9 | `~/.zcode` |
+| Zwork（AutoClaw 新客户端） | ✅ | 13 | 10 | `~/Library/Application Support/AutoClaw-official` |
 
 ## 三、缺失语义（回执判红的依据）
 
@@ -66,6 +67,7 @@
 | Trae Work | custom_directive, rules_inject | agents_full_inject, awareness, hook_stdout_inject, hooks_alternative, hooks_event, launchd_patrol, settings_json, skill_symlink | — |
 | WorkBuddy | custom_directive, rules_inject | agents_full_inject, awareness, hook_stdout_inject, hooks_event, settings_json, skill_symlink | — |
 | ZCode | custom_directive, rules_inject | agents_full_inject, awareness, hook_stdout_inject, hooks_alternative, hooks_event, settings_json, skill_symlink | — |
+| Zwork（AutoClaw 新客户端） | awareness, custom_directive | agents_full_inject, hook_stdout_inject, hooks_alternative, hooks_event, launchd_patrol, rules_inject, settings_json, skill_symlink | — |
 
 > **怎么读这张表**（端 AI）：能力项显示 `—<br>无声明` ⇒ **不要报红**，
 > 去查该端是否有 `capability.yaml`；没有就说明该端**尚未适配**，

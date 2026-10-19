@@ -24,7 +24,7 @@
 | `twin` | 数字分身 | `数字分身/` |
 | `blueprint` | 记忆蓝图 | `记忆蓝图/` |
 | `skills` | 技能配置（真源） | `技能配置/` |
-| `kb_engine` | 知识联邦引擎 | `开发工具/知识联邦引擎/` |
+| `kb_engine` | 知识联邦引擎 | `知识联邦引擎/`（顶层·2026-10-12 迁顶层定案） |
 | `knowledge` | 知识库 | `知识库/` |
 | `k2_slices` | K2 切片 | `数字分身/K2切片蒸馏/` |
 | `custom_route` | 路由家族 | `自定义层/路由家族/` |
@@ -53,7 +53,7 @@ rp("kb_engine", optional=True) # → 缺键返回 None（⛔ 仅限显式声明�
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import json
@@ -116,7 +116,24 @@ def _default_file() -> str:
         return os.path.expanduser(os.environ[ENV_PATHS_FILE])
     cfg = os.environ.get(ENV_CFG_DIR)
     if cfg:
-        return os.path.join(os.path.expanduser(cfg), DECL_NAME)
+        base = os.path.expanduser(cfg)
+        # 🔴 2026-10-11 沙箱实测逮到的语义错位（隔离链第 5 断点）：
+        #    `DOENGLINGZ_CONFIG_DIR` 有**两种传法**且都真实存在——
+        #      · setup.sh / install_scripts 传**配置根**（如 ~/.hermes·声明在其 doenglingz/ 下）
+        #      · 插件侧有传**doenglingz 目录本身**的既有用法
+        #    原实现只做 `cfg + DECL_NAME` ⇒ 配置根传法下恒找不到声明 ⇒ 所有取值抛
+        #    DeclNotFound（隔离验证时 G3 全红；真机上若 env 被设置同样全红）。
+        #    ✅DO 两档都认（⛔ 不猜哪个"对"——两种都是既有事实，兼容才不断链）：
+        #       ① cfg/doenglingz/runtime_paths.json 存在 ⇒ 配置根传法
+        #       ② cfg/runtime_paths.json 存在       ⇒ doenglingz 传法
+        #       ③ 都不在 ⇒ 回落 ① 的路径（让报错指向"安装没跑"而非"路径算错"）
+        cand_dl = os.path.join(base, "doenglingz", DECL_NAME)
+        cand_self = os.path.join(base, DECL_NAME)
+        if os.path.isfile(cand_dl):
+            return cand_dl
+        if os.path.isfile(cand_self):
+            return cand_self
+        return cand_dl
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), DECL_NAME)
 
 

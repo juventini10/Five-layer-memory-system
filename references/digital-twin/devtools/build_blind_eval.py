@@ -25,9 +25,9 @@ import re
 from pathlib import Path
 
 SEED = 20260821
-KB_DIR = Path.home() / "[记忆共享中心]" / "知识库" / "AI学习库"
-MAP_FILE = "[记忆共享中心]" / "数字分身" / "立场卡通读档案" / "立场卡全量地图.md"
-OUT_FILE = "[记忆共享中心]" / "数字分身" / "steps" / "step2-blind-items.md"
+KB_DIR = Path.home() / "[日记仓库]" / "2-知识库" / "09-AI学习库"  # 2026-10-13 C''波次2迁移后路径同步·顺带根治Path.home()重复bug
+MAP_FILE = Path('[记忆共享中心]') / "数字分身" / "立场卡通读档案" / "立场卡全量地图.md"
+OUT_FILE = Path('[记忆共享中心]') / "数字分身" / "steps" / "step2-blind-items.md"
 
 # 规格书 v0.1 已引用的立场卡（in-spec 池）
 SPEC_CITED = [1, 3, 4, 5, 6, 7, 74, 84, 114, 127, 132, 179, 180, 650, 771, 810, 811, 812, 813, 814]

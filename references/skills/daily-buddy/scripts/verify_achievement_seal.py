@@ -84,6 +84,72 @@ def load_achievement_data():
     return None
 
 
+# ── md 展示行格式断言+幂等自愈（2026-10-13 digit-blob 根治 · S1087 隐形契约 · triwich seal dfb5bf470868f380）──
+# 契约：成就 md「最后更新」行只许 `**最后更新：YYYY-MM-DD HH:MM**`；写者(agent会话直编)不可枚举，读侧有牙挡一切。
+import re as _re_fmt
+_MD_LINE_OK = _re_fmt.compile(r'^\*{1,2}最后更新[:：]\d{4}-\d{2}-\d{2} \d{2}:\d{2}\*{1,2}$')
+_MD_HEAL = _re_fmt.compile(r'^(\*{1,2}最后更新[:：]\d{4}-\d{2}-\d{2} \d{2}:\d{2})\d+\*{1,2}$')
+
+def check_and_heal_md_lines(dry_run=False):
+    """扫描 *成就.md 时间行：干净跳过(幂等)；时间后粘连数字尾缀→截掉自愈+ALERT留痕；救不了→UNRECOVERABLE。返回不可救数。"""
+    fixed, bad = [], []
+    try:
+        names = sorted(os.listdir(ACHIEVEMENT_DIR)) if os.path.isdir(ACHIEVEMENT_DIR) else []
+    except OSError:
+        return 0
+    for fn in names:
+        if not fn.endswith("成就.md"):
+            continue
+        path = os.path.join(str(ACHIEVEMENT_DIR), fn)
+        try:
+            lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+        except OSError:
+            continue
+        changed = False
+        for i, ln in enumerate(lines):
+            if "最后更新：" not in ln or "{" in ln:
+                continue  # 含{}=未填模板(合法未更新态·非脏)·不误伤
+            s = ln.rstrip("\n")
+            if _MD_LINE_OK.match(s):
+                continue
+            m = _MD_HEAL.match(s)
+            if m:
+                nl = m.group(1) + "**\n"
+                lines[i] = nl
+                changed = True
+                fixed.append(fn)
+            else:
+                bad.append(fn)
+        if changed and not dry_run:
+            open(path, "w", encoding="utf-8").writelines(lines)
+    if fixed:
+        print(f"ALERT:FORMAT {len(fixed)}个成就md时间行曾带数字尾缀已自愈: {','.join(sorted(set(fixed)))}")
+    for b in sorted(set(bad)):
+        print(f"ALERT:FORMAT-UNRECOVERABLE {b} 时间行格式不可解析，需人工")
+    return len(set(bad))
+
+def _self_test():
+    """双向夹具：脏行→自愈成正确形(正例)；干净行→一字不动(负例防误伤)。"""
+    import tempfile, shutil
+    tmp = tempfile.mkdtemp(prefix="seal_fmt_")
+    globals()["ACHIEVEMENT_DIR"] = tmp
+    try:
+        dirty = tmp + "/测试成就.md"
+        clean = tmp + "/干净成就.md"
+        open(dirty, "w", encoding="utf-8").write("**最后更新：2026-10-12 23:2524202040403535595841414102024227**\n")
+        orig_clean = "**最后更新：2026-10-12 23:25**\n"
+        open(clean, "w", encoding="utf-8").write(orig_clean)
+        open(tmp + "/单星成就.md", "w", encoding="utf-8").write("*最后更新：2026-10-12 23:25*\n")
+        open(tmp + "/模板成就.md", "w", encoding="utf-8").write("**最后更新：{YYYY-MM-DD}**\n")
+        unrecoverable = check_and_heal_md_lines()
+        pos = open(dirty, encoding="utf-8").read() == orig_clean and unrecoverable == 0
+        neg = open(clean, encoding="utf-8").read() == orig_clean and open(tmp + "/单星成就.md", encoding="utf-8").read() == "*最后更新：2026-10-12 23:25*\n" and open(tmp + "/模板成就.md", encoding="utf-8").read() == "**最后更新：{YYYY-MM-DD}**\n"
+        print(f"[夹具·正例] 脏行自愈成正确形: {'✅' if pos else '❌'}  [夹具·负例] 干净行一字不动: {'✅' if neg else '❌'}")
+        return 0 if pos and neg else 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     if not dbenv.self_check(verbose=True):
         sys.exit(9)
@@ -98,6 +164,7 @@ def main():
                 return 1
 
     date_str = target_date.strftime("%Y-%m-%d")
+    check_and_heal_md_lines()  # md展示行契约自愈(2026-10-13 digit-blob根治·先于一切return路径执行)
 
     # 1. 找日记文件
     diary_file = find_diary_file(target_date)
@@ -138,4 +205,6 @@ def main():
 
 
 if __name__ == "__main__":
+    if "--self-test" in sys.argv:
+        sys.exit(_self_test())
     sys.exit(main())

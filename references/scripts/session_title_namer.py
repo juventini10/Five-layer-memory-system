@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# version: v0.6
+# version: v0.6.1
 """session_title_namer.py — WorkBuddy 专属适配器：UserPromptSubmit 钩子新会话首轮自动命名对话标题。
 
 规则（你立 2026-09-09，SSOT=~/.workbuddy/MEMORY.md「对话标题命名规则」）:
@@ -48,7 +48,7 @@ v0.6（2026-09-29·真机实锤补充）：宿主 AI 起名发生在钩子首轮
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import json
@@ -250,7 +250,18 @@ def guard_reclaim(session_id: str) -> None:
 
 def hook_mode() -> None:
     try:
-        raw = sys.stdin.read()
+        # 跨端稳健解码：直接读字节再解 UTF-8，规避 Windows 上 sys.stdin 默认
+        # 按 GBK 解 UTF-8 字节导致中文主题乱码（不依赖 reconfigure，与 Python
+        # 版本/构建链无关）。失败时回退 reconfigure+read。
+        try:
+            raw = sys.stdin.buffer.read().decode("utf-8", errors="replace")
+        except Exception:
+            try:
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+                raw = sys.stdin.read()
+            except Exception:
+                raw = ""
         payload = json.loads(raw) if raw.strip().startswith("{") else {}
     except Exception:
         payload = {}

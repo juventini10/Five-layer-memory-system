@@ -7,7 +7,7 @@ emoji: "🔮"
 capabilities:
   rules_inject: true        # rules/*.md alwaysApply=true 常驻注入
   agents_full_inject: true  # AGENTS.md 全文注入（08-27 实测推翻旧"不注入"结论）
-  hooks_event: true         # settings.json hooks (4事件: Stop/UserPromptSubmit/PreToolUse/SessionStart)
+  hooks_event: true         # settings.json hooks (5事件: Stop/UserPromptSubmit/PreToolUse/SessionStart/SubagentStop——C05 机械计数=ROSTER∪extra_hooks 并集)
   hook_stdout_inject: true  # UserPromptSubmit stdout → 注入本轮上下文
   settings_json: true       # 可注册 hooks 到 settings.json
   awareness: false          # 无 awareness 目录（不同于 QoderWork）
@@ -71,11 +71,21 @@ extra_hooks:
 #   · 执行准则走 rules/execution-guidelines.md（⛔ 不是 UI 粘贴框）
 # ⚠️ 与 WorkBuddy 的差别：WB 五件走「公共模板 + 端名注入」+ 第五件在设置框；本端五件全是文件。
 system_file_paths:
-  SOUL: "rules/core-soul.md"              # 实测 6792 bytes（2026-10-07 签名焊本端后）
-  IDENTITY: "rules/core-identity.md"      # 实测 5863 bytes（2026-10-07 订正旧注释6467漂移）
-  USER: "rules/core-user.md"              # 实测 1029 bytes
-  MEMORY: "MEMORY.md"                     # 配置根·本端定位=经验积累器
-  customPrompt: "rules/execution-guidelines.md"   # 执行准则走 rules 通道·⛔ 非 UI 粘贴
+  # ── 键名归一（C13·2026-10-14 修包）──────────────────────────────────────
+  # 病：本段原用裸名键（SOUL/IDENTITY/USER/MEMORY/customPrompt），而条文32 的权威口径＝
+  #   `SOUL.md / IDENTITY.md / USER.md / MEMORY.md / 自定义指令`（SSOT=01-安装包设计通用规范
+  #   条文32＋WorkBuddy设计哲学02§六）。两个读者按权威口径逐字取键：
+  #     · verify.sh SYSFILES → 五件全判 NOKEY（卡 C13 记的"未声明"其实是读不到，段并不空）
+  #     · install_scripts.py system_file_targets() 的 paths.get(name, name) → 五件全部失配
+  #       ⇒ **回落配置根**：step5 把品格/身份/画像写成 `~/.qoder-cn/SOUL.md` 这类死文件
+  #       （本端实读通道是 `rules/*.md`），setup.sh 落的 `rules/core-soul.md` 与它并存两份
+  #       ⇒ 用户改哪份生效靠运气。实测取证：E2E 沙箱配置根同时存在 root 三件 + rules/ 四件。
+  # 修法＝声明侧归一到权威键名（⛔不放宽 verify 的键表，那会把 SSOT 拉到漂移水平）。
+  SOUL.md: "rules/core-soul.md"                    # 实测 6792 bytes（2026-10-07 签名焊本端后）
+  IDENTITY.md: "rules/core-identity.md"            # 实测 5863 bytes（2026-10-07 订正旧注释6467漂移）
+  USER.md: "rules/core-user.md"                    # 实测 1029 bytes
+  MEMORY.md: "MEMORY.md"                           # 配置根·本端定位=经验积累器（非导航仪）
+  自定义指令: "rules/execution-guidelines.md"        # 执行准则走 rules 通道·⛔ 非 UI 粘贴
 
 # ─── 条文33 · 端侧功能面映射声明（2026-10-03·按 41 条实挂盘点）──
 hooks_surface:
@@ -101,7 +111,7 @@ hooks_surface:
     - {script: twin_verdict_ledger.py,            event: Stop,             src: references/digital-twin/devtools, component: twin}
     - {script: twin_changelog_guard.py,           event: Stop,             src: references/digital-twin/devtools, component: twin}
     # ── 本端专属四件（setup.sh 注册）──
-    - {script: qodercn_inject_chain_guard.py,     event: Stop,             src: references/scripts, note: 端元守卫}
+    - {script: qodercn_inject_chain_guard.py,     event: Stop,             src: adapters/qodercn/hooks, note: 端元守卫·2026-10-11 挂载源口径对齐（原写 references/scripts 与 L57 实际挂载源不符）·该副本已入镜像自动面（manifest 登记 src=脚本中心→adapters 投影）}
     - {script: qodercn_title_namer.py,            event: UserPromptSubmit,  src: references/scripts, note: C1二期入包·端标题适配器}
     - {script: registry_precheck_guard.py,          event: PreToolUse,         src: references/scripts, note: C3二期·投影残留0}
     - {script: stamp_precheck_guard.py,             event: PreToolUse,         src: references/scripts, note: C3二期}
@@ -111,7 +121,7 @@ hooks_surface:
     - {script: qodercn_config_guard.py,     note: 端元守卫·**包内无源**·源在开发工具·未纳入镜像·待脱敏入包}
     # qodercn_title_namer 已翻 delivered（C1 2026-10-04·extra_hooks 注册+源在包·原 gap 注撤销）
     # philosophy_radar_inject 已翻 delivered（C2 2026-10-04·源在包且10-03版与作者侧逐函数一致·manifest补投递目）；philosophy_radar 扫描侧=launchd件挂 C4 装机腿
-    - {script: qodercn_inject_chain_guard.py, note: 端元守卫·**包内无源**·同上}
+    # qodercn_inject_chain_guard 已翻 delivered（2026-10-11 任务2 根治：原 gap 行"包内无源"过时——references 三层 10-10 批次3 已登记、adapters 挂载源副本今日入镜像，源链=脚本中心→镜像→包双投影）
     - {script: doenglingz_guard.py,      note: 分身守护执行体·走 gate_runner 委派非独立钩子}
     - {script: platform_adaptation_check.py, note: 作者侧发版门禁·依赖作者侧日志目录}
     - {script: registry_precheck_guard.py,   note: 端注册前置检查·依赖端特定配置}

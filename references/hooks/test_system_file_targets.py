@@ -6,19 +6,21 @@
 写错 ⇒ 文件在盘上但端根本不读，而 verify 只查"文件在不在" ⇒ 恒真假绿。
 
 用例：
-  T1 扁平端（未声明）⇒ 四件全落配置根（向后兼容·行为不变）
+  T1 扁平端（未声明）⇒ 五件全落配置根（向后兼容·行为不变）
   T2 Hermes 声明 ⇒ USER/MEMORY 落 memories/·IDENTITY 为 None
   T3 段 id 从声明读·未声明时派生稳定 id
   T4 两路 YAML 解析一致（PyYAML / 内置 mini-YAML）
   T5 造错：把 Hermes 声明删掉 ⇒ T2 必须 FAIL（证明判据可区分）
   T6 造错：全角/CJK 不影响解析
   T7 端中立性：⛔ 函数本身不含任何端名字符串（防"为 Hermes 特判"）
+  T8 三形态解析（~/ 绝对 / :: 字段级 / platform:// 平台托管）——C29 承重
+  T9 九端键名=条文32 协议逐字一致（键名三源归一的账）+裸名键负例
 """
 
 from __future__ import annotations
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
 import importlib.util
@@ -76,6 +78,8 @@ def t3_segments():
     a = ins.system_file_segments({})
     b = ins.system_file_segments(None)
     _t("未声明时派生且稳定", a == b and a["SOUL.md"] == "sys.soul", repr(a))
+    # C29·键名归一后第五件派生 slug 必须保持旧值（段 id 一经断章不可漂移）
+    _t("第五件派生 slug 不漂移", a.get("自定义指令") == "sys.customprompt", repr(a.get("自定义指令")))
     for v in a.values():
         if not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", v):
             _t("段 id 合规", False, v)
@@ -148,10 +152,70 @@ def inspect_lines(fn_name):
     return inspect.getsource(getattr(ins, fn_name)).split("\n")
 
 
+SSOT5 = ("SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md", "自定义指令")
+
+
+def _key_check(paths):
+    """键集对协议判据（T9 与负例共用同一把尺·⛔两套逻辑）。"""
+    if not isinstance(paths, dict):
+        return ["缺段"]
+    return [("+%s" % k) for k in paths if k not in SSOT5] + \
+           [("-%s" % k) for k in SSOT5 if k not in paths]
+
+
+def t8_three_forms():
+    print("T8 三形态解析（C29·~/ :: platform://）")
+    cap = {"system_file_paths": {
+        "SOUL.md": "~/custom-home/SOUL.md",
+        "IDENTITY.md": "sub/IDENTITY.md",
+        "USER.md": "platform://memory/user-cards",
+        "MEMORY.md": None,
+        "自定义指令": "app/app-config.json::personalization.customPrompt",
+    }}
+    tg = ins.system_file_targets("/root/.cfg", cap)
+    _t("~/ ⇒ expanduser 绝对（⛔不拼配置根）",
+       tg["SOUL.md"] == os.path.expanduser("~/custom-home/SOUL.md"), repr(tg["SOUL.md"]))
+    _t("相对值 ⇒ 拼 config_root（向后兼容）",
+       tg["IDENTITY.md"] == "/root/.cfg/sub/IDENTITY.md", repr(tg["IDENTITY.md"]))
+    _t("platform:// ⇒ 平台托管目标（无文件可写）",
+       tg["USER.md"] == {"platform": "platform://memory/user-cards"}, repr(tg["USER.md"]))
+    _t("None ⇒ None（无载体）", tg["MEMORY.md"] is None, repr(tg["MEMORY.md"]))
+    ft = tg["自定义指令"]
+    _t(":: ⇒ 结构化字段目标（宿主文件+字段路径·⛔按 md 整写会毁配置）",
+       isinstance(ft, dict) and ft.get("file") == "/root/.cfg/app/app-config.json"
+       and ft.get("field") == "personalization.customPrompt", repr(ft))
+    # 负例（防恒真）：宿主文件路径被拼上 ::（旧缺陷形态）必须不再出现
+    _t("旧缺陷形态不复现（值里不再含 :: 字面）",
+       "::" not in str(ft), repr(ft))
+
+
+def t9_key_protocol():
+    print("T9 九端键名=条文32 协议")
+    adir = os.path.join(_PKG, "adapters")
+    bad = []
+    n_cov = 0
+    for pid in sorted(os.listdir(adir)):
+        p = os.path.join(adir, pid, "capability.yaml")
+        if not os.path.isfile(p):
+            continue
+        n_cov += 1
+        cap = ins.load_capability(p)
+        v = _key_check(cap.get("system_file_paths"))
+        if v:
+            bad.append((pid, v))
+    _t("adapters 全端键集=条文32 五键（含显式 null 缺件声明·NOKEY=0）", not bad, repr(bad))
+    _t("覆盖端数 ≥9", n_cov >= 9, "n=%d" % n_cov)
+    # 负例（防恒真）：裸名键必须被同一把尺判出
+    neg = _key_check({"SOUL": "SOUL.md", "IDENTITY.md": None, "USER.md": None,
+                      "MEMORY.md": None, "自定义指令": None})
+    _t("负例：裸名键「SOUL」被协议判出", "+SOUL" in neg and "-SOUL.md" in neg, repr(neg))
+
+
 def main():
     print("=== 项 3/4 承重验收 · 系统文件落点解析 ===\n")
     for fn in (t1_flat_default, t2_hermes_declared, t3_segments,
-               t4_two_yaml_paths, t5_falsification, t6_cjk_safe, t7_endpoint_neutral):
+               t4_two_yaml_paths, t5_falsification, t6_cjk_safe, t7_endpoint_neutral,
+               t8_three_forms, t9_key_protocol):
         fn()
         print("")
     print("=" * 52)

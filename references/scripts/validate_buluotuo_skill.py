@@ -14,8 +14,16 @@
   4. CHANGELOG 版本一致性（SKILL.md version == CHANGELOG 最新条目）
 
 用法：
-  python3 validate_buluotuo_skill.py --skill-dir ~/[记忆共享中心]/技能配置/clock-loop
-退出码：0=无 FAIL（可含 WARN） | 1=有 FAIL
+  python3 validate_buluotuo_skill.py --skill-dir [记忆共享中心]/技能配置/clock-loop
+  python3 validate_buluotuo_skill.py --selfcheck    # 仪器自检（正负夹具·2026-10-10 新增）
+退出码：0=无 FAIL（可含 WARN） | 1=有 FAIL | 2=参数缺失
+
+v2.2.0（2026-10-10 · Qoder CN · 门禁自噬案根治）：
+  病案：10-07 判据重写（dc76404c 批·经 0928b513 auto-backup 落盘）在 CMD_ANCHORS 引入
+  os.path.expanduser 却未 import os ⇒ 模块 import 即 NameError，skill-forge Step4 整条
+  查侧静默死 3 天。py_compile 只查语法、查不到运行时缺名（=门禁的门禁缺位）。
+  根治：①补 import os ②--selfcheck 正负夹具（仪器可运行性+判别力双证·S6 专锚
+  CMD_ANCHORS 的 ~ 展开形状=本病的最小可证伪用例）③注册表行「负例实测待补」就此清账。
 """
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
 try:
@@ -23,6 +31,7 @@ try:
 except Exception: pass
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -193,19 +202,89 @@ def check_changelog_version(skill_dir: Path, text: str):
     if not cl.exists():
         fails.append("WARN CHANGELOG: references/CHANGELOG.md 不存在，跳过版本比对")
         return fails
-    ents = re.findall(r'^###\s+v([\d.]+)', cl.read_text(encoding="utf-8"), re.M)
+    ents = re.findall(r'^#{2,3}\s+v([\d.]+)', cl.read_text(encoding="utf-8"), re.M)  # v1.1·2026-10-11 你令修复：库史格式为 ## v（42条·### v 零条）——两级标题同准入
     if not ents:
         fails.append("WARN CHANGELOG: 无版本条目")
         return fails
-    if ents[0] != ver:
+    # v前缀归一（2026-10-10 案：triwich SKILL.md=v4.5.2 vs CHANGELOG 捕获"4.5.2"永假红
+    # ——提取正则 `### v([\d.]+)` 已吃掉 v，比较侧不吃=判据两侧不对称。假红烧报警信用
+    # （岗位3 v1.9 同族教训）；归一后比较，展示保留原值。）
+    if ents[0] != ver.lstrip("v"):
         fails.append(f"FAIL 版本不一致: SKILL.md={ver} CHANGELOG最新={ents[0]}")
     return fails
 
 
+def _t(name, cond):
+    print(("  ✅ " if cond else "  🔴 ") + name)
+    return bool(cond)
+
+
+def selfcheck():
+    """仪器自检：正例必须绿、负例必须红、形状判据必须可证伪（2026-10-10）。
+    夹具全在临时目录，⛔不碰任何真 Skill。"""
+    import tempfile
+    import shutil
+    bad = 0
+    tmp = tempfile.mkdtemp(prefix="validate-selfcheck-")
+    try:
+        good = Path(tmp) / "good"
+        (good / "references").mkdir(parents=True)
+        (good / "SKILL.md").write_text(
+            '---\nname: g\ndescription: d\nversion: "v1.0.0"\n---\n'
+            '## Phase 1\n\n✅DO 运行脚本\n\n```bash\npython3 scripts/a.py\n```\n',
+            encoding="utf-8")
+        (good / "references" / "CHANGELOG.md").write_text("### v1.0.0\n- init\n", encoding="utf-8")
+        tg = (good / "SKILL.md").read_text(encoding="utf-8")
+        f1 = ([i for i in check_frontmatter(tg) if i.startswith("FAIL")]
+              + check_scripts_compile(good, tg) + check_changelog_version(good, tg))
+        w1 = check_phase_anchors(tg)
+        if not _t("S1 正例·合法最小Skill→FAIL=0", not f1):
+            bad += 1
+        if not _t("S2 正例·bash 围栏命令锚点不误报", not w1):
+            bad += 1
+        badskill = Path(tmp) / "bad"
+        (badskill / "references").mkdir(parents=True)
+        (badskill / "SKILL.md").write_text(
+            '---\nname: b\ndescription: d\nversion: "2.0.0"\nrogue_key: x\n'
+            'dependencies: [scripts/nope.py]\n---\n'
+            '## Phase 1\n\n✅DO 做得漂亮\n', encoding="utf-8")
+        (badskill / "references" / "CHANGELOG.md").write_text("### v1.9.9\n- old\n", encoding="utf-8")
+        tb = (badskill / "SKILL.md").read_text(encoding="utf-8")
+        f2 = ([i for i in check_frontmatter(tb) if i.startswith("FAIL")]
+              + check_scripts_compile(badskill, tb) + check_changelog_version(badskill, tb))
+        w2 = check_frontmatter(tb) + check_phase_anchors(tb)
+        if not _t("S3 负例·版本不一致+缺脚本→FAIL≥2", len(f2) >= 2):
+            bad += 1
+        if not _t("S4 负例·未知字段→WARN不阻断(§127宽容)",
+                  any("rogue_key" in i for i in w2 if i.startswith("WARN"))):
+            bad += 1
+        if not _t("S5 负例·空心✅DO→命令锚点WARN", any("命令锚点" in i for i in w2)):
+            bad += 1
+        # S6 本病专锚（10-10 NameError 复发病的最小可证伪用例）：
+        # CMD_ANCHORS 里的 "~" 令牌必须由 os.path.expanduser 真实解析——
+        # os 未 import 时本函数体根本进不到这里（import 期即崩）⇒ S6 存在本身=烟测。
+        # （首跑S6即红逮到我判据写错：元组存的是展开后的家路径非"~"字面——
+        #    selfcheck 判别力当场自证。正确形状=元组里存在 expanduser 的展开结果。）
+        if not _t("S6 CMD_ANCHORS含展开后家路径（NameError案专防·import期expanduser已真执行=烟测）",
+                  os.path.expanduser("~") in CMD_ANCHORS):
+            bad += 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    print("=== validate 自检 %d/%d 通过 ===" % (6 - bad, 6))
+    return bad == 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="布洛陀 Skill 合规检查器")
-    ap.add_argument("--skill-dir", required=True, help="Skill 目录（含 SKILL.md）")
+    ap.add_argument("--skill-dir", required=False, help="Skill 目录（含 SKILL.md）")
+    ap.add_argument("--selfcheck", action="store_true",
+                    help="仪器自检（正负夹具6例·v2.2.0·不碰真Skill）")
     args = ap.parse_args()
+    if args.selfcheck:
+        sys.exit(0 if selfcheck() else 1)
+    if not args.skill_dir:
+        print("ERROR: 需要 --skill-dir 或 --selfcheck", file=sys.stderr)
+        sys.exit(2)
     sd = Path(args.skill_dir).expanduser()
     skill = sd / "SKILL.md"
     if not skill.exists():

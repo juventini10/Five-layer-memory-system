@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 from datetime import date, datetime
 
-FEEDBACK_LOG = "[记忆共享中心]/成长箱/experience/规范反哺日志.md"
+FEEDBACK_LOG = Path.home() / "[记忆共享中心]/成长箱/experience/规范反哺日志.md"
 ALARM_THRESHOLD = 15
 
 
@@ -137,6 +137,32 @@ def parse_detailed_entries(text: str) -> list[dict]:
     return entries
 
 
+def _append_scan_trail(backlog, alarm, days):
+    """E0 扫描动作凭证（append-only）。2026-10-10 Qoder CN·供 tsl_verify v0.11.8 L7-2 读账。
+
+    为什么由脚本写：backlog 数**本脚本自己算**——若让 AI 报"我扫了，没候选"，那还是自证；
+    脚本落账后该回合的"无对象"有独立凭证（承 v0.11.7 L7-3「动作即凭证」同一范式）。
+    fail-open：写失败绝不影响 --check 的原有 stdout/exit 语义（守卫不阻断纪律）。
+    """
+    try:
+        import datetime as _dt
+        import json as _json
+        import os as _os
+        from pathlib import Path as _P
+        p = _P(_os.environ.get("DOENGLINGZ_E0_TRAIL") or
+               str(_P(__file__).resolve().parent.parent / "logs" / "e0_scan_trail.jsonl"))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        rec = {"ts": _dt.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+               "backlog": int(backlog), "alarm": bool(alarm),
+               "since_last_drain": days,
+               "src": _os.environ.get("DOENGLINGZ_SRC", "unknown"),
+               "by": "drain-backlog.cmd_check"}
+        with p.open("a", encoding="utf-8") as f:
+            f.write(_json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def cmd_check():
     """--check: 输出 JSON 状态。
     v0.4（2026-09-22）：口径归一——原 n=count_backlog(总追踪表行数)，与 --report(详细条目块数)
@@ -152,6 +178,8 @@ def cmd_check():
     alarm = n >= ALARM_THRESHOLD or (days is not None and days >= 30)
     result = {"backlog": n, "tracker_rows": tracker, "tracker_detail_gap": tracker - n,
               "alarm": alarm, "since_last_drain": days}
+    # 只在**成功扫描**路径落凭证：上面 `error: feedback log not found` 分支不落（错误态不得换 GO）。
+    _append_scan_trail(n, alarm, days)
     print(json.dumps(result))
     sys.exit(0 if not alarm else 1)
 
@@ -180,9 +208,9 @@ def cmd_report():
 
 
 DOC_ROOTS = [
-    "[记忆共享中心]/记忆蓝图",
-    "[记忆共享中心]/记忆规则",
-    "[记忆共享中心]/技能配置",      # 2026-09-22 补：反哺落点常是 Skill（如 clock-loop）
+    Path.home() / "[记忆共享中心]/记忆蓝图",
+    Path.home() / "[记忆共享中心]/记忆规则",
+    Path.home() / "[记忆共享中心]/技能配置",      # 2026-09-22 补：反哺落点常是 Skill（如 clock-loop）
 ]
 APPLY_THRESHOLD = 0.5          # 回标门槛：落点覆盖率 ≥ 此值才判「疑似已整合」（低阈值不放行·防误回标）
 _STOP_CHARS = set("的了呢吗和与或及等在对不为以于从这那有是了地得着把被")

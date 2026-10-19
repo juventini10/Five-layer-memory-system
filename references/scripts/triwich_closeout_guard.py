@@ -34,9 +34,10 @@ Version: 1.3.0 (2026-09-18·S1/S3 判定从"时间差代理"改为"登记身份�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import json
 import os
 import re
@@ -49,7 +50,7 @@ HOME = os.path.expanduser("~")
 
 
 # ── 记忆共享中心根探测（v1.2.0·2026-09-18·换机/对外可用性根治） ──
-# 原实现把 HOME 下个人绝对路径写死（~/个人AI档案/...）→ 换机器/换用户名/对外分发包时
+# 原实现把 HOME 下个人绝对路径写死（[记忆共享中心]/...）→ 换机器/换用户名/对外分发包时
 # 全部失效，S1/S2/S3 静默放行——**比误报更危险：守卫看起来在岗实际零判定**。
 # 探测优先级：①包内自我定位 ②env 覆盖 ③HOME 候选。皆失败→显式 skipped，⛔不静默。
 MC_CANDIDATES_ENV = ("TRIWICH_MC", "MEMORY_CENTER")
@@ -443,7 +444,7 @@ if __name__ == "__main__":
 
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:

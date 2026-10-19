@@ -1,19 +1,19 @@
-import os
 #!/usr/bin/env python3
 # version: v0.2
 # v0.2：输出协议委托 hook_protocol（同 secret_key_guard 法·双端实测 JSON/text 各归其位）
 """ttl_expiry_guard.py — UserPromptSubmit 钩子：规则文件 TTL 过期自动提醒（每会话首prompt一次）。
-扫描 ~/[记忆共享中心]/记忆规则/*.md 头部「过期：YYYY-MM-DD」→ 已过期则注入提醒；无过期静默。
+扫描 [记忆共享中心]/记忆规则/*.md 头部「过期：YYYY-MM-DD」→ 已过期则注入提醒；无过期静默。
 防重入：cache/ttl-expiry/<sid>.json（对齐 title/tail 状态机）。异常 exit 0。"""
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
 try:
     import sys; sys.stdout.reconfigure(encoding="utf-8"); sys.stderr.reconfigure(encoding="utf-8")
 except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import json, os, re, sys
 from datetime import datetime
 from pathlib import Path
 
-RULES_DIR = os.path.expanduser("[记忆共享中心]/记忆规则")
+RULES_DIR = Path(os.path.expanduser("[记忆共享中心]/记忆规则"))
 STATE_DIR = Path(os.environ.get("WORKBUDDY_CONFIG_DIR") or (Path.home() / ".workbuddy")) / "cache/ttl-expiry"
 
 

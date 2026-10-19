@@ -176,6 +176,103 @@ def _selftest(pkg):
     return result
 
 
+# ─── 三选闸对账（②代码腿）───────────────────────────────────────────
+
+SYSFILE_CHOICES_NAME = "sysfile-choices.md"
+CHOICE_BACKUP_DIR = ("记忆琥珀", "安装前备份")
+CHOICE_KINDS = ("write", "merge", "skip")
+
+
+def _parse_choices(mc):
+    """读 .install/sysfile-choices.md → {文件名: (选择, 记录时指纹)}。
+
+    文件形态（由 step5 三选闸流程写入·重启会话可恢复）：
+        ## SOUL.md
+        选择: merge
+        指纹: sha256:abc...   （记录时盘上内容的 sha256·判"动没动过"的锚）
+    解析失败/字段缺失 → 返回 None（Fail-closed：宁可报"闸没走"也不猜）。
+    """
+    p = os.path.join(mc, ".install", SYSFILE_CHOICES_NAME)
+    if not os.path.isfile(p):
+        return None
+    out = {}
+    cur = None
+    for line in open(p, encoding="utf-8"):
+        m = re.match(r"^##\s+(\S+)", line)
+        if m:
+            cur = m.group(1)
+            out[cur] = {}
+            continue
+        m = re.match(r"^选择[:：]\s*(\w+)", line)
+        if m and cur:
+            out[cur]["choice"] = m.group(1).lower()
+            continue
+        m = re.match(r"^指纹[:：]\s*(sha256:[0-9a-f]+|-)", line)
+        if m and cur:
+            out[cur]["fp"] = m.group(1)
+    if not out:
+        return None
+    for name, rec in out.items():
+        if rec.get("choice") not in CHOICE_KINDS:
+            return None                      # 选择值非法=闸没走完整=Fail-closed
+    return out
+
+
+def _sha256(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return "sha256:" + h.hexdigest()
+
+
+def _find_sysfile(mc, pd, name):
+    """五系统文件落点探测：平台目录优先·回落记忆中心（与 synthesis_assert SPEC 同口径）。"""
+    for base in (pd, mc):
+        p = os.path.join(base, name)
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def _sysfile_choices_check(mc, pd, pkg):
+    """②代码腿主判据：三选闸选择 vs 盘上状态 四态对账。
+
+    返回 (fails, checks)。⛔不打印——由调用方并入主 fails 流（同 SPEC 循环风格）。
+    """
+    fails, checks = [], 0
+    choices = _parse_choices(mc)
+    if choices is None:
+        # Fail-closed：升级用户无 choices 文件 = 三选闸未走（或全新用户——由调用方按场景豁免）
+        return None, 0                          # None=哨兵：调用方判"闸未启用"而非 FAIL
+
+    backup_root = os.path.join(mc, *CHOICE_BACKUP_DIR)
+    for name, rec in sorted(choices.items()):
+        fp_actual = _find_sysfile(mc, pd, name)
+        if fp_actual is None:
+            fails.append("S0 %s：三选闸记录了选择但盘上无此文件（闸与实盘脱钩）" % name)
+            checks += 1
+            continue
+        checks += 1
+        cur_fp = _sha256(fp_actual)
+        choice, rec_fp = rec["choice"], rec.get("fp", "-")
+        if choice == "skip":
+            # S2 判据：选了跳过→盘上必须仍是记录时的原版（指纹一致）
+            if rec_fp != "-" and cur_fp != rec_fp:
+                fails.append("S2 %s：选了「跳过」但文件已被改动（指纹漂移·用户原版受损嫌疑）" % name)
+        elif choice == "write":
+            # S1 判据：选了覆盖→备份必须在列（条40 回执三要素③的机械对账）
+            if not os.path.isdir(backup_root) or not os.listdir(backup_root):
+                fails.append("S1 %s：选了「写（覆盖）」但备份目录为空（记忆琥珀/安装前备份/·回执三要素不成立）" % name)
+        elif choice == "merge":
+            # S3 判据：增量合并→断章状态自证（UNCHANGED 指纹=记录指纹=不写盘幂等；
+            # UPDATED/CONFLICT 允许指纹变——内容级判定归断章引擎·本腿只验"变有原因"）
+            if rec_fp != "-" and cur_fp == rec_fp:
+                pass                            # UNCHANGED 正常路径（版本一致不写盘）
+            # 指纹变了 = UPDATED/CONFLICT 均可·⛔不在此重复断章引擎的内容判定（防双本账）
+    return fails, checks
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--memory-center", help="记忆共享中心（--selftest 时可省）")
@@ -184,6 +281,8 @@ def main():
     ap.add_argument("--strict-style", action="store_true", help="加跑 step5 §5f 风格合规（合成时点用）")
     ap.add_argument("--selftest", action="store_true", help="自验证：用模板造模拟产物跑判据")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--sysfile-choices", action="store_true",
+                    help="②代码腿：三选闸选择 vs 盘上状态对账（.install/sysfile-choices.md·step5附页）")
     a = ap.parse_args()
 
     if a.selftest:
@@ -201,6 +300,19 @@ def main():
     if not os.path.isdir(refs):
         print("!! 前置错误：包内 references/ 不存在 %s（判据基准缺失=拒绝判定·fail-closed）" % refs)
         return 2
+
+    if a.sysfile_choices:
+        cfails, cchecks = _sysfile_choices_check(mc, pd, a.pkg)
+        if cfails is None:
+            print("ℹ️ 三选闸未启用（.install/sysfile-choices.md 不存在——全新用户或未走三选闸·跳过对账）")
+            return 0
+        if cfails:
+            print("❌ 三选闸对账 FAIL %d 项：" % len(cfails))
+            for _f in cfails:
+                print("   - %s" % _f)
+            return 1
+        print("✅ 三选闸对账全过（%d 组判据：S0 脱钩/S1 备份/S2 原版/S3 幂等）" % cchecks)
+        return 0
 
     fails, checks = [], 0
     texts = {}

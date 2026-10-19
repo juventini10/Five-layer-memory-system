@@ -77,10 +77,10 @@ CARD_BODY_MAX = 600
 # ⛔DO NOT 在 build_*_frontmatter 里再写一遍版本字面量——原因是 v4.1.0 实测过：
 # builder 停在 v1.1.0 而校验器已到 v1.3.0，builder 产出物过不了自己的 validate_card。
 NOTE_SCHEMA_VERSION = "笔记schema v1.0.0"
-CARD_SCHEMA_VERSION = "读书卡片schema v1.3.1"
+CARD_SCHEMA_VERSION = "读书卡片schema v1.3.4"
 CARD_SCHEMA_ACCEPTED = (
     "读书卡片schema v1.0.0", "读书卡片schema v1.1.0", "读书卡片schema v1.2.0",
-    "读书卡片schema v1.2.1", "读书卡片schema v1.3.0", CARD_SCHEMA_VERSION,
+    "读书卡片schema v1.2.1", "读书卡片schema v1.3.0", "读书卡片schema v1.3.1", CARD_SCHEMA_VERSION,  # v1.3.1=2026-10-15 前现行版·存量合法卡兼容
 )  # v1.3.0 存量卡经接受表继续合法（v1.3.1 = 追加可选 verified·2026-09-01 清零批#11）
 
 # --- 题库 schema 版本单源（v4.7.0 · 跨Skill消费边）---
@@ -136,7 +136,8 @@ CARD_FIELDS = [
     ("author", True, lambda v: bool(str(v).strip())),          # 维护者
     ("book", False, lambda v: bool(str(v).strip())),           # 条件必填→validate_card
     ("book_author", False, lambda v: bool(str(v).strip())),    # 条件必填→validate_card
-    ("card_id", True, lambda v: bool(str(v).strip())),
+    ("card_id", True, lambda v: bool(re.fullmatch(r"\S+-卡片\d+", str(v)))),  # v1.3.4 禁空白+标准尾缀（2026-10-15 D3根治批：全池1272张已统一·负例证过才升档#S243）
+    ("kb_no", True, lambda v: bool(re.fullmatch(r"#Z\d{4}", str(v)))),  # v1.3.2 必填·Z族四位数·唯一性由 assign_kb_no.py --sync 对账保证（2026-10-13 立法轮遗留②）
     ("topic", True, lambda v: bool(str(v).strip())),
     ("card_type", True, lambda v: v in _CARD_TYPE_SET),
     ("reading_status", True, lambda v: v in _READING_STATUS_SET),
@@ -282,7 +283,7 @@ def build_card_frontmatter(book_name, book_info, card_n, title, topic,
                            source_type="book", category=None, tags=None,
                            source_title=None, source_author=None,
                            source_url=None, source_date=None, trigger_scene=None,
-                           related=None):
+                           related=None, kb_no=None):
     """从 CARD_FIELDS 单源构建卡片 frontmatter（schema v1.3.0 全字段）。
 
     v4.2.0 修复（H2）：原实现停在 schema v1.1.0 且不产 source_type/category/tags，
@@ -297,6 +298,7 @@ def build_card_frontmatter(book_name, book_info, card_n, title, topic,
     if summary is None:
         summary = f"《{book_name}》·{title}"[:40]
     resolved_author = book_info.get("author", "未知")
+    _bn = re.sub(r"\s+", "", book_name)  # v1.3.3 card_id 源头去空白
     fm = {
         "title": title,
         "type": "reading-card",
@@ -309,7 +311,8 @@ def build_card_frontmatter(book_name, book_info, card_n, title, topic,
         "source_type": source_type,
         "source_title": source_title or (f"《{book_name}》" if is_book else book_name),
         "source_author": source_author or resolved_author,
-        "card_id": f"《{book_name}》-卡片{card_n}" if is_book else f"{book_name}-卡片{card_n}",
+        "card_id": (f"《{_bn}》-卡片{card_n}" if is_book else f"{_bn}-卡片{card_n}"),  # v1.3.3 源头去空白（_bn=book_name 去空白）
+
         "topic": topic,
         "card_type": card_type,
         "reading_status": "L1",
@@ -326,6 +329,8 @@ def build_card_frontmatter(book_name, book_info, card_n, title, topic,
         # book/book_author 是 source_type=book 时的条件必填（兼容别名）
         fm["book"] = book_name
         fm["book_author"] = resolved_author
+    if kb_no:
+        fm["kb_no"] = kb_no  # v1.3.2 双字段制：card_id 人读家规 + kb_no 机器索引别名
     for k, v in (("source_url", source_url), ("source_date", source_date),
                  ("trigger_scene", trigger_scene)):
         if v:

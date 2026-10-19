@@ -67,7 +67,7 @@ SLICES_DIR = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "数�
 END_SPECIFIC_PATHS = {
     "workbuddy": {
         "w1_inject_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "doenglingz_inject_prompt.py"),
-        "guard_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "changelog-guard", "doenglingz_guard.sh"),
+        "guard_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "分身", "doenglingz_guard.sh"),
         "w2_launchd_label": "com.buluotuo.doenglingz-slice-watch",
         "has_hooks": True,
     },
@@ -80,7 +80,7 @@ END_SPECIFIC_PATHS = {
     "dsh": {
         "plugin_file": os.path.join(HOME, ".dsh", "profiles", "web", "node_modules", "five-layer-memory", "src", "index.js"),
         "w1_inject_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "doenglingz_inject_prompt.py"),
-        "guard_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "doenglingz_guard_dsh.py"),
+        "guard_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "分身", "doenglingz_guard_dsh.py"),
         "w2_launchd_label": None,  # 插件直读，不需要launchd守望
         "has_hooks": False,  # 插件原生事件通道
         "plugin_direct_read": True,

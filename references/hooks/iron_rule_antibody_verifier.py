@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 """iron_rule_antibody_verifier.py — A类候选**逐条回读核证**器（v1.0.0·2026-10-01）
 
 ## 为什么需要这个（mapper 翻车实录）
@@ -28,6 +24,10 @@ except Exception: pass
 · ✅ 只产出「可补登记清单」，由人/授权流程执行写入
 · 核证表为空 ⇒ 覆盖率读数**不涨**（⛔不得靠放宽判据虚增）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import io
 import json

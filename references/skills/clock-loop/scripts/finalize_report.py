@@ -450,8 +450,54 @@ def check_delivery_summary(report_path):
     return True, '📢 交付摘要齐全（双轨+CTA+挂起分层）——对话框搬运源就绪'
 
 
+def check_koujing_consumption(report_path, runs_path=None, tool_path=None):
+    """门禁17判据（v4.18.0·L3反哺T2·独立可测函数）：修了 N 处就必须拿出"全树口径复扫跑过"的凭证。
+
+    治的病：`phase2-execution.md` 4.5① 早在 v4.17.13 就写明"修复批首选跑 koujing_audit.py"，
+    但义务只住散文——2026-10-12 成长箱 Loop 当天，该件建好后同轮评估并没跑它（手写复扫代替）。
+    规则在位而无人消费 = 第 N 轮仍会漏，与修得多干净无关。
+    判据：报告含"修正批/修复批"⇒ 必携 `口径复扫凭证 run_id=<8位hex>` 且该 id 真实存在于运行账本、
+    且那次运行 red==0。N/A 放行：本轮无修复批 / 工具或账本不存在（装机态未投递）。
+    强度上限如实：凭证只证"跑过且全绿"，不证登记表口径齐全（登记表覆盖度归 N0 扫描域完备数·flow-C C4）。
+    """
+    import re as _re
+    d = os.path.dirname(os.path.abspath(__file__))
+    runs_path = runs_path or os.path.join(d, ".koujing_runs.jsonl")
+    tool_path = tool_path or os.path.join(d, "koujing_audit.py")
+    try:
+        text = open(report_path, encoding="utf-8", errors="replace").read()
+    except OSError as _e:
+        return False, f"koujing_consumption_guard 读取失败: {_e}"
+    if not _re.search(r"修正批|修复批", text):
+        return True, "N/A（本轮报告无修复批·无需复扫凭证）"
+    if not os.path.exists(tool_path):
+        return True, "N/A（koujing_audit.py 未投递·装机态）"
+    if not os.path.exists(runs_path):
+        return False, ("报告含修复批但运行账本不存在（.koujing_runs.jsonl）"
+                       "——✅DO 跑 `python3 scripts/koujing_audit.py` 取 run_id 并写进报告「口径复扫凭证」行")
+    m = _re.search(r"口径复扫凭证\s*run_id=([0-9a-f]{8})", text)
+    if not m:
+        return False, "报告有修复批却未声明 `口径复扫凭证 run_id=`（义务在位≠被消费·4.5⑥）"
+    rid = m.group(1)
+    ok = {r.get("run_id"): r.get("red") for r in
+          (json.loads(l) for l in open(runs_path, encoding="utf-8") if l.strip())}
+    if rid not in ok:
+        return False, f"run_id={rid} 不在运行账本（编造或未跑·伪造成本≥跑一次）"
+    if ok[rid] != 0:
+        # 不同轨不硬拦"已知并申报"的状态（如包面暂停令致镜像滞后），但必须显式申报＋给依据：
+        # 沉默不同轨=🔴；申报不同轨=✅并把风险留在报告面上（可观测/可抽检，⛔不静默）
+        m2 = _re.search(r"口径复扫 red=(\d+)[^\n]*依据[：:][^\n]{8,}", text)
+        if not m2:
+            return False, (f"run_id={rid} 那次运行 red={ok[rid]} 未清零——要么修平，"
+                           f"要么在报告写 `口径复扫 red=N｜依据：<为何本轮不修>`（沉默不同轨=不放行）")
+        if int(m2.group(1)) != ok[rid]:
+            return False, f"申报 red={m2.group(1)} ≠ 账本 red={ok[rid]}（申报须与实跑同数·铁律-002）"
+        return True, f"run_id={rid} red={ok[rid]} 已显式申报并附依据（不同轨不静默）"
+    return True, f"run_id={rid} 账本实存且 red=0（全树口径复扫已消费）"
+
+
 def finalize(skill, report, archive_root=DEFAULT_ARCHIVE_ROOT):
-    """16道检查 → 封口确认块dict。（v4.12.3 门禁15共享record_fix实装+位次=编号对齐；门禁16=冒烟证据产物绑定；test#7 看护 编号↔声明↔append 三线一致）sealed=True 当且仅当全部硬门禁通过。"""
+    """17道检查 → 封口确认块dict。（v4.12.3 门禁15共享record_fix实装+位次=编号对齐；门禁16=冒烟证据产物绑定；test#7 看护 编号↔声明↔append 三线一致）sealed=True 当且仅当全部硬门禁通过。"""
     detail = []
     # ── 硬门禁1：报告文件存在性（门禁⓪等价·确定性os.path.exists） ──
     exists = os.path.exists(os.path.expanduser(report))
@@ -564,6 +610,12 @@ def finalize(skill, report, archive_root=DEFAULT_ARCHIVE_ROOT):
     # ── 硬门禁16：smoke_evidence_guard（v4.12.3新增·R3-N-06："实测通过"标签无产物绑定=从未实测也能宣称实测） ──
     g16_ok, g16_note = check_smoke_evidence(report)
     detail.append(('smoke_evidence_guard', g16_ok, g16_note))
+    # ── 硬门禁17：koujing_consumption_guard（v4.18.0·L3反哺T2："机制在位≠被消费"，修复批必带复扫凭证） ──
+    if exists:
+        g17_ok, g17_note = check_koujing_consumption(os.path.expanduser(report))
+    else:
+        g17_ok, g17_note = False, 'skipped: report missing'
+    detail.append(('koujing_consumption_guard', g17_ok, g17_note))
 
     sealed = all(ok for _, ok, _ in detail)
     # v3.27.0归一：co['passed']=诚实章（唯一结论），raw_pass=旧口径历史可比

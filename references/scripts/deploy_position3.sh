@@ -19,7 +19,7 @@ PLIST_DST="$HOME/Library/LaunchAgents/com.buluotuo.position3-audit.plist"
 PY="$(command -v python3 || echo /usr/local/bin/python3)"
 LABEL="com.buluotuo.position3-audit"
 
-echo "=== 岗位3对账官 部署（端: $DEST_DIR · python: $PY）==="
+echo "=== 岗位3对账官 部署（端: $DEST_DIR · python: ${PY}）==="
 
 # 1. 复制脚本（幂等: 内容相同则跳过）
 mkdir -p "$DEST_DIR"

@@ -35,7 +35,7 @@ fi
 export BULUOTUO_GUARD_DIR="$GUARD_DIR"
 
 if [ ! -f "$GUARD_DIR/registry_guards.sh" ]; then
-  echo "[i] 守卫族未安装（查 $GUARD_DIR）·跳过·不影响其他功能"
+  echo "[i] 守卫族未安装（查 ${GUARD_DIR}）·跳过·不影响其他功能"
   exit 0
 fi
 exec bash "$GUARD_DIR/registry_guards.sh" 2>&1

@@ -23,24 +23,27 @@ capabilities:
                             # 生成待粘贴文本（~/.doubaowork-config/doubaowork-paste.md + .readme）；
                             # 旧逻辑在此形态下不委派 ⇒ 粘贴文本零产出（端 AI 不自觉跑 setup 即空壳）
   custom_directive: true     # 执行准则走「设置→工作任务偏好指令」UI 粘贴（人工一步）
-  launchd_patrol: false      # 无 launchd patrol 通道（靠 cronjob 跨端蒸馏）
+  launchd_patrol: true       # 2026-10-12 已加：route_doubaowork_patrol.sh + com.buluotuo.doubaowork.patrol.plist + install_launchd.sh
+                             # 端中立观测层巡逻（Skill 生态健康/路由审计），launchd 定时承载
 
 # ─── 条文32·五系统文件端自适配声明律（2026-10-03）───
 # 豆包办公无自动加载机制，五系统文件落在 ~/.doubaowork-config/，
 # 由 T0 常驻 Read 指令（paste.md 首条）强制 AI 每次新会话首条先 Read。
 # customPrompt 为第5件（执行准则#10-13+铁律恒驻），与四系统文件同目录。
 system_file_paths:
-  SOUL: "~/.doubaowork-config/SOUL.md"
-  IDENTITY: "~/.doubaowork-config/IDENTITY.md"
-  USER: "~/.doubaowork-config/USER.md"
-  MEMORY: "~/.doubaowork-config/MEMORY.md"
-  customPrompt: "~/.doubaowork-config/customPrompt.md"
+  # C29 键名归一（2026-10-15）：裸名→条文32 五键；~/ 绝对形态由装机器 expanduser 解析（不拼配置根）
+  SOUL.md: "~/.doubaowork-config/SOUL.md"
+  IDENTITY.md: "~/.doubaowork-config/IDENTITY.md"
+  USER.md: "~/.doubaowork-config/USER.md"
+  MEMORY.md: "~/.doubaowork-config/MEMORY.md"
+  自定义指令: "~/.doubaowork-config/customPrompt.md"   # 端实体文件名是端事实（值不动）
 
 # ─── 条文33·端侧功能面映射声明律（delivered/gaps/endogenous 三态）───
 # 豆包办公无 hook 事件面，守卫/分身功能靠端专属 Skill + paste.md + 五系统文件内生承载。
 # delivered=已交付可验证；gaps=平台边界型缺口（非执行缺口）；endogenous=内生等价承载。
 hooks_surface:
-  delivered: []              # 无标准 hook 事件面（hooks_event=false）
+  delivered:
+    - "launchd 端中立巡逻（route_doubaowork_patrol.sh·2026-10-12）：Skill 生态健康+路由审计定时扫描，launchd 承载（非 hook 事件面·跨工具中立方式 B）"
   gaps: ["无Stop/UserPromptSubmit钩子=平台边界型，非执行缺口"]
   endogenous:                # 守卫功能的内生等价承载
     - "布洛陀-豆包办公规则 Skill：核心3守卫（回复格式/路由审计4维度/L3结论）+ 端专属铁律11条"

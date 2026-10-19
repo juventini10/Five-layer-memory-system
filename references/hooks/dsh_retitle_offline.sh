@@ -40,7 +40,7 @@ sleep "$DELAY"
 OLD_PID=$(lsof -nP -iTCP:$PORT -sTCP:LISTEN -t 2>/dev/null | head -1)
 if [ -n "${OLD_PID:-}" ]; then
     kill "$OLD_PID" 2>/dev/null
-    log "已停 dsh web（PID=$OLD_PID）"
+    log "已停 dsh web（PID=${OLD_PID}）"
 else
     log "端口 $PORT 无监听者（无需停）"
 fi
@@ -71,7 +71,7 @@ fi
 
 # ---------- 4. 起服 ----------
 if ! command -v dsh >/dev/null 2>&1; then
-    log "❌ dsh 不在 PATH（$PATH）——需人工恢复"
+    log "❌ dsh 不在 PATH（${PATH}）——需人工恢复"
     exit 1
 fi
 cd "$HOME" || exit 1
@@ -83,7 +83,7 @@ for i in $(seq 1 40); do
     sleep 1
     NPID=$(lsof -nP -iTCP:$PORT -sTCP:LISTEN -t 2>/dev/null | head -1)
     if [ -n "${NPID:-}" ]; then
-        log "✅ 重启成功：新 PID=$NPID（耗时 ${i}s）"
+        log "✅ 重启成功：新 PID=${NPID}（耗时 ${i}s）"
         OK=1
         break
     fi

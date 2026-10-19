@@ -63,27 +63,36 @@ try:
             import os as _o2
             return _o2.path.join(_o2.path.sep, "nonexistent",
                                  "__BULUOTUO_ABSENT__:%s" % key)
-except Exception:            # ⛔ 不静默：解析器不可达时留痕交守卫报
-    rp = None
-
-    def _cand(key, *parts):
-        return None
+except Exception as _rp_exc:   # ⛔ 解析器不可用 = 安装不完整·必须显形（2026-10-09 根治）
+    # 此前 rp=None 会让下游模块级 rp(...) 报 'NoneType' object is not callable
+    # ——完全不指向根因（session-title hook 失效排查的教训）。改为明确抛错。
+    raise RuntimeError(
+        "布洛陀运行路径解析器（runtime_paths）不可用：%s: %s\n"
+        "  ⇒ 运行路径声明（runtime_paths.json）缺失/损坏，或解析器不在探测路径。\n"
+        "     修复：运行安装器重新生成，或确认 doenglingz/runtime_paths.{py,json} 就位。\n"
+        "  ⛔ 不回落 rp=None——否则下游只报 NoneType（不指向根因·排查成本极高）。"
+        % (type(_rp_exc).__name__, _rp_exc)
+    ) from _rp_exc
 # ── /BULUOTUO-PATH-PARAM ──────────────────────────────────────
 
 
-# 路由家族脚本可能在以下任一位置（真实成员来自脚本哲学家族实例）。
-# 用容错查找：存在即用，不假定单一路径。
-# ⚠️ 2026-10-01 补根：route_audit.py 的真身在 `开发工具/Skill路由引擎/scripts/`
-#   （15KB·2026-09-23 mtime·分源账本写入方），原三根皆不含该目录 ⇒ _find_script 返 None
-#   ⇒ 该脚本**结构性不可达**（不是"漏跑一次"，是"永远跑不到"）。已补为第 4 根。
+# 路由家族脚本真身在 脚本中心（devtools 键直接=脚本中心·route_audit.py 等四件在册）。
+# ⚠️ 2026-10-12 Hermes 适配核证根治：原 _CANDIDATE_DIRS 用 custom_route(缺键→哨兵路径)
+#   + devtools/scripts(子路径不存在·devtools 直接=脚本中心) ⇒ 四候选全 exists=False
+#   ⇒ _find_script 恒返 None ⇒ route_audit.py 在本端**从未执行**（审计账本 hermes 0 行实证）。
+#   修法=候选直指 devtools 本体（脚本中心）+ Skill路由引擎运行位（软链真源·双保险）。
+#   根因定性=挂载≠生效家族第二例（ZCode 内部台账 model-io 空转同族·挂载了但探不到脚本位）。
 _CANDIDATE_DIRS = [
-    _cand("custom_route", "scripts"),
-    _cand("custom_route", "scripts"),
-    _cand("custom_route", "scripts"),
-    _cand("devtools", "scripts"),
+    rp("custom_route"),
+    rp("devtools"),
+    rp("script_center"),
 ]
 
 # 知识库审计适配器（接入层：从 state.db 导出 transcript 喂给既有审计脚本）。
+# 2026-10-12 ZCode 真源侧收口：adapter 已迁顶层（rp("kb_engine") 命中·旧位转软链）——
+#   端侧旧位兜底退役（下方旧位候选块已移除·迁移见内部台账）。
+#   adapter 产出 = {"role":..., "message":{"content":[{"type":"text","text":c}]}}（CC式JSONL）
+#   → route_audit read_transcript 原解析直接命中（model-io 分支=ZCode 专有·与 Hermes 无关）。
 _KB_ADAPTER = rp("kb_engine", "scripts", "_hermes_transcript_adapter.py")
 
 # 平台接入率漂移校验（跨工具中立·接入不拥有：仅调用公共脚本）

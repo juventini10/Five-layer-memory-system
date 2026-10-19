@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # REG: family=守卫 | registry=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/守卫编写规范.md§四 | board=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/03-进度看板.md
 # -*- coding: utf-8 -*-
 """registry_precheck_guard.py v1.0 — 「改完必回流治理文档」事前钩子（PreToolUse）+ 事后核销。
@@ -25,6 +21,11 @@ except Exception: pass
 排除：tests/ fixtures/ steps/ .bak 记忆琥珀 发布库 __pycache__（夹具与派生镜像不是"新资产入库"）。
 回落律：payload 非 JSON / 非 .py|.sh / 文件已存在（改既有脚本不属本判据）→ 一律放行 exit 0。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
+import sys as _sys, os as _os; _SCROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))); _SCROOT in _sys.path or _sys.path.insert(1, _SCROOT)  # sc-rootfix-20261014 域搬补路
 import datetime
 import json
 import os
@@ -33,13 +34,13 @@ import sys
 
 BASE = os.path.expanduser("~")
 JOURNAL = os.path.expanduser("[记忆共享中心]/脚本中心/logs/registry_promise.jsonl")
-DOMAIN_RE = re.compile(r"([记忆共享中心]/脚本中心/|~/[记忆共享中心]/技能配置/[^/]+/scripts/|~/[记忆共享中心]/数字分身/scripts/)")
+DOMAIN_RE = re.compile(r"([记忆共享中心]/脚本中心/|[记忆共享中心]/技能配置/[^/]+/scripts/|[记忆共享中心]/数字分身/scripts/)")
 EXCLUDE_RE = re.compile(r"(/tests/|/fixtures/|/steps/|\.bak|记忆琥珀|发布库|__pycache__|/golden/)")
 REG_RE = re.compile(r"^#\s*REG:\s*(.+)$", re.M)
 FIELDS = ("family", "registry", "board")
 # ── 布洛陀发布包·路径覆盖层 ──────────────────────────────────
 # 装包时安装器生成本机实况的 path_override.py，把上面这些
-# **作者态落点**（"~/个人AI档案/…"）改成本机值或哨兵路径。
+# **作者态落点**（"[记忆共享中心]/…"）改成本机值或哨兵路径。
 # ⛔ 本块必须留在**所有模块级常量之后**——插早了会被后面的定义覆盖回去。
 # 作者侧运行（开发工具/ 下）时 path_overlay 不可达 ⇒ ImportError ⇒ 原样运行。
 try:
@@ -109,7 +110,10 @@ def extract(payload):
             return "", ""
     path = ti.get("file_path") or ti.get("path") or ti.get("target_file") or ""
     body = ""
-    for key in ("content", "new_string", "newText", "text"):
+    # 2026-10-11 键面补全根治：Qoder CN Write 工具的载荷键是 file_content，原四键不覆盖
+    #   ⇒ 带 REG 的 Write 新建被误判"缺 REG"拦截（实测 slice_chain_check 落笔被拦暴露）。
+    #   同族病=Stop 载荷键错致守护空转（2026-09 在案）——提取键须随产品字段名演化。
+    for key in ("content", "file_content", "new_string", "newText", "text"):
         if isinstance(ti.get(key), str):
             body += ti[key] + "\n"
     return str(path), body
@@ -144,12 +148,17 @@ def reconcile():
             target = (reg.get(key) or "").split("§")[0].strip()
             if not target:
                 continue
-            fp = target if os.path.isabs(target) else os.path.join(BASE, target)
-            try:
-                if os.path.isfile(fp) and name in open(fp, encoding="utf-8").read():
-                    hit = True
-            except OSError:
-                pass
+            cands = [target] if os.path.isabs(target) else [
+                # 承诺里 registry 多为「记忆蓝图/…」相对记忆中心路径（2026-10-11 实证：
+                #   原单根 BASE=家目录 解不到 → 已登记仍判"未回流"假红——双根尝试根治）
+                os.path.join(BASE, "[记忆共享中心]", target), os.path.join(BASE, target)]
+            for fp in cands:
+                try:
+                    if os.path.isfile(fp) and name in open(fp, encoding="utf-8").read():
+                        hit = True
+                        break
+                except OSError:
+                    pass
         (done if hit else owed).append((name, reg.get("registry", "?")))
     print(f"registry 回流核销：✅已登记 {len(done)} ｜ ⚠️未回流 {len(owed)} ｜ 🚪显式豁免 {len(exempt)}")
     for n, where in owed:
@@ -182,6 +191,7 @@ def main(argv):
             else:
                 print(f"  ⚠️ seed 拒收：{os.path.basename(fp)} 头部无合格 REG 行（{d}）→ 请补声明或改写 skip 理由")
         return 0
+    if hasattr(sys.stdin, "reconfigure"): sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}
@@ -217,7 +227,7 @@ def self_test():
         ("N4 显式豁免带原因 → exempt", judge("/x/[记忆共享中心]/脚本中心/foo.py", "# REG: skip 一次性探针·落盘后即删", False)[0] == "exempt"),
         ("N5 既有文件被改 → 不判（域外）", judge("/x/[记忆共享中心]/脚本中心/foo.py", "print(1)", True)[0] == "skip-domain"),
         ("N6 tests/ 夹具 → 不判", judge("/x/[记忆共享中心]/脚本中心/tests/t_foo.py", "print(1)", False)[0] == "skip-domain"),
-        ("N7 治理域外（~/[记忆共享中心]/工作日志） → 不判", judge("/x/~/[记忆共享中心]/工作日志/a.py", "print(1)", False)[0] == "skip-domain"),
+        ("N7 治理域外（[记忆共享中心]/工作日志） → 不判", judge("/x/[记忆共享中心]/工作日志/a.py", "print(1)", False)[0] == "skip-domain"),
     ]
     bad = 0
     for name, ok in cases:

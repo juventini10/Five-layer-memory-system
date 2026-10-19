@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.5
 """session_title_utils.py — 对话标题统一命名·公共原语（跨工具中立）
 
@@ -40,6 +36,10 @@ except Exception: pass
 语义深度天花板由此封顶（20 字标题本就没有信息量可言），这是**有意的取舍**。
 需要更强语义时：用 LLM 出主题，再调用本原语做**格式规范化**（见 references/ 架构说明）。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 import re
 from datetime import datetime, timedelta, timezone
@@ -195,11 +195,11 @@ def extract_theme(prompt: str) -> str:
         line = line.strip('"').strip() or "未命名"
     # v0.4 修：引用与提问**同行**时（`@"路径" 这个问题怎么办`）——
     #   v0.2/v0.3 只能"跳过整行"，同行就跳不掉，导致主题=路径截断
-    #   （实证 v0.3 产出 `~/[记忆共享中心]/README.md" 这个`·路径+残引号进了标题）。
+    #   （实证 v0.3 产出 `[记忆共享中心]/README.md" 这个`·路径+残引号进了标题）。
     #   => 剥掉行首引用 token，保留其后的提问文字。
     if line.startswith("@"):
         # ⛔ 非贪婪 `\S*?` 的坑（v0.4 实测）：`@"路径" 问题` 只吃到开引号就停
-        #    ⇒ 主题残留 `~/[记忆共享中心]/README.md"`。改为**引号配平优先**，引号内可含空格。
+        #    ⇒ 主题残留 `[记忆共享中心]/README.md"`。改为**引号配平优先**，引号内可含空格。
         line = re.sub(r'^@(?:"[^"]*"|\S+)\s*', "", line, count=1).strip() or line
     if line.startswith("file://"):
         m2 = re.match(r"file://[^\s，,：:？?]+\s*[，,：:？?]?\s*(\S.*)", line)

@@ -52,12 +52,29 @@ LOGDIR_DEFAULT = os.path.expanduser("[记忆共享中心]/工作日志/系统日
 GUARD_CACHE = os.path.expanduser("~/.cache/systemlogger/guard_line.txt")
 
 
+def _guard_script_path():
+    """changelog_guard.sh 定位（2026-10-14 根治谎报「未安装」）。
+
+    病根：本件原写死 `开发工具/changelog-guard/changelog_guard.sh`，脚本中心根治阶段3首批
+    把它搬进 `脚本中心/守卫/changelog-guard/` 后 os.path.exists 转 False → --guard-line 落
+    "N/A（个人工具·未安装）"分支——十端共用的变更日志兜底层**静默降级**（真态=已装·移位）。
+    判据：⛔单一写死路径=移位即假 N/A；按候选序取第一个存在件，旧址保留作回滚兼容。
+    """
+    for p in (
+        os.path.expanduser("[记忆共享中心]/脚本中心/changelog_guard.sh"),
+        os.path.expanduser("[记忆共享中心]/脚本中心/changelog-guard/changelog_guard.sh"),
+    ):
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def _guard_fingerprint():
     """签名=检测所依赖的两个输入的身份（guard 脚本 + 被检账本）。
     ⛔ 不用缓存自身年龄作新鲜度——那只是"多久前算的"，不回答"所算的东西变了没"。"""
     parts = []
     for p in (
-        os.path.expanduser("[记忆共享中心]/脚本中心/changelog_guard.sh"),
+        _guard_script_path() or "changelog_guard.sh:absent",
         os.path.expanduser("[记忆共享中心]/变更日志.md"),
     ):
         try:
@@ -116,8 +133,8 @@ def run_guard_line():
     仅调用时机从"每次写入"改为"验证块输出前（每会话 1 次）"。
     """
     guard_line = ""
-    guard_script = os.path.expanduser("[记忆共享中心]/脚本中心/changelog_guard.sh")
-    if os.path.exists(guard_script):
+    guard_script = _guard_script_path()
+    if guard_script and os.path.exists(guard_script):
         out = err = ""
         try:
             try:
@@ -281,8 +298,8 @@ def main():
         os.makedirs(_cache_dir, exist_ok=True)
         with open(os.path.join(_cache_dir, "last_token.txt"), "w", encoding="utf-8") as _tf:
             _tf.write(token_hash)
-        with open(os.path.join(_cache_dir, "seal_ledger.log"), "a", encoding="utf-8") as _lf:
-            _lf.write("%s\t%sT%s\t%s\t%s\n" % (token_hash, today, now_hm, os.path.basename(logfile), args.tool))
+        with open(os.environ.get("SYSLOG_SEAL_LEDGER") or os.path.join(_cache_dir, "seal_ledger.log"), "a", encoding="utf-8") as _lf:
+            _lf.write("%s\t%sT%s\t%s\t%s\t%s\n" % (token_hash, today, now_hm, os.path.basename(logfile), args.tool, os.path.dirname(os.path.abspath(logfile))))
     except Exception:
         pass  # 落盘失败不阻塞写入主流程；verify 时按"无签发记录"降级处理
 
@@ -357,6 +374,28 @@ def emit_verify_block(logfile, today, now_hm, tool, body, token_hash):
         changelog = "⚠️ guard_line 未跑（先跑 `append_log_entry.py --guard-line` 填值）"
     else:
         changelog = gv
+    # v3.17.3 自签 seal 回验（2026-10-12 成长箱 Loop 实证：本端 21:00 写入成功的条目，
+    #   21:05 被另一窗口的"读全文→写回"吞掉——O_APPEND 防得住追加并发、防不住整文件重写，
+    #   塌缩熔断阈值 >30% 也报不出（当日只丢 1 条）。现按签发账本逐枚回查，丢了就在验证块喊出来。）
+    seals_line = "✅ 自签 seal 回验：通过"
+    try:
+        _lg = os.environ.get("SYSLOG_SEAL_LEDGER") or os.path.join(os.path.dirname(GUARD_CACHE), "seal_ledger.log")
+        _mine = []
+        if os.path.exists(_lg):
+            with open(_lg, encoding="utf-8", errors="replace") as _sf:
+                for _l in _sf:
+                    _c = _l.rstrip("\n").split("\t")
+                    if (len(_c) >= 5 and _c[2] == os.path.basename(logfile) and str(today) in _c[1]
+                            and _c[4] == os.path.dirname(os.path.abspath(logfile))):
+                        _mine.append(_c[0])
+        with open(logfile, encoding="utf-8", errors="replace") as _ff:
+            _body = _ff.read()
+        _lost = [x for x in _mine if x not in _body]
+        if _lost:
+            seals_line = ("❌ 自签 seal 回验：%d/%d 枚已签发却不在文件里（疑被并发整文件回写吞没）%s"
+                          " —— 按步骤 5.8 用会话回显原文重建，⛔凭记忆重写" % (len(_lost), len(_mine), _lost[:6]))
+    except Exception as _e:
+        seals_line = "⚪ 自签 seal 回验：未执行（%s）" % type(_e).__name__
     # v3.14.0：令牌已在写入前生成，并已内嵌进条目（- **seal**：行）+ 记入 seal_ledger.log
     #   （append-only）。此处只负责把同一枚值打进验证块——保证「条目内 seal ≡ 回复令牌」。
     print("📝 系统日志已写入")
@@ -372,6 +411,7 @@ def emit_verify_block(logfile, today, now_hm, tool, body, token_hash):
     print(consistency)
     print(fmt)
     print("✅ 机械校验：完成行回读一致 + 字段结构检查（假设验证=AI步骤4.3自检项·脚本未代验·审查F3如实化）")
+    print(seals_line)
     print()
     print("📋 变更日志检测：%s" % changelog)
     print()

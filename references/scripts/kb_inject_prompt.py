@@ -26,7 +26,7 @@ kb_inject_prompt.py — UserPromptSubmit 钩子：知识库确定性激活（知
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import sys
 import os
@@ -65,6 +65,7 @@ def _arm_deadline():
     失败静默（平台不支持 → 退化为无保护，⛔不阻断）。"""
     if HOOK_DEADLINE <= 0:
         return
+
     def _h(_sig, _frm):
         raise _Deadline()
     try:
@@ -90,7 +91,7 @@ def _tick(stage=""):
 # ── 2026-09-10 修复：回退通道自我 re-exec 进 .venv-st（保证回退=完整语义检索而非纯 BM25）──
 # 背景：旧架构依赖 search_kb 模块顶层 execv 自动换身；v0.3.6 改子进程委托+__main__守卫后，
 # import 场景不再换身 → 回退会退化为纯 BM25。此处由钩子自身换身（单发进程·execv 合法）。
-_VENV_PY = os.path.expanduser("[记忆共享中心]/脚本中心/知识联邦引擎/.venv-st/bin/python")
+_VENV_PY = os.path.expanduser("[记忆共享中心]/脚本中心/.venv-st/bin/python")
 if (os.environ.get("KB_HOOK_VENV") != "1"
         and os.path.exists(_VENV_PY)
         and os.path.realpath(sys.executable) != os.path.realpath(_VENV_PY)):
@@ -159,7 +160,15 @@ def _serve_search(task):
         # 服务端单次检索实测 7~21s（2701 文档全库 + bge 向量 RRF），5s 超时必触发回退冷跑→偶发破 60s 钩子上限。
         # 拉到 50s：> P100 实测响应且 < WorkBuddy 60s 钩子硬上限，快通道稳定命中不再回退。
         s.settimeout(50.0)
-        s.connect(SOCK_PATH)
+        _sock = SOCK_PATH
+        try:
+            import search_kb as _SK
+            _es = os.path.join(_SK._ENGINE_DIR, "scripts", "kb.sock")
+            if os.path.exists(_es):
+                _sock = _es
+        except Exception:
+            pass
+        s.connect(_sock)
         s.sendall((json.dumps({"task": task, "k": INJECT_TOPN}) + "\n").encode("utf-8"))
         buf = b""
         while not buf.endswith(b"\n"):
@@ -175,7 +184,7 @@ def _serve_search(task):
                    {"src": h.get("src", ""), "title": h.get("title", ""),
                     "summary": h.get("summary", "")}, h.get("matched", []))
                   for h in resp.get("hits", [])]
-        return scores, resp.get("buckets", [])
+        return scores, resp.get("buckets", []), resp.get("nat")  # A4b inject通道补录(2026-10-17 漏检审计)
     except Exception:
         return None
 
@@ -188,6 +197,7 @@ def main():
     # 无 --prompt：读 stdin（v1.4.1 协议统一：优先解析 JSON payload 取 prompt 字段；解析失败回退全文）
     raw = ""
     try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         raw = sys.stdin.read()
     except Exception:
         raw = ""
@@ -216,11 +226,11 @@ def _inject(task):
         served = _serve_search(task)
         _tick("after_serve")   # 闹钟若已在 recv 内触发，这里补刀，⛔不让回退冷跑裸奔
         if served is not None:
-            scores, bucket_names = served
+            scores, bucket_names, _nat_served = served
             if not scores:
                 return  # 引擎判非知识场景（或零召回）→ 放行
             if _append_trail:
-                _append_trail(task, scores, bucket_names, source="serve")
+                _append_trail(task, scores, bucket_names, source="serve", nat=_nat_served)
             _emit(scores, bucket_names)
             return
         # ② 回退：本地冷跑（本进程已在 .venv-st 内·import search_kb 即完整语义检索）
@@ -239,7 +249,12 @@ def _inject(task):
             return
         # hits 元组 = (桶名字符串, 关键词列表)，首位即桶名
         if _append_trail:
-            _append_trail(task, scores, [b for b, _ in hits], source="fallback")
+            try:
+                import search_kb as _SKf
+                _natf = getattr(_SKf._NAT, "d", None)
+            except Exception:
+                _natf = None
+            _append_trail(task, scores, [b for b, _ in hits], source="fallback", nat=_natf)
         _emit(scores, [b for b, _ in hits])
     except _Deadline:
         # 到点未出结果 → 留痕 + 放行（⛔不阻塞对话）。冷启首跑属预期，

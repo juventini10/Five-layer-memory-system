@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # REG: family=守卫 | registry=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/守卫编写规范.md§四 | board=记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学/03-进度看板.md
 # -*- coding: utf-8 -*-
 """md_table_shape_guard.py v1.4 — markdown「写入结构」机械门禁（delta-only·表格形状 J1/J1F/J2 ＋ 条目血缘 J4）。
@@ -18,7 +14,7 @@ v1.4（2026-10-01 17:06·Qoder CN 童灵·成长箱 QCN-20261001-004／-009 同�
       `J4_PROMOTE_DEADLINE=2026-11-15` 的语义＝**复核日**，⛔"到期自动转红"：转红须另翻 `J4D_PROMOTE_READY=True`
       并附新回测证据。写成"到期即红"＝给未来埋假承诺（条文承诺会响、实际永不响＝假绿·D29 同类）。
     ①条目头族口径：488 个「提交×族文件」对 → 身份丢失 1 例，该例是真伤
-      （`dba916c8` 把 LRN-20260716-001 整条覆盖成 LRN-20260822-001，当时过了全部守卫）⇒ 该口径假阳 0。
+      （`dba916c8` 把 内部记录 整条覆盖成 内部记录，当时过了全部守卫）⇒ 该口径假阳 0。
     ②域改内容驱动（HEAD 条目身份 ≥3 入域·见 lineage_family）＋加表格行族后：入断面 1182 对 → 命中 38 例（3.2%），
       其中 27 例属表格行族，抽样全是**设计使然的整写**（`K2切片蒸馏/slices/*` 生成器重写、`*_MEMORY_INDEX.md`／
       `INDEX.md` 脚本重建）⇒ 与阻断混档＝用必然误拦换信任额度，故按 J2 自家先例"承接在前·引爆在后"分档。
@@ -81,6 +77,10 @@ v1.3（09-19 12:20·Qoder CN 童灵·工单 D29 拆弹）：①**到期升红原
   --self-test          内置夹具（真 git 仓 + 真判据 + 三判据各一条变异）
 退出码：0 无红 / 1 有红 / 2 参数或环境错
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import os
 import re
@@ -96,7 +96,7 @@ ROW_TAIL_RE = re.compile(r"\|(?:[^|\n]*\|){2,}\s*$")   # 段间共用竖线：`|
 # 分级：J1（表格片段拼进正文）＋J4（条目身份消失）=高精度→阻断；J2（列数≠表头）=存在系统性误报（单元格内未转义竖线/表尾注记）
 # →先显形不拦，待噪声口径清完再转红（§3.5「承接在前·引爆在后」·转红单点改此集合即可）
 # J4 直接进阻断集的依据＝历史回测（2026-10-01·Qoder CN·488 个「提交×族文件」对实测）：
-#   身份丢失 1 例，且该例是真伤（`dba916c8` 把 LRN-20260716-001 整条记录覆盖成 LRN-20260822-001，
+#   身份丢失 1 例，且该例是真伤（`dba916c8` 把 内部记录 整条记录覆盖成 内部记录，
 #   取证销毁且当时过了全部守卫）⇒ 假阳率 0/488，非 J2 那种"系统性误报必须先清噪声"的形态。
 BLOCKING = {"J1", "J4"}
 # J1F：「- 2026-09-19 10:50 | 端 | 动作 | 待办 |」= 时间戳引导的整行台账行（本系统讨论记录/变更记录的通用idiom，
@@ -239,7 +239,7 @@ def lineage_losses(root, rel):
 
 
 def _cells(line):
-    """单元格数：先剥行内 code span（`A \|\| B` 里的竖线是内容不是分隔符），
+    r"""单元格数：先剥行内 code span（`A \|\| B` 里的竖线是内容不是分隔符），
     再按未转义竖线切，去掉首尾空段——缺尾竖线的历史行不得算作异形（防假红）。"""
     bare = re.sub(r"`[^`\n]*`", "§", line)
     parts = re.split(r"(?<!\\)\|", bare)

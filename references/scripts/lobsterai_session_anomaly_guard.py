@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Win console UTF-8 guard (auto by build chain · V9)
-try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
-except Exception: pass
 # version: v0.1
 """
 lobsterai_session_anomaly_guard.py — LobsterAI 专属守卫（会话层异常检测）
@@ -33,6 +29,10 @@ lobsterai_session_anomaly_guard.py — LobsterAI 专属守卫（会话层异常�
 告警显形：异常 → 写 .patrol/lobsterai_anomaly_alert.txt + exit 1（patrol 日志留痕）
 创建：2026-08-22
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import argparse
 import json
 import os

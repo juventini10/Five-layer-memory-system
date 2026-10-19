@@ -16,7 +16,7 @@ v0.3 变更（构造权移交扩面 L7→L0-L7）：
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import os, sys, argparse, datetime, re, subprocess, hashlib
 BASE = os.environ.get("BULUOTU_BASE") or os.path.expanduser("[记忆共享中心]")
@@ -26,11 +26,57 @@ SLICES = os.path.join(BASE, "数字分身/K2切片蒸馏/slices")
 SSOT = os.path.join(BASE, "数字分身/童灵·人格规格书.md")
 DECLARE_STATE = os.path.join(os.environ.get("WORKBUDDY_CONFIG_DIR") or os.path.expanduser("~/.workbuddy"),
                              "doenglingz_level_declare_state.json")
+# v0.11.6 2026-10-09 L3读面根治（Qoder CN 童灵D3·同 W3 L28"写读分根即假红"先例）：
+#   根因＝guard 各端按 DOENGLINGZ_CONFIG_DIR 写本端 state（本端192行含当日记录），tsl 读面只盯 ~/.workbuddy
+#   （WB 台账末行停昨日）⇒ 本端每轮 L3 恒🟡＝双向失明（声明真在·台账看不见）。修法＝读面跟随写面聚合。
+import glob as _glob
+def _declare_files():
+    home = os.path.expanduser("~")
+    cands = [DECLARE_STATE]
+    cands += _glob.glob(os.path.join(home, ".*", "doenglingz_level_declare_state.json"))
+    cands += _glob.glob(os.path.join(os.path.expanduser("[记忆共享中心]"), ".*", "doenglingz_level_declare_state.json"))
+    out = []
+    for c in cands:
+        if c not in out:
+            out.append(c)
+    return out
+
+def _declare_src_match(path, src):
+    if not src or src == "unknown":
+        return True
+    import re as _re
+    tag = _re.sub(r"[._\-]", "", os.path.basename(os.path.dirname(path))).lower()
+    return tag == _re.sub(r"[_\-]", "", src.lower())
 GUARD_STATE = os.path.join(os.environ.get("WORKBUDDY_CONFIG_DIR") or os.path.expanduser("~/.workbuddy"),
                            "doenglingz_guard_state.json")
 CACHE = os.environ.get("TSL_VERIFY_CACHE") or os.path.expanduser("~/.cache/tsl_verify")   # env=测试隔离缝（对齐 closeout 同名先例·守卫规范 §3.9）
 W3_LEDGER = os.path.join(BASE, "脚本中心/logs/runtime/w3_inject_ledger.jsonl")  # 2026-10-07 W3根治：读侧对齐写侧(doenglingz_inject_prompt L489)——写读分根即假红
-__version__ = "v0.11.5"   # 版本机械载体（2026-09-26 与注入器同律：⛔版本只活在输出串/文档手写号里）
+__version__ = "v0.11.9"
+#   v0.11.9（2026-10-11·ZCode 童灵·L7-3 serve 账认账·任务卡队列③挂账清偿）：
+#     _kb_trail_since 原只认 source=cli → CLI 快通道（kb_serve 常驻引擎·2026-10-11 上线）
+#     落的 source=serve 账被 L7-3 判据过滤 = 归属断（当日两度实证 L7-3 红）。
+#     修法：cli∪serve 同权——两者动作主体同为「童灵本端主动实跑 search_kb」（serve 只是
+#     执行引擎为常驻 daemon·trail 落同一本 kb_query_trail.jsonl）；source=inject（注入流）
+#     仍排除。⛔不改 search_kb 侧记账（追加第二账=双本账）。
+#   v0.11.8（2026-10-10·Qoder CN 童灵·L7-2 假红根治·皮叔令「符合愿景根治处理」）：
+#     判据面补第三出口——08 §L7-2 早允许「本次会话无铁律盲区需反哺」，但机械判据只认两本账
+#     （扫描 log ∪ 反哺日志）＝合法出口无处落账 → 无素材回合必红（同族第三次：v0.11.3 缺第二账本
+#     ／v0.11.4 账本行形状脱钩／本次缺第三出口）。修法＝读 growth-box E0 扫描动作台账
+#     （drain-backlog --check 每次成功运行落一行·backlog 由脚本自算·⛔不由 AI 报数）：
+#     本窗口跑过 E0 且 backlog=0 → GO；backlog>0 而反哺未动 → 仍 🔴（⛔不被本增量洗白）。
+#     ⛔不用 ⚪ 表示"无对象"：08 v1.4.3 定死 ⚪＝平台物理无机制，"本轮无候选"是合法完成态。
+#     ⛔不替换原两本账（防退化）；fail-open：无台账件/解析失败 → 回落原判据·⚪不误标。
+#   v0.11.7（2026-10-10·Hermes 童灵·L7-3 假红根治·皮叔令「符合愿景彻底根治」）：   # 版本机械载体（2026-09-26 与注入器同律：⛔版本只活在输出串/文档手写号里）
+#   v0.11.7（2026-10-10·Hermes 童灵·L7-3 假红根治·皮叔令「符合愿景彻底根治」）：
+#     L7-3 判据增读 kb_query_trail 动作台账（与日志#S 判据取或·符合愿景①动作即凭证）。
+#     病根：原判据只认「系统日志 立场卡#S 行」=凭证层，「跑 search_kb」=动作层，两层靠
+#     AI 自觉写日志串联 ⇒ 跑了没写日志=判红=「两层记账」结构缺口（D3 回合连判🔴实证）。
+#     search_kb 实跑已由 _log_cli_trail→kb_query_trail.append_trail(source=cli) 落台账
+#     ⇒ 判据增读该台账·动作自动转凭证·不靠记日志。⛔不替换原判据（防退化）；fail-open
+#     回落纯原判据（不破坏他端/无引擎端）；source 只认 cli（注入流不算「自己跑」）。
+#     验证：selftest 14/14+MUT 变异被抓；真机 L7-3 ✅做到·检索台账1(10-10 06:47)。
+#   v0.11.6（2026-10-07·Hermes 童灵·你令 relay 候选1·src= 生产者字段同步面）：stamps.log
+#     第1栏时间戳后插入 src= 生产者字段（relay 归因基础·⛔历史行无此字段·解析侧按 tab 位取用）。
 #   v0.11.5（2026-10-06·WorkBuddy 童灵·L5 MISS 根治·皮叔令「查为何MISS：时序/字段/口径，修到连续两轮✅」·Qoder CN 方案执行）：
 #     L5 对账口径切换＝doenglingz_guard_state.json **当轮行**（本会话+ts>=since 的最新行·tsl_hits 含
 #     ts_l5_selfcheck=守护三查痕）。根因三查实锤：①口径——原读全局 eight_check.log 尾行，账本无
@@ -106,6 +152,98 @@ def _log_docs(day):
         out.append((ds, _read(os.path.join(BASE, "工作日志/系统日志", "系统日志_%s.md" % ds))))
         d += datetime.timedelta(days=1)
     return [(ds, t) for ds, t in out if t]
+
+
+# ── v0.11.8 L7-2 动作凭证源：growth-box E0 扫描台账（drain-backlog 落账）──
+def _e0_trail_since(since):
+    """返回 (本窗口 E0 扫描次数, 最后一次 backlog)；无台账/解析失败 → (0, None)＝fail-open 回落原判据。
+
+    ⛔不信任 AI 自报"我扫过了"——凭证只来自脚本自己落的那行（backlog 由 drain-backlog 计算）。
+    """
+    p = os.environ.get("DOENGLINGZ_E0_TRAIL") or os.path.join(
+        BASE, "技能配置", "growth-box", "logs", "e0_scan_trail.jsonl")
+    if not os.path.isfile(p):
+        return (0, None)
+    try:
+        import json as _json
+        n, last = 0, None
+        for line in open(p, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                d = _json.loads(line)
+            except Exception:
+                continue
+            ts = str(d.get("ts", ""))[:19].replace("T", " ")
+            try:
+                t = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                t = datetime.datetime.strptime(ts[:16], "%Y-%m-%d %H:%M")
+            if t >= since:
+                n += 1
+                last = d.get("backlog")
+        return (n, last)
+    except Exception:
+        return (0, None)
+
+
+# ── v0.11.7 L7-3 动作凭证源：kb_query_trail（2026-10-10 童灵根治·符合愿景①全自动化）──
+# 病根（D3 回合 TSL 连判 L7-3 🔴「今日日志无立场卡引用」·但 search_kb 明明实跑过）：
+#   原判据只认「系统日志里 `立场卡…#S数字` 行」= **凭证层**。而「跑 search_kb」是**动作层**，
+#   两者中间靠 AI 自觉写日志串联 ⇒ 跑了但没写日志 = 判红 = 「两层记账」结构缺口。
+#   后果：① 误伤真检索（本回合实跑被红）；② 钩子已注入锚点时 AI 易以为「有卡了不用跑」更不记。
+# 修法（三选里最符合愿景①的「动作即凭证」·⛔不靠我记得记账）：
+#   search_kb 每次实跑已由 `_log_cli_trail`→`kb_query_trail.append_trail(source="cli")`
+#   落台账（事实：本机 3641 条·末条即本回合 06:47 那次）⇒ 判据**增读该台账**，
+#   与日志 #S 判据**取或**：任一命中即 GO。
+#   ⚠️ 保留原判据（不替换）——防退化：若 trail 落盘坏了，日志引用仍是独立证据源；
+#      两者都无才判 🔴（红着不圆·符合 TSL 纪律）。
+#   ⚠️ fail-open：找不到引擎/trail ⇒ 回落纯原判据（⛔不因本增量破坏他端/无引擎端）。
+def _kb_trail_path():
+    """定位 kb_query_trail.jsonl（与 search_kb._pick_engine_dir 同判据·route_table.json）。"""
+    for sub in ("脚本中心/知识联邦引擎", "开发工具/知识联邦引擎"):
+        eng = os.path.join(BASE, sub)
+        if os.path.isfile(os.path.join(eng, "route_table.json")):
+            p = os.path.join(eng, "logs", "kb_query_trail.jsonl")
+            if os.path.isfile(p):
+                return p
+    # 兜底：常见落点直查（不依赖 route_table 判据·防引擎结构差异漏读）
+    for sub in ("开发工具/知识联邦引擎", "脚本中心/知识联邦引擎"):
+        p = os.path.join(BASE, sub, "logs", "kb_query_trail.jsonl")
+        if os.path.isfile(p):
+            return p
+    return ""
+
+
+def _kb_trail_since(since):
+    """返回本窗口(source=cli) trail 时刻列表；缺台账返回 []（fail-open 回落原判据）。"""
+    p = _kb_trail_path()
+    if not p:
+        return []
+    try:
+        import json as _json
+        out = []
+        for line in open(p, encoding="utf-8", errors="replace"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                d = _json.loads(line)
+            except Exception:
+                continue
+            if d.get("source") not in ("cli", "serve"):
+                continue        # 只看本端主动实跑（cli=冷路径/serve=快通道·v0.11.9 同权；inject 注入流不算「童灵自己跑」）
+            try:
+                t = datetime.datetime.strptime(
+                    str(d.get("ts", "")), "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                continue
+            if t >= since:
+                out.append(t.strftime("%m-%d %H:%M"))
+        return out
+    except Exception:
+        return []
 
 
 def l7_rows(since, day, logf):
@@ -259,6 +397,13 @@ def l7_rows(since, day, logf):
         _d2 = "本回合未扫未反哺（他方：扫描%d笔/反哺%d笔·不顶账）" % (len(oth2), len(othF))
     else:
         _d2 = "今日零扫描（没写=没扫）"
+    # ── v0.11.8 第三出口：E0 扫描动作凭证（⛔不替换上两本账，仅在其均为空时补位）──
+    if st2 == "NO-GO":
+        _n0, _b0 = _e0_trail_since(since)
+        if _n0 and _b0 == 0:
+            st2 = "GO"
+            _d2 = "E0扫描=%d次·积压=0（无候选可反哺·动作即凭证 v0.11.8）·他方：扫描%d/反哺%d" % (
+                _n0, len(oth2), len(othF))
     rows.append(("L7-2", "铁律盲区反哺", st2, _d2))
     # ── v0.10 L7-3 归因显形：原锚"当日日志含引用即GO"=他会话产出顶账。引用行归属其上方最近的
     #   「完成：HH:MM」（条目完成时刻）；遍历 _log_docs 全日文件（对齐 D38 跨零点判据·原只看当日文件）。
@@ -276,14 +421,27 @@ def l7_rows(since, day, logf):
                 except Exception:
                     continue
                 (in3 if t3 >= since else oth3).append(day2[-5:] + " " + last_t)
-    st3 = "GO" if in3 else "NO-GO"
+    # v0.11.7：L7-3 判据 = 日志#S引用（凭证层） ∪ kb_query_trail动作台账（动作层）·取或。
+    #   ⚠️ 不替换原判据·防退化（trail 落盘坏了日志引用仍是独立源）；两者都无才 NO-GO。
+    trail3 = _kb_trail_since(since)
+    # v0.11.10 文案归真（2026-10-13·Qoder CN）：原 else 分支写「今日无检索凭证」，
+    #   但窗口外今日实有 trail 动作时也走到该分支 ⇒ 措辞与事实不符，会误导归因
+    #   （把「本回合没跑」读成「今天没人跑」）。补一个今日全量口径供分支判定。
+    _trail_today = _kb_trail_since(datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0))
+    st3 = "GO" if (in3 or trail3) else "NO-GO"
+    _src3 = []
     if in3:
-        _d3 = "本窗口检索引用=%d（%s）·今日他方=%d（%s·不顶账）" % (
-            len(in3), "/".join(in3[:3]) or "—", len(oth3), "/".join(oth3[:3]) or "—")
-    elif oth3:
-        _d3 = "本回合引用未入日志（他方%d处：%s·不顶账）" % (len(oth3), "/".join(oth3[:2]))
+        _src3.append("日志引用%d" % len(in3))
+    if trail3:
+        _src3.append("检索台账%d(%s)" % (len(trail3), "/".join(trail3[:2])))
+    if in3 or trail3:
+        _d3 = ("本窗口：%s · 今日他方=%d（%s·不顶账）"
+               % ("+".join(_src3), len(oth3), "/".join(oth3[:2]) or "—"))
+    elif oth3 or _trail_today:
+        _d3 = ("本回合未实跑（今日窗口外：日志%d处·台账%d次·⛔不顶账）"
+               % (len(oth3), len(_trail_today)))
     else:
-        _d3 = "今日日志无立场卡引用（没查=没检索）"
+        _d3 = "今日全天零检索凭证（日志与台账双无·没跑=没检索）"
     rows.append(("L7-3", "立场卡检索", st3, _d3))
     return rows
 
@@ -349,23 +507,25 @@ def _guard_row_l5(session, since_dt):
     return res
 
 
-def l0_l6_rows(since):
+def l0_l6_rows(since, src="unknown"):
     rows = []
     core_rules = _read(os.path.join(QCN_RULES, "doenglingz-core.md"))
-    go0 = bool(core_rules) and os.path.isfile(os.path.join(BASE, "开发工具/doenglingz_inject_prompt.py"))
+    go0 = bool(core_rules) and any(os.path.isfile(os.path.join(BASE, d, "doenglingz_inject_prompt.py")) for d in ("开发工具", "脚本中心/分身", "脚本中心"))  # B3中心直址双看·旧单径判据必假(L0假红) 2026-10-16
     rows.append(("L0", "接入态", "GO" if go0 else "NO-GO", "锚=rules/doenglingz-core.md非空+W1注入脚本在位（文件级）"))
     go1 = all(os.path.isfile(os.path.join(QCN_RULES, f)) for f in ("core-identity.md", "core-soul.md", "core-user.md"))
     rows.append(("L1", "身份感知", "GO" if go1 else "NO-GO", "锚=三恒驻身份文件存在（文件级·注入生效归inject_chain_guard另腿）"))
     go2 = ("身份骨架" in core_rules) and ("L6" in core_rules)
     rows.append(("L2", "规则加载", "GO" if go2 else "NO-GO", "锚=doenglingz-core含「身份骨架」+「L6」段标题（内容级）"))
-    st = _read(DECLARE_STATE)
+    _dfiles = [f for f in _declare_files() if _declare_src_match(f, src)]
+    _dst = "".join(_read(f) for f in _dfiles)
     today = since.strftime("%Y-%m-%d")
-    if not st:
-        l3, d3 = "⚪", "声明台账不可读（无机械证据·非通过）"
-    elif today in st:
-        l3, d3 = "GO", "锚=declare台账当日在（仅档位标签可机检·仪式全文未覆盖如实声明）"
+    _srcref = "" if (not src or src == "unknown") else f"·端={src}"
+    if not any(_read(f) for f in _dfiles):
+        l3, d3 = "⚪", "声明台账均不可读（无机械证据·非通过）"
+    elif today in _dst:
+        l3, d3 = "GO", f"锚=declare台账当日在（读面{len(_dfiles)}端聚合{_srcref}·仅档位标签可机检·仪式全文未覆盖如实声明）"
     else:
-        l3, d3 = "🟡", "锚=declare台账当日无记录（待核·不判过）"
+        l3, d3 = "🟡", f"锚=declare台账当日无记录（聚合{len(_dfiles)}端{_srcref}·待核·不判过）"
     rows.append(("L3", "上岗仪式", l3, d3))
     # v0.4 L4 上色（皮叔令「欠装的两台检查机造出来」2026-09-23）：W3 留痕台账在位，⚪ 退役
     lw3all = [l for l in _read(W3_LEDGER).strip().splitlines() if since.strftime("%Y-%m-%d") in l]
@@ -468,7 +628,7 @@ def main():
     global _SESSION
     _SESSION = _norm_sid(a.session)   # v0.11.5：L5 守卫当轮行对账的会话锚（l0_l6_rows 内消费）
     def _build(sc):
-        return (l0_l6_rows(sc) + l7_rows(sc, day, logf)) if a.full else l7_rows(sc, day, logf)
+        return (l0_l6_rows(sc, getattr(a, "src", "unknown")) + l7_rows(sc, day, logf)) if a.full else l7_rows(sc, day, logf)
     rows_s, rows_d = _build(since), _build(since_day)
     dmap = {n: (st, dt) for n, _nm, st, dt in rows_d}
     merged, same = [], 0
@@ -605,7 +765,28 @@ def _self_test():
         def cnt(note):   # 从"窗口内条目=N"里取 N，按精确条数断言（⛔只断 GO/NO-GO 会漏掉少算）
             i = note.find("条目=")
             return note[i + 3:].split("·")[0] if i >= 0 else "?"
+        # v0.11.8 第三出口用例：先把两本账都清成"本窗口皆无"，再单独加 E0 凭证
+        #   （早前夹具往扫描 log 写过窗内行·⛔不清就顶掉 S9b/S9c 的 NO-GO 预期＝夹具污染用例）
+        open(os.path.join(td, "成长箱/铁律盲区扫描.log"), "w", encoding="utf-8").write(
+            "| %s 00:04 | 夹具 | 0 | 窗外旧扫描行（他方·不顶账） |\n" % d1)
+        open(os.path.join(td, "成长箱/experience/规范反哺日志.md"), "w", encoding="utf-8").write(
+            "- 📅 日期：%s 00:05\n" % d1)          # 窗外旧条目（他方·不顶账）
+        _tp = os.path.join(td, "e0_trail.jsonl")
+        os.environ["DOENGLINGZ_E0_TRAIL"] = _tp
+        open(_tp, "w", encoding="utf-8").write(
+            '{"ts": "%s 00:31", "backlog": 0, "alarm": false, "src": "qodercn"}\n' % d2)
+        r_e0 = run(d2, "00:30", d2)                # 窗内凭证·backlog=0 → 应 GO
+        open(_tp, "w", encoding="utf-8").write(
+            '{"ts": "%s 00:31", "backlog": 3, "alarm": true, "src": "qodercn"}\n' % d2)
+        r_e0b = run(d2, "00:30", d2)               # 有积压未反哺 → 必仍 🔴（⛔洗白）
+        _tp2 = os.path.join(td, "e0_none.jsonl")
+        os.environ["DOENGLINGZ_E0_TRAIL"] = _tp2   # 无凭证文件 → 回落原判据（防恒真）
+        r_e0c = run(d2, "00:30", d2)
+        os.environ.pop("DOENGLINGZ_E0_TRAIL", None)
         cases = [
+            ("S9a L7-2 E0凭证窗内且backlog=0 → GO(第三出口)", r_e0["L7-2"][0], "GO", r_e0["L7-2"][1]),
+            ("S9b L7-2 E0凭证backlog>0未反哺 → 必仍NO-GO(不洗白)", r_e0b["L7-2"][0], "NO-GO", r_e0b["L7-2"][1]),
+            ("S9c L7-2 无E0凭证 → 回落原判据NO-GO(防恒真)", r_e0c["L7-2"][0], "NO-GO", r_e0c["L7-2"][1]),
             ("S1 跨零点窗口计三日", cnt(r_cross["L7-4"][1]), "3", r_cross["L7-4"][1]),
             ("S2 窗口只在今日计一条", cnt(r_same["L7-4"][1]), "1", r_same["L7-4"][1]),
             ("S3 L7-4 状态随条目存在为 GO", r_cross["L7-4"][0], "GO", r_cross["L7-4"][1]),
@@ -617,8 +798,9 @@ def _self_test():
             ("S8c L7-2 窗外反哺他方不顶账", "今日他方=扫描1/反哺1" in r_cross["L7-2"][1], True, r_cross["L7-2"][1]),
             ("S8d L7-2 真机冒号带时分=窗内命中", r_shape["L7-2"][0] == "GO" and "本窗口扫描=1·反哺=1" in r_shape["L7-2"][1], True, r_shape["L7-2"][1]),
             ("S8e L7-2 真机冒号无时分=保守归他方(不冒充本窗口)", "今日他方=扫描0/反哺1" in r_shape["L7-2"][1], True, r_shape["L7-2"][1]),
-            ("S5a L7-3 跨日三引用都入窗", "本窗口检索引用=3" in r_cross["L7-3"][1], True, r_cross["L7-3"][1]),
-            ("S5b L7-3 窗外引用显形他方不顶账", "他方=1" in r_same["L7-3"][1] and "本窗口检索引用=1" in r_same["L7-3"][1], True, r_same["L7-3"][1]),
+            # v0.11.7：_d3 格式改「本窗口：日志引用N+检索台账M(...) · 他方=K」⇒ 断言同步
+            ("S5a L7-3 跨日三引用都入窗", "日志引用3" in r_cross["L7-3"][1], True, r_cross["L7-3"][1]),
+            ("S5b L7-3 窗外引用显形他方不顶账", "他方=1" in r_same["L7-3"][1] and "日志引用1" in r_same["L7-3"][1], True, r_same["L7-3"][1]),
             ("S6 L7-4 时刻归因显形", "22:30" in r_cross["L7-4"][1], True, r_cross["L7-4"][1]),
             ("S7 NO-GO 机械短因前置", l2_pre[1].startswith("本回合未扫"), True, l2_pre[1]),
         ]

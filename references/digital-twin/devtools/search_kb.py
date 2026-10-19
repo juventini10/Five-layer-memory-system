@@ -2,7 +2,7 @@
 # TRUTH_OF: 脚本中心/search_kb.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """
-search_kb.py v0.3.14 — 知识沉淀自动检索（v0.3.14·2026-10-07 CLI实跑落trail·原则17机械锚补全）（前值 v0.3.13·2026-10-05 布局+引擎根双自适应·P2 G4 检索面修复）（第二刀·BM25式+路由加权+ bge 向量 RRF 融合；v0.3 实体直通+单一真源）
+search_kb.py v0.3.17 — 知识沉淀自动检索（v0.3.17·2026-10-17 模块C库容治理：C-2 非卡入库排除表(_NONCARD_EXCLUDE)+缓存schema4·C-5 成长箱纯元块结构过滤(_is_meta_block·标题黑名单弃用改物理判据)·gate0 71%/0.638 前后对照零退化·回滚点=记忆琥珀/模块C-白名单-bak-20261017/）（v0.3.16·2026-10-16 门3换参 K_RRF 60→30·NDCG+3.5pp零Recall代价·标题保底floor机理·真尺n=21验证·回滚点=记忆琥珀search_kb_v0.3.15_K60_改前·母卡§八门3节）（v0.3.15·2026-10-13 技能卡专属分支·任务卡T3 判据预注册见工单§8）（v0.3.14·2026-10-07 CLI实跑落trail·原则17机械锚补全）（前值 v0.3.13·2026-10-05 布局+引擎根双自适应·P2 G4 检索面修复）（第二刀·BM25式+路由加权+ bge 向量 RRF 融合；v0.3 实体直通+单一真源）
 职责: 任务描述 → ①意图路由（5类型查路由表）→ ②检索（路由加权×3 + 词面命中×IDF + 向量余弦）
       → ③Top-K（路径+命中理由+摘要）。输出带纠错标记说明（⛔ 这条没用 → 回写路由表/关键词）。
       数据源: 知识池卡(05-知识池) + 读书笔记(01-读书笔记) + 立场卡(AI学习库) + 概念卡(08-概念层) + Skill。
@@ -38,7 +38,7 @@ v0.3.9: 降级面根治（2026-09-10 童灵·皮叔令「按符合愿景的第�
 """
 # Win console UTF-8 guard (auto by build chain · V9)
 try:
-    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8")
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
 except Exception: pass
 import sys, os
 import importlib.util
@@ -66,8 +66,8 @@ def _find_mc():
         return os.path.dirname(os.path.dirname(rp("devtools")))
     except Exception:
         pass
-    sys.stderr.write("[search_kb] 未定位到记忆中心根，已回落 ~/~/个人AI档案（重装或改过配置请检查）\n")
-    return os.path.join(os.path.expanduser("~"), "~/个人AI档案")
+    sys.stderr.write("[search_kb] 未定位到记忆中心根，已回落 ~/个人AI档案（重装或改过配置请检查）\n")
+    return os.path.join(os.path.expanduser("~"), "[记忆共享中心]")
 _MC = _find_mc()
 def _pick_engine_dir(_mc):
     """引擎根解析（2026-10-06 LobsterAI 端根治）：以「含 route_table.json」为功能判据。
@@ -84,7 +84,8 @@ def _pick_engine_dir(_mc):
     """
     for _c in (
         os.path.join(_mc, "脚本中心", "知识联邦引擎"),                       # 端用户态（装包后落点）
-        os.path.join(_mc, "开发工具", "知识联邦引擎"),                       # 作者态真根
+        os.path.join(_mc, "知识联邦引擎"),                                   # 作者态钦定落点（2026-10-11 定论"一个家"·内部台账遗留2第1件顶层位置顶）
+        os.path.join(_mc, "开发工具", "知识联邦引擎"),                       # 旧位·④批(2026-10-15)已整树退役——本候选永不命中；留二周观察窗后随阶段5清零（⛔当场删=行为改动混进注释批·哲学01 §二·二十三之二）
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "知识联邦引擎"),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "知识联邦引擎"),
     ):
@@ -234,8 +235,8 @@ _LAYOUT_ALT = {
     "POOL_DIR": ("[日记仓库]", "2-知识库", "05-知识池"),
     "NOTES_DIR": ("[日记仓库]", "2-知识库", "01-读书笔记"),
     "CONCEPT_DIR": ("[日记仓库]", "2-知识库", "08-概念层"),
-    "AILIB_DIR": ("~/个人AI档案", "AI学习库"),
-    "GROWTH_DIR": ("~/个人AI档案", "成长箱", "learnings"),
+    "AILIB_DIR": ("[日记仓库]", "2-知识库", "09-AI学习库"),  # 2026-10-12 C''波次2迁入vault(卡内部台账·旧位软链为72h缓冲)
+    "GROWTH_DIR": ("[记忆共享中心]", "成长箱", "learnings"),
     "BLUEPRINT_INDEX_DIR": ("[日记仓库]", "2-知识库", "10 蓝图索引卡"),
     # 2026-10-06 布局第三形态落位（键20261006_171708后·皮叔令"未闭环的尝试去做"）：
     #   原 "[日记仓库]" 为未解析占位符（join 后 = ~/[日记仓库]/… 字面路径·永不存在）
@@ -243,13 +244,25 @@ _LAYOUT_ALT = {
     #   实际仓根 = ~/[日记仓库]/2-知识库/（四源 ls 实证 2026-10-06）——
     #   Obsidian vault 即"日记仓库"的实际名，占位符以实名落位。
 }
+# 2026-10-13 B方案·功能判据替代非空判据（K007三源闭环裁决·童灵D3执行）
+# 迁移后旧路径残留文件（如触发台账）会导致"非空优先"误判遮蔽新路径
+# 对已迁移目录用"特征文件存在"替代"目录非空"作为在位判据
+# 与下方引擎根"含route_table.json"功能判据同构（第264行先例）
+_LAYOUT_FEATURE = {
+    "AILIB_DIR": "立场卡#S",  # AI学习库特征文件=立场卡#S*.md（其他目录未迁移保持非空判据）
+}
 _LAYOUT_DIAG = []
 for _nm, _alt in _LAYOUT_ALT.items():
     _cur = globals().get(_nm)
     if not _cur:
         continue
-    if os.path.isdir(_cur) and os.listdir(_cur):
-        continue                                     # 端用户态在位且非空，不动
+    _feat = _LAYOUT_FEATURE.get(_nm)
+    if _feat:
+        _alive = os.path.isdir(_cur) and any(_feat in f for f in os.listdir(_cur))
+    else:
+        _alive = os.path.isdir(_cur) and os.listdir(_cur)
+    if _alive:
+        continue                                     # 在位（功能判据/非空判据），不动
     # 2026-10-06 判据加固：空目录壳（迁移残留/makedirs 误建）此前被当"在位"⇒ 检索读空库静默0命中
     #   且不告警——isdir 存在性判据与"有内容"错位（PAT-043/053 家族·实证=立场卡+概念卡整源消失4天）
     _cand = os.path.join(os.path.expanduser("~"), *_alt)
@@ -269,7 +282,7 @@ if _LAYOUT_DIAG:
 # 兼容：端用户态（脚本中心/知识联邦引擎 带 route_table）命中第一条，行为不变。
 _ENGINE_CANDIDATES = [
     os.path.join(_MC, "脚本中心", "知识联邦引擎"),        # 端用户态（装包后引擎落点）
-    os.path.join(_MC, "开发工具", "知识联邦引擎"),        # 作者态真根
+    os.path.join(_MC, "开发工具", "知识联邦引擎"),        # 作者态旧根·④批已退役（同上一条·观察窗后清零）
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "知识联邦引擎"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "知识联邦引擎"),
 ]
@@ -314,6 +327,7 @@ _QUANT_READY = os.path.isfile(_QUANT_FINAL)
 # 量化产物=large 的 int8，标签须如实记 large——原 MODEL_NAME+@qint8 在默认 base 时把 store
 # 记成 base@qint8（误导，实际向量是 large-qint8 1024 维）。量化目录硬编码即 large 身份，标签从之。
 MODEL_EFFECTIVE = ("BAAI/bge-large-zh-v1.5@qint8-avx2" if _QUANT_READY else MODEL_NAME)
+    # ↑2026-10-16 定案注(v6):量化缺失时 MODEL_EFFECTIVE=base 与库标签 large@qint8 不符→校验拒载→诚实降级纯 BM25。检索体系无线上替补(你裁决):base 仅=用户机正岗/库回滚锚;量化税≈0 已实证(fp16 对照未赢,母卡§八+检索设计哲学 v1.26)。勿将此分支描述为「base 兜底检索」。
 _model = None
 
 
@@ -577,7 +591,7 @@ def rank_mixed(scores, task, entity_docs=None, docs=None, allowed=None):
 
     ordered = sorted(scores, key=lambda x: -x[0])  # BM25 得分降序 → 排名（插入序≠得分序，2026-08-07 修复）
     bm25_rank = {p: i + 1 for i, (_, p, _, _) in enumerate(ordered)}
-    K_RRF = 60.0
+    K_RRF = 30.0
 
     merged, seen = [], set()
     for s, p, d, matched in scores:
@@ -607,6 +621,19 @@ def rank_mixed(scores, task, entity_docs=None, docs=None, allowed=None):
     # 存量卡无 verified → unverified ×1.0 → 零影响（eval 23/23 保持）。
     merged = [(s * TRUST_MULT.get(d.get("trust", "unverified"), 1.0), p, d, matched)
               for s, p, d, matched in merged]
+    # 标题保底通道（2026-10-11·「实现真正该命中的那一个」·对齐 pool_books 保底位范式·K007 D3 产物）：
+    # 任务词面与卡标题精确包含 → 保底补偿分——抽词三源（词面∩桶/文档键词/实体）全空时词面腿
+    # 空转，精确名卡被相关语义卡淹没（实证：K005 自搜 top-10 无本尊）。泛化机制非打地鼠。
+    task_norm = re.sub(r"\s+", "", task)
+    if task_norm:
+        _tg = []
+        for s, p, d, matched in merged:
+            tnorm = re.sub(r"\s+", "", d.get("title", ""))
+            if tnorm and (task_norm in tnorm or tnorm in task_norm):
+                s = max(s, ROUTE_BOOST / (K_RRF + 1) + 0.001)
+                matched = matched + ["🎯标题精确"]
+            _tg.append((s, p, d, matched))
+        merged = _tg
     merged.sort(key=lambda x: -x[0])
     return merged
 
@@ -719,6 +746,32 @@ def extract_section_ln(body, key):
 
 
 
+
+# ── v0.3.15 技能卡专属分支（任务卡 2026-10-13 T3·判据先写后改·预注册见工单 §8）──
+# 根因：技能卡（技能卡#K*）此前混走立场卡分支——LOAD_BEARING 是立场卡 bold 字段表，
+#   技能卡承重节是 `## 标题` 结构（核心方法/适用边界/反例），提取全空 → 正文仅前 300 字入索（≈3%）。
+# 判据纪律：模板里不许出现机制不读的字段（card-schema §八）；本分支只消费真实存在的节。
+LOAD_K_CARD = ["核心方法", "适用边界", "反例"]
+
+def _extract_md_section(body, key):
+    """技能卡标题级抽段：`## key…` 起（含标题行——标题词本身是检索面）到下一 ## 或文末。"""
+    m = re.search(r"^##\s*" + re.escape(key) + r"[^\n]*\n(.*?)(?=\n##\s|\Z)", body, re.M | re.S)
+    if not m:
+        return ""
+    head = m.group(0)[:m.group(0).index("\n")].lstrip("#").strip()
+    return head + " " + m.group(1).strip()
+
+def skill_card_view(raw, fm):
+    """技能卡检索 text 构造（harness_t3 H1 测量对象·⛔返回值形态勿改）：
+    cat + summary（fm 优先·缺则核心方法首句回退）+ 承重节（含节名） + 正文前 300。"""
+    body = re.sub(r"^---\n.*?\n---\n", "", raw, flags=re.S)
+    segs = [x for x in (_extract_md_section(body, k) for k in LOAD_K_CARD) if x]
+    cat = " ".join(fm.get("topic", []) + fm.get("type", []) + fm.get("领域分诊", []))
+    sm = fm.get("summary", [""])
+    sm = sm[0] if isinstance(sm, list) else sm
+    sm = sm or (brief(segs[0]) if segs else "")
+    return " ".join([x for x in (cat, sm) if x]) + " " + " ".join(segs) + " " + body[:300]
+
 # ── v0.3.5 索引磁盘缓存（2026-09-09 童灵根治·SIGKILL 137 实锤归因）──
 # 根因：WB 沙箱对进程文件打开次数设配额，实测 build_docs 逐个 open ~2400 源文件，
 # 读到 ~650 个即被 SIGKILL(137)（monkeypatch open 打点抓到死亡现场·毛选目录段）。
@@ -743,6 +796,37 @@ def _glob_patterns():
 def _corpus_paths():
     return sorted(set(itertools.chain.from_iterable(glob.glob(pt) for pt in _glob_patterns())))
 
+# ── 模块C·库容治理 C-2 入库排除表（2026-10-17·专项卡 2026-10-17-模块C库容治理 §附 A级清单）──
+# 病灶（母卡新病⑥）：台账/评测/规范/bak 等"工作文件"被当卡入索引，占候选位稀释精度（合并台账.md 霸题4第1 实锤）。
+# 纪律：⛔物理文件不动，只动入库判定（归属与位置解耦律 S199）；逐条显式排除（不做模式猜测——防误伤真卡）。
+# 台账型源（成长箱 learnings/）B级存疑件本期不排：该源设计定位=台账可检，排出误伤"该中的中"（卡面存证备你复核）。
+_NONCARD_EXCLUDE = {
+    "AILIB_DIR": {"合并台账.md", "引用台账.md", "技能卡候选台账.md", "碰撞卡多视角评测.md",
+                  "触发台账.md", "跨类型碰撞候选-蓝图索引卡↔立场卡.md"},
+    "BLUEPRINT_INDEX_DIR": {"00-蓝图索引卡格式规范.md", "蓝图索引卡-.bak-20260923-acregistry.md"},
+    "GROWTH_DIR": {"批量归属复核表-2026-09-26.md"},  # C-5 终判（2026-10-17 广授权）：一次性复核交付物=历史档案，非可检经验
+}
+def _is_noncard(p_):
+    _b = os.path.basename(p_)
+    for _dk, _names in _NONCARD_EXCLUDE.items():
+        if _b in _names and os.path.normpath(os.path.dirname(p_)) == os.path.normpath(globals().get(_dk, "")):
+            return True
+    return False
+
+# ── C-5 病⑦根治（2026-10-17·专项卡§二C-5）：成长箱切块过滤纯结构元块 ──
+# 病灶：learnings 按 `## ` 切块时，"## 状态/Metadata"类模板元块被切成独立 doc 占候选位（C-3 全库 sim=1.0 双写的成因）。
+# 判据选型：⛔标题黑名单（会烂——变体标题即漏网），✅纯字段行结构判据——块体非空行 100% 为状态/计数字段行才排除；
+#          Summary 类正文句、裁定前言类 prose 天然不命中（不误伤内容本体，防误伤真卡红线同 C-2）。
+_META_LINE_RE = re.compile(
+    r"^\s*(?:-\s*\[[ x]\]|✅\s*已|-\s*\*{0,2}(?:出现次数|同类错误|Source|Tags|Related|状态|Error Count|Promoted to)|\*{0,2}本次：第\d|第\d+次(?:[（(]|$)|fixed\s*→)")
+def _is_meta_block(blk):
+    # 双判据（v2 实跑数据驱动·2026-10-17）：体长≤200字 且 非空行100%为状态/计数字段行——
+    # 变体标题/无bullet勾选/裸"第N次"/fixed→promoted 箭头全收；prose 行（如"第2次时AI主动提醒…"）天然不命中。
+    body_lines = [l for l in blk.splitlines()[1:] if l.strip()]
+    if not body_lines or sum(len(l) for l in body_lines) > 200:
+        return False
+    return all(_META_LINE_RE.match(l) for l in body_lines)
+
 def _fingerprint(paths):
     """stat 指纹（mtime_ns+size）——不 open 文件体，不触发读配额。"""
     fp = {}
@@ -761,7 +845,7 @@ def build_docs():
     try:
         if os.path.isfile(_DOC_CACHE):
             c = json.load(open(_DOC_CACHE, encoding="utf-8"))
-            if c.get("schema") == 1 and c.get("fingerprint") == fp and isinstance(c.get("docs"), dict):
+            if c.get("schema") == 4 and c.get("fingerprint") == fp and isinstance(c.get("docs"), dict):
                 return c["docs"]
     except Exception:
         pass  # 缓存损坏=视作未命中，走全量重建
@@ -787,7 +871,7 @@ def build_docs():
             docs.update(json.load(open(partf, encoding="utf-8")))
         if _ok and docs:
             with open(_DOC_CACHE, "w", encoding="utf-8") as _f:
-                json.dump({"schema": 1, "fingerprint": fp, "docs": docs}, _f, ensure_ascii=False)
+                json.dump({"schema": 4, "fingerprint": fp, "docs": docs}, _f, ensure_ascii=False)
             return docs
     except Exception as _e:
         print("⚠️ 分片重建异常 %s（退回当前解释器直建·可能触发读配额）" % _e, file=sys.stderr)
@@ -795,7 +879,7 @@ def build_docs():
     try:
         os.makedirs(os.path.dirname(_DOC_CACHE), exist_ok=True)
         with open(_DOC_CACHE, "w", encoding="utf-8") as _f:
-            json.dump({"schema": 1, "fingerprint": fp, "docs": docs}, _f, ensure_ascii=False)
+            json.dump({"schema": 4, "fingerprint": fp, "docs": docs}, _f, ensure_ascii=False)
     except Exception:
         pass  # 缓存写失败不阻断检索主流程（下次重建即可）
     return docs
@@ -853,6 +937,16 @@ def _build_docs_full():
         cat = fm.get("topic", []) + fm.get("type", []) + fm.get("领域分诊", [])
         title = os.path.basename(p).replace(".md", "")
         body_full = re.sub(r"^---\n.*?\n---\n", "", raw, flags=re.S)
+        if title.startswith("技能卡#"):
+            # v0.3.15·T3：技能卡走专属 text（核心方法/适用边界/反例+summary 入面）。
+            #   src 桶保持「立场卡」不变——rank_mixed 分档与 ROUTE_TABLE 源名都按 src 认路，
+            #   新增 src=未经要求的改路由（最小方案纪律）。
+            _sk = fm.get("summary", [""])
+            _sk = _sk[0] if isinstance(_sk, list) else _sk
+            _sk = _sk or brief(_extract_md_section(body_full, "核心方法")) or title
+            docs[p] = {"title": title, "text": skill_card_view(raw, fm),
+                       "cat": " ".join(cat), "src": "立场卡", "summary": _sk, "trust": trust_of(fm)}
+            continue
         sec = {k: extract_section(body_full, k) for k in LOAD_BEARING}
         segs = [s for s in sec.values() if s]  # 承重字段优先
         # B'' 修复：366/366 立场卡 frontmatter 无 summary 字段 → 回退承重字段首句（主要矛盾 > 立场），非 title
@@ -876,6 +970,8 @@ def _build_docs_full():
     for _p in sorted(glob.glob(os.path.join(GROWTH_DIR, "*.md"))):
         if os.path.basename(_p) == "INDEX.md":
             continue
+        if _is_noncard(_p):      # C-5：一次性复核表等工作文件出库（归属与位置解耦·物理不动）
+            continue
         try:
             _raw = open(_p, encoding="utf-8").read()
         except OSError:
@@ -884,6 +980,8 @@ def _build_docs_full():
         for _bi, _blk in enumerate(_blocks):
             _blk = _blk.strip()
             if not _blk:
+                continue
+            if _is_meta_block(_blk):   # C-5 病⑦：纯状态/Metadata 模板元块不入库
                 continue
             _title = _blk.splitlines()[0].lstrip("#").strip()[:80] or os.path.basename(_p)
             docs[f"{_p}#{_bi}"] = {"title": _title, "text": _blk[:1200],
@@ -911,7 +1009,7 @@ def _build_docs_full():
         source_path = fm.get("source_path", [""])[0]
         body = re.sub(r"^---\n.*?\n---\n", "", raw, flags=re.S)[:600]
         # 承重字段优先：core_principles > summary > tags > 正文
-        text = " ".join(core_principles) + " " + summary + " " + " ".join(tags) + " " + body
+        text = " ".join(core_principles) + " " + summary + " " + " ".join(tags) + " " + body + (" 常见问法 " + " ".join(fm.get("retrieval_queries", [])) if fm.get("retrieval_queries") else "")
         docs[p] = {"title": title, "text": text,
                    "cat": " ".join(tags), "src": "蓝图索引卡",
                    "summary": summary or title, "trust": trust_of(fm)}
@@ -957,6 +1055,12 @@ def _build_docs_full():
         docs[p] = {"title": title, "text": title + " " + raw[:400],
                    "cat": _cat_cn, "src": "Skill", "summary": title,
                    "first_line": first_line, "trust": trust_of(fm)}
+    # C-2 入库排除（见 _NONCARD_EXCLUDE 注释块）：分片/全量两路都汇到此 chokepoint
+    _ex = [k for k in docs if _is_noncard(k)]
+    for k in _ex:
+        docs.pop(k)
+    if _ex and os.environ.get("KB_DEBUG"):
+        print("🧹 C-2 排除非卡 %d 条: %s" % (len(_ex), ", ".join(sorted(os.path.basename(x) for x in _ex))), file=sys.stderr)
     return docs
 
 
@@ -1162,7 +1266,12 @@ def search(task, k=K):
         gpaths = {x[1] for x in pool_guaranteed}
         rest = [x for x in scores if x[1] not in gpaths]
         insert_at = min(K - len(pool_guaranteed), len(rest))
+        # A4 nat_rank(2026-10-17·外部二轮评审"强插位污染反馈信号"采纳):插位卡记无插自然位
+        _natmap = {x[1]: i + 1 for i, x in enumerate(rest)}
+        _NAT.d = {x[1]: _natmap.get(x[1]) for x in pool_guaranteed}  # None=自然零出场
         scores = rest[:insert_at] + pool_guaranteed + rest[insert_at:]
+    else:
+        _NAT.d = {}
     return scores[:k], buckets
 
 
@@ -1180,6 +1289,9 @@ def read_full(path):
     body = re.sub(r"^---\n.*?\n---\n", "", raw, flags=re.S)
     return body.strip(), p
 
+
+import threading as _threading  # A4 反馈去污染(2026-10-17):daemon 一连接一线程,thread-local 防串账
+_NAT = _threading.local()
 
 def _log_cli_trail(task, scores, buckets):
     """CLI 实跑落 kb_query_trail（source=cli·v0.3.14·2026-10-07 原则17 机械锚补全）。
@@ -1201,7 +1313,7 @@ def _log_cli_trail(task, scores, buckets):
     if _qt is None:
         return
     try:
-        _qt.append_trail(task, scores, [b[0]["name"] for b in buckets] if buckets else [], source="cli")
+        _qt.append_trail(task, scores, [b[0]["name"] for b in buckets] if buckets else [], source="cli", nat=getattr(_NAT, "d", None))
     except Exception:
         pass
 
@@ -1230,6 +1342,78 @@ def main():
         print(f"📂 下钻: {os.path.relpath(p, HOME)}\n")
         print(body)
         return 0
+    # CLI 快通道（2026-10-11·kb_serve 常驻引擎客户端·「该命中的→毫秒拿到」最后一公里）：
+    # socket 在位→驻留引擎毫秒返回（实测 0.09-0.15s vs 冷路径 18.5s）；任何异常→回退冷路径
+    # （kb_serve 设计约束"失败默认放行"同款·不阻塞）。trail 记 source=serve（诚实源分布账）。
+    _task0 = args[0]
+    if not _task0.startswith("--"):
+        try:
+            import time as _time
+            import socket as _socket
+            _sock_cands = [
+                os.path.join(_ENGINE_DIR, "scripts", "kb.sock"),
+                os.path.join(_MC, "开发工具", "知识联邦引擎", "scripts", "kb.sock"),
+                os.path.join(_MC, "脚本中心", "知识联邦引擎", "scripts", "kb.sock"),
+            ]
+            _sock_path = next((c for c in _sock_cands if os.path.exists(c)), None)
+            if _sock_path:
+                _t0 = _time.time()
+                _c = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
+                _c.settimeout(10)
+                _c.connect(_sock_path)
+                _c.sendall((json.dumps({"task": _task0, "k": K}) + "\n").encode("utf-8"))
+                _buf = b""
+                while not _buf.endswith(b"\n"):
+                    _chunk = _c.recv(65536)
+                    if not _chunk:
+                        break
+                    _buf += _chunk
+                _c.close()
+                _resp = json.loads(_buf.decode("utf-8"))
+                if _resp.get("ok"):
+                    _dt = _time.time() - _t0
+                    _hits = _resp.get("hits", [])
+                    print(f"⏱ {datetime.now().strftime('%H:%M')} | 意图路由: {', '.join(_resp.get('buckets', []))} | 候选: {len(_hits)} | 快通道 {_dt:.2f}s")
+                    print(f"任务: {_task0}\n")
+                    _budget = int(os.environ.get("KB_CHAR_BUDGET", CHAR_BUDGET))
+                    _used = 0
+                    _pscores = []
+                    for _i, _h in enumerate(_hits, 1):
+                        _pscores.append((_h.get("score", 0), _h.get("path", ""),
+                                         {"src": _h.get("src", ""), "title": _h.get("title", ""),
+                                          "summary": _h.get("summary", ""), "trust": "unverified"},
+                                         _h.get("matched") or []))
+                        _sc = f"{_h.get('score', 0):.4f}" if _h.get("score", 0) < 1 else f"{_h.get('score', 0):.1f}"
+                        _rel = os.path.relpath(_h.get("path", ""), HOME) if _h.get("path") else ""
+                        _entry = (f"[{_i}] 得分{_sc} | {_h.get('src', '')} | {_h.get('title', '')}\n"
+                                  f"    {_rel}\n"
+                                  f"    命中: {', '.join((_h.get('matched') or [])[:8])} | {(_h.get('summary') or '')[:50]}\n"
+                                  f"    ⛔ 这条没用 → 回写路由表/关键词（反馈闭环）")
+                        if _used + len(_entry) > _budget:
+                            print("    …（字符预算已用尽，低分条目已省略）")
+                            break
+                        _used += len(_entry)
+                        print(_entry)
+                    try:
+                        import kb_query_trail as _qt2
+                    except Exception:
+                        _qt2 = None
+                        try:
+                            _tp = os.path.join(_ENGINE_DIR, "scripts")
+                            if _tp not in sys.path:
+                                sys.path.insert(0, _tp)
+                            import kb_query_trail as _qt2
+                        except Exception:
+                            _qt2 = None
+                    if _qt2 is not None:
+                        try:
+                            _qt2.append_trail(_task0, _pscores, [b for b in _resp.get("buckets", [])], source="serve", nat=_resp.get("nat"))  # A4修正:nat在daemon进程生成,经协议透传(本地_NAT恒None)
+                        except Exception:
+                            pass  # 观测层不阻断（对齐 _log_cli_trail）
+                    print(f"\nTop-K={K} · 快通道（kb_serve 常驻引擎·异常自动回退冷路径）")
+                    return 0
+        except Exception:
+            pass  # 快通道任何失败→回退冷路径（设计律：失败默认放行·kb_serve 同款）
     task = args[0]
     scores, buckets = search(task)
     _log_cli_trail(task, scores, buckets)
