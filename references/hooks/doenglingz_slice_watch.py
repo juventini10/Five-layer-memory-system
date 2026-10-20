@@ -73,7 +73,10 @@ MARKED_HOMES = [
     #   TeleAgent：真身文件在 ~/.local/share/TeleAgent/memory/USER.md（instructions 四文件之一，
     #              不是 06 旧登记的 ~/.config/TeleAgent/USER.md——那里根本没有该文件）
     os.path.expanduser("[记忆共享中心]/豆包办公系统文件/USER.md"),
-    os.path.expanduser("~/.local/share/TeleAgent/memory/USER.md"),
+    # 2026-10-19 你令：TeleAgent 暂无精力适配，落点摘出纳管表（该端 USER.md 不存在，
+#   留着 watcher 每轮报「标记对恒驻文件缺失」红＝假红毒化·守卫规范 §3.5）。
+#   恢复适配时把下行放回即重新纳管（06 §2.2.0 该端 status 同批改回 completed）。
+#   os.path.expanduser("~/.local/share/TeleAgent/memory/USER.md"),
     # 2026-09-11 纳端（WorkBuddy AI 国际版·第18端）：童灵节在 USER.md（复刻自国内版·core/L6 标记对在位）
     os.path.expanduser("~/.workbuddy-ai/USER.md"),
     # 2026-09-12 纳端（WorkBuddy 国内版·本源端补挂）：童灵节在 USER.md，K2 标记对 2026-09-12 补齐

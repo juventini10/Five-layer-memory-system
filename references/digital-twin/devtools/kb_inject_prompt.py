@@ -91,7 +91,17 @@ def _tick(stage=""):
 # ── 2026-09-10 修复：回退通道自我 re-exec 进 .venv-st（保证回退=完整语义检索而非纯 BM25）──
 # 背景：旧架构依赖 search_kb 模块顶层 execv 自动换身；v0.3.6 改子进程委托+__main__守卫后，
 # import 场景不再换身 → 回退会退化为纯 BM25。此处由钩子自身换身（单发进程·execv 合法）。
-_VENV_PY = os.path.expanduser("[记忆共享中心]/脚本中心/.venv-st/bin/python")
+def _venv_py_probe():
+    # 2026-10-19 Win反馈 A-2：原落点(脚本中心/.venv-st)+形态(bin/python)双错，
+    #   两错叠加 exists 恒 False→永不 execv 换身。改引擎根候选×平台形态双探，单点不中续探。
+    _rel = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")
+    for _c in (os.path.expanduser("[记忆共享中心]/脚本中心/知识联邦引擎"),
+               os.path.expanduser("[记忆共享中心]/脚本中心")):  # 2026-10-20 批E拆链：档案根候选=死位已删
+        _p = os.path.join(_c, ".venv-st", *_rel)
+        if os.path.isfile(_p):
+            return _p
+    return ""
+_VENV_PY = _venv_py_probe()
 if (os.environ.get("KB_HOOK_VENV") != "1"
         and os.path.exists(_VENV_PY)
         and os.path.realpath(sys.executable) != os.path.realpath(_VENV_PY)):

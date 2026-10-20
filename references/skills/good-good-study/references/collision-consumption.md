@@ -20,7 +20,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 ## 二、批量筛选（N 对·你已授权时）
 
-✅DO 从 `collision_candidates.json`（`~/个人AI档案/知识联邦引擎/collision_candidates.json`）筛 `status=pending 且 cross_domain 且 cross_owner`（跨域跨主体=联邦最高价值）。**降级声明**：知识联邦引擎以端用户最小集随安装包分发（references/知识联邦引擎-min→装至 [记忆共享中心]/知识联邦引擎/·2026-10-10 按实盘修正旧表述「安装包不携带该目录」，该表述与随包事实不符）——端用户无此引擎目录时本节批量流程不适用·跳过·不阻塞。
+✅DO 从 `collision_candidates.json`（`[记忆共享中心]/脚本中心/知识联邦引擎/collision_candidates.json`）筛 `status=pending 且 cross_domain 且 cross_owner`（跨域跨主体=联邦最高价值）。**降级声明**：知识联邦引擎以端用户最小集随安装包分发（references/知识联邦引擎-min→装至 [记忆共享中心]/知识联邦引擎/·2026-10-10 按实盘修正旧表述「安装包不携带该目录」，该表述与随包事实不符）——端用户无此引擎目录时本节批量流程不适用·跳过·不阻塞。
 > 🔻 **降级声明**：上列/本节引擎及脚本以端用户版随安装包分发（旧表述「不携带该目录」与实盘不符·2026-10-10 修正；作者侧运行数据 cache/vectors/logs 不随包）——引擎目录或相关脚本缺失时，相关步骤**跳过·不阻塞**。
 
 ✅DO 按**碰撞价值**排序，不无脑取 sim 最高：
@@ -76,7 +76,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 ## 六、收口验证环（批量后必跑·8行=整步6+半步3.5/4.5·缺一不可（2026-08-11 复审：含 step 3.5 成就封口；2026-08-25 根治：增 step 4.5 队列对账；2026-10-09 v1.1.0：增 step 6 童灵去重/融合验收·详见 §十））
 
-脚本目录：`[记忆共享中心]/知识联邦引擎/scripts/`（系统共享脚本·与 SKILL.md §④⑤ 同源引用）
+脚本目录：`[记忆共享中心]/脚本中心/知识联邦引擎/scripts/`（系统共享脚本·与 SKILL.md §④⑤ 同源引用）
 
 | 步 | 命令 | 闸 | 判定 |
 |:--|:--|:--|:--|
@@ -85,8 +85,8 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 3 | `python3 concept_projection.py` | projection fail-fast | 确认退出码 0·零静默 skipped |
 | 3.5 | `python3 [记忆共享中心]/成就系统/scripts/check_concept_achievement.py` | 概念碰撞成就封口 | 跨阈即宣告+写最伟大的我·幂等可重复跑 |
 | 4 | `python3 lint_collision_card.py --strict` | 全库严格 | 零违规确认 |
-| 4.5 | `python3 [记忆共享中心]/知识联邦引擎/scripts/sync_collision_queue.py` | 队列↔INDEX 对账（幂等） | 二次运行 0 更新=已同步；>0=补回写 |
-| 5 | `python3 ~/个人AI档案/知识联邦引擎/scripts/scan_card_citations.py` | 新卡依据链引用自动登记（幂等）+冲突检测 | 登记 N 条引用；冲突信号输出待你复审 |
+| 4.5 | `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/sync_collision_queue.py` | 队列↔INDEX 对账（幂等） | 二次运行 0 更新=已同步；>0=补回写 |
+| 5 | `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/scan_card_citations.py` | 新卡依据链引用自动登记（幂等）+冲突检测 | 登记 N 条引用；冲突信号输出待你复审 |
 | 6 | 童灵去重/融合验收（执行细则见 §十·非脚本·子批收口时批量深度验收） | gate C·卡库健康 | 每张卡出判定：新建✅/建议融合到SXXX/挡掉；融合操作过 §10.4 执行权边界 |
 > 🔻 **降级声明**：上列/本节引擎及脚本以端用户版随安装包分发（旧表述「不携带该目录」与实盘不符·2026-10-10 修正；作者侧运行数据 cache/vectors/logs 不随包）——引擎目录或相关脚本缺失时，相关步骤**跳过·不阻塞**。
 
@@ -140,7 +140,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 | 碰撞类型 | 源卡A路径 | 源卡B路径 |
 |:---|:---|:---|
 | 概念卡×概念卡 | `08-概念层/C-XXX-*.md` | `08-概念层/C-YYY-*.md` |
-| **蓝图索引卡↔立场卡** | `10 蓝图索引卡/蓝图索引卡-*.md` | `AI学习库/立场卡#SXXX-*.md` |
+| **蓝图索引卡↔立场卡** | `10-蓝图索引卡/蓝图索引卡-*.md` | `AI学习库/立场卡#SXXX-*.md` |
 
 ✅DO 跨类型碰撞回溯时，Read蓝图索引卡的core_principles+summary+设计背景，Read立场卡的主要矛盾+立场+依据链——找真正碰撞点（非仅标题相似）。
 

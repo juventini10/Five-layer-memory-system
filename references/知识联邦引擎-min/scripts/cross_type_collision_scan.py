@@ -75,7 +75,7 @@ def main():
     blueprint_cards = {}
     stance_cards = {}
     for path, vec in vecs.items():
-        if "10 蓝图索引卡" in path and path.endswith(".md") and "references" not in path:
+        if "10-蓝图索引卡" in path and path.endswith(".md") and "references" not in path:
             blueprint_cards[path] = vec
         elif "AI学习库" in path and "立场卡#" in path and path.endswith(".md"):
             stance_cards[path] = vec

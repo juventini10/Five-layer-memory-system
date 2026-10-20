@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "_truth": "Q3路线C守护清单(声明层单一真源)：本表声明件=包内注册件=装机真在跑 三面对账·消费端=Q6门禁②+装机验收。⛔各端注册硬编码漂移——两端注册件均以本表为唯一依据(2026-10-19 你裁路线C)",
+  "_of": "依据 V2.2.4 审计族A/tiger②：装机端 Mac 与 Win 都缺周期调度(L6恒⚪)。执行体=平台中性python·各端只用OS原生调度层注册·⛔ps1逻辑副本",
+  "guards": [
+    {
+      "id": "slice-watch",
+      "purpose": "分身同步周期守护：跑 doenglingz_slice_watch(切片守望)+state_bus_sync --update(端账本刷新)→tsl_verify L6 装机端显示真状态而非⚪",
+      "runners": [
+        "脚本中心/doenglingz_slice_watch.py",
+        "数字分身/scripts/state_bus_sync.py --update"
+      ],
+      "cadence": "每24h+规格书变更触发(mac WatchPaths)+开机/登录即跑",
+      "mac": {
+        "template": "references/digital-twin/scripts/com.doenglingz.slice-watch.plist.template",
+        "label": "com.doenglingz.slice-watch",
+        "register": "渲染[记忆共享中心]→cp ~/Library/LaunchAgents/com.doenglingz.slice-watch.plist→launchctl load"
+      },
+      "win": {
+        "register_ps1": "references/digital-twin/scripts/slice-watch-install-task.ps1",
+        "task_name": "DoenglingzSliceWatch",
+        "uninstall": "pwsh -File slice-watch-install-task.ps1 -Uninstall"
+      },
+      "verify_installed": {
+        "mac": "launchctl print gui/$(id -u)/com.doenglingz.slice-watch",
+        "win": "Get-ScheduledTask -TaskName DoenglingzSliceWatch",
+        "both": "数字分身/state_bus.json mtime < 25h(L6 四态不再⚪)"
+      }
+    }
+  ]
+}

@@ -54,16 +54,48 @@ def _first_live(candidates, default):
             return c
     return default
 
+
+def _kb_root():
+    """知识库根（⛔ 不假设 Obsidian）：唯一来源 = runtime_paths.kb_root（条文47 SSOT）。
+    安装器默认 MC/知识库；Obsidian 用户改指自己 vault。缺/不可读回落 None，
+    由 CONCEPTS_DIR/AILIB_DIR 的 _mc_path 装机态默认兜底
+    （⛔ 不自带 vault 默认值/不读遗留环境变量——那会重开第二套机制）。"""
+    _f = None
+    if os.environ.get("BULUOTUO_RUNTIME_PATHS"):
+        _f = os.path.expanduser(os.environ["BULUOTUO_RUNTIME_PATHS"])
+    elif os.environ.get("DOENGLINGZ_CONFIG_DIR"):
+        _cfg = os.path.expanduser(os.environ["DOENGLINGZ_CONFIG_DIR"])
+        if os.path.isfile(os.path.join(_cfg, "doenglingz", "runtime_paths.json")):
+            _f = os.path.join(_cfg, "doenglingz", "runtime_paths.json")
+        elif os.path.isfile(os.path.join(_cfg, "runtime_paths.json")):
+            _f = os.path.join(_cfg, "runtime_paths.json")
+    if _f is None:
+        for _root in (os.path.expanduser("~/.workbuddy"), os.path.expanduser("~/.hermes")):
+            _cand = os.path.join(_root, "doenglingz", "runtime_paths.json")
+            if os.path.isfile(_cand):
+                _f = _cand
+                break
+    if not _f or not os.path.isfile(_f):
+        return None
+    try:
+        with open(_f, encoding="utf-8") as _fh:
+            _r = json.load(_fh).get("kb_root")
+        if _r and os.path.isdir(os.path.expanduser(_r)):
+            return os.path.expanduser(_r)
+    except Exception:
+        pass
+    return None
+
+_KB_ROOT = _kb_root()
 KB = _mc_path("知识库")                                  # 用户知识库根（安装态假设·作者机卡库直挂MC下）
-CONCEPTS_DIR = _first_live(
-    [os.path.expanduser("~/Local_Obsidian_Vault/2-知识库/08-概念层"),  # 作者态实位（2026-10-08 轮次1实证修复）
-     _mc_path("知识库", "概念卡")],                                    # 装机态默认（安装器建库面）
-    _mc_path("知识库", "概念卡"))
-AILIB_DIR = _first_live(
-    [os.path.expanduser("~/Local_Obsidian_Vault/2-知识库/09-AI学习库"),  # 作者态实位（2026-10-12 C''波次2迁移·立场卡1095张迁入vault）
-     _mc_path("AI学习库"),                                             # 旧作者态（向后兼容）
+CONCEPTS_DIR = os.environ.get("KB_CONCEPTS_ROOT") or _first_live(
+    [os.path.join(_KB_ROOT, "2-知识库", "08-概念层")] if _KB_ROOT else [],  # Obsidian 态（kb_root=自己 vault·SSOT）
+    _mc_path("知识库", "概念卡"))                          # 装机态默认（安装器建库面）
+AILIB_DIR = os.environ.get("KB_AILIB_ROOT") or _first_live(
+    ([os.path.join(_KB_ROOT, "2-知识库", "09-AI学习库")] if _KB_ROOT else []) + [
+     _mc_path("AI学习库"),                                             # 旧位软链缓冲（迁移72h验收全绿后拆·防壳家族=断点A教训）
      _mc_path("知识库", "AI学习库")],                                  # 装机态默认
-    _mc_path("知识库", "AI学习库"))
+    _mc_path("知识库", "AI学习库"))                                  # 装机态默认
 INDEX_FILE = _mc_path("知识库", "知识总索引.md")           # 编译产物·脚本生成
 SYSLOG_DIR = _mc_path("工作日志", "系统日志")              # 系统日志落点
 INSTALLED = MC is not None
@@ -87,9 +119,44 @@ def ensure_dirs():
         os.makedirs(d, exist_ok=True)
     return True
 
+def _diary_root():
+    """日记根（⛔ 不假设 Obsidian）：唯一来源 = runtime_paths.diary_root（条文47 SSOT）。
+    安装器默认 MC/日记/1-每日计划/01-日记；Obsidian 用户改指自己 vault 日记位。
+    缺/不可读回落 None，由 diary_dir 的 _mc_path 装机态默认兜底。"""
+    _f = None
+    if os.environ.get("BULUOTUO_RUNTIME_PATHS"):
+        _f = os.path.expanduser(os.environ["BULUOTUO_RUNTIME_PATHS"])
+    elif os.environ.get("DOENGLINGZ_CONFIG_DIR"):
+        _cfg = os.path.expanduser(os.environ["DOENGLINGZ_CONFIG_DIR"])
+        if os.path.isfile(os.path.join(_cfg, "doenglingz", "runtime_paths.json")):
+            _f = os.path.join(_cfg, "doenglingz", "runtime_paths.json")
+        elif os.path.isfile(os.path.join(_cfg, "runtime_paths.json")):
+            _f = os.path.join(_cfg, "runtime_paths.json")
+    if _f is None:
+        for _root in (os.path.expanduser("~/.workbuddy"), os.path.expanduser("~/.hermes")):
+            _cand = os.path.join(_root, "doenglingz", "runtime_paths.json")
+            if os.path.isfile(_cand):
+                _f = _cand
+                break
+    if not _f or not os.path.isfile(_f):
+        return None
+    try:
+        with open(_f, encoding="utf-8") as _fh:
+            _r = json.load(_fh).get("diary_root")
+        if _r and os.path.isdir(os.path.expanduser(_r)):
+            return os.path.expanduser(_r)
+    except Exception:
+        pass
+    return None
+
+_DIARY_ROOT = _diary_root()
+
 def diary_dir():
-    """日记目录：config.json 可覆盖；缺省 [MC]/ObsidianVault/1-每日计划/01-日记"""
+    """日记目录：config.json 可覆盖；缺省 runtime_paths.diary_root（条文47 SSOT，
+    ⛔ 不假设 Obsidian：默认 MC/日记/1-每日计划/01-日记·零 Obsidian 依赖；Obsidian 用户改指自己 vault 日记位）。"""
     c = _config()
     if c.get("diary_dir"):
         return os.path.expanduser(c["diary_dir"])
-    return _mc_path("ObsidianVault", "1-每日计划", "01-日记")
+    if _DIARY_ROOT:
+        return _DIARY_ROOT
+    return _mc_path("日记", "1-每日计划", "01-日记")

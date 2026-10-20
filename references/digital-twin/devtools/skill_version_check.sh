@@ -1,5 +1,8 @@
 #!/bin/bash
-# skill-version-check.sh — Skill 版本一致性机械校验 v1.0
+# skill-version-check.sh — Skill 版本一致性机械校验 v1.1
+# 变更记录: v1.1(2026-10-20·Qoder CN·版本对账批)——frontmatter 提取由 head -15 固定窗
+#   改为开/闭 --- 精确解析。根因=实测 awaken-memory-system version 落在第16行被漏读，
+#   巡检假报🟡「无版本声明」（窗口截断≠字段不存在）。v1.0(2026-09 better-harness 发现#5)
 # 来源: better-harness 发现#5「治理铁律靠口头重复维持」→ 落成机械校验
 # 铁律依据: 皮叔的治理规则——每个 skill 内涉及版本信息必须全部一致，不允许版本不一致的信息存在
 # 用法:
@@ -10,7 +13,7 @@
 set -u
 SKILL_ROOT="${1:-$HOME/.qoder/skills}"
 PASS=0; FAIL=0; WARN=0
-echo "=== Skill 版本一致性校验 v1.0 ==="
+echo "=== Skill 版本一致性校验 v1.1 ==="
 echo "扫描根: $SKILL_ROOT"
 echo ""
 
@@ -19,8 +22,8 @@ for dir in "$SKILL_ROOT"/*/; do
   f="$dir/SKILL.md"
   [ -f "$f" ] || { echo "⚪ $name: 无 SKILL.md, 跳过"; continue; }
 
-  # 1) frontmatter version 字段（前 15 行内）
-  fm_ver=$(head -15 "$f" | grep -E '^version:' | head -1 | sed -E 's/version:[[:space:]]*"?v?([0-9]+\.[0-9]+(\.[0-9]+)?)"?.*/\1/')
+  # 1) frontmatter version 字段（v1.1: 首行 --- 到次 --- 精确解析，⛔不用固定行窗——防深位字段漏读）
+  fm_ver=$(awk 'NR==1 && $0 ~ /^---[[:space:]]*$/ {infm=1; next} infm && $0 ~ /^---[[:space:]]*$/ {exit} infm && $0 ~ /^version:/ {gsub(/^[version:[:space:]"]+/,""); gsub(/["[:space:]]+$/,""); print; exit}' "$f")
 
   # 2) 正文自版本声明行（"> **版本**：vX.Y.Z" / "版本：vX.Y.Z" 开头的行）
   body_vers=$(grep -oE '^>? ?\*{0,2}版本\*{0,2}[：:][[:space:]]*v?[0-9]+\.[0-9]+(\.[0-9]+)?' "$f" \

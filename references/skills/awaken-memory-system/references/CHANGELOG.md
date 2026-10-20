@@ -5,8 +5,6 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 
-## 2026-10-03 · None：SKILL.md v8.3.1→v8.3.2
-> **变更**：commit `7b3b0d13` chore(archive): 回购卫生清理·童灵收尾。
 # 变更日志
 
 > 本文件记录版本变更历史（最新条目=当前版本，与 SKILL.md frontmatter 对齐·v8.1.3修正自述与实盘矛盾）。历史叙述以本文件为准。
@@ -19,6 +17,9 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 - **实跑对账**：due_check `NONE` == scheduler 逾期0（两判定器同答，本轮实跑在案·Loop 报告专项D）。
 - **R2 审查收口（独立审查 finding #9中/#10低/#12低·#11销案）**：①`patrol.md §2` 动态解析段按 distill_due_core 口径三要素上移同步（实物口径⊃文档口径=E6声明滞后同族病）：旧文「取最新月段」改「全文倒序取最后一条」、补「分桶归一 normalize_type」要素、`days==0` 归口🔵今天到期；②`test_distill_core.py` 权限 755→644 对齐同级导入模块；③#11 包内 `[记忆共享中心]` 占位符疑问**销案**——install_scripts.py L47 PLACEHOLDER 定义+L347/364/964 替换实现·R3复核实锤（预存机制非缺陷）。⚠️ 本条首版误标 L61/66/83=引用未经计数（铁律002自纠·R3 finding）。
 - **版本判定**：8.3.2→**8.3.3**（Z 级·测试实物补件+卫生+文档口径收口，判定行为零变更；R2收口并入同版本=同一Loop同一收口批先例）。
+
+## 2026-10-03 · None：SKILL.md v8.3.1→v8.3.2
+> **变更**：commit `7b3b0d13` chore(archive): 回购卫生清理·童灵收尾。
 
 ### v8.3.2 — 2026-10-03（公共口径模块随 Skill 分发·端用户断链根治·Z 级）
 

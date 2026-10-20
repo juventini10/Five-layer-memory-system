@@ -417,7 +417,7 @@ python3 "<安装包根>/questionnaire_sync_check.py" --answer "$MC/.install/问�
 | Agent B 盲审 | ✅ 独立通过 |
 | 总体状态 | ✅ 就绪 |
 
-> 记忆系统名称：五层记忆系统 布洛陀 2.2.4
+> 记忆系统名称：五层记忆系统 布洛陀 2.2.8
 > 安装时间：YYYY-MM-DD
 
 ---

@@ -2,6 +2,9 @@
 # ============================================================
 # verify.sh — 布洛陀安装包 接入自检 v1.0（只读·不改任何文件）
 # 用法: bash verify.sh [--platform <端ID>]   (默认记忆中心 ~/记忆共享中心)
+# 语义声明（2026-10-20·反馈#3 误读根治）：本脚本=**装后自检**——需要已安装的记忆中心；
+#   在未安装的 clone/解包目录上跑，装机态项（路径完整性/占位符残留/软链）必报失败，属预期，
+#   ⛔ 不等于"包缺件"。只看包面请用：python3 references/scripts/smoke_test.py . 与 platform_compat.py .
 #       MEMORY_CENTER=/path bash verify.sh   (自定义记忆中心)
 #       --platform qodercn → 落点检查按该端 capability.yaml 的 config_root（v2.0.1·多端）
 # 检查项: 0)数据污染 1)系统文件 2)规则三层 3)记忆Skill 4)安装包干净度 5)版本锚点

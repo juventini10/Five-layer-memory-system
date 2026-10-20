@@ -33,9 +33,66 @@
 > 曾出现的 `version.md = 2.0.0-dev` 属自造状态后缀：一个号同时存在两种宣称串，
 > 实测一处后缀制造 5 处门禁红＋归档名污染（`V2.0.0-dev.zip`），已于 2026-10-01 废除并上门禁。
 
-<!-- LAST-PUBLISHED: 2.1.0 (GitHub release v2.1.0 · 2026-10-07 · 判据源=GitHub 分发仓 release 列表（发布侧实查）)。
+<!-- LAST-PUBLISHED: 2.2.4 (GitHub release v2.2.4 · 2026-10-19 · 判据源=GitHub 分发仓 release 列表（发布侧实查）)。
      本行由发布侧在每次对外发布时上移（写发布 Loop 的封口清单·G 路径报告必核该行与 GitHub 实况一致，不一致=红）。
      消费方=INSTALL Step -0.9 第6点「本次更新了什么」抽取区间：本行版本段(不含)→顶段(含)。） -->
+
+## [2.2.8] — 2026-10-20（分身岗位心跳机检 + launchd 漂移重指提案 + Qoder CN 钩子126风暴根治）
+
+**变更**：
+- 对账官 `position3_audit.py` v1.10→v1.11：新增**判据⑥「岗位心跳」**——数字分身各岗位按判决台账机械聚合，在册岗位连续 30 天零判决自动显形 🟡休眠（只显形不撤岗，撤留归用户）。作者端首发第 176 轮四岗全✅并实证推翻一条二手旧账。负例夹具 11-15 五例全过。
+- 巡检 `launchd_health_daily.sh`：新增 1b 段「plist 脚本漂移重指提案」——脚本搬家后 plist 未跟随时自动出提案（唯一同名才提案，多义不猜）。配套工具 `plist_repoint.py` 本批**未随包**（新包件待裁），daily 段以 `[ -x ]` 缺件跳过为设计内安全态，端机不崩仅少提案。
+- 用户可感变化：系统建设页的「数字分身在岗情况」从"人翻台账"变"每日对账自报"；升级者无需操作，对账作业（position3）在装机链路原有 deploy 步骤自动带上新版。
+
+**判据**：待本轮出包+真机跑验（T20/T21 沿用上轮 harness 口径·⛔Mac 绿≠可发布）。真源 commit=ce9f52ee7。
+
+**变更（Qoder CN 钩子126风暴根治线·交接卡 2026-10-20 21:05）**：
+- `qodercn_config_guard.py` v0.27（风暴判据部分，执行位判据已在 2.2.7 收录）：
+  ① 判活窗口收编轮转日志 `hooks.N.log`（按 run 目录分组·PROBE_MAX_FILES 封顶）——旧 glob 精确名致风暴 48 败中 40 条结构性不可见；
+  ② 新增 `_storm_flip_scan` 双判据：FLIP_ALERT=同命令最新 run 连崩≥3 条 126/127 无成功回执（分布形态判据·不依赖绝对计数），跨 run 翻转/persistent/intra-run 三型；STORM_ATTR=libxpc 断言指纹 ±2s 配对加分路；
+  ③ Stop 强提醒自带会话级自愈指引「先重新登录·⛔不怀疑文件权限」（10-20 两次实测重登录自愈，人肉判据吸收进机制）。
+- `sescan_shim.py` 首次入包（references/hooks/·读模式镜像扫描钩子·PASSTHROUGH 参数透传）：官方 security-scan 插件钩子在 macOS 因无 shebang .cmd 依赖 shell fallback 间歇全崩时的本端兜底件；随 install_scripts 全量投递，⚠️ 挂载不自注入——装机端按需挂（Qoder CN settings.json PostToolUse）。
+- 伴生：mirror-manifest +1 条目；doenglingz_guard 条目 src 直址化（既存断链修复）；sescan_shim 真源归位 `脚本中心/守卫/`（执行位改软链同源·先例=search_kb 派生副本口径）。
+
+**判据（126风暴线）**：守卫自测 84/0（39 系 5 例含真机跨 run 形态夹具+双负例）；真机风暴日志直投 FLIP_ALERT 抓到（hard=48·首09:05:54末17:13:25）；consistency_guard 0 偏离；重启后产品 config loaded handlers 71 证实新挂载加载、if 过滤生效。根治效果挂 FU-209/210 回访（到期 11-03·判假式已绑）。
+
+## [2.2.7] — 2026-10-20（路由引擎新装机根治 + 升级路径三缺口 + Windows 判据对等）
+
+**变更**：
+- 路由引擎 `router.py`：`SKILLS` 由硬编码 17 名改为**目录扫描派生**（目录含 SKILL.md 即入表）。旧表含 7 个不随包的 Skill，新装机 `get_desc` 首个缺件即 FileNotFoundError，被上层失败放行吞掉 → 路由整条静默死。新增 `BULUOTUO_SKILLS_DIR` 测试隔离缝。
+- 升级路径缺口：①钩子注册增"同内容副本（sha）"去重（改名 fork 不再双注册同一注入钩子；⛔不用后缀族——kb_/doenglingz_ 同后缀不同职能）；②老用户身份判据补 `.install/versions.json`（此前漏它 → 已装用户被误判首次安装）。
+- Windows 判据对等：`workbuddy_skill_health_guard` 认 Junction/reparse point（此前 junction 被当实目录报 WARN）。
+- 安装器 `TEXT_EXT` 扩 .jsonl/.txt/.cmd/.swift（Skill 拷贝链未来形态的占位符本地化）。
+- `verify.sh` 增"装后自检"语义头注（未安装目录运行必报失败≠包缺件）；`version_diff` 增快照滞后注记（落后判定以实盘为准）。
+- 软链巡检补硬链抽查（nlink>1 非依赖件=违规，防"删文件重建"式升级静默断链）。
+- Win 真机 harness 增 T21：新装机路由冒烟（SKILLS>0 且 "loop 安装包" 命中 clock-loop）。
+
+**判据**：待本轮出包+真机跑验（T20/T21）。
+
+## [2.2.6] — 2026-10-20（装后清扫 + 发版三一致门禁 + 变更日志写入口跨布局）
+
+**变更**：
+- 装后清扫（tiger① 存量根治）：`install_scripts.py` 新增 `--sweep-ghost` 与装后自动执行——把家目录根/记忆中心根的字面 `[记忆共享中心]` 幽灵目录**移动**到 `<MC>/.install/ghost-sweep/<name>-<ts>/`（可逆·⛔永不删除）；移动失败只告警不中止
+- Win 真机 harness 增 T20：幽灵目录迁移 + 备份内容完整 + 二次清扫幂等（`-LiteralPath` 防方括号通配）
+- 发版三一致门禁（Q6）：新增 `three_way_gate.py`（①manifest 声明件⊆包实有 ②zip≡包树逐件 ③未展开占位符 0 ④双向差额 ratchet 基线），接线 `generate_release` 守卫10——不通过即拒绝出包
+- `changelog_append.py` 写入口候选面扩：脚本位置上溯 4 级 + `MEMORY_CENTER`/`MC_PATH` 环境变量 + 家目录默认（非默认记忆中心/异盘/中文用户名不再 exit=3）
+
+**判据**：守卫10 本地 PASS（826 声明件全实有·zip 1486 件逐件一致·双向差额基线 436 件在册）；T20 随本轮 Win 真机跑验。
+
+## [2.2.5] — 2026-10-19（Q1分发补件 + Q3分身周期守护路线C进包 + WorkBuddy亮牌纠黄 + 首触第6点增补）
+
+**变更**：
+- `references/知识联邦引擎-min/` 补 route_table.json + kb_query_trail.py（V2.2.4 审计#1 分发漏件根治：装机端语义检索判据+TSL L7-3 动作账）
+- Q3 路线C装机周期守护进包：`references/digital-twin/guardians.json`（声明层单一真源·Q6门禁②对账源）+ `scripts/com.doenglingz.slice-watch.plist.template`（mac）+ `scripts/slice-watch-install-task.ps1`（win·Find-Python规范+间隔型触发）+ install_scripts DT_SUITE 接线 + INSTALL §slice-watch 注册段
+- 阈值单源化（方案①）：state_bus_sync `--update` 写 `l6_policy.stale_days` 入账本，tsl_verify L6 读账本（fallback=3 等价旧值）——同值双写分叉根除
+- `path_migration_sweep_guard.py` v1.4：字面 `[记忆共享中心]` 目录盘上实存跨端判据（影子目录根治·包面副本随正链）
+- install_scripts L931 注释归一：route_table 从"⛔不入包"改判为引擎根功能判据（防下个读者按旧口径删）
+- 话术与亮牌：WorkBuddy 🟢→🟡（第5件自定义指令=设置框字段需粘贴1步·与豆包办公同构·capability.yaml L45/L144 实证）；首触第6点增补检索修复与自动巡检两行（用户话术·三查定屏）；README 头 2.1→2.2.5 归位
+- venv 跨端形态修复入包账（A-1~A-7）已记 2.2.4.x 系列见作者侧变更日志·本包面为其载体
+
+**判据**：twin_chain_check 沙箱三步绿·mirror-sync 826条目/0漂移·隐私A7 RED=0·路径完整性模板面PASS·tsl_verify L6 负例🟡/复原✅。Win 真机腿（5.1语义/注册实跑）留 Q7 harness 轮，⛔Mac绿不顶真机账。
+
+---
 
 ## [2.2.4] — 2026-10-19（安静模式实装·D3分层开关+包面安全词表同步）
 

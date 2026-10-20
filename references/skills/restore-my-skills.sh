@@ -29,7 +29,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 AUTHORITY_DIR="$SCRIPT_DIR"
-PKG_ROOT=""
+PKG_ROOT="${BULUOTUO_PKG_ROOT:-}"  # 允许外部预设包根(作者端LIVE技能配置不在包根内时用)；装机端不设此env=向上探测行为不变
 DRY=0
 PROJECT_RULES=""
 

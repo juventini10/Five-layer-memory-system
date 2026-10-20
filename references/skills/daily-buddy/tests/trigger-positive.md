@@ -1,4 +1,4 @@
-# 触发测试 · 正向用例（trigger-positive） — v3.51.6（应触发）
+# 触发测试 · 正向用例（trigger-positive） — v3.51.7（应触发）
 
 > 验证：以下输入应触发 daily-buddy 对应工作流（不触发=漏触发缺陷）。
 > 机器断言（评估器 l2_trigger_testing 验收点）：`tests/` 目录含 `trigger` 用例即过；本文件为人工/子代理复核锚点。

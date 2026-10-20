@@ -15,7 +15,7 @@ author: 皮叔
 source: self-built
 upstream: [记忆共享中心]/技能配置/triwich/
 modifiable: true
-version: "4.5.4"
+version: "4.6.0"
 cured_snapshot:
   consumer: clock-loop
   reference: 技能配置/clock-loop/references/triwich-integration.md
@@ -128,6 +128,7 @@ M3 计数唯一源=decision-room 有效登记数(三账分工口径表#1·机械
     - **挂载覆盖边界(2026-09-18 评估 C-04 修复·v4.4.9 R1-P2-01 随实盘)**:现 **WorkBuddy + Qoder CN 双端**已挂(`~/.workbuddy/settings.json` / `~/.qoder-cn/settings.json` Stop·Qoder CN 首挂 `triwich_closeout_guard.py --report`·账本 v1.0.94 在案);其余 compatibility 声明端**未挂载**=S1/S2/S3 在那几端不生效(靠本 Skill 收尾三登记锁的人工纪律兜)。⚠️挂载清单属运行时真源(各端 settings.json),⛔本行手抄随实盘滞后——核对以 `grep closeout_guard ~/.*/settings.json` 实况为准。守卫本体硬编码已于 v1.3.0 根治(根探测)→**换机/对外发布后设 `TRIWICH_MC` 即可启用 S1/S3**--已知边界,⛔DO NOT 当作"全端已兜"。
     - **测试覆盖边界(2026-09-18 评估 C-05 修复)**:`tests/test_closeout_guard.py` 现有 **18 例**覆盖 S1/S2/S3(v4.4.9 计数随实跑·⛔例数以 `tests/test_closeout_guard.py` 为唯一真源,本数字为快照引用会滞后)(含 S3 负例命中 + S3 静默两例·夹具经 env 隔离 DECISION_ROOM)。⚠️ 历史遗留：06:53 首修因夹具未重定向 `DECISION_ROOM` 常量 + S3/S1 共用 120s 容忍窗，曾出现假失败（正例被 S3 误报）；S3 与 S1 共用 120s 仍为已知设计点（决策卡登记属收尾动作，seal 后补登常 >120s）。
   - ⛔ **机械化边界(诚实声明)**:机器只管"追",不管"编"--台账内容(任务/卡点/深度匹配)需判读,**编造=踩采样红线**,故不自动生成。
+- ✅ **扫描预算物理闸锁(v4.6.0新增·案20261020_211758实证驱动·皮叔令"符合愿景·最根本性解决")**-- L3 Agent A 的盘点/检索类动作✅DO经 `scripts/triwich_scan.py` 物理入口执行(超时杀rc=124/行数截断/默认排除名单/同轮指纹重扫拦截/零命中≠失败三态区分/scan_ledger.log静默留痕),⛔DO NOT 绕过入口做裸 grep/rg 全域全文转储--原因是预算若为 prose 条款则靠 AI 自觉+"你恰好看表"(违愿景①机制自动运转;实证:在跑轮 Agent A 无预算扫描落盘 raw 约250MB、38分钟未进思维本体,而全包条款清查证实"超时/预算"仅覆盖 Agent B(120s降级)、A 执行侧零条款=设计不对称)。预算参数值唯一真源=脚本头部常量(TRUTH_OF·本条不复制数值防双本账);失败处置见 `references/l3/full-flow.md` §Agent A 扫描预算失败处置。对账显形(S4)挂账:键文件无台账行却出盘点结论=签名造假信号,待 triwich_closeout_guard 扩展接入(宿主件中途改有假警风险,接入前靠人眼抽检);eval-set 同步断言待下批。
 - ✅ **回访前置筛查锁(triwich_seal v1.2.0新增·G2 决策卡闭环·2026-09-13 M4 转正)**-- Step0 键铸造后、Step0 判定前,✅DO跑 `scripts/triwich_seal.py followup` 前置筛查(无待回访 exit 0 不阻塞);有待回访条目时✅DO先完成该回访(对照 prediction→实际→`resolve {seq} --actual ... --bias B1-B9 --cause ... --fix ... --mechanism mechanism` 销账)再进本轮分析--回访由机制前置发起(G2 铁证:"Skill 回访我"非"我回访它")。回访数据唯一 source=`references/decision-room.md`(封口登记→前置筛查→resolve 销账全链路·B0-B9 硬枚举·重复销账/缺四件套拒绝·Fail-Closed)。**mechanism 物理锚(v1.5.0·本端 2026-09-18·v1.5.1 加固)**:A 值的「发起方式」不再由 AI 自报——resolve 标 mechanism 时脚本校验「本 seq 出现在 24h 窗口内**任一次** followup 留痕的 seqs 里」(⛔只看最近一行=任何并发写者都能把诚实回访打成假阴性·实测被自己的夹具泄漏行触发过),缺留痕/超龄/查无此 seq 一律 FAIL 并给补法(重跑 followup,或如实改标 manual/AI想起·诚实降级不受罚)。留痕载体 `scripts/followup_ledger.log`(与 seal.log 同 .gitignore 策略·机器本地,换机重新起链,⛔不冒充跨机持久证据·测试夹具✅DO覆写该路径防污染真台账);夹具 tests/test_triwich_mechanism_anchor.py 11/11 + 双变异体测试(短路锚校验→A1-A6/A9 必红;短路弱判据显形→A10 必红)。另:`followup` 筛查对**无判假方式**的存量卡显形 ⚠️无判假式(v1.5.1·此前只认「（缺…」占位符→老卡静默绿),⛔筛查只显形,不替立单端代写判据。见 `references/decision-room.md`
 - ✅ **思考检查点**(L3 有 G1·G2 两个检查点)-- 定值法:G1·G2 必须全部执行,缺一不可(注:G3已被Agent B Step3替代,编号保留不重用,见CHANGELOG v3.8.7;另 G4/G5 属签名前自检项(L3签名反造假三处引用/五问),不计"独立检查点"——v4.4.9 R1-P2-09 口径自洽)
 - ✅ **熔断器**(每个文件读写步骤🔌)-- 读不到Step0文件则中止全过程

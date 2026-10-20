@@ -53,7 +53,11 @@ STATE_BUS_PATH = os.path.join(TWIN_HOME, "state_bus.json")
 PHILOSOPHY_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "记忆蓝图", "04_系统文件设计", "数字分身设计哲学", "06-跨端适配规范.md")
 
 # 判据唯一来源＝分发者本体（依赖方向：检查器 import 分发者，不得反向、不得另写一份标记常量）
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# v1.1.1（2026-10-19 Qoder CN）：分发者模块在上级 脚本中心/，原只插本目录→import 恒失败→
+#   判据器恒 rc=4「拒绝检查」，端账本 status 从此不再重算（文件在≠跑得动·PAT-053 同型）。
+_D = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(_D))
+sys.path.insert(0, _D)
 try:
     import doenglingz_slice_watch as _w2
 except Exception as _e:  # Fail-Loud：判据源缺失时不降级回"上一轮观测值当期望"
@@ -476,6 +480,10 @@ def main():
         state_bus["sync_check"]["last_result"] = "all_in_sync" if out_of_sync == 0 else f"{out_of_sync}_out_of_sync"
         state_bus["sync_check"]["total_ends"] = len(ends_def)
         state_bus["sync_check"]["completed_ends"] = total_completed
+        # 2026-10-19 Q3 阈值单源化（复核端L310-319补账·方案①）：写侧把判据阈值随账本下发，
+        # 消费端（tsl_verify L6）只读账本——同值双写会打脸的分叉根除。真源=本常量。
+        state_bus["l6_policy"] = {"stale_days": BASELINE_MAX_AGE_DAYS,
+                                  "_src": "state_bus_sync.py::BASELINE_MAX_AGE_DAYS（唯一真源·消费端勿另调）"}
 
         with open(STATE_BUS_PATH, "w", encoding="utf-8") as f:
             json.dump(state_bus, f, ensure_ascii=False, indent=2)

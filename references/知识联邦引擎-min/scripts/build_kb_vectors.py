@@ -109,11 +109,12 @@ MODEL_EFFECTIVE = ("BAAI/bge-large-zh-v1.5@qint8-avx2" if _QUANT_READY else MODE
 
 # ── 语义层解释器自路由 + 资产预检 ──
 # 端用户 venv 建在脚本中心内（INSTALL.md Phase C2）；候选覆盖 .venv-st / .venv / scripts/.venv
+_BP = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")  # 2026-10-19 Win反馈 min
 _VENV_CANDIDATES = tuple(
     os.path.join(FED, *rel) for rel in (
-        (".venv-st", "bin", "python"),
-        (".venv", "bin", "python"),
-        ("scripts", ".venv", "bin", "python"),
+        (".venv-st", *_BP),
+        (".venv", *_BP),
+        ("scripts", ".venv", *_BP),
     )
 ) if FED else ()
 _HUB_CACHE = os.path.expanduser("~/.cache/huggingface/hub")

@@ -1,4 +1,4 @@
-# 触发测试 — 好好学习 good-good-study v1.1.15（不应触发）
+# 触发测试 — 好好学习 good-good-study v1.1.16（不应触发）
 # 复核戳：v1.1.8 · 2026-10-12 clock-loop Loop R2（负例用例逐条复核有效·补第6条去重负例·创建戳 v0.10.8 保留=既定口径，version_uniform 该 warning 属设计内）
 
 | # | 用户输入 | 不触发原因 |

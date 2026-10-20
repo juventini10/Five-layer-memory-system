@@ -4,7 +4,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 # 读书助手 — 平台路径对照表
 
-> 本文件为 9 个 Skill 跨平台改造的**共享路径模板适配版**（基准见 daily-buddy/references/platform-paths.md）。读书助手特有路径：读书笔记 / 知识池 / 电子书目录。C2 类绝对路径统一用 `{{OBSIDIAN_VAULT}}` / `{{EBOOK_DIR}}` 占位符（打包时由用户填真实值），运行时由 `OBSIDIAN_VAULT` / `EBOOK_DIR` 环境变量解析，默认 `$HOME/Local_Obsidian_Vault` / `$HOME/电子书`。
+> 本文件为 9 个 Skill 跨平台改造的**共享路径模板适配版**（基准见 daily-buddy/references/platform-paths.md）。读书助手特有路径：读书笔记 / 知识池 / 电子书目录。C2 类绝对路径统一用 `{{OBSIDIAN_VAULT}}` / `{{EBOOK_DIR}}` 占位符（打包时由用户填真实值），运行时由 `OBSIDIAN_VAULT` / `EBOOK_DIR` 环境变量解析，默认 `$HOME/日记（或 runtime_paths.diary_root·零 Obsidian 假设）` / `$HOME/电子书`。
 
 ## 共用路径（全平台一致）
 
@@ -20,7 +20,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 | 占位符 | 环境变量 | 默认值 |
 |--------|---------|--------|
-| `{{OBSIDIAN_VAULT}}` | `OBSIDIAN_VAULT` | `$HOME/Local_Obsidian_Vault` |
+| `{{OBSIDIAN_VAULT}}` | `OBSIDIAN_VAULT` | `$HOME/日记（或 runtime_paths.diary_root·零 Obsidian 假设）` |
 | `{{EBOOK_DIR}}` | `EBOOK_DIR` | `$HOME/电子书` |
 
 > Windows 用户：安装后把占位符替换为自己的 Obsidian 库路径与电子书目录（或设置对应环境变量后由 Skill 运行时解析）。

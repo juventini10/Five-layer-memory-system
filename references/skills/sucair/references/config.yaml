@@ -68,7 +68,8 @@
 
 | 用途 | 包 | 不装时降级为 | 探测方式 |
 |------|-----|-------------|---------|
-| 扫描件 OCR（A 路·快） | `rapidocr-onnxruntime` | 视觉转写（B 路·慢但不依赖） | `python3 scripts/ocr_scan.py --probe` |
+| 扫描件 OCR（A 路·快） | `rapidocr-onnxruntime` | 退 A2 路，再退 B 路 | `python3 scripts/ocr_scan.py --probe` |
+| 扫描件 OCR（A2 路·本机原生·仅 macOS） | Swift 工具链 `swiftc`（Vision 框架系统自带，无第三方包） | 视觉转写（B 路） | `command -v swiftc` |
 | URL / 非 MD 抓取 | `crawl4ai` / `markitdown` | `.md`/`.txt` 直读；URL 报错提示安装 | `scripts/fetch_source.py` 内部 try import |
 
 ### 扫描件分支参数
@@ -83,3 +84,5 @@
 | 闸表能力边界 | 抓不到单字识别错误 | 同一模型两次跑错法相同，双跑无差异——那类靠 `ocr-corrections.json` + 抽检硬项 |
 | 纠错表 | `references/ocr-corrections.json` | 只收已回原图确认的条目 |
 | 环境变量 | `SUCAIR_OCR_PYTHON` | 指向已装 RapidOCR 的解释器，脚本自动切换 |
+| A2 路并发 | **4**（`xargs -P 4`） | 第八卷实测：单进程仅占约 0.9% CPU（瓶颈在系统服务非核数），4 路并行 12.5→9 秒/页；再高因内存争用收益转平 |
+| A2 路已知短板 | 注释页/小字号页单字错读率高于正文页 | 2026-10-20 第八卷实测（特务→持务、忆秦娥→忆秦姆、所摄→所最）；年份数字可靠 → 卡片引文限正文页 |

@@ -1195,15 +1195,50 @@ def check_retired(ledger_path=None, home=None, doc_path=None, verbose=True):
     except Exception:
         pass
     noise = ("记忆琥珀", "存档包", "/归档", ".bak", "sessions", "workspace",
-             ".openclaw-attachments", "__pycache__", "backup")
+             ".openclaw-attachments", "__pycache__", "backup",
+             # 2026-10-20：以下不是运行面（发布库=包快照·评估库=报告·日志=流水），
+             # 全树扫它们既慢又会产生"包内副本=复活"的语义假红
+             "发布库", "评估知识库", "工作日志", "记忆蒸馏")
+
+    # 2026-10-20 性能根治（Stop 钩子实测 52-70s > 60s 超时线）：
+    # 旧实现=每个退役名 × 11 个根各跑一次 recursive glob（实测 1.87M 次 stat·98s/轮）。
+    # 修法=每个根只 os.walk 一次建 basename 索引（剪 noise 目录），按名查表；
+    # 语义不变（同 noise 过滤·同匹配名），⛔不改变命中的定义。
+    _idx_cache = {}
+
+    def _index_dir(root):
+        if root in _idx_cache:
+            return _idx_cache[root]
+        idx = {}
+        if not os.path.isdir(root):
+            _idx_cache[root] = idx
+            return idx
+        # 重依赖/缓存目录一律不可能是"钩子复活"的落点（.hermes 28.7万件/.workbuddy 17.6万件
+        # 绝大部分住在这里）；剪掉它们把每轮 Stop 的索引成本压到可用范围，判据面不变。
+        _prune = {"node_modules", ".venv", "venv", ".git", "cache", "logs", "dist",
+                  "build", "__pycache__", ".cache", "site-packages", "tools"}
+        for dp, dns, fns in os.walk(root):
+            dns[:] = [d for d in dns
+                      if d not in _prune and not any(n.strip("/") in d for n in noise)]
+            for fn in fns:
+                fp = os.path.join(dp, fn)
+                if any(n in fp for n in noise):
+                    continue
+                idx.setdefault(fn, []).append(fp)
+        _idx_cache[root] = idx
+        return idx
 
     def _hits(patterns):
         out = []
         for pat in patterns:
-            for fp in _glob.glob(pat, recursive=True):
-                if any(n in fp for n in noise):
-                    continue
-                out.append(fp)
+            if "/**/" in pat:
+                root, name = pat.split("/**/", 1)
+                out.extend(_index_dir(root).get(name, []))
+            else:
+                for fp in _glob.glob(pat, recursive=True):
+                    if any(n in fp for n in noise):
+                        continue
+                    out.append(fp)
         return out
 
     problems = 0
@@ -1220,7 +1255,8 @@ def check_retired(ledger_path=None, home=None, doc_path=None, verbose=True):
             hits = _hits([os.path.join(home, d, "**", name) for d in
                          (".qoder-cn", ".workbuddy", ".qoder", ".trae-cn", ".zcode",
                           ".openclaw-autoclaw", ".hermes", ".dsh", ".claude", ".codex")]
-                        + [os.path.join(os.path.expanduser("[记忆共享中心]"), "**", name)])
+                        + [os.path.join(os.path.expanduser("[记忆共享中心]"), _d, "**", name)
+                           for _d in ("脚本中心", "技能配置", "数字分身")])
             if hits:
                 problems += 1
                 if verbose:
@@ -1228,7 +1264,8 @@ def check_retired(ledger_path=None, home=None, doc_path=None, verbose=True):
                           % (name, [h.replace(home, "~") for h in hits[:4]]))
         elif form == "exit0_stub":
             allow = [os.path.realpath(os.path.expanduser(p)) for p in item.get("allowed_paths", [])]
-            files = _hits([os.path.join(os.path.expanduser("[记忆共享中心]"), "**", name)]
+            files = _hits([os.path.join(os.path.expanduser("[记忆共享中心]"), _d, "**", name)
+                           for _d in ("脚本中心", "技能配置", "数字分身")]
                           + [os.path.join(home, d, "**", name) for d in
                              (".qoder-cn", ".workbuddy", ".qoder", ".trae-cn", ".zcode",
                               ".openclaw-autoclaw", ".hermes", ".dsh")])

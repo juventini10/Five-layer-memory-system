@@ -327,7 +327,7 @@ def check_staging_water():
 
 
 # ============ 判据⑤：定时作业健康度（launchd 声明-实盘对账·v1.3 新增·v1.4 补判活） ============
-CRITERIA_VERSION = "v1.10"  # 报告头部与分节标题共用（⛔不两处各写一次=防双本账）
+CRITERIA_VERSION = "v1.11"  # 报告头部与分节标题共用（⛔不两处各写一次=防双本账）
 # 缘起（2026-08-30 实证）：com.knowledge.backup 因 plist 脚本名手误 exit=127 静默死 23 天；
 # 同日又查出 3 个 plist 指向已不存在的脚本且根本没加载。判据①-④ 全测不到这一类——
 # "作业声称每日跑"与"台账实锤没跑"的落差必须机械显形（愿景①不依赖人记得）。
@@ -652,6 +652,54 @@ def check_scheduled_jobs(launch_dir=None, own_roots=None, ctl=None, now=None, pr
 # + QoderCN守卫台账落点迁移）被引擎滚动覆盖无持久化，仅 .bak 存留——处置记录落点=报告本身=每次被覆盖。
 # 根治（愿景①全自动化/②越用越好用/③自主进化）：写新报告前引擎自旧报告机械提取处置记录 →
 # 合并去重入 audit-log rec.dispositions（累积快照·自包含）→ 新报告「处置记录」节回显 →
+HEARTBEAT_STALE_DAYS = 30
+JOB_LEDGER = os.path.expanduser("[记忆共享中心]/数字分身/job_probation_ledger.json")
+
+
+def check_job_heartbeat(ledger_path=None, now=None):
+    """判据⑥：岗位心跳（在册岗位按判决台账聚合·>30天零判决=🟡休眠·只显形不撤岗）。
+    2026-10-20 A段（你批上岗改善方案）·负例夹具见 --negtest 11-14。"""
+    now = now or datetime.now()
+    path = ledger_path or JOB_LEDGER
+    if not os.path.exists(path):
+        return [("job_probation_ledger", "🟡", "台账缺失（fail-loud·心跳判据不可判·%s）" % path)]
+    try:
+        d = json.load(open(path, encoding="utf-8"))
+    except Exception as e:
+        return [("job_probation_ledger", "🟡", "台账损坏不可解析（⛔静默吞=死数据·%s）" % str(e)[:60])]
+    rows = []
+    for job, v in sorted((d.get("jobs") or {}).items()):
+        if not isinstance(v, dict):
+            continue
+        if v.get("status") == "retired":
+            continue
+        ds = v.get("decisions") or []
+        dates = []
+        for x in ds:
+            dd = (x or {}).get("date", "")[:10]
+            try:
+                dates.append(datetime.strptime(dd, "%Y-%m-%d"))
+            except Exception:
+                continue
+        if not dates:
+            st = v.get("start_date") or v.get("probation_start")
+            if st:
+                try:
+                    dates.append(datetime.strptime(st[:10], "%Y-%m-%d"))
+                except Exception:
+                    pass
+        if not dates:
+            rows.append((job, "🟡", "零判决且无上岗日期字段（盲区·不可判休眠也⛔不假绿）"))
+            continue
+        days = (now - max(dates)).days
+        n = len(ds)
+        if days > HEARTBEAT_STALE_DAYS:
+            rows.append((job, "🟡", "岗位休眠：距末判决 %d 天>%d（在册·判决累计 %d 条·撤留归你）" % (days, HEARTBEAT_STALE_DAYS, n)))
+        else:
+            rows.append((job, "✅", "心跳正常：末判决距 %d 天（累计 %d 条·status=%s）" % (days, n, v.get("status", "?"))))
+    return rows
+
+
 # 处置台账随 audit-log 供 evolution_deviation.py 闭环流消费（处置了什么→下轮还红不红=闭环验证数据）。
 # 机械锚点：报告内 `> YYYY-MM-DD HH:MM 处置记录：<内容>`（blockquote 行·第19轮既有格式）。
 DISPOSITION_PATTERN = re.compile(
@@ -696,20 +744,21 @@ def _merge_dispositions(prev, carried):
     return merged
 
 
-def build_report(round_no, pend, ledg, emb, water, jobs, dispositions=None):
+def build_report(round_no, pend, ledg, emb, water, jobs, dispositions=None, hb=None):
     j_own, j_foreign, j_skipped = jobs
     dispositions = dispositions or []
     red = sum(1 for x in pend if x[4] == "🔴") + sum(1 for x in ledg + emb if x[1] == "🔴") \
         + sum(1 for x in j_own if x[1] == "🔴")
     yellow = (len(pend) - sum(1 for x in pend if x[4] == "🔴")) + \
              sum(1 for x in ledg + emb if x[1] == "🟡") + \
-             sum(1 for x in j_own if x[1] == "🟡") + len(j_foreign)
+             sum(1 for x in j_own if x[1] == "🟡") + len(j_foreign) + \
+             sum(1 for x in (hb or []) if x[1] == "🟡")
     now = datetime.now()
     L = []
     L.append("# 岗位3 · 声明-实盘对账报告（第 %d 轮 · %s）\n" % (round_no, now.strftime("%Y-%m-%d %H:%M")))
     L.append("> 本轮结论：🔴 %d 处脱钩 · 🟡 %d 处悬置 · 其余声明与台账相符%s\n" % (red, yellow,
              ("（已归档处置 %d 条）" % len(dispositions)) if dispositions else ""))
-    L.append("> 判据版本 %s（台账实锤才算✅·悬置阈 %d 天·台账新鲜阈 %d 天·运行时载荷键数≥10·仅当前态区计悬置·schema无stdin_keys不套载荷口径）——v1→v1.1 演进依据=第1轮两处误报实证（变更记录历史区/异端schema）；v1.2→v1.3 演进依据=同日实证 com.knowledge.backup plist 脚本名手误 exit=127 静默死 23 天，判据①-④对『作业没在跑』这一类结构性失明；v1.3→v1.4 演进依据=建 v1.3 过程中自查出的假绿（拿 plist stdout mtime 给常驻作业判时效，而 stdout 新旧与『进程是否在跑』无因果），改由 launchd 自证 state/pid，并补 WatchPaths 指向不存在文件→🔴（事件永不触发）。v1.4→v1.5 演进依据=2026-08-31 实证：重启后/非交互 shell 下 `launchctl list` 返回空→全部 own job 误报『未加载』🔴（手动补跑爆 27 假红）；改由逐 label `launchctl print gui/$UID/<label>` 实查（与 _job_alive 同源可靠），并新增「看门狗看自己」自身节律缺口门禁（>9天未跑→🔴），根治看门狗漏跑无感。v1.5→v1.6 演进依据=同次根治：调度原语从 `StartCalendarInterval`（周一09:00·错过点不补跑·脆弱）改为 `StartInterval 86400`+`RunAtLoad`（每日·加载即跑·睡眠/重启自愈），自身节律门禁阈值随 9→2 天；从愿景①「不依赖人记得」判定此为看门狗最优可靠形态，原「每周」仅为拍脑袋节奏。v1.6→v1.7 演进依据=2026-08-31 第9轮27🔴复盘：判据②原以 /tmp 台账存在+新鲜判守卫健康，但 /tmp 重启易失且事件驱动守卫(端休眠无会话即不写账)→WB/ZCode 误报🔴；根治=事件驱动守卫台账落点迁 ~/.workbuddy/(持久·根治重启清空)+判据②增补「挂载态兜底」(已挂 hooks 但端休眠/未触发→🟡待命而非🔴·真未挂载才🔴)，对齐愿景「可观测·全自动化」。v1.7→v1.8 演进依据=2026-09-01 第20轮实证：第19轮人工处置记录(09:45·consistency-guard 双因修复+QoderCN台账落点迁移)被引擎滚动覆盖丢失仅.bak存留；根治=写报告前引擎自旧报告机械提取处置记录→合并去重入 audit-log rec.dispositions(累积快照)→报告「处置记录」节回显(历史可追溯)，处置台账随 audit-log 供 evolution_deviation.py 闭环流消费——对齐愿景①不依赖人记得/②越用越好用/③自主进化。v1.8→v1.9 演进依据=2026-09-26 第107轮实证：4 处🔴里只有 1 处是真崩（panel_snapshot.compute_okr TypeError），另 3 处是检查器正常工作——`script_family_check.py --strict` 的 help 自陈「任一红→exit 1」、blueprint watcher stdout 末行「发现 2 个问题」、changelog-audit stdout `alarm:true`，其 stderr 全空。原判据对 last exit code 非 0 一律 hard.append（裸比较分支），把「有发现」与「崩了」混为同一红，代价不是多报 3 红，而是**真崩被假红淹没（信噪比 1:3）→ 狼来了 → 红被习惯性跳过**。根治=新增 `_rc_semantics()` 三分类（crash/finding/unknown，机械判据：stderr 异常特征 vs stdout 有产物），finding 记 🟡 待处置（⛔不记 ✅——那等于把欠账藏进绿里），unknown 保守留 🔴（宁可假红不漏真崩）；判据⑤负例夹具 17/17 复跑通过。对齐愿景③「从自身运行数据学习改进」——本轮同时暴露并修掉上游真崩根因（SSOT 那行被加粗成「接入率（**分母」→ 字面锚点失配 → 回退手敲裸 int → 解包崩），教训抽象：**凡靠字面锚点解析文档的机器，匹配前必须先剥 markdown 装饰，且降级兜底值不得携带具体数字（伪装成有效数据的降级=二次故障源）**。v1.9→v1.10 演进依据=2026-10-10 第148轮实证：state-bus-sync 崩案已于10-09修复并复跑（rc=1 系业务发现·stderr 静默），但 err.log 里的旧 TypeError 残骸被 _rc_semantics 无条件当现行证据→修好的作业永远真崩（同源律的取数时点残面：判据演化了，证据时效没跟上）。根治=崩溃签名加时效闸（stderr mtime 早于 stdout ⇒ 上一轮遗账·降级 finding/unknown；无 stdout 可比时照旧 crash·保守性不丢）；负例夹具 +3 例（18旧trace不得crash/19新trace仍crash/20无签名仍finding）。对齐愿景③。（判据预注册下如实升版）· 抽检入口：detail 内路径可直接打开验证\n"
+    L.append("> 判据版本 %s（台账实锤才算✅·悬置阈 %d 天·台账新鲜阈 %d 天·运行时载荷键数≥10·仅当前态区计悬置·schema无stdin_keys不套载荷口径）——v1→v1.1 演进依据=第1轮两处误报实证（变更记录历史区/异端schema）；v1.2→v1.3 演进依据=同日实证 com.knowledge.backup plist 脚本名手误 exit=127 静默死 23 天，判据①-④对『作业没在跑』这一类结构性失明；v1.3→v1.4 演进依据=建 v1.3 过程中自查出的假绿（拿 plist stdout mtime 给常驻作业判时效，而 stdout 新旧与『进程是否在跑』无因果），改由 launchd 自证 state/pid，并补 WatchPaths 指向不存在文件→🔴（事件永不触发）。v1.4→v1.5 演进依据=2026-08-31 实证：重启后/非交互 shell 下 `launchctl list` 返回空→全部 own job 误报『未加载』🔴（手动补跑爆 27 假红）；改由逐 label `launchctl print gui/$UID/<label>` 实查（与 _job_alive 同源可靠），并新增「看门狗看自己」自身节律缺口门禁（>9天未跑→🔴），根治看门狗漏跑无感。v1.5→v1.6 演进依据=同次根治：调度原语从 `StartCalendarInterval`（周一09:00·错过点不补跑·脆弱）改为 `StartInterval 86400`+`RunAtLoad`（每日·加载即跑·睡眠/重启自愈），自身节律门禁阈值随 9→2 天；从愿景①「不依赖人记得」判定此为看门狗最优可靠形态，原「每周」仅为拍脑袋节奏。v1.6→v1.7 演进依据=2026-08-31 第9轮27🔴复盘：判据②原以 /tmp 台账存在+新鲜判守卫健康，但 /tmp 重启易失且事件驱动守卫(端休眠无会话即不写账)→WB/ZCode 误报🔴；根治=事件驱动守卫台账落点迁 ~/.workbuddy/(持久·根治重启清空)+判据②增补「挂载态兜底」(已挂 hooks 但端休眠/未触发→🟡待命而非🔴·真未挂载才🔴)，对齐愿景「可观测·全自动化」。v1.7→v1.8 演进依据=2026-09-01 第20轮实证：第19轮人工处置记录(09:45·consistency-guard 双因修复+QoderCN台账落点迁移)被引擎滚动覆盖丢失仅.bak存留；根治=写报告前引擎自旧报告机械提取处置记录→合并去重入 audit-log rec.dispositions(累积快照)→报告「处置记录」节回显(历史可追溯)，处置台账随 audit-log 供 evolution_deviation.py 闭环流消费——对齐愿景①不依赖人记得/②越用越好用/③自主进化。v1.8→v1.9 演进依据=2026-09-26 第107轮实证：4 处🔴里只有 1 处是真崩（panel_snapshot.compute_okr TypeError），另 3 处是检查器正常工作——`script_family_check.py --strict` 的 help 自陈「任一红→exit 1」、blueprint watcher stdout 末行「发现 2 个问题」、changelog-audit stdout `alarm:true`，其 stderr 全空。原判据对 last exit code 非 0 一律 hard.append（裸比较分支），把「有发现」与「崩了」混为同一红，代价不是多报 3 红，而是**真崩被假红淹没（信噪比 1:3）→ 狼来了 → 红被习惯性跳过**。根治=新增 `_rc_semantics()` 三分类（crash/finding/unknown，机械判据：stderr 异常特征 vs stdout 有产物），finding 记 🟡 待处置（⛔不记 ✅——那等于把欠账藏进绿里），unknown 保守留 🔴（宁可假红不漏真崩）；判据⑤负例夹具 17/17 复跑通过。对齐愿景③「从自身运行数据学习改进」——本轮同时暴露并修掉上游真崩根因（SSOT 那行被加粗成「接入率（**分母」→ 字面锚点失配 → 回退手敲裸 int → 解包崩），教训抽象：**凡靠字面锚点解析文档的机器，匹配前必须先剥 markdown 装饰，且降级兜底值不得携带具体数字（伪装成有效数据的降级=二次故障源）**。v1.9→v1.10 演进依据=2026-10-10 第148轮实证：state-bus-sync 崩案已于10-09修复并复跑（rc=1 系业务发现·stderr 静默），但 err.log 里的旧 TypeError 残骸被 _rc_semantics 无条件当现行证据→修好的作业永远真崩（同源律的取数时点残面：判据演化了，证据时效没跟上）。根治=崩溃签名加时效闸（stderr mtime 早于 stdout ⇒ 上一轮遗账·降级 finding/unknown；无 stdout 可比时照旧 crash·保守性不丢）；负例夹具 +3 例（18旧trace不得crash/19新trace仍crash/20无签名仍finding）。对齐愿景③。v1.10→v1.11 演进依据=2026-10-20 上岗改善方案A段落地（你批）：岗位「在册但休眠」无机械检——一手机证：09表 10-13 扫描记「JOB-005 0条」，至 10-20 台账实查已 24 条（二手引用会腐烂，必须一手机检）；JOB-004 末判决 10-02 渐近沉默。新增判据⑥「岗位心跳」：在册岗位按 job_probation_ledger 聚合，>30 天零判决→🟡休眠（只显形不撤岗——撤岗属价值层归你·愿景红线）；台账缺失/损坏→🟡 fail-loud；retired/无判决字段如实🟡不假绿。对齐愿景①不依赖人记得/④越用越懂你（哪些岗真在干活）。⚠️另记：本判据首跑即推翻一处本家族二手声明（见处置记录）。 （判据预注册下如实升版）· 抽检入口：detail 内路径可直接打开验证\n"
              % (CRITERIA_VERSION, STALE_DAYS, LEDGER_FRESH_DAYS))
     L.append("\n## 处置记录（v1.8·引擎机械归档·历史可追溯）\n")
     if dispositions:
@@ -754,6 +803,11 @@ def build_report(round_no, pend, ledg, emb, water, jobs, dispositions=None):
         L.append("|---|---|---|")
         for n, v, d in j_foreign:
             L.append("| %s | %s | %s |" % (n, v, d))
+    L.append("\n## 岗位心跳（判据⑥·%s·按判决台账聚合·只显形不撤岗）\n" % CRITERIA_VERSION)
+    L.append("| 岗位 | 判定 | detail |")
+    L.append("|---|---|---|")
+    for n, v2, d2 in (hb or []):
+        L.append("| %s | %s | %s |" % (n, v2, d2))
     L.append("\n> 归属判据=被调脚本路径落在 %s 之一；其余 %d 项作业属他端/系统组件，不纳入本判据（如实声明边界·不假装全覆盖）。\n"
              % ("、".join("~/" + os.path.basename(r.rstrip("/")) for r in OWN_ROOTS), j_skipped))
     L.append("\n---\n\n*岗位3「声明-实盘对账官」试运行产出·只检测不修改·异常处置归你/原登记端（02规范§五.3）*\n")
@@ -793,6 +847,7 @@ def run_round():
     emb = check_embeds()
     water = check_staging_water()
     jobs = check_scheduled_jobs()
+    hb = check_job_heartbeat()
     # 看门狗看自己：把自身节律缺口并入门禁（v1.5）
     sc = check_self_cadence()
     if sc:
@@ -808,7 +863,7 @@ def run_round():
         except Exception:
             old_text = ""
     dispositions = _merge_dispositions(_audit_log_last_dispositions(), _extract_dispositions(old_text))
-    report, red, yellow = build_report(round_no, pend, ledg, emb, water, jobs, dispositions)
+    report, red, yellow = build_report(round_no, pend, ledg, emb, water, jobs, dispositions, hb=hb)
     if os.path.exists(REPORT):
         shutil.copy2(REPORT, REPORT + ".bak")
     with open(REPORT, "w", encoding="utf-8") as f:
@@ -906,6 +961,25 @@ def mode_negtest_jobs():
 
     rows, _, _ = check_scheduled_jobs(tmp, (os.path.join(tmp, "nope") + os.sep,), {lab: "0"})
     case("10 负例·归属零命中→own 空（报告层显式为判据失明）", rows == [])
+
+    # ── 判据⑥岗位心跳负例（v1.11）──
+    import json as _json
+    hj = os.path.join(tmp, "hb_ledger.json")
+    old = (datetime.now() - timedelta(days=40)).strftime("%Y-%m-%d")
+    fresh = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
+    _json.dump({"jobs": {
+        "JOB-T1": {"status": "active", "decisions": [{"date": old}]},
+        "JOB-T2": {"status": "probation", "decisions": [{"date": fresh}, {"date": fresh}]},
+        "JOB-T3": {"status": "retired", "decisions": [{"date": old}]},
+        "JOB-T4": {"status": "active", "decisions": []}}}, open(hj, "w"))
+    hb = check_job_heartbeat(hj)
+    hm = {r[0]: r for r in hb}
+    case("11 心跳·40天零判决→🟡休眠", hm["JOB-T1"][1] == "🟡" and "休眠" in hm["JOB-T1"][2])
+    case("12 心跳·5天有判决→✅", hm["JOB-T2"][1] == "✅" and "累计 2" in hm["JOB-T2"][2])
+    case("13 心跳·retired不进判（退役岗不误报）", "JOB-T3" not in hm)
+    case("14 心跳·零判决无日期→🟡盲区不假绿", hm["JOB-T4"][1] == "🟡" and "盲区" in hm["JOB-T4"][2])
+    hb2 = check_job_heartbeat(os.path.join(tmp, "ghost.json"))
+    case("15 心跳·台账缺失→🟡fail-loud", hb2[0][1] == "🟡" and "缺失" in hb2[0][2])
 
     mk("com.nosched.job", no_sched=True)
     rows, _, _ = check_scheduled_jobs(tmp, roots, {lab: "0", "com.nosched.job": "0"})
