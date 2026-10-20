@@ -563,3 +563,4 @@ Skill 自包含化——成就脚本移入 Skill 目录（用户只装 daily-bud
 - 为通过 validate 硬门禁补建 references/CHANGELOG.md（版本记录须置于 references/ 下）；日常迭代历史见 SKILL.md 内联 `> **vX变更**` 注释。
 
 - **verify_achievement_seal.py v+自愈（2026-10-13·Qoder CN）**：成就 md「最后更新」行加机器可读契约断言+幂等自愈（check_and_heal_md_lines·夜跑内挂·ALERT:FORMAT 留痕·模板豁免）；双向夹具 4 例；根治 digit-blob 脏行入包（content-gate 8→0）。备份=记忆琥珀 verify_achievement_seal-bak-135221。
+- （2026-10-20注记见批E：该表述为当时史实；作者侧现址=`脚本中心/知识联邦引擎`，顶层过渡软链已拆。本行历史原文未改写。）
