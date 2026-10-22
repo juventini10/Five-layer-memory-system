@@ -34,11 +34,36 @@ import sys
 # v1.0.1 根治（2026-10-07）：默认值曾硬编 ~/变更日志.md——该路径不存在，任何 cwd 裸调均 exit=3。
 # 现改为「脚本自身位置派生 → 家目录锚兜底」：真源面（脚本中心/开发工具）派生命中，装机面兜底命中。
 _SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-_CANDIDATES = [
-    os.path.normpath(os.path.join(_SCRIPT_DIR, os.pardir, "变更日志.md")),
-    os.path.expanduser("[记忆共享中心]/变更日志.md"),
-]
-DEFAULT_TARGET = next((p for p in _CANDIDATES if os.path.exists(p)), _CANDIDATES[-1])
+# 2026-10-20（Q4/#5·Win 反馈）：候选面曾只有「脚本旁」+「~/个人AI档案」两处——
+#   非默认记忆中心（用户自命名/异盘/中文用户名）两处全落空 ⇒ exit=3 写不进。
+#   修法=沿脚本位置上溯最多 4 级 + 显式 MC 环境变量 + 家目录默认，按序取第一个存在件；
+#   仍然全空时沿用"脚本旁"（保持旧报错语义可诊断），⛔不静默新建账本。
+def _walk_up_dirs(start, levels=4):
+    cur = start
+    out = []
+    for _ in range(levels):
+        cur = os.path.dirname(cur)
+        if not cur or cur == os.path.dirname(cur):
+            break
+        out.append(cur)
+    return out
+# 账本根候选（顺序保持：脚本旁优先→env→上溯→作者兜底）
+_ROOTS = [os.path.normpath(os.path.join(_SCRIPT_DIR, os.pardir))]
+# 显式 MC 环境变量优先于目录上溯（2026-10-20 审查吸收：上溯可能先命中父目录里别人的账本）
+_mc_env = os.environ.get("MEMORY_CENTER") or os.environ.get("MC_PATH")
+if _mc_env:
+    _ROOTS.append(os.path.expanduser(_mc_env))
+for _d in _walk_up_dirs(_SCRIPT_DIR, 4):
+    _ROOTS.append(_d)
+_ROOTS.append(os.path.expanduser("[记忆共享中心]"))
+# 每个根补两种布局：<root>/变更日志.md 与 <root>/记忆规则/变更日志.md
+#   （2.2.8 上游反馈Bug2：安装包规则层账本落 <MC>/记忆规则/，旧候选只认根→fail(3)；作者本机账本在MC根故未暴露）
+_CANDIDATES = []
+for _r in _ROOTS:
+    _CANDIDATES.append(os.path.join(_r, "变更日志.md"))
+    _CANDIDATES.append(os.path.join(_r, "记忆规则", "变更日志.md"))
+# 候选全空=不猜落点（write 段对不存在目标会 fail(3) 大声报错）
+DEFAULT_TARGET = next((p for p in _CANDIDATES if os.path.exists(p)), "")
 LOCK_MODE = 0o444
 UNLOCK_MODE = 0o644
 

@@ -58,6 +58,21 @@ DISTILLATION_TYPES = {
     # 任务C·高频卡→人格切片管道（皮叔 2026-10-13 令「我要打通」）：飞轮第三条腿挂月度节拍
     #   执行体=童灵D3（机械候选清单脚本 kb_slice_candidates.py 待建·首拍前落）+你逐卡终审
     #   ⛔不新建调度件——寄生本调度器月拍（S030 机制重构非镀金）
+    # 资产体检·月拍（皮叔 2026-10-21 四步案步骤3·寄生本调度器，⛔不新建调度件·同🧬先例）
+    #   执行体=clock-loop Phase X-AST（v4.19.0上线·四维度谓词表见 kb-checkup.md 第五节）
+    "🔍 资产体检": {
+        "trigger": "loop 资产体检",
+        "skill": "clock-loop",
+        "match": "资产体检",
+    },
+    # 卡库体检·月拍（2026-10-21 MemHub评估线派生·寄生本调度器⛔不新建launchd·闭合C-091死数据）
+    #   执行体=童灵D3 跑 kb_card_stats.py + task_card_scatter.py 出僵尸/热卡候选+散落度触发判定→你定归档/施工
+    #   （task_card_scatter=2026-10-21 R7分支B接线·你绿字「接」·真源 知识联邦引擎/scripts/·只读报表件）
+    "🗂️ 卡库体检": {
+        "trigger": "卡库体检",
+        "skill": "童灵D3（跑 kb_card_stats.py + task_card_scatter.py·僵尸/热卡候选+散落度双条件触发判定→你定归档/是否起聚合施工窗）",
+        "match": "卡库体检",
+    },
     "🧬 切片管道复检": {
         "trigger": "启动切片管道复检",
         "skill": "童灵D3+你终审（切片候选/衰减出册）",
@@ -180,6 +195,7 @@ def generate_todo_section(overdue: list, today_str: str) -> str:
         "3. 蒸馏完成后，对应Skill的C6/终检步骤自动更新蒸馏中心已完成记录",
         "4. 下月1号脚本自动重新检查，已完成的待做项自动清除",
         "5. ⛔本区域由脚本机械生成，禁止手动编辑标记之间的内容",
+        "6. 🔍 资产体检（X-AST）同批特注：非蒸馏系 Loop 路径——①次序=排蒸馏三项之后逐条触发（月首单窗多任务，串行防对冲）；②标准=kb-checkup.md 第五节四维度谓词表已是现成标准，clock-loop 阶段1照此展示、你确认后才跑（阶段1不可跳过·PAT-047）；③销账=H路径报告归档 kb_tests/*资产体检报告* 后更新本账行，非 Skill C6 通道", 
         "",
         END_MARKER,
     ])
@@ -391,7 +407,10 @@ def run_self_test():
         DISTILLATION_CENTER = Path(center)
         LOG_SCRIPT = Path(stub)
         BANNER_SCRIPT = Path(stub)          # 假 banner 脚本（同样只写计数文件，无副作用）
-        REMINDER_STATE = Path(st)
+        # 根治夹具隔离缺陷(2026-10-21)：e2e 必须用独立干净 state，⛔不复用上方法 reminder_record(sig1,st) 污染过的 st
+        #   ——否则 sig1(用today=10-20) 与 e2e main(真today) 周档巧合相同→首跑误判已提醒→写0→E1假红
+        e2e_state = os.path.join(d, "e2e_state.json")
+        REMINDER_STATE = Path(e2e_state)
         main()                              # 第一次：有逾期 → 应写 1 条
         first = os.path.exists(counter) and len(open(counter).read().strip().split("\n")) or 0
         main()                              # 第二次：同集合同周档 → 不应再写

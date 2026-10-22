@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- com.buluotuo.awaken-patrol — 记忆健康自动巡检 macOS 载体（8.4.0 入包·此前仅文档引用无实体=Mac 新用户也从未有自动巡检的根因）
+     等价 Windows 侧 awaken-patrol-install-task.ps1；执行体同一份平台中性 python awaken_patrol.py（单一真源⛔sh/ps1逻辑副本）。
+     结构承作者机活件 com.buluotuo.awaken-patrol（StartInterval=21600·RunAtLoad）。
+     装机渲染：[记忆共享中心]→<MC>绝对路径（与 slice-watch/drift-check 模板同惯例）。 -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.buluotuo.awaken-patrol</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-lc</string>
+        <string>"/usr/bin/env -u PYTHONHOME -u PYTHONPATH python3 '[记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_patrol.py'"</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>21600</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>[记忆共享中心]/脚本中心/logs/awaken_patrol_launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>[记忆共享中心]/脚本中心/logs/awaken_patrol_launchd.err.log</string>
+</dict>
+</plist>

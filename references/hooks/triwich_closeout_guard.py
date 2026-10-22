@@ -45,7 +45,7 @@ import subprocess
 import sys
 import time
 
-VERSION = "1.3.2"  # 1.3.2（2026-10-05）：MC_CANDIDATES_HOME 语义修正（HOME 本身→HOME 下子目录名），根治负向注入假命中（f84d9401 匿名化对象写错·tests [2] 拦截）。历史：1.3.1（2026-09-19）SESSION_RX 截断修复——旧式 `[^\s·]+` 在多字工具名处截成 "Qoder"，S3 恒假红（WorkBuddy 单词名免疫故从未暴露）
+VERSION = "1.4.0"  # 1.4.0（2026-10-21）：新增 S4 深度举证对账（triwich v4.7.0 Step0.5-c 构成性部件）——S4_SINCE 版本闸防存量假红；无举证行封口轮=显形；先例指针机械可验（FU号/日期对账 decision-room/seal.log/系统日志），非格式弱证据只 hint 不判定（同 v1.3.0 三档纪律）。历史：1.3.2（2026-10-05）：MC_CANDIDATES_HOME 语义修正（HOME 本身→HOME 下子目录名），根治负向注入假命中（f84d9401 匿名化对象写错·tests [2] 拦截）。历史：1.3.1（2026-09-19）SESSION_RX 截断修复——旧式 `[^\s·]+` 在多字工具名处截成 "Qoder"，S3 恒假红（WorkBuddy 单词名免疫故从未暴露）
 HOME = os.path.expanduser("~")
 
 
@@ -95,6 +95,11 @@ if TRIWICH_DIR:
 SAMPLE_LEDGER = os.path.join(MC, "自定义层/待完成工作/阶段A采样清单-三明智4.0.md") if MC else None
 DECISION_ROOM = os.path.join(TRIWICH_DIR, "references/decision-room.md") if TRIWICH_DIR else None
 PHILO_DIR = os.path.join(MC, "记忆蓝图/04_系统文件设计/布洛陀脚本架构设计哲学") if MC else None
+
+S4_SINCE = time.mktime(time.strptime("2026-10-21", "%Y-%m-%d"))  # triwich v4.7.0 Step0.5-c 生效边界：此日前的轮次没有举证条款→⛔不检查（防存量假红·gate 同 FALSIFY_HARD_SINCE 单常量可回落先例）
+PROOF_RX = re.compile("深度举证[:：]")
+PREC_FU_RX = re.compile(r"FU-\d+")
+PREC_DATE_RX = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 WINDOW_SEC = 6 * 3600      # 判定窗口：6 小时内有三明智活动才算"本轮"
 LAG_TOLERANCE = 120        # 旧口径回退容忍（仅用于"无身份凭据可验"的降级场景）
@@ -237,6 +242,62 @@ def _last_fu_register():
     except (IOError, OSError):
         return None
     return latest
+
+
+def _grep_token(path, token):
+    """文件存在且含 token？读失败/不存在→False（调用方须自行处理缺件态）。"""
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return token in f.read()
+    except OSError:
+        return False
+
+
+def _latest_step_file(cwd):
+    """近窗口最新键文件全路径 (path, mtime)；扫描域与 _steps_candidates 一致。"""
+    steps_dirs = []
+    if TRIWICH_DIR:
+        steps_dirs.append(os.path.join(TRIWICH_DIR, "steps"))
+    if cwd:
+        steps_dirs.append(os.path.join(cwd, "steps"))
+    best = None
+    now = time.time()
+    for steps in steps_dirs:
+        if not steps or not os.path.isdir(steps):
+            continue
+        try:
+            for name in os.listdir(steps):
+                if not name.startswith("step0-determination-") or name.endswith(".bak"):
+                    continue
+                full = os.path.join(steps, name)
+                try:
+                    mt = os.stat(full).st_mtime
+                except OSError:
+                    continue
+                if now - mt <= WINDOW_SEC and (best is None or mt > best[1]):
+                    best = (full, mt)
+        except OSError:
+            pass
+    return best
+
+
+def _precedent_verifiable(token):
+    """S4 先例指针机械核验。True=账上命中 / False=指针格式在但账上查无 / None=非可验格式（不判定·⛔弱证据不下结论）。"""
+    m = PREC_FU_RX.search(token)
+    if m and DECISION_ROOM:
+        return _grep_token(DECISION_ROOM, m.group(0))
+    m = PREC_DATE_RX.search(token)
+    if m:
+        d = m.group(0)
+        if _seal_log() and _grep_token(_seal_log(), d):
+            return True
+        if MC:
+            import glob
+            for p in glob.glob(os.path.join(MC, "工作日志", "系统日志", "系统日志_*.md")):
+                if _grep_token(p, d):
+                    return True
+        return False
+    return None
 
 
 def _steps_candidates(cwd):
@@ -395,11 +456,52 @@ def check(cwd):
                    % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t_fu)),
                       (t_seal - t_fu) / 60.0))
 
+    # ④ S4 深度举证对账（v1.4.0·triwich v4.7.0 Step0.5-c 构成性部件的另一腿·任务卡2026-10-20 D节落地步3）
+    weak_s4 = None
+    if t_seal >= S4_SINCE:
+        best = _latest_step_file(cwd)
+        if best:
+            try:
+                with open(best[0], "r", encoding="utf-8", errors="replace") as fh:
+                    kf_text = fh.read()
+            except OSError:
+                kf_text = None
+            if kf_text is not None:
+                if not PROOF_RX.search(kf_text):
+                    findings.append({
+                        "code": "S4",
+                        "msg": "封口晚于v4.7.0边界但键文件无深度举证行（无据降档或无据结论）",
+                        "detail": "封口=%s · 键文件=%s 不含“深度举证:”行——Step0.5-c 起每轮须在键文件留举证行"
+                                  "（降档须四格证据；循默认重也须老实写一行判定）" % (seal_when, os.path.basename(best[0])),
+                        "fix": "真实补记：键文件末追加“深度举证: 先例=…|词义=…|域数=…|可逆=…; 判定=…”"
+                               "（⛔不编证据——假证据会被本闹钟下一轮指针核验逮住）；你压档轮补"
+                               "“判定=重（你压档·声明级）”；确属 v4.7.0 发布前轮次=本报为假红，登记台账修正",
+                    })
+                else:
+                    m = re.search(r"先例\s*=\s*([^|\n]+)", kf_text)
+                    if m:
+                        tok = m.group(1).strip()
+                        if tok and not tok.startswith("无"):
+                            verdict = _precedent_verifiable(tok)
+                            if verdict is False:
+                                findings.append({
+                                    "code": "S4",
+                                    "msg": "深度举证“先例”指针机械不可验（有格式、账上查无）",
+                                    "detail": "指针=%s · decision-room/seal.log/系统日志均未命中——假证据=无据降档的签名"
+                                              "（断言绑实录 v5.33 同源纪律）" % tok[:60],
+                                    "fix": "把先例改成可验指针（真实FU号或实录日期）；先例确无则改“先例=无”并让判定落“默认重”",
+                                })
+                            elif verdict is None:
+                                weak_s4 = ("先例=%s 非可验指针格式（FU-xxx/日期），本轮不机械判定"
+                                           "——格式内证据才可验，⛔拿格式外文本当已验" % tok[:40])
+
     hints = []
     if weak_s1:
         hints.append("⚠️ S1 证据强度弱·待确认：%s —— 若已补登请为台账行加 `seal <指纹>（链长N）` 以保身份可验" % weak_s1)
     if weak_s3:
         hints.append("⚠️ S3 证据强度弱·待确认：%s —— 若已补登请为登记行补会话字段以保身份可验" % weak_s3)
+    if weak_s4:
+        hints.append("⚠️ S4 证据强度弱·待确认：%s" % weak_s4)
     if _recent_script_change():
         hints.append("本轮改过脚本/Skill → 哲学回流三查：①对应编写规范 ②03-进度看板变更记录 ③02-脚本家族实例")
 

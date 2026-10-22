@@ -8,12 +8,12 @@ description: >
   "记忆"单独出现不触发，须配合动词（检查/加载/唤醒/刷新/启动）。
 compatibility: trae, trae-work, qclaw, workbuddy, wukong, qoderwork, zcode, qoder, qoder-cn
 allowed-tools: [Read, Write, Bash, Grep, Glob]
-dependencies: [scripts/distill_due_core.py, scripts/awaken_version_gate_check.py, scripts/update_snapshot_from_diary.py, scripts/awaken_patrol.sh, scripts/awaken_distill_due_check.py, scripts/awaken_health_dashboard.py, ../daily-buddy/scripts/distill_containers.py]
+dependencies: [scripts/distill_due_core.py, scripts/awaken_version_gate_check.py, scripts/update_snapshot_from_diary.py, scripts/awaken_patrol.py, scripts/awaken_patrol.sh, scripts/awaken-patrol-install-task.ps1, scripts/com.buluotuo.awaken-patrol.plist.template, scripts/awaken_distill_due_check.py, scripts/awaken_health_dashboard.py, ../daily-buddy/scripts/distill_containers.py]
 author: 皮叔
 source: self-built
 upstream: [记忆共享中心]/技能配置/awaken-memory-system/
 modifiable: true
-version: "8.3.3"
+version: "8.4.0"
 license: Proprietary
 complies_with: 文件格式规范 v2.0.0
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"

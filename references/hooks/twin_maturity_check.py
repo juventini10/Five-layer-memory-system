@@ -85,10 +85,14 @@ END_SPECIFIC_PATHS = {
         "has_hooks": False,  # 插件原生事件通道
         "plugin_direct_read": True,
     },
-    "traework": {
-        "guard_skill": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "技能配置", "布洛陀-童灵守护", "SKILL.md"),
+    "traework": {  # 2026-10-21：Trae Work 已并入 Trae CN；本端真实形态=hooks.json（非 settings.json）
+        "w1_inject_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "分身", "doenglingz_inject_prompt.py"),
+        "guard_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "脚本中心", "doenglingz_guard.py"),
+        "hooks_json": os.path.join(HOME, ".trae-cn", "hooks.json"),
+        "inject_state": os.path.join(HOME, ".trae-cn", "doenglingz_inject_state.json"),
+        "guard_state": os.path.join(HOME, ".trae-cn", "doenglingz_guard_state_traecode.json"),
         "w2_launchd_label": "com.buluotuo.doenglingz-slice-watch",
-        "has_hooks": False,
+        "has_hooks": True,
     },
     "qodercn": {
         "w1_inject_script": os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "开发工具", "doenglingz_inject_prompt.py"),
@@ -139,7 +143,7 @@ MANUAL_TABLE_NAMES = {
     "lobsterai": "LobsterAI",
     "dsh": "DSH黑鲸",
     "doubaowork": "豆包办公",
-    "traework": "Trae Work",
+    "traework": "Trae CN（原 Trae Work·2026-10-09 合并·2026-10-21 复检补登）",
     "teleagent": "TeleAgent",
 }
 
@@ -351,6 +355,19 @@ def evaluate_end(end_def: dict) -> dict:
     k2_core_path = end_def.get("k2_core_path", "")
     k2_core_type = end_def.get("k2_core_type", "")
     specific = END_SPECIFIC_PATHS.get(end_id, {})
+    # 2026-10-21 Trae CN hooks.json 形态机械取证（旧评估器只认 settings.json/patrol ⇒ 恒判 L2=假低）
+    hooks_txt = ""
+    if specific.get("hooks_json"):
+        try:
+            hooks_txt = open(os.path.expanduser(specific["hooks_json"]), encoding="utf-8", errors="ignore").read()
+        except Exception:
+            hooks_txt = ""
+    inject_state_rows = []
+    if specific.get("inject_state"):
+        try:
+            inject_state_rows = [json.loads(l) for l in open(os.path.expanduser(specific["inject_state"]), encoding="utf-8") if l.strip()]
+        except Exception:
+            inject_state_rows = []
 
     checks = {}
     gaps = []
@@ -459,12 +476,22 @@ def evaluate_end(end_def: dict) -> dict:
     if specific.get("w1_inject_script"):
         w1_exists = os.path.isfile(os.path.expanduser(specific["w1_inject_script"]))
         l3["W1注入脚本存在"] = "✅" if w1_exists else "❌"
+        # 2026-10-21 Trae CN hooks.json 形态：UPS 条目即机械注入面
+        if hooks_txt and "doenglingz_inject_prompt" in hooks_txt:
+            w1_exists = True
+            l3["hooks.json UPS 注入条目"] = "✅"
+        _d3_rows = [r for r in inject_state_rows if r.get("w1") is True and r.get("d_tier") == "D3"]
+        if _d3_rows:
+            l3["注入台账 w1/D3 实证"] = "✅"
         # 2026-09-04 判据升级（根治"仪器只验文件在"）：脚本存在 ≠ 输出被产品收下。
         # 实证病灶：Qoder CN 端 W1 注入脚本在位且 exit0，但产品对裸文本 stdout 判
         # `winner=none (no parsed output)` 整轮丢弃（143/143）——旧判据照样评 ✅L3。
         if w1_exists:
-            receipt = injection_receipt_evidence(end_id)
-            l3["注入被产品收下"] = receipt
+            if _d3_rows:
+                l3["注入被产品收下"] = "✅（inject_state 台账 w1/D3 实证）"
+            else:
+                receipt = injection_receipt_evidence(end_id)
+                l3["注入被产品收下"] = receipt
     elif specific.get("w1_skill"):
         w1_exists = os.path.isfile(os.path.expanduser(specific["w1_skill"]))
         l3["W1上岗Skill存在"] = "✅" if w1_exists else "❌"
@@ -486,6 +513,10 @@ def evaluate_end(end_def: dict) -> dict:
     elif specific.get("w1_skill"):
         skill_content = check_file_contains(specific["w1_skill"], ["W3", "域切片", "路由表", "slices/"])
         w3_exists = any(skill_content.values())
+    # 2026-10-21 Trae CN hooks.json 形态：UPS 注入器的 slices_injected 台账=W3 已装实证
+    if hooks_txt and "doenglingz_inject_prompt" in hooks_txt and any(r.get("slices_injected") for r in inject_state_rows):
+        w3_exists = True
+        l4["W3 注入实证（slices_injected）"] = "✅"
     l4["W3域切片路由表存在"] = "✅" if w3_exists else "🟡待人工确认"
     l4["触发词命中→加载域切片"] = "🟡待人工确认"
     l4["一次一域≤2切片"] = "🟡待人工确认"
@@ -497,6 +528,13 @@ def evaluate_end(end_def: dict) -> dict:
     if specific.get("guard_script"):
         guard_exists = os.path.isfile(os.path.expanduser(specific["guard_script"]))
         l5["守护脚本存在（Stop链机械校验）"] = "✅" if guard_exists else "❌"
+        # 2026-10-21 Trae CN hooks.json 形态：Stop 条目 + 守卫台账双证
+        if hooks_txt and "doenglingz_guard" in hooks_txt:
+            guard_exists = True
+            l5["hooks.json Stop 守护条目"] = "✅"
+        if specific.get("guard_state") and os.path.isfile(os.path.expanduser(specific["guard_state"])):
+            guard_exists = True
+            l5["守卫台账落账"] = "✅"
     elif specific.get("guard_skill"):
         guard_exists = os.path.isfile(os.path.expanduser(specific["guard_skill"]))
         l5["守护Skill存在（软约束）"] = "✅" if guard_exists else "❌"
@@ -550,7 +588,9 @@ def evaluate_end(end_def: dict) -> dict:
         l7["立场卡反哺蒸馏"] = "🟡待人工确认"
         l7["反思--reflection分流蒸馏"] = "🟡待人工确认"
     else:
-        _ev = l7_evidence(end_id) if end_id else None
+        # 2026-10-21：L7 审计按「系统日志 ## 段名」取证；本端日志段=Trae CN（非 traework）
+        _log_tool = {"traework": "Trae CN"}.get(end_id, end_id)
+        _ev = l7_evidence(_log_tool) if _log_tool else None
         _keys = ["错误→成长箱记录", "铁律反哺进化", "立场卡反哺蒸馏", "系统日志自动记", "反思--reflection分流蒸馏"]
         _chmap = ["①", "②", "③", "④", "⑤"]
         for _k, _c in zip(_keys, _chmap):

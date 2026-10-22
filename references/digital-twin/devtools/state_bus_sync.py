@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-state_bus_sync.py v2.1.0 — 童灵多端状态同步检查器（SSOT驱动·判据换向版）
+state_bus_sync.py v2.2.0 — 童灵多端状态同步检查器（SSOT驱动·判据换向版）
+
+v2.2.0 装机态双端可用（2026-10-21 V2.2.8 用户报障根治·Mac/Win 同病同修）：
+- 06 端清单 SSOT 是作者侧设计文档、⛔不入包 ⇒ 装机态端清单真源改「部署注册表派生」
+  （分发者 HOMES+MARKED_HOMES ∧ 本机实存 ∧ K2 区段可定位＝本机安装事实，非作者台账）
+- 装机态缺账本→种子初始化（根治「sync 要账本、账本要 sync」死锁＝state_bus.json 永不生成）；
+  作者态缺账本仍 exit 2 拒代造（纪律逐字不变）
+- import 补第三候选 <数字分身上级>/脚本中心（装机态两落点分家·作者态与上级同值零影响）
+- 装机首轮代位登记分发基线（v2.2.0.1 前移至 seed 后·先登记后检查·首轮自洽不假红）
 
 设计定位（数字分身设计哲学·P1-3多端状态同步机制·2026-09-03童灵愿景裁决·v2.0.0端清单SSOT化·
 v2.1.0 判据换向根治「检查者改写判据」型假绿）：
@@ -28,8 +36,8 @@ v2.1.0 判据换向根治「检查者改写判据」型假绿）：
 退出码：
   0 = 全部同步
   1 = 有端不一致
-  2 = state_bus.json不存在或格式错误
-  3 = 哲学文件端清单JSON读取失败
+  2 = state_bus.json不存在或格式错误（装机态缺账本=自动种子初始化不再 exit 2·作者态纪律不变）
+  3 = 端清单读取失败（作者态=06 JSON 读不到；装机态=本机无可派生端=未造芯/未装端）
   4 = 判据源（watcher 模块）不可加载——检查器不许降级回自指判据
 """
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
@@ -53,7 +61,17 @@ STATE_BUS_PATH = os.path.join(TWIN_HOME, "state_bus.json")
 PHILOSOPHY_FILE = os.path.join(os.path.expanduser("~"), "[记忆共享中心]", "记忆蓝图", "04_系统文件设计", "数字分身设计哲学", "06-跨端适配规范.md")
 
 # 判据唯一来源＝分发者本体（依赖方向：检查器 import 分发者，不得反向、不得另写一份标记常量）
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# v1.1.1（2026-10-19 Qoder CN）：分发者模块在上级 脚本中心/，原只插本目录→import 恒失败→
+#   判据器恒 rc=4「拒绝检查」，端账本 status 从此不再重算（文件在≠跑得动·PAT-053 同型）。
+_D = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(_D))
+sys.path.insert(0, _D)
+# v2.2.0（2026-10-21 装机端根治）：装机态本件落 数字分身/scripts/、分发者落 脚本中心/——
+#   两级上级都不含它 ⇒ 同一 rc=4 病换端复发。补第三候选（作者态与上级同值·零影响；
+#   append 不置前，不改作者态既有解析优先序）。
+_p_sc = os.path.join(os.path.dirname(TWIN_HOME), "脚本中心")
+if _p_sc not in sys.path:
+    sys.path.append(_p_sc)
 try:
     import doenglingz_slice_watch as _w2
 except Exception as _e:  # Fail-Loud：判据源缺失时不降级回"上一轮观测值当期望"
@@ -75,13 +93,64 @@ def file_hash(path: str) -> str:
     return h.hexdigest()[:12]
 
 
+_END_ID_FRAGS = (  # 装机态端 id 派生（与 06/state_bus 既有端 id 对齐·特异性高的在前）
+    (".qoder-cn", "qodercn"),
+    (".trae-cn/user_rules", "traework"),
+    (".trae-cn", "traecode"),
+    (".workbuddy-ai", "workbuddyai"),
+    (".workbuddy", "workbuddy"),
+    (".zcode", "zcode"),
+    (".openclaw-autoclaw", "autoclaw"),
+    ("LobsterAI", "lobsterai"),
+    ("TeleAgent", "teleagent"),
+    ("豆包办公系统文件", "doubaowork"),
+    ("AutoClaw/AGENTS.md", "zwork"),
+)
+
+
+def _derive_end_id(path: str) -> str:
+    norm = path.replace(os.sep, "/")
+    for frag, eid in _END_ID_FRAGS:
+        if frag in norm:
+            return eid
+    parent = os.path.basename(os.path.dirname(norm)) or "end"
+    return re.sub(r"[^a-z0-9_-]+", "-", parent.lower()).strip("-") or "end"
+
+
+def _install_ends() -> list:
+    """装机态端清单＝分发者部署注册表(HOMES+MARKED_HOMES) ∧ 本机实存 ∧ K2区段可定位。
+    ⛔不过滤则未装端进台账=「文件不存在」假红；区段不可定位=未造芯/他端模板态，不入账。"""
+    seen, ends = set(), []
+    for h in list(_w2.HOMES) + list(_w2.MARKED_HOMES):
+        p = os.path.expanduser(h)
+        if p in seen or not os.path.isfile(p):
+            continue
+        seen.add(p)
+        if not _w2.k2_region_hash(p):
+            continue
+        eid, tried = _derive_end_id(p), 0
+        while any(e["id"] == eid for e in ends):  # 同端多件防撞名
+            tried += 1
+            eid = f"{_derive_end_id(p)}-{tried}"
+        ends.append({"id": eid, "name": eid, "status": "completed",
+                     "k2_core_path": p, "k2_core_type": "file",
+                     "notes": "装机态自部署注册表登记（v2.2.0）"})
+    return ends
+
+
 def load_end_manifest() -> dict:
-    """从06-跨端适配规范.md §2.2.0读取端清单JSON（SSOT）。
-    提取文件中第一个```json ... ```区块。
+    """端清单读取（v2.2.0 双态）：
+    作者态＝06-跨端适配规范.md §2.2.0 端清单JSON（SSOT·提取第一个```json区块，原样不变）；
+    装机态（本机无 06＝正常·该文件是作者侧设计文档⛔不入包）＝部署注册表派生清单
+    （2026-10-21 V2.2.8 用户端 L6 四断链根治：账本种子与SSOT都住作者机＝装机链必死）。
     """
     if not os.path.isfile(PHILOSOPHY_FILE):
-        print(f"❌ 哲学文件不存在: {PHILOSOPHY_FILE}")
-        sys.exit(3)
+        ends = _install_ends()
+        if not ends:
+            print(f"❌ 本机既无 06 端清单 SSOT，也无装机可派生端"
+                  f"（部署注册表内无实存且含 K2 区段的恒驻核＝未造芯/未装端）")
+            sys.exit(3)
+        return {"ends": ends}
 
     with open(PHILOSOPHY_FILE, "r", encoding="utf-8") as f:
         content = f.read()
@@ -389,29 +458,97 @@ def self_test() -> int:
     return 0 if ok == len(results) else 1
 
 
+def _new_bus(ends_def: list) -> dict:
+    """装机态账本骨架（键形与作者态账本同构·消费端 tsl_verify/record_baselines 零改）。"""
+    return {
+        "version": "1.0.0-install",
+        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "description": "童灵多端状态总线（装机态自动初始化·端清单真源=本机部署注册表）",
+        "ends": {d["id"]: {"name": d["name"], "k2_core_path": d["k2_core_path"]} for d in ends_def},
+        "sync_check": {},
+    }
+
+
+def _provision_baselines() -> dict:
+    """装机态首轮代位登记分发基线（v2.2.0.1·从 update 尾前移=先登记后检查·首轮自洽）。
+    v2.2.0.2：record_baselines 写的是文件，检查器手里是内存对象——登记后必须重载，
+    否则首轮仍拿旧内存骨架找 expected_hash＝时序二坑（沙箱实证 2026-10-21）。
+    时序病实证（2026-10-21 沙箱）：seed 后立刻 check 时 ends 尚无 expected_hash，
+    且 watcher 首轮跑在账本存在前登记落空 ⇒ 首轮假红三端。record_baselines 幂等、
+    判据位写者仍是分发者本体（本函数只是装机首轮的代位执行，⛔检查器自写判据
+    ——v2.0.0 假绿病不复发·T7 静态断言不受影响）。"""
+    if not (os.path.isfile(STATE_BUS_PATH) and os.path.isfile(_w2.SPEC)):
+        return {}
+    try:
+        _w2.record_baselines(_w2.sha12(_w2.SPEC))
+    except Exception as e:
+        print("  ⚠️ 装机态基线代位登记失败（下轮 watcher 补拍）: %s" % str(e)[:100])
+    try:  # 重载登记后的账本（内存判据与文件同步·下轮 update 写回也不丢基线）
+        with open(STATE_BUS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
 def main():
     summary_mode = "--summary" in sys.argv
     update_mode = "--update" in sys.argv
+    install_mode = not os.path.isfile(PHILOSOPHY_FILE)  # 装机态（06 不入包=本机没有属正常）
 
-    # 读取state_bus.json
-    if not os.path.isfile(STATE_BUS_PATH):
-        print(f"❌ state_bus.json不存在: {STATE_BUS_PATH}")
-        sys.exit(2)
-
-    try:
-        with open(STATE_BUS_PATH, "r", encoding="utf-8") as f:
-            state_bus = json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"❌ state_bus.json格式错误: {e}")
-        sys.exit(2)
-
-    # 从哲学文件读取端清单（SSOT）
-    manifest = load_end_manifest()
-    ends_def = manifest["ends"]
+    if install_mode:
+        # 装机态解死锁（V2.2.8 用户报障根治·2026-10-21）：先取清单→账本缺=从未跑过，
+        #   种子初始化（⛔不再 exit 2 卡死「sync要账本/账本要sync」）；账本在但清单
+        #   新增端缺条目→增量补种（用户后装工具自动入账）。
+        manifest = load_end_manifest()
+        ends_def = manifest["ends"]
+        if not os.path.isfile(STATE_BUS_PATH):
+            state_bus = _new_bus(ends_def)
+            with open(STATE_BUS_PATH, "w", encoding="utf-8") as f:
+                json.dump(state_bus, f, ensure_ascii=False, indent=2)
+            print(f"🌱 装机态：账本不存在→已种子初始化 {STATE_BUS_PATH}（{len(ends_def)}端入账）")
+            _pb = _provision_baselines()  # 先登记后检查（v2.2.0.1·首轮不假红）
+            if _pb.get("ends"):
+                state_bus = _pb  # v2.2.0.2：检查用登记后的重载账本，⛔拿 seed 前内存骨架
+        else:
+            try:
+                with open(STATE_BUS_PATH, "r", encoding="utf-8") as f:
+                    state_bus = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"❌ state_bus.json格式错误: {e}")
+                sys.exit(2)
+            seeded = 0
+            for d in ends_def:
+                if d["id"] not in state_bus.setdefault("ends", {}):
+                    state_bus["ends"][d["id"]] = {"name": d["name"], "k2_core_path": d["k2_core_path"]}
+                    seeded += 1
+            if seeded:
+                with open(STATE_BUS_PATH, "w", encoding="utf-8") as f:
+                    json.dump(state_bus, f, ensure_ascii=False, indent=2)
+                print(f"🌱 装机态：增量补种 {seeded} 端（本机新增安装的端已入账）")
+                _pb = _provision_baselines()  # 新入账户同样先给基线
+                if _pb.get("ends"):
+                    state_bus = _pb  # v2.2.0.2 同步重载
+    else:
+        # 作者态原纪律逐字不变：账本缺失=事故，拒绝代造
+        if not os.path.isfile(STATE_BUS_PATH):
+            print(f"❌ state_bus.json不存在: {STATE_BUS_PATH}")
+            sys.exit(2)
+        try:
+            with open(STATE_BUS_PATH, "r", encoding="utf-8") as f:
+                state_bus = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"❌ state_bus.json格式错误: {e}")
+            sys.exit(2)
+        # 从哲学文件读取端清单（SSOT）
+        manifest = load_end_manifest()
+        ends_def = manifest["ends"]
 
     if not summary_mode:
-        print("🔄 童灵多端状态同步检查 v2.1.0（SSOT驱动·判据换向：基线由分发者写，本脚本只读）")
-        print(f"   端清单SSOT: 06-跨端适配规范.md §2.2.0（{len(ends_def)}端登记）")
+        print("🔄 童灵多端状态同步检查 v2.2.0（SSOT驱动·判据换向：基线由分发者写，本脚本只读）")
+        if install_mode:
+            print(f"   端清单真源: 部署注册表派生·装机态（{len(ends_def)}端·本机实存且有K2区段）")
+        else:
+            print(f"   端清单SSOT: 06-跨端适配规范.md §2.2.0（{len(ends_def)}端登记）")
         print("=" * 60)
 
     # 检查各端
@@ -472,10 +609,15 @@ def main():
                 elif key == "k2_region":
                     state_bus["ends"][end_id]["k2_region_hash"] = value
         refresh_header_blocks(state_bus)
+        state_bus.setdefault("sync_check", {})  # v2.2.0 装机态手搓账本可能无此键
         state_bus["sync_check"]["last_check"] = now
         state_bus["sync_check"]["last_result"] = "all_in_sync" if out_of_sync == 0 else f"{out_of_sync}_out_of_sync"
         state_bus["sync_check"]["total_ends"] = len(ends_def)
         state_bus["sync_check"]["completed_ends"] = total_completed
+        # 2026-10-19 Q3 阈值单源化（复核端L310-319补账·方案①）：写侧把判据阈值随账本下发，
+        # 消费端（tsl_verify L6）只读账本——同值双写会打脸的分叉根除。真源=本常量。
+        state_bus["l6_policy"] = {"stale_days": BASELINE_MAX_AGE_DAYS,
+                                  "_src": "state_bus_sync.py::BASELINE_MAX_AGE_DAYS（唯一真源·消费端勿另调）"}
 
         with open(STATE_BUS_PATH, "w", encoding="utf-8") as f:
             json.dump(state_bus, f, ensure_ascii=False, indent=2)

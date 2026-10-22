@@ -773,6 +773,6 @@ if __name__ == "__main__":
         sys.exit(_rc)
     if "--self-test" in sys.argv:
         sys.exit(_self_test())
-    if "--close" in sys.argv:
+    if any(a in ("--close", "--close-title-file") for a in sys.argv):  # v3.4.2 分发与_cli_guard白名单同源化：known-but-undispatched 不再流穿全量写盘（2026-10-20 本窗实证：--close-title-file 被放行后未分发=静默全量挖掘）
         sys.exit(_close_cli(sys.argv))
     exit(main())

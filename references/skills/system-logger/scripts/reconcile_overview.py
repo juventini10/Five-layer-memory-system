@@ -283,6 +283,8 @@ def reconcile(path):
     不收敛则保守放弃不写——宁可派生延迟，不可吞条目）。
     """
     import tempfile
+    from systemlog_lock import log_lock
+    _lk = log_lock(path); _lk.__enter__()  # 持独占锁跨 read→replace；进程退出自动释放兜底
     for attempt in range(3):
         with open(path, encoding="utf-8") as f:
             raw = f.read()
@@ -295,9 +297,11 @@ def reconcile(path):
             with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
                 f.write(out)
             os.replace(tmp_path, path)
+            _lk.__exit__(None, None, None)
             print(summary)
             return 0
         print(f"  ⚠️ 并发变更检出（第 {attempt + 1} 次）——基于最新内容重算", file=sys.stderr)
+    _lk.__exit__(None, None, None)
     print("reconcile: 并发变更 3 次未收敛——保守放弃本次派生（未写盘·不吞条目），请重跑", file=sys.stderr)
     return 3
 

@@ -12,7 +12,7 @@ source: self-built
 upstream: [记忆共享中心]/技能配置/good-good-study/
 modifiable: true
 requires_twin_on_duty: true
-version: "1.1.15"
+version: "1.1.18"
 license: MIT
 complies_with: 文件格式规范 v2.0.0
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
@@ -261,7 +261,7 @@ Phase 1·路径图(必出) → Phase 2·过程辅导(可选) → Phase 3·即时
 > ⚠️ **步序提醒（v0.13.2）**：新立场卡**写入前**先过下方【A线分身价值预筛】——预筛通过才写卡，⛔按节内命令链先写卡后看预筛（预筛是写入前动作·本节末段）。
 
 - **前置·git考古（2026-08-24 补·内部记录）：INDEX 有记录但 .md 文件缺失时，⛔DO NOT 直接重写新卡——✅DO 先跑 `git log --all --oneline -- "AI学习库/立场卡#<ID>*"` 考古（在 ~/个人AI档案 仓根运行——Skill目录非仓根会fatal；非git环境按"从未存在"处理但须留痕声明）：有历史提交 → `git checkout` 恢复原版（禁重写——重写版顶替共创原版的教训：S012/S013 八十二行原版曾被重建版顶替）；确认从未存在（含全部分支/stash）→ 才允许新建**
-- A线：✅DO 写入 `~/Local_Obsidian_Vault/2-知识库/09-AI学习库/`（2026-10-12 C''波次2迁入·旧位软链为72h过渡缓冲）（文件名 ✅DO 严格等于 `{card_id}-{主题}.md`·如 `立场卡#S005-讨好双因模型.md`，⛔DO NOT 用连字符代替 `#`——2026-08-06 S005 漂移实锤已根除） + 运行 `python3 [记忆共享中心]/知识联邦引擎/scripts/regen_ailib_index.py` 重建 INDEX.md（编译产物·⛔DO NOT 手工 Edit INDEX——手工维护的派生数据=债务 D-F1；脚本内含文件名↔card_id 一致性机械断言，违规即报错） + 运行 `python3 [记忆共享中心]/知识联邦引擎/scripts/derive_reading_status.py` 派生 reading_status（事件驱动·2026-08-17 根治改造：⛔DO NOT 手写 status 升级，AI 只写质证事件记录段，status 由脚本从事件机械派生——与 INDEX 编译同构；v1.4 起标签区分质证主体——分身质通过标"L2（分身已质证·待你抽检）"，⛔DO NOT 标"你已质证"除非你亲质） + 运行 `python3 [记忆共享中心]/知识联邦引擎/scripts/sync_card_frontmatter.py` 同步卡文件 frontmatter reading_status（2026-08-26 根治双本账漂移：derive 只写 INDEX 不写卡 frontmatter 致 840 张卡 frontmatter 永停 L1；本脚本从 INDEX 回写 frontmatter，只升不降，幂等可重复跑）
+- A线：✅DO 写入 `~/Local_Obsidian_Vault/2-知识库/09-AI学习库/`（2026-10-12 C''波次2迁入·旧位软链为72h过渡缓冲）（文件名 ✅DO 严格等于 `{card_id}-{主题}.md`·如 `立场卡#S005-讨好双因模型.md`，⛔DO NOT 用连字符代替 `#`——2026-08-06 S005 漂移实锤已根除） + 运行 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/regen_ailib_index.py` 重建 INDEX.md（编译产物·⛔DO NOT 手工 Edit INDEX——手工维护的派生数据=债务 D-F1；脚本内含文件名↔card_id 一致性机械断言，违规即报错） + 运行 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/derive_reading_status.py` 派生 reading_status（事件驱动·2026-08-17 根治改造：⛔DO NOT 手写 status 升级，AI 只写质证事件记录段，status 由脚本从事件机械派生——与 INDEX 编译同构；v1.4 起标签区分质证主体——分身质通过标"L2（分身已质证·待你抽检）"，⛔DO NOT 标"你已质证"除非你亲质） + 运行 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/sync_card_frontmatter.py` 同步卡文件 frontmatter reading_status（2026-08-26 根治双本账漂移：derive 只写 INDEX 不写卡 frontmatter 致 840 张卡 frontmatter 永停 L1；本脚本从 INDEX 回写 frontmatter，只升不降，幂等可重复跑）
 > 🔻 **降级声明（v1.1.8 真值校正）**：知识联邦引擎及其脚本已以端用户最小集（min 16 件）随安装包分发，口径真源见 collision-consumption.md 腿F案段。仅当包内与本机该引擎目录**实际缺失**时，相关步骤才**跳过·不阻塞**。⛔不得把「随包」写成「不携带」（2026-10-12 clock-loop R1 实证=六处与实盘互斥）。
 - A线碰撞产出卡：正文 ✅DO 含「碰撞后我会做的三件事（碰撞前不会做）」表格（# | 动作 | 碰撞前的做法 三列，碰撞前做法须从「推翻的旧认知」提取基线）——⛔DO NOT 写纯文本列表丢对比列（2026-08-06 S017-S022 格式漂移已根除，schema 已定义必填）
 - B线：✅DO 产物写入 `~/Local_Obsidian_Vault/2-知识库/07-主动学习/`（学习路径图/学习成果/验收记录三个子文件夹·按LXXX编号挂靠）+ 学习成果记入日记
@@ -424,8 +424,8 @@ AI回顾刚才完成的工作（对话上下文+产出物+系统日志）
 ### ⑤ 回写(如适用)
 ✅DO 来自残差的学习→回写 `未知未知/显形台账.md`
 ✅DO 来自碰撞候选的洞见卡→必带"碰撞来源: [C-XXX × C-YYY]"字段(D-F4)+收口时跑 `sync_collision_queue.py` 自动对账回写（幂等·INDEX 为权威·⛔DO NOT 手工编辑 json——2026-08-25 根治：手工回写靠自觉曾致 66% 假 pending）
-✅DO 碰撞回写完成后调用 `python3 [记忆共享中心]/知识联邦引擎/scripts/concept_projection.py` 重建概念卡「下游收窄」派生段（projection 层·机械聚合 INDEX 已有数据·⛔不写 definition；终裁2026-08-06 选项A·挂生产脚本非 lint 管道）
-✅DO 批量碰撞生成后、调 projection 前→必跑 `python3 [记忆共享中心]/知识联邦引擎/scripts/lint_collision_card.py <本次生成的卡路径>` 生成即检（gate B·批次模式严格：字段/card_id前缀/碰撞来源方括号/正文段/文件名一致，非0退出即拦截·不进派生层·2026-08-07 立）；不传参跑全库=审计模式，仅报 SOFT 历史债不阻塞
+✅DO 碰撞回写完成后调用 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/concept_projection.py` 重建概念卡「下游收窄」派生段（projection 层·机械聚合 INDEX 已有数据·⛔不写 definition；终裁2026-08-06 选项A·挂生产脚本非 lint 管道）
+✅DO 批量碰撞生成后、调 projection 前→必跑 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/lint_collision_card.py <本次生成的卡路径>` 生成即检（gate B·批次模式严格：字段/card_id前缀/碰撞来源方括号/正文段/文件名一致，非0退出即拦截·不进派生层·2026-08-07 立）；不传参跑全库=审计模式，仅报 SOFT 历史债不阻塞
 > 🔻 **降级声明（v1.1.8 真值校正）**：知识联邦引擎及其脚本已以端用户最小集（min 16 件）随安装包分发，口径真源见 collision-consumption.md 腿F案段。仅当包内与本机该引擎目录**实际缺失**时，相关步骤才**跳过·不阻塞**。⛔不得把「随包」写成「不携带」（2026-10-12 clock-loop R1 实证=六处与实盘互斥）。
 ✅DO projection 收口纪律：concept_projection.py 已 fail-fast（碰撞来源含 C-X×C-Y 形态却缺方括号即非零退出）→ 收口时须确认其退出码=0 且「解析到 N 条」= 预期碰撞卡数，零静默 skipped（gate A·2026-08-07 立·堵 S054-S063 事故类）
 ✅DO 结构闸（2026-08-07 立·根除静默失败）：regen_ailib_index.py 已内置 lint --strict 闸——任何含碰撞来源的卡不合规（HARD/SOFT 任一）→ 拒建 INDEX、非零退出。S054 类事故结构上不可能；「清完历史问题才能做新卡」= 管道事实非口头规则
@@ -496,20 +496,20 @@ AI回顾刚才完成的工作（对话上下文+产出物+系统日志）
 
 **宿主共享引擎——知识联邦引擎**（消费处 SKILL.md §④入库管道+§⑤回写收口、references/topic-selection.md 池2碰撞候选队列、references/collision-consumption.md 批量筛选+收口验证环；缺失→入库管道熔断降级"脚本缺失，卡片仅落盘不重建INDEX/不回写队列"，collision_candidates.json 缺失→池2降级为空仅走池1，不阻塞）：
 
-- [记忆共享中心]/知识联邦引擎/scripts/derive_reading_status.py
-- [记忆共享中心]/知识联邦引擎/scripts/regen_ailib_index.py
-- [记忆共享中心]/知识联邦引擎/scripts/sync_card_frontmatter.py
-- [记忆共享中心]/知识联邦引擎/scripts/concept_projection.py
-- [记忆共享中心]/知识联邦引擎/scripts/lint_collision_card.py
-- [记忆共享中心]/知识联邦引擎/scripts/sync_collision_queue.py
-- [记忆共享中心]/知识联邦引擎/scripts/scan_card_citations.py
-- [记忆共享中心]/知识联邦引擎/scripts/（收口验证环脚本目录）
-- [记忆共享中心]/知识联邦引擎/scripts/concept_coverage_stats.py
-- [记忆共享中心]/知识联邦引擎/collision_candidates.json
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/derive_reading_status.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/regen_ailib_index.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/sync_card_frontmatter.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/concept_projection.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/lint_collision_card.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/sync_collision_queue.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/scan_card_citations.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/（收口验证环脚本目录）
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/concept_coverage_stats.py
+- [记忆共享中心]/脚本中心/知识联邦引擎/collision_candidates.json
 - [记忆共享中心]/数字分身/scripts/doenglingz_drift_check_remind.py
 - [记忆共享中心]/脚本中心/build_spotpack.py
 - [记忆共享中心]/脚本中心/记忆蒸馏/confidence_calibration_audit.py
-- [记忆共享中心]/知识联邦引擎/scripts/cross_type_collision_scan.py（消费处 references/topic-selection.md 池3）
+- [记忆共享中心]/脚本中心/知识联邦引擎/scripts/cross_type_collision_scan.py（消费处 references/topic-selection.md 池3）
 - [记忆共享中心]/脚本中心/search_kb.py（消费处 ④.5 七闸表闸1·真源带 TRUTH_OF 头；开发工具/知识联邦引擎 下为派生旧版）
 - [记忆共享中心]/成就系统/scripts/check_concept_achievement.py（消费处 §⑤ 收口 step3.5）
 - [记忆共享中心]/数字分身/scripts/count_card_topic.py（消费处 分层终审·新领域机械计数）

@@ -1,3 +1,17 @@
+### v3.17.9 — 2026-10-21 13:4x（组C·工具名变体入口封口·任务卡2026-10-21-静默隐身检测与日志变体根治）
+
+病形（2026-10-21 09:18 实证·当日 12:5x gate 拦截时确诊）：v3.15.1「缺则补、有则不动」对条目体 `- **工具**：` 只判存在不判值——AI 自写变体值（`qodercn`）照原样落盘，下游 reconcile/normalize_fix 按字段值归组把变体养成 `## qodercn` 组头（25 条字段+组头他窗预存违规当日手动归一收口）。修法=入口封口：append_log_entry 在字段存在但值≠--tool 归一后规范名时，机械改写全部工具字段行为规范名（不拒写·stderr ℹ️显形）——与上游 --tool allowlist 归一（v3.10.9）合成"CLI+body 双闸"，变体永不进盘=发生器根治；下游 resolve_tool_field 变体映射保留作第二道（双保险·同源 normalize_tool 表）。序列化说明：本条压他窗 v3.17.8（丢字段盲区根治·已闭环落账）之后，改动位在其三级保证链外（if/elif 兼容插入·自证闸不受影响）。验证：夹具 T1 变体值改写+gate 绿/T2 合规值零变化/T3 缺字段补正回归（详见卡）；py_compile 过。回滚点=记忆琥珀/groupC-20261021-bak/ ×4。判级 patch 3.17.8→3.17.9。
+
+### v3.17.8 — 2026-10-21 13:2x（append_log_entry 静默丢字段盲区根治·任务卡2026-10-21-append-log静默丢字段盲区·皮叔令「开卡」「先处理这个」）
+
+病形（2026-10-21 10:16 实证）：条目体「## 标题+非粗体 bullet」时 v3.15.1 两路字段注入锚（粗体字段行/### 标题）全不中，`re.sub` 静默返回原文——工具/完成字段没注入也不报错，下游 reconcile（归属真源=工具字段·切块锚=^###）归不了位→条目悬在他端组头下（Qoder CN 条目落进 WorkBuddy 组·写后告警报了但拦不住）。
+修法=三级机械保证（先例双轨合流）：①无 ### 标题先锚保底——非###标题做**层级矫正**（题文不变）或首行补题（承 v3.16.0 --reflection「机械补标题防漏网」先例·路线a为主）；②字段注入改显式分支不再依赖 body 恰好有锚；③**写前自证闸**——补全后仍缺（###标题/工具/完成）三要素任一=拒写 exit2（承 v3.10.9 --tool allowlist「拒写不生成脏行」·路线b兜极端），⛔事后「回读未命中」告警当防线。
+验证：夹具 6/6（T1 真实翻车形→矫正补全落位+ℹ️显形·T2 正常模板零变化回归·T3 全字段不重复注入·T4 空body仍拒·T5 无标题粗体形补题·T6 reconcile --check 读回可解析·全程假 logdir ⛔不污染真实日志）；py_compile 过。同轮顺手归一 v3.17.7 条目 H2 抬头→H3（他会话落笔形态·恰为本件 v3.17.6 条目自曝「H2 对机检隐身」同族第四例·归一不代修其内容）。诚实边界：--reflection 兜底路径未逐支重跑（其自带补标题逻辑在前·行为兼容）。回滚点=本条前 append_log_entry.py L247-262 段（git 历史可取）。判级 patch 3.17.7→3.17.8。
+
+### v3.17.7 — 2026-10-21 11:15（根治系统日志并发吞没：fcntl 共享写锁·reconcile os.replace 换 inode 吞并发 append）
+
+新增 scripts/systemlog_lock.py（REG:skip 工具库·POSIX fcntl.flock / Win msvcrt / 否则 best-effort no-op）。append_log_entry 的 O_APPEND 单笔写 与 reconcile_overview 的 read→replace 全程持同一把 `<logdir>/.systemlog.lock` 独占锁互斥（append 释放后才 spawn reconcile 避父子同锁死锁；进程退出自动释放兜底）——封死"他端 append 落在 reconcile 读快照与 replace 换 inode 之间被旧 inode 覆盖"这一 reconcile 头注释自曝的微秒残窗。验证：①12 路并发 append 零丢失零挂起；②4 进程临界区互斥无重叠 + 去锁变异必重叠（S065 判据自证·非概率侥幸）；③reconcile 自带 --self-test 9/9 未回归；④skill_eval G1-G3+validate 双绿。诚实边界：Windows 端锁语义 msvcrt 与 POSIX flock 有差、装机真机未验（发版链补·Mac 绿≠可发）。回滚：删 systemlog_lock.py + 撤两处 import/lock 包裹即复原。判级 patch 3.17.6→3.17.7。
+
 ### v3.17.6 — 2026-10-18 11:22（署名Skill Loop顺位4·账红清零批：CHANGELOG归一+戳头追主版+卫生）
 
 clock-loop 完整Loop（串行队列 B-4）逮出账红三项：①v3.17.5 条目为 H2 抬头（`## v3.17.5 —`·10-13批落笔形态）对机检 `### vX.Y.Z` 解析隐身→语义最大误读 v3.17.4 与主体分叉——归一（正文零改动·与同日 sucair B-3/daily-buddy 挂号项同族第三例确诊·Agent B N1 点名"第三例"为低估口径：同族 H2/日期抬头存量实≥4（growth-box 置顶三条全H2/good-good-study/awaken/daily-buddy），已移交串行队列任务卡存量清单）②tests/trigger 双戳 3.14.1 追主版至 3.17.6（跟随主版本形态漏改·模式F亮灯消除）③scripts/__pycache__ 清剿（移 /tmp/trash-cleanup-20261018）。判级 3.17.5→3.17.6（patch·账面归零批·功能零变更）。回滚点=记忆琥珀/技能升级备份/systemlogger__*_preLoopSL4_261018_1120.bak ×4（前缀命名·N6 自适用）。

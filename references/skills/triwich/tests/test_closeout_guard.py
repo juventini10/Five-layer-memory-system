@@ -48,7 +48,7 @@ def check(name, cond, detail=""):
 
 
 def make_env(seal_age, ledger_age, key_age=None, fu_age=None,
-             ledger_has_seal=None, fu_synced=None, declared_len=None):
+             ledger_has_seal=None, fu_synced=None, declared_len=None, key_text=None):
     """ledger_has_seal: True→台账含本轮 seal 指纹 / False→不含 / None→台账只有标题
     fu_synced: True→决策卡含 (ts,session) 精确对应 / False→含但不匹配 / "legacy"→老式无会话字段 / "absent"→无登记行
     declared_len: 台账自称"链长 N"（用于超前检测）
@@ -78,7 +78,7 @@ def make_env(seal_age, ledger_age, key_age=None, fu_age=None,
     if key_age is not None:
         kf = os.path.join(steps, "step0-determination-20260915_120000.md")
         with open(kf, "w", encoding="utf-8") as fh:
-            fh.write("x")
+            fh.write(key_text if key_text is not None else "x")
         os.utime(kf, (now - key_age, now - key_age))
 
     room = os.path.join(tmp, "decision-room.md")
@@ -102,9 +102,9 @@ def make_env(seal_age, ledger_age, key_age=None, fu_age=None,
 
 
 def run(seal_age, ledger_age, key_age=None, fu_age=None,
-        ledger_has_seal=None, fu_synced=None, declared_len=None):
+        ledger_has_seal=None, fu_synced=None, declared_len=None, key_text=None):
     tmp, cwd = make_env(seal_age, ledger_age, key_age, fu_age,
-                        ledger_has_seal, fu_synced, declared_len)
+                        ledger_has_seal, fu_synced, declared_len, key_text)
     try:
         return G.check(cwd)
     finally:
@@ -113,6 +113,23 @@ def run(seal_age, ledger_age, key_age=None, fu_age=None,
 
 def main():
     print("🧪 三明智收尾守卫回归 v%s" % G.VERSION)
+
+    print("\n[0a] S4 负例：封口晚于v4.7.0边界·键文件存在(早于封口不误报S2)但无举证行（应报 S4）")
+    r = run(seal_age=300, ledger_age=60, key_age=600, ledger_has_seal=True, fu_synced=True, key_text="x")
+    codes = [f["code"] for f in r["findings"]]
+    check("S4 命中", "S4" in codes, r)
+
+    print("\n[0b] S4 正例：举证行在位·先例指针 FU-99 账上可验（不得报 S4）")
+    r = run(seal_age=300, ledger_age=60, key_age=600, ledger_has_seal=True, fu_synced=True,
+            key_text="深度举证: 先例=FU-99 | 词义=本轮对话 | 域数=1 | 可逆=改回备份; 判定=轻")
+    codes = [f["code"] for f in r["findings"]]
+    check("无 S4", "S4" not in codes, r)
+
+    print("\n[0c] S4 负证据：先例指针 FU-777 账上查无（应报 S4 假证据）")
+    r = run(seal_age=300, ledger_age=60, key_age=600, ledger_has_seal=True, fu_synced=True,
+            key_text="深度举证: 先例=FU-777 | 判定=轻")
+    codes = [f["code"] for f in r["findings"]]
+    check("S4 命中(指针不可验)", any(f["code"] == "S4" and "不可验" in f["msg"] for f in r["findings"]), r)
 
     print("\n[1] 负例：封口后未补台账（台账无本轮 seal 指纹 → 应报 S1）")
     r = run(seal_age=300, ledger_age=7200, ledger_has_seal=False)

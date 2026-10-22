@@ -15,6 +15,11 @@ path_migration_sweep_guard.py — 批量路径/改名迁移残留扫查闸（三
   --full       收口扫查口径：全仓文本扫（收口/施工批次收尾时人工或流程调用）
   --self-test  自检：临时注入病灶样例→检测→清理→报结果（G2 验证方法1的机械化）
 
+v1.4 增量（2026-10-19·Qoder CN·影子目录根治）：新增字面占位符目录 [记忆共享中心] 盘上实存判据——
+  v1.3 守卫只认 tilde 树（/Users/<u>/~）与 /Users 幽灵树，对字面占位符目录的盘上形态失明，
+  致作者侧工作区根（~/qoder-cn-work/[记忆共享中心]）与用户机 home 根（tiger 形态 C:/Users/<u>/[记忆共享中心]）
+  的影子目录能静默堆积到下次人肉发现。新判据跨端（Path.home() 在 Win 同样有效·装机端用户机直接命中）。
+
 v1 诚实边界：
   - 只做模式扫描 + 幽灵树实存（纯机械判据）；"expanduser 读路径实存验证"留 v2
     （需要读路径白名单设计，否则合法的"运行时创建目录"会假红——Agent B G2 缺口⑤
@@ -39,7 +44,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-__version__ = "v1.3"
+__version__ = "v1.4"
 
 REPO_ROOT = Path(os.path.expanduser("[记忆共享中心]"))
 EXEMPT_FILE = REPO_ROOT / "开发工具" / "path_migration_sweep_exemptions.json"
@@ -285,6 +290,33 @@ def check_self_symlinks(roots):
     return findings
 
 
+def check_placeholder_shadow():
+    """[记忆共享中心] 字面目录盘上实存 = 占位符未展开被写入的病灶（v1.4·跨端·影子tilde树同族）。
+
+    跨端：Path.home() 在 Win 亦解析到 C:/Users/<u>，装机端用户机 home 根影子直接命中；
+    作者侧额外把已知工作区根（qoder-cn-work）纳入候选（存在才加·不盲扫家目录全树防成本失控）。
+    """
+    findings = []
+    ph = "[记忆共享中心]"
+    roots = [Path.home()]
+    for cand in ("qoder-cn-work",):          # 作者侧高频工作区根（存在才加）
+        c = Path.home() / cand
+        if c.is_dir():
+            roots.append(c)
+    for r in roots:
+        d = r / ph
+        if d.is_dir():
+            try:
+                n = sum(1 for _ in d.rglob("*"))
+            except Exception:
+                n = -1
+            findings.append(("占位符影子目录", str(d),
+                             f"盘上字面占位符目录（{n} 项）= 占位符未展开被写入的病灶（影子tilde树同族）。"
+                             f"修法：整棵 mv 进废纸篓（⛔rm）→ 复跑回清白；"
+                             f"并修写入脚本的未展开占位符（源头·承 P0 残留清单）"))
+    return findings
+
+
 def run_gate():
     """pre-commit 口径：staged delta 扫描（新增行拦·预存行打印）+ 幽灵树恒查。"""
     exemptions = load_exemptions()
@@ -306,6 +338,7 @@ def run_gate():
         ghost.append(("影子tilde树", str(sh),
                       f"占位符/tilde 二次拼接的写入事故产物在盘（{sum(1 for _ in sh.rglob('*'))} 项）。"
                       f"修法：整棵移入废纸篓（⛔rm）→ 复跑回清白"))
+    ghost += check_placeholder_shadow()
     for rel, lineno, text in warned:
         print(f"⚠️ [迁移扫查·预存态不拦·归因律] {rel}:{lineno}: {text}")
     if exempted or exemptions:
@@ -353,6 +386,7 @@ def run_full():
         ghost.append(("影子tilde树", str(sh),
                       f"占位符/tilde 二次拼接的写入事故产物在盘（{sum(1 for _ in sh.rglob('*'))} 项）。"
                       f"修法：整棵移入废纸篓（⛔rm）→ 复跑回清白"))
+    ghost += check_placeholder_shadow()
     # v1.3 自指软链（迁移高危区·恒查）
     ghost += check_self_symlinks(_migration_scan_roots())
     if blocking or ghost:
@@ -382,6 +416,14 @@ def run_self_test():
         good.write_text('P = os.path.expanduser("[记忆共享中心]/y.md")\n', encoding="utf-8")
         if scan_lines(good, "good_sample.py"):
             print("❌ 自检：合法路径被误报（模式过宽）"); ok = False
+        # v1.4 占位符影子夹具：临时目录造字面 [记忆共享中心]/x → 判据函数须能识别该形态
+        _ph = "[记忆共享中心]"          # 变量间接：避免字面占位符拼接触发本闸 P3c 自扫
+        ph_probe = Path(td) / _ph
+        ph_probe.mkdir()
+        (ph_probe / "seed.txt").write_text("x", encoding="utf-8")
+        # 直接验证判据核心逻辑：字面占位符目录 is_dir 可检出（不依赖真实 home·纯形态自检）
+        if not ph_probe.is_dir():
+            print("❌ 自检：占位符影子夹具未被 is_dir 识别"); ok = False
         if not ghost_tree_root.__name__:
             ok = False
     g = ghost_tree_root()

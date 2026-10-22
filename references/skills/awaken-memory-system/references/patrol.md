@@ -2,7 +2,7 @@
 
 > **设计哲学**：本文件 = 唤醒记忆系统巡检机制的执行细节单真源（8.0 模块化拆分·模块间单依赖方向）。双模式流程（`dual-mode.md`）对应步骤处仅做指针引用，⛔不复制细节（单一真源·指令编写规范 §6.2）。
 > **读取时机**：执行到 dual-mode.md 中标注「按 patrol.md §X 执行」的步骤时按需 Read 对应节。
-> **阶段③（8.0 主动泵·已实现 2026-09-17）**：本模块承载记忆健康**自动巡检**（触发模型从"纯被触发"升级为"触发 + 自动巡检"）——launchd 无人值守定时 + `awaken_patrol.sh` + osascript 通知，规格与执行细节单真源见 §3。**跨端声明**：自动巡检载体（launchd/StartInterval + osascript）为 macOS 宿主依赖，⛔非 macOS 端不生效（该端仍可走双模式会话内巡检 §1/§2）；卸载即收回（`launchctl unload` 或删 plist）。
+> **阶段③（8.0 主动泵·已实现 2026-09-17·8.4.0 双端对等）**：本模块承载记忆健康**自动巡检**——平台中立执行体 `awaken_patrol.py` + 双载体（macOS：launchd plist `com.buluotuo.awaken-patrol`，模板随包·Windows：Task Scheduler `BuluotuoAwakenPatrol`，`scripts/awaken-patrol-install-task.ps1` 注册）。**跨端声明**：巡检执行体 mac/Win 双端可跑；触达层分端——mac=osascript 弹窗、Win=告警落 `~/buluotuo_bin/log/awaken_patrol_alerts.pending` 由唤醒轻量会话内转述（§3/§4·S4U 非交互会话弹不出 toast，2026-10-21 设计决策a）；`awaken_patrol.sh` 已降薄壳转发 py（仅兼容旧载体）。未注册端自动巡检不可用，走双模式会话内巡检 §1/§2——「未注册」与「坏了」由 §5 三态文案区分。卸载即收回（mac：`launchctl unload` 或删 plist / Win：`-Uninstall`）。
 
 ---
 
@@ -57,19 +57,22 @@
 **目标形态**（触发模型从"纯被触发"升级为"触发 + 自动巡检"·已上线）：
 
 ```
-launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunAtLoad）
-    → awaken_patrol.sh
+双载体（每6小时·注册指引见 INSTALL.md §自动巡检注册）：
+  macOS：launchd com.buluotuo.awaken-patrol（StartInterval=21600·RunAtLoad·模板随包 8.4.0）
+  Windows：Task Scheduler BuluotuoAwakenPatrol（Daily+Repetition PT6H·StartWhenAvailable 补跑·S4U）
+    → awaken_patrol.py（平台中立执行体·单一真源；awaken_patrol.sh 已降薄壳转发）
         ├─ ①快照滞后检查 → update_snapshot_from_diary.py（§1 现成脚本·exit 语义原样保留）
         ├─ ②蒸馏待办三级检测 → awaken_distill_due_check.py（§2 逻辑脚本化）
-        └─ ③osascript 通知你（有逾期🟡/🔴或缺口才弹·无事不打扰）
+        └─ ③触达分端：mac=osascript 弹窗 / Win=pending 落盘+会话内转述（有逾期🟡/🔴或缺口才出声·无事不打扰）
 ```
 
 ### §3.1 载体与运行环境（单真源）
 
 | 项 | 值 |
 |---|---|
-| plist | `~/Library/LaunchAgents/com.buluotuo.awaken-patrol.plist`（StartInterval=21600 秒=6小时·RunAtLoad=true·StandardOut/Err → `~/buluotuo_bin/log/awaken_patrol_launchd{,_err}.log`） |
-| 主脚本 | `scripts/awaken_patrol.sh`（编排：快照检查→蒸馏检测→触达·只提醒不写他者文件·自有快照经脚本属职责内——v8.1.3与§3.3同口径） |
+| 载体（8.4.0 双端） | macOS：`scripts/com.buluotuo.awaken-patrol.plist.template`（入包·渲染 [记忆共享中心] 后装载 `~/Library/LaunchAgents/`·StartInterval=21600·RunAtLoad）/ Windows：`scripts/awaken-patrol-install-task.ps1`（注册 Task Scheduler `BuluotuoAwakenPatrol`·PT6H 重复·StartWhenAvailable 补跑·S4U 加固三连·`-Uninstall` 对称卸载） |
+| 执行体 | `scripts/awaken_patrol.py`（编排：快照检查→蒸馏检测→触达·只提醒不写他者文件·自有快照经脚本属职责内——v8.1.3与§3.3同口径；`awaken_patrol.sh`=薄壳转发·仅兼容旧载体） |
+| Win 触达 pending | `~/buluotuo_bin/log/awaken_patrol_alerts.pending`（Win 端告警落盘·轻量巡检读到即转述随后删除——§4） |
 | 检测脚本 | `scripts/awaken_distill_due_check.py`（蒸馏中心三级阈值·可选位置参数指定蒸馏中心路径·测试/运维用） |
 | 巡检日志 | `~/buluotuo_bin/log/awaken_patrol.log`（每次运行四段留痕：快照/蒸馏/触达/完成·可观测） |
 | 环境变量 | `DISTILL_CENTER_PATH`（可选·覆盖蒸馏中心路径） |
@@ -85,7 +88,7 @@ launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunA
 - **边界**：巡检本体=脚本+launchd（不依赖工具运行·愿景①全自动化）；工具内 Schedule 仅用于需要 AI 会话的环节（如逾期后的蒸馏调度触发）；⛔巡检只提醒不写他者文件（不替任何 Skill 写蒸馏中心/日记·跨 Skill 边界，童灵裁决原则；自有快照当日行经 update_snapshot_from_diary.py 既有脚本更新属职责内，v8.1.2·审查A14消歧）
 - **与每日伙伴 4.0 边界**：蒸馏待办/快照更新归 awaken（记忆状态域）；日记封口/月报触发归 daily-buddy（记录域）——不重复建设主动泵（方案待决项#2·2026-09-17 你确认推进阶段③时关闭）
 - **可观测/可抽检**：巡检=机检，检测对象已外化台账（立场卡 S1022：蒸馏中心/快照）；结果可观测（巡检日志+通知留痕）；可收回（`launchctl unload ~/Library/LaunchAgents/com.buluotuo.awaken-patrol.plist` 即停·删 plist 即永停）——愿景红线（自主≠黑箱）
-- **跨端**：launchd/osascript = macOS 宿主依赖；非 macOS 端自动巡检不生效（该端走双模式会话内巡检 §1/§2），如实声明不迁移（版本命名规范兼容性声明口径）
+- **跨端**（8.4.0 升级·原「非 macOS 不生效」口径退役）：执行体=平台中性 python，mac/Win 双载体经 INSTALL.md 指引注册；触达层分端（mac 弹窗 / Win pending+对话转述），其他平台 pending 留痕不丢失（降级非断链）。未注册端仍走双模式会话内巡检 §1/§2——仪表盘三态文案（§5）把「未注册」「未运行」「被清理」分开显形，⛔不再混说
 
 ---
 
@@ -93,13 +96,14 @@ launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunA
 
 > **定位**：B-2 = 小美重定位为巡检的「对话内详情面板」（升级方案 §7.2）——巡检弹窗（B-1）是机制层入口（Fogg 补 P·提示即入口），小美输出是对话层详情（补 V·"愿意看"）。**小美使用次数 = 巡检发现问题数·不靠你记得**（愿景①不依赖人记得）。规格锚点：设计哲学 §9.5 B-2·升级方案 §7.2。
 
-**读取方式**：`tail -30 ~/buluotuo_bin/log/awaken_patrol.log`（并入轻量步骤②读取轮的批量 Bash·⛔不单独增轮次——轻量预算约束"目标≤3轮工具往返"·dual-mode.md 轻量预算声明②读取轮已登记）
+**读取方式**：`tail -30 ~/buluotuo_bin/log/awaken_patrol.log`（并入轻量步骤②读取轮的批量 Bash·⛔不单独增轮次——轻量预算约束"目标≤3轮工具往返"·dual-mode.md 轻量预算声明②读取轮已登记）；PowerShell 端用 `Get-Content "$env:USERPROFILE\buluotuo_bin\log\awaken_patrol.log" -Tail 30`（8.4.0 Win 对等·同日志同格式）；Win 端另查 `awaken_patrol_alerts.pending`（存在且非空=有积压告警→转述后删除·读到即删=幂等·⛔不重复转述）
 
 **解析逻辑**：以最后一次 `[完成]` 行为本次巡检运行段终点，取该段内容判定：
 - `[触达] 已弹通知（...）` → 本次巡检有告警 → 输出「📋 巡检详情」模块（告警内容=括号内原文逐字转述·⛔不凭记忆重述·⛔不复制细节=单一真源）
 - `[触达] 无事不打扰（静默）` → 无告警 → 静默不输出（指令编写规范 §7.5 静默幂等·有结果才出声）
 - `[快照] 更新失败（exit N）` / `[快照] 脚本缺失` → 快照缺口告警（即使 [触达] 未弹也按告警输出——失败显形·假绿防线）
-- 巡检日志不存在/为空 → 标注「📋 巡检详情：无记录（巡检未运行或日志被清理）」·不阻塞（熔断器降级·轻量继续输出其余模块）
+- `[触达] 告警已记录（...）·pending·待会话内转述`（Win 端留痕·8.4.0）→ 本次巡检有告警 → 输出「📋 巡检详情」模块，告警内容=括号内原文逐字转述
+- 巡检日志不存在 → 标注「📋 巡检详情：本机未注册自动巡检（注册见 INSTALL.md §自动巡检注册）」；存在但窗口内无记录 → 「无记录（未运行或日志被清理）」——两态分说不混贴（8.4.0·⛔结构性缺失不说成运行时故障）·均不阻塞（熔断器降级·轻量继续输出其余模块）
 
 **输出模块（轻量模式结论块中·位于「📋 蒸馏待办」段之后·v8.2 TSL化）：**
 
@@ -125,7 +129,7 @@ launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunA
 
 **调用方式**：
 - 完整仪表盘：macOS/Linux/Git Bash 用 `env -u PYTHONHOME -u PYTHONPATH python3 [记忆共享中心]/技能配置/awaken-memory-system/scripts/awaken_health_dashboard.py`；PowerShell 无 env -u，直接 `python3 <同路径>`（v8.1.2·审查A12：Unix 专属调用形态不留 Windows 死路）（轻量结论块 3.5.3 / 全量 3b 报告·D-3 ②③入口·并入②读取轮批量 Bash·⛔不增轮次·预算声明已登记 v8.0 D-1）
-- 单行摘要：加 `--summary`（巡检弹窗·D-3 ①入口·awaken_patrol.sh 触达层自动调用·脚本缺失/失败降级=弹窗不含摘要不阻塞）
+- 单行摘要：加 `--summary`（巡检弹窗·D-3 ①入口·awaken_patrol.py 触达层自动调用·脚本缺失/失败降级=弹窗不含摘要不阻塞）
 - 趋势窗口：`--weeks N`（默认 2 周·≤0 钳为 1）
 
 **数据源（全部只读）**：快照「最近变更摘要」表格最新日期（滞后天数=今日-最新·跨年回退·表格日期双格式接受 MM-DD 与 YYYY-MM-DD（v8.1.3·审查N1：写侧/读侧同一契约·口径=双格式接受集一致，v8.1.1跨端实案；v8.2.1注：失败语义不同——读侧该项标不可用/写侧计数有痕跳过，不视为契约分叉））·自画像目录最新月份（frontmatter `month:` 优先·文件名 YYYY-MM 兜底·`_模板.md` 排除·滞后=月差）·蒸馏中心三级状态（import `awaken_distill_due_check`·`DISTILL_CENTER_PATH` 环境变量可覆盖·与 patrol.sh 传递口径对齐）·巡检日志（`~/buluotuo_bin/log/awaken_patrol.log`·近 N 周窗口 `[完成]/[快照]/[蒸馏]/[触达]` 四段留痕统计·趋势=后半窗口 vs 前半窗口蒸馏逾期检出比较）。
@@ -149,4 +153,4 @@ launchd plist com.buluotuo.awaken-patrol（每6小时·StartInterval=21600·RunA
 
 **D-3 三处入口（一致输出=同源·反模式 D6）**：①巡检弹窗（awaken_patrol.sh 触达层自动加 `--summary` 摘要行·有告警才弹）②小美详情（轻量结论块「📊 记忆健康仪表盘」段·步骤 3.5.3）③全量报告（3b·象限健康后 Skill 版本快照前）。三处数据同一脚本产出·⛔不各写一套。
 
-**环境依赖**：`~/buluotuo_bin/log/awaken_patrol.log`（巡检日志·macOS 端自动巡检产物）·缺失时趋势标「日志不可用」降级不阻塞（熔断器降级·同 §4 口径）；`DISTILL_CENTER_PATH` 缺省用默认蒸馏中心路径（同 §2）。
+**环境依赖**：`~/buluotuo_bin/log/awaken_patrol.log`（巡检日志·mac/Win 双端自动巡检产物·载体见 §3.1）·三态文案（8.4.0·替代原单态「日志不可用」）：文件不存在→「本机未注册自动巡检+注册指引」/ 存在但窗口内无记录→「已注册但未运行或日志被清理」/ 有记录→出趋势——均降级不阻塞（熔断器·同 §4 口径）；`DISTILL_CENTER_PATH` 缺省用默认蒸馏中心路径（同 §2）。

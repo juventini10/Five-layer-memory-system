@@ -129,11 +129,16 @@ def distill_status():
 
 
 def patrol_trend(weeks):
-    """巡检日志近 N 周趋势 → dict。行格式：[完成]/[快照]/[蒸馏]/[触达] 四段留痕（patrol.md §3.1）。"""
+    """巡检日志近 N 周趋势 → dict·state 三态（8.4.0：区分「未注册」与「被清理」——
+      原单态文案把结构性缺失说成运行时故障，Win 用户被误导去查"谁清了我的日志"，任务卡 2026-10-21）。
+      missing=日志文件不存在（本机未注册自动巡检/读失败）/ empty=窗口内无记录 / ready=有指标。
+    行格式：[完成]/[快照]/[蒸馏]/[触达] 四段留痕（patrol.md §3.1）。"""
+    if not PATROL_LOG.exists():
+        return {"state": "missing"}
     try:
         lines = PATROL_LOG.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return None
+        return {"state": "missing"}
     window_start = TODAY - datetime.timedelta(days=7 * weeks)
     entries = []
     for line in lines:
@@ -147,11 +152,14 @@ def patrol_trend(weeks):
         if d < window_start:
             continue
         entries.append((d, m.group(2), m.group(3)))
+    if not entries:
+        return {"state": "empty"}
     runs = sum(1 for _, t, _ in entries if t == "完成")
     snap_gaps = sum(1 for _, t, txt in entries if t == "快照" and ("失败" in txt or "缺失" in txt))
     due_alerts = sum(1 for _, t, txt in entries if t == "蒸馏" and "DUE|" in txt and ("🔴" in txt or "🟡" in txt))
-    notify_count = sum(1 for _, t, txt in entries if t == "触达" and "已弹通知" in txt)
-    last_notify = next((txt for _, t, txt in reversed(entries) if t == "触达" and "已弹通知" in txt), None)
+    # 8.4.0 Win对等：Win 触达标记="告警已记录"（pending·会话内转述），同计一次触达（语义=告警到达用户侧，非物理弹窗）
+    notify_count = sum(1 for _, t, txt in entries if t == "触达" and ("已弹通知" in txt or "告警已记录" in txt))
+    last_notify = next((txt for _, t, txt in reversed(entries) if t == "触达" and ("已弹通知" in txt or "告警已记录" in txt)), None)
     half = max((TODAY - window_start).days // 2, 1)
     cutoff = window_start + datetime.timedelta(days=half)
     recent = sum(1 for d, t, txt in entries if t == "蒸馏" and d >= cutoff
@@ -161,7 +169,7 @@ def patrol_trend(weeks):
     trend = "↑" if recent > earlier else ("↓" if recent < earlier else "→")
     if runs < 2:
         trend = "—"
-    return {"runs": runs, "snap_gaps": snap_gaps, "due_alerts": due_alerts,
+    return {"state": "ready", "runs": runs, "snap_gaps": snap_gaps, "due_alerts": due_alerts,
             "notify": notify_count, "trend": trend, "last_notify": last_notify,
             "window_days": 7 * weeks}
 
@@ -185,7 +193,7 @@ def portrait_level(months_lag):
 def build_advice(snap_lag, portrait_lag, counts, trend):
     adv = []
     if counts is not None and (counts["🔴严重逾期"] + counts["🟡已逾期"]) > 0:
-        trend_note = "（检出趋势上升·优先安排）" if trend == "↑" else ""
+        trend_note = "（检出趋势上升·优先安排）" if isinstance(trend, dict) and trend.get("trend") == "↑" else ""  # 8.4.0修复参型：原 trend=="↑" 是 dict↔str 比较恒假=注记从未显示过（潜伏bug·随三态改造同批自洽）
         adv.append(f"蒸馏逾期{trend_note} → 说对应触发词立即蒸馏（📊系统日志蒸馏→'系统月报'/📓日记月报→'月报'/🧠成长箱蒸馏→'成长箱蒸馏'）")
     if isinstance(snap_lag, int) and snap_lag > 1:  # v8.1.4：失败态snap_lag为文案串，str>int会TypeError
         adv.append(f"快照滞后 {snap_lag} 天 → 输入『我美吗』全量加载+行为刷新（写动作入口·自愈引擎修复）")
@@ -228,17 +236,20 @@ def render_dashboard(weeks):
         lines.append(f"├─ 蒸馏：🔴 {counts['🔴严重逾期']} / 🟡 {counts['🟡已逾期']} / 🔵 {counts['🔵即将到期']}")
     else:
         lines.append("├─ 蒸馏：检测不可用（蒸馏中心读取失败）")
-    if trend is not None:
+    tstate = trend.get("state")
+    if tstate == "ready":
         lines.append(f"└─ 巡检趋势（近 {trend['window_days']} 天·运行 {trend['runs']} 次）：")
         lines.append(f"   ├─ 快照缺口 {trend['snap_gaps']} 次 · 蒸馏逾期检出 {trend['due_alerts']} 次 · 告警弹窗 {trend['notify']} 次 · 趋势 {trend['trend']}")
         if trend["last_notify"]:
             lines.append(f"   └─ 最近告警：{trend['last_notify']}")
         else:
             lines.append("   └─ 最近告警：无（近窗口无弹窗）")
-    else:
-        lines.append("└─ 巡检趋势：日志不可用（巡检未运行或日志被清理）")
+    elif tstate == "empty":
+        lines.append(f"└─ 巡检趋势：已注册但近 {7 * weeks} 天无巡检记录（未运行或日志被清理）")
+    else:  # missing=本机未注册——结构性缺失，⛔不再说成"日志被清理"的故障
+        lines.append("└─ 巡检趋势：本机未注册自动巡检（mac: launchctl load com.buluotuo.awaken-patrol.plist / Win: 跑 awaken-patrol-install-task.ps1·见 INSTALL.md §自动巡检注册）")
     lines.append("建议：")
-    for adv in build_advice(snap_lag, portrait_lag, counts, trend if trend else None):
+    for adv in build_advice(snap_lag, portrait_lag, counts, trend if tstate == "ready" else None):
         lines.append(f"├─ {adv}")
     lines.append(f"└─ {next_advice(counts)}")
     return "\n".join(lines)

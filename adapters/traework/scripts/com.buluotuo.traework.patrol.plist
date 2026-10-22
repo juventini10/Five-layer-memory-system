@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>[记忆共享中心]/开发工具/Skill路由引擎/scripts/route_traework_patrol.sh</string>
+        <string>[记忆共享中心]/脚本中心/Skill路由引擎/scripts/route_traework_patrol.sh</string>
     </array>
     <key>StartInterval</key>
     <integer>1800</integer>

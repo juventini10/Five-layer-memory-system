@@ -16,9 +16,12 @@
 # ============================================================
 param([string]$Platform = "")
 $ErrorActionPreference = "Stop"
-$PASS = 0; $FAIL = 0
+$PASS = 0; $FAIL = 0; $PEND = 0
 function ok($t){ Write-Host "  [PASS] $t" -ForegroundColor Green; $script:PASS++ }
 function no($t){ Write-Host "  [FAIL] $t" -ForegroundColor Red; $script:FAIL++ }
+# 三态分账（2026-10-22 R9·条文70「自检报告三态分账律」）：引导段未跑段的缺失=⏳待办非🔴失败
+function pend($t){ Write-Host "  [PEND] $t" -ForegroundColor DarkYellow; $script:PEND++ }
+function miss($t){ if (-not $script:STEP5) { pend ($t + "（AI引导段未跑·答题后重跑即消）") } else { no $t } }
 
 # 解析真实 python.exe 绝对路径，跳过 Windows Store 应用执行别名，抗 Get-Command 畸形前缀
 # 2026-09-17 收口：优先 WorkBuddy 自带解释器绝对路径（INSTALL.md 反复强调的落点），
@@ -74,6 +77,9 @@ function Find-Python {
 
 $PKG_ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
 $MC = if ($env:MEMORY_CENTER) { $env:MEMORY_CENTER } else { Join-Path $HOME "记忆共享中心" }
+# STEP5 判定必须挂 $MC 赋值之后（R9 首轮 runner 逮到时序倒置：挂函数区时 $MC 未定义·Stop 模式 Join-Path 空参崩·教训=判定行跟着数据源走）
+$script:STEP5 = Test-Path (Join-Path $MC '.install\step5-done.md')
+
 # ── v2.0.1 多端配置根（与 verify.sh --platform 同语义；不传=~/.workbuddy 向后兼容）──
 if ($Platform -ne "") {
   $capYml = Join-Path $PKG_ROOT ("adapters\" + $Platform + "\capability.yaml")
@@ -84,6 +90,11 @@ if ($Platform -ne "") {
 if ($CONFIG_ROOT -eq "") { $CONFIG_ROOT = "~/.workbuddy" }
 $CFG_DIR = if ($CONFIG_ROOT.StartsWith("~")) { Join-Path $HOME ($CONFIG_ROOT.Substring(1).TrimStart('\', '/')) } else { $CONFIG_ROOT }
 Write-Host ("=== 布洛陀安装包 接入自检 | 记忆中心: $MC | 端: " + $(if ($Platform -ne '') { $Platform } else { 'workbuddy' }) + " 配置根: $CONFIG_ROOT ===") -ForegroundColor Cyan
+
+# 🔴 2026-10-21 根治(Win用户反馈缺陷②·对齐 verify.sh L112)：本自检跑包内 python
+#    检查器会 import 兄弟 .py → 自造 __pycache__ → §4 pkg_cleanliness 判污染 = 假红。
+#    从产生源封死：环境级禁写字节码，覆盖本脚本全部 & $py 调用。
+$env:PYTHONDONTWRITEBYTECODE = "1"
 
 # 0) 数据污染检测（dry-run 只读·Find-Python 解析）
 #    域外降级判据（2026-09-30 终检·**结构性**·⛔无作者侧字面量）：
@@ -111,13 +122,13 @@ foreach ($e in @(@("references\templates\SOUL.md", "人格模板"), @("reference
   if ((Test-Path $p) -and ((Get-Item $p).Length -gt 0)) { ok "发布模板 ${lb}: $rel" } else { no "发布模板 ${lb}: $rel (缺失)" }
 }
 $coreMd = Join-Path $MC "核心层\CORE.md"
-if ((Test-Path $coreMd) -and ((Get-Item $coreMd).Length -gt 0)) { ok "记忆中心 核心层: CORE.md" } else { no "记忆中心 核心层: CORE.md (缺失/为空)" }
+if ((Test-Path $coreMd) -and ((Get-Item $coreMd).Length -gt 0)) { ok "记忆中心 核心层: CORE.md" } else { miss "记忆中心 核心层: CORE.md (缺失/为空)" }
 
 # 1.5) 平台系统文件（step5 契约落点 = 端配置根 $CONFIG_ROOT\）
 #     2026-09-17 新增·2026-09-30 多端化：SOUL/IDENTITY/USER/MEMORY 写入端配置根目录（WB=.workbuddy、Qoder CN=.qoder-cn），而非记忆中心根。
 foreach ($rel in @("SOUL.md", "IDENTITY.md", "USER.md")) {
   $p = Join-Path $CFG_DIR $rel
-  if ((Test-Path $p) -and ((Get-Item $p).Length -gt 0)) { ok "平台系统文件: $CONFIG_ROOT/$rel" } else { no "平台系统文件: $CONFIG_ROOT/$rel (缺失)" }
+  if ((Test-Path $p) -and ((Get-Item $p).Length -gt 0)) { ok "平台系统文件: $CONFIG_ROOT/$rel" } else { miss "平台系统文件: $CONFIG_ROOT/$rel (缺失)" }
 }
 
 # 1.6) 端功能面 twin_surface（条文33·fail-closed·与 verify.sh §1.6 同口径·2026-10-11 Q1补Win验收对等）
@@ -146,6 +157,17 @@ foreach ($rel in @("记忆规则/用户基本规则-铁律版.md", "记忆规则
   $rp = Join-Path $MC $rel; if ((Test-Path $rp) -and ((Get-Item $rp).Length -gt 0)) { ok "规则三层 $rel" } else { no "规则三层 $rel (缺失/为空)" }
 }
 
+# 3.0) Skill 落点三口径判定（2026-10-21 双端补腿·与 verify.sh §3.0 同 verify_pair_checks 源）
+#      旧 ps1 仅目录名直配（Test-Path），sh 10-03 已根治中文别名目录误报——孪生同判据单端演化
+#      正是条文68孪生同构律针对的病形活例；判据住 py，本壳只调用。
+$VPC = Join-Path $PKG_ROOT "references\scripts\verify_pair_checks.py"
+function Test-SkillPresent($pkgSkillDir, $rootDir) {
+  if (-not $py -or -not (Test-Path $VPC)) { return 2 }
+  & $py $VPC skill-present "$pkgSkillDir" "$rootDir" | Out-Null
+  $rc = $LASTEXITCODE
+  if ($rc -eq 0 -or $rc -eq 1) { return $rc } else { return 2 }
+}
+
 # 3) 记忆 Skill（2026-09-21 改「名单同源」：从包内 references/skills/ 动态枚举，⛔不再硬编码
 #    9 个名字——硬编码导致新增 Skill 长期不在验证覆盖内=装了没装都不报）
 $skillSrc = Join-Path $PKG_ROOT "references\skills"
@@ -154,11 +176,16 @@ if (Test-Path $skillSrc) {
   $names = Get-ChildItem -Path $skillSrc -Directory | Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") } | ForEach-Object { $_.Name }
 }
 $SKILLS_TOTAL = $names.Count
-$FSK = 0
+$FSK = 0; $SKI = 0
 foreach ($s in $names) {
-  if (Test-Path (Join-Path $MC ("技能配置/" + $s + "/SKILL.md"))) { $FSK++ }
+  switch (Test-SkillPresent (Join-Path $skillSrc $s) (Join-Path $MC "技能配置")) {
+    0 { $FSK++ }
+    1 { }
+    default { $SKI++ }
+  }
 }
-if ($SKILLS_TOTAL -gt 0 -and $FSK -eq $SKILLS_TOTAL) { ok "记忆Skill: $FSK/$SKILLS_TOTAL（名单源=包内 references/skills/）" }
+if ($SKI -gt 0) { no "记忆Skill落点判定: 仪器未跑 $SKI 件（python/verify_pair_checks 不可用·⛔失明期间不得代报缺失——与 verify.sh §3 同判据同口径）" }
+elseif ($SKILLS_TOTAL -gt 0 -and $FSK -eq $SKILLS_TOTAL) { ok "记忆Skill: $FSK/$SKILLS_TOTAL（名单源=包内 references/skills/·三口径=verify_pair_checks 双端单源）" }
 elseif ($SKILLS_TOTAL -eq 0) { no "记忆Skill: 包内 references/skills/ 无可枚举 Skill（包结构异常）" }
 else { no "记忆Skill仅 $FSK/$SKILLS_TOTAL（比对包内 references/skills/ 与 技能配置/）" }
 
@@ -341,7 +368,7 @@ $cleaner = Join-Path $PKG_ROOT "references\scripts\pkg_cleanliness_check.py"
 if (-not $py) {
   no "未找到可用 python.exe(跳过干净度检查)"; $DIRT = 1
 } elseif (Test-Path $cleaner) {
-  & $py $cleaner --pkg-root $PKG_ROOT
+  & $py $cleaner --pkg-root $PKG_ROOT --exclude-runtime   # 2026-10-22 R9：装后自检排除装机过程出生物(lock/pycache)·发版侧不传
   if ($LASTEXITCODE -ne 0) { no "安装包干净度: 检查器报污染（上方 [FAIL] 行=分类明细·本汇总按检查器级计 1 项·B6 口径）"; $DIRT = 1 }
 } else { no "卫生检查器缺失: references/scripts/pkg_cleanliness_check.py"; $DIRT = 1 }
 $compat = Join-Path $PKG_ROOT "references\scripts\platform_compat.py"
@@ -361,6 +388,33 @@ if ($py -and (Test-Path $integrity)) {
   } else { ok "装后产物路径完整性: 无双拼形态、无占位符残留" }
 }
 
+# 4.6) 目录型骨架在位且非空（C16·与 verify.sh §4.6 同 verify_pair_checks 源·2026-10-21 双端补腿）
+if ($py -and (Test-Path $VPC)) {
+  $sklOut = (& $py $VPC skeleton $MC 2>&1 | Out-String).Trim()
+  if ($LASTEXITCODE -eq 0) { ok "目录型骨架在位且非空: $sklOut" } else { miss "目录型骨架: $sklOut" }
+} else { no "目录型骨架: 仪器未跑（python/verify_pair_checks 不可用·⛔失明期间不得判无）" }
+
+# 4.7) 摘要版三表占位符闭环（C08·与 verify.sh §4.7 同 verify_pair_checks 源·双向：出厂纯净+装机注入完整）
+$tplPath = Join-Path $PKG_ROOT "references\templates\用户基本规则-摘要版.md"
+$instSum = Join-Path $MC "记忆规则\用户基本规则-摘要版.md"
+if ($py -and (Test-Path $VPC) -and (Test-Path $tplPath)) {
+  $st = (& $py $VPC summary-tables $tplPath $instSum 2>&1 | Out-String)
+  if ($LASTEXITCODE -eq 2 -or $st -match '^INSTRUMENT=') {
+    no "模板纯净: python 腿未跑（仪器未跑·$($st.Trim())·⛔此为仪器故障非包污染）"
+  } else {
+    $rows = if ($st -match 'ROWS=(\d+)') { [int]$Matches[1] } else { -1 }
+    $bad  = if ($st -match 'BAD=(\S+)')  { $Matches[1] } else { "?" }
+    $left = if ($st -match 'LEFT=(\S+)') { $Matches[1] } else { "NA" }
+    if ($rows -eq 19 -and $bad -eq '0') { ok "模板纯净: 摘要版三表 19 行 38 格全为占位符（⛔不携带任何具体答案·含选项名）" }
+    else { no "模板被污染: 摘要版三表应为 19 行全占位符，实测 行数=$rows 非占位符格=$bad（作者/选项内容不得随包出）" }
+    if ((Test-Path $instSum) -and $left -ne 'NA') {
+      if ([int]$left -gt 0) { miss "摘要版答案未注入: 残留占位符 $left 处（step5 三表逐格替换未完成·用户画像不完整）" }
+      else { ok "摘要版答案已注入: 无残留占位符" }
+    }
+  }
+} elseif (-not (Test-Path $tplPath)) { no "模板纯净: 模板缺失 $tplPath（包结构异常）" }
+else { no "模板纯净: 仪器未跑（python/verify_pair_checks 不可用·⛔失明期间不得判通过）" }
+
 # 5) 版本锚点（不计分·信息）
 $BV = if (Test-Path (Join-Path $MC ".install\version")) { Get-Content (Join-Path $MC ".install\version") -Encoding UTF8 -Raw | ForEach-Object { $_.Trim() } } else { "未知(未完成安装或无锚点)" }
 Write-Host "  [i] 布洛陀版本: $BV" -ForegroundColor Cyan
@@ -379,5 +433,6 @@ Write-Host "  作者本机专用工具（多端巡逻/控制环/git门禁/面板
 Write-Host ""
 
 Write-Host ""
-if ($FAIL -eq 0) { Write-Host "=== 自检通过: $PASS 项全过 ===" -ForegroundColor Green; exit 0 }
+if ($FAIL -eq 0 -and $PEND -eq 0) { Write-Host "=== 自检通过: $PASS 项全过 ===" -ForegroundColor Green; exit 0 }
+elseif ($FAIL -eq 0) { Write-Host "=== 机械段全绿: $PASS 项 · 待办 $PEND 项（AI 引导段未完成·答完题回来重跑 verify 即清零·待办不是故障）===" -ForegroundColor DarkYellow; exit 0 }
 else { Write-Host "=== 自检未过: $FAIL 项失败(见上) ===" -ForegroundColor Red; exit 1 }

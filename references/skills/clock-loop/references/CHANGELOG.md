@@ -1,3 +1,57 @@
+### v4.19.10 — 2026-10-22 15:0x（triwich 4.10.7 检查⑩跨平台根治·级联收口·Case A）
+
+triwich 升 4.10.7（flow-agent-b.md /tmp 字面量→{tmpdir} 运行时派生 + result-block-examples.md 补平台声明行·D5 检查⑩ 6 处清零；固化对象 4 层正文零改动 ⇒ Case A）。本端跟随：dependencies 4.10.6→4.10.7 + 固化件链首 Case A 同步 + check_cured_snapshot 复验。判级 patch 记账条·功能零变更。
+
+### v4.19.9 — 2026-10-22 11:5x（triwich 4.10.6 呈现契约两修·Case B 重固化联动）
+
+triwich 认知格层级归位+档位字段序钉死（你裁「A；批」）。改动落结论块结构面=固化对象 → **Case B**：triwich-integration.md 增「v4.10.6 依据行语法增量」段+链首链尾同步；dependencies 4.10.5→4.10.6。check_cured_snapshot 复验。判级 patch 记账条。
+
+### v4.19.8 — 2026-10-22 10:5x（triwich 4.10.5 R4余账收口批级联收口）
+
+triwich 升 4.10.5（口径契约立法/基线代次/WAIVED到期/eval#31/p-mechanism 随行）。本端跟随：dependencies 4.10.4→4.10.5 + 固化件链首尾 Case A + check_cured_snapshot 复验。判级 patch 记账条·功能零变更。
+
+### v4.19.7 — 2026-10-22 10:3x（triwich 4.10.4 R4收口批级联收口·同窗 Loop）
+
+triwich R4 收口批升 4.10.4（模板占位/套件级互遮/账面勘误/C3声明扩面）。本端跟随：dependencies 4.10.3→4.10.4 + 固化件链首尾 Case A 同步 + check_cured_snapshot 复验。判级 patch 记账条·功能零变更。R4 独立复审结论"可收口（附6条件）"已随对象批落地，详见报告 R4 追加段。
+
+### v4.19.6 — 2026-10-22 10:0x（triwich 4.10.3 R3-2 批级联收口·同窗 Loop R4 前置）
+
+triwich run.sh 目录级 tests 缺失 SKIP→FAIL（R3-2 互遮根治·你令），本体升 4.10.3。本端跟随：dependencies triwich 4.10.2→4.10.3 + 固化件 triwich-integration 链首/链尾 Case A 同步·check_cured_snapshot 复验。判级 patch 记账条·功能零变更。回滚点=本条前 SKILL.md/CHANGELOG/固化件（.bak 见 triwich_run.sh 同窗批次 + git）。
+
+### v4.19.5 — 2026-10-22 08:3x（triwich Loop R2 配套批：eval_t5 扫描域 glob 化根治假红 + triwich 4.10.2 级联收口·同窗 Loop 执行腿）
+
+两件合一：① **评估器盲区根治（功能法非prose）**：`eval_t5_adversarial` 外迁兼容文件名硬编码 `t5-defenses.md`，而 triwich 外置件实名 `t5-defense-assessment.md`（v4.7.3 容量治理批产物）——名字不匹配=补偿零命中=T5 覆盖机检 8/22 假红（Loop R1 实证：十一条声明实体全在位）。修法=references/ 下 `t5*.md` glob 并入扫描域（保留"正文无 T5-nn 才补偿"的原防双计语义）。改评估器流程合规：snapshot 冻结前置（记忆琥珀 clockloop_skill_eval_preT5glob_261022_082x.bak）+改后跑 test_skill_eval 全量回归+本端自评不降分（读数见系统日志同轮条）。② **升版级联收口（自家 v4.18.7 铁律）**：triwich 本窗 Loop R2 升 4.10.2（死锚/计数/栅栏一致层+run.sh 简报判据三→七字段机械补全，Case A 判定=固化对象正文零改动）——dependencies 声明位 4.10.1→4.10.2 + 固化件 triwich-integration.md 链首 Case A 节同步，check_cured_snapshot 复跑验证。frontmatter bump 4.19.4→4.19.5（4.19.4 位已被并发窗 G路径 B1.5l 条目占用，本条压其后，未触其改动面——共件串行说明依 v4.19.2 先例）。判级 patch（仪器扫描域修复+账面同步，评分维度/权重/考题零变更）。回滚点=本条前 SKILL.md/CHANGELOG/skill_eval.py/triwich-integration（.bak 同名时间戳 + git）。
+
+### v4.19.4 — 2026-10-22 08:1x（G路径新增 Step B1.5l Windows 行为层证据链对账·皮叔问「可以加到Loop安装包规则么」拍板·Win安装体验根治 R7-R9 反哺）
+
+R7-R9 五枚真雷全部由 windows-latest runner 逮出、零枚出自 Mac 静态自验——「Mac 绿≠可发布」从文档口号升为 Loop 机械步：每轮对账装机链改动 vs blt-win-ci-public success run（run 号回实盘验真·无号按日期对账·无改动显式记⚪免检不留静默），红=输出发起建议不自动踢 CI（烧机时归人），gh 不可达=判黄不判绿。判级 minor（新增检查步·承 4.19.1 B1.5g 孪生步入尺先例）。改动面=references/pkg-checkup.md 一处+frontmatter 版本号，零代码零其他文件。回滚点=git revert 2754e5dee（本条源 commit·铁律-016④写侧回指自纠：初稿声称记忆琥珀 bak 未实际制作，改指真实回滚位）。
+
+### v4.19.3 — 2026-10-22 06:0x（triwich 4.10.1 下游声明位级联收口 + skill-arch-standard 本地两方自矛盾清零·皮叔令「修」）
+
+clock-loop Loop 开工基线轮（水位同步 C07 #184）回归 179 例逮出 1 红=依赖声明漂移×2：① dependencies triwich 4.7.1 ≠ 源实盘 4.10.1（triwich 本窗 10-21 夜密集升 4.6.0→4.10.1，级联责任按 v4.18.7 铁律归升版方，声明位漏追）；② skill-arch-standard 声明 5.41 ≠ 固化件 v5.43（实测源文件 Skill架构规范.md=v5.43，固化副本与源一致，仅账面滞后）。修复=声明位两处跟随（triwich→4.10.1 / arch-standard→5.43），frontmatter bump 4.19.2→4.19.3。施工前备份记忆琥珀 clockloop_*_261022_0603.bak ×3；改后 skill_eval --check-only honest_flags 清零 + test_skill_eval 全量回归复跑（读数见系统日志条目）。判级 patch（账面条线同步，评分维度/权重/考题零变更）。回滚点=本条前 SKILL.md/CHANGELOG（.bak 同名时间戳）。
+
+### v4.19.2 — 2026-10-21 13:4x（X-AST 谓词⑤ Skill源隐身物理病接入·任务卡2026-10-21-静默隐身检测与日志变体根治·组A+B合并体）
+
+皮叔令「继续」推进编排表第3行。接入位=kb-checkup.md 五节谓词表增⑤行（只读调用，判据本体住 脚本中心/守卫/skill_source_health_check.py v1.0.3·零复制铁律）——该守卫由今日 triwich frontmatter 转义写坏隐身 3h+ 实证立项（旁路写入不经 forge 门禁，唯一检出防线曾是人眼）。判据经首日基线校正两轮：v1.0.2 消 growth-box YAML注释行假红/YAML严格错降WARN（lh 产品宽容实证）；v1.0.3 增量基准按 root 分域（变异测试实证串味）。消费端双腿=launchd com.skill.source-health（3600s·kickstart 实火回执在 jsonl）+ 本路径 X-AST ⑤行。故障注入演练：变异树 bad(\---)→FAIL/nofm→WARN/good→PASS 全中+幂等复跑不刷日志。回滚点=本条前 SKILL 4.19.1/kb-checkup 后态（git 可取）。判级 patch。A-B 共件说明：本条压他窗 v4.19.1 双条目之后，未触其改动面。
+
+### v4.19.1 (2026-10-21) — X-AST 资产体检根治
+- **references 路径修正**：kb-checkup.md/machine-acceptance.md 中「开发工具/知识联邦引擎」→「脚本中心/知识联邦引擎」(F-02)，对齐 10-17 引擎迁移实盘
+- **矛盾清单骨架**：脚本中心/知识联邦引擎/矛盾清单.md 创建空文件(F-03)，与 kb_concept_lint.py 的 graceful handle 对齐文档声明
+- **依赖版本同步**：triwich 依赖声明 4.7.1 与盘上实值一致(F-07误报撤销)
+- 扫描器精度教训：naive regex 取首个 version: 4.10.7
+
+## v4.19.1 — 2026-10-21 11:5x（G路径 Step B1.5g 孪生件形状对账·安装包哲学条文68承接批·皮叔令「做；批」）
+
+外部评估点破「verify.sh 有、verify.ps1 没有」+本窗实跑坐实：verify.ps1 缺 §3.0 三口径/§4.6 骨架非空/§4.7 三表闭环三面（Mac 10-03~10-15 逐个根治的判据 Win 端失明），且段级同构零机检（文件级配对 L1/P1 全绿看不见）=「校验器的校验器缺位」（S232 反方向实例：验收器自己成了未验收存量）。落地：pkg-checkup.md 新增 Step B1.5g（platform_compat 检查⑬调用形·三向判据·负例翻色义务·数据面 twin-sections.json 类型=数据）；判据本体 verify_pair_checks.twin_check（真源 脚本中心/守卫·mirror-manifest 4条目登记）；同批 verify.sh 三段调用壳化（行为零变更+仪器未跑分态显形）、verify.ps1 补同名三段。检查⑬对改造前包面首跑精准报三缺腿零过报=仪器有牙实证。回滚点=本条前 SKILL.md 4.19.0/pkg-checkup/CHANGELOG 三件（git 2ffa1e6e8 后态）。Z级·G路径清单增项，A-H 判定行为零变更。
+
+## v4.19.0 — 2026-10-21 09:4x（上下文资产体检 Phase X-AST 上线 + triwich 4.7.1 声明位收口并入）
+
+两项合一提交：① dependencies triwich 4.6.0→4.7.1（Z级接棒同步·08:2x批已完工未提交·皮叔确认"任务早做完"授权代收尾·固化件位随 triwich-integration 同步，本批提交被 version_truth 守卫点名故与②并批 bump）；② H路径增补资产层变体 Phase X-AST（触发词组"循环 资产体检/loop 资产体检/上下文体检/指令审计"+路由行+H节标题扩双域+kb-checkup.md 新增第五节四维度谓词表：指令互斥/触发面过宽/依赖死工具/陈旧事实）。来源=2026-10-21 K007 三源闭环评估轮四步案·你「认可，按建议推进」；变更稿与实盘对账后施工（共件冲突预检见任务卡）。回滚点=记忆琥珀/技能升级备份/clockloop_assetcheck-bak-20261021_0945/ 三件。
+
+### v4.18.8 — 2026-10-21 07:0x（triwich 4.6.0 下游声明位级联收口·双盲第18次揪漏修）
+
+双盲第18次盲审独立揪出：本端 dependencies 声明位 triwich 仍锁 4.5.4，与 triwich 本体 4.6.0、与自家固化件 references/triwich-integration.md 4.6.0 三处不一致——违反本端 v4.18.7 新立铁律「升版级联收口（升版方同批追下游声明位）」，前轮 triwich 4.5.4→4.6.0 时漏追本位。修复=照 v4.18.6 先例（triwich 归一轮同款「dependencies + 固化件链首同步」）补 dependencies triwich 4.5.4→4.6.0，固化件位（triwich-integration）已随上一提交对齐 4.6.0。frontmatter 随内容变 bump 4.18.7→4.18.8。patch 记账条·功能零变更。回滚点=本条前两版 SKILL.md/CHANGELOG（git 0c48a38d5 后态）。
+
 ### v4.18.7 — 2026-10-18 13:35（署名队列收口批·提案落地P1/P2/P4/P5：条款两条+评估器判据两处）
 
 皮叔令「按符合愿景最优解处理」落地队列遗留提案四件：**P1** 禁止行为#11 备份模板加 `{Skill名}_` 前缀（B-5 扁平撞名事故条款化）；**P5** 新增铁律「升版级联收口」（升版方同批追下游声明位·B-5 实证入条）；**P2** eval_backup_gate 子串匹配改归属两级判据（strong=前缀显式归属/weak=首段在被评树实存·form字段显数·N7"他人件顶备份拿满分"盲区封堵）；**P4** eval_version_grading_advisory 否定语境豁免（12字窗口否定形不计·治"六工作流功能零变更"误报狼来了）。改评估器流程合规：snapshot 冻结前置（记忆琥珀 clockloop__*_preP2P4_261018_1327.bak ×3）+改后自举回归不降分（读数见下条注）。判级 patch（条款+advisory+门禁判据·评分维度权重考题定义未动·gate属检查实现层）。回滚点=同 snapshot。

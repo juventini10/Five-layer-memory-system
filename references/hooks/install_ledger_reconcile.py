@@ -5,7 +5,16 @@ try:
 except Exception: pass
 # TRUTH_OF: 脚本中心/install_ledger_reconcile.py   # 真源声明·派生面须软链指向本件
 # -*- coding: utf-8 -*-
-"""install_ledger_reconcile.py v1.0.4 — install_ledger 台账对账器（幂等缓存自动追平·分叉隔离）
+"""install_ledger_reconcile.py v1.0.5 — install_ledger 台账对账器（幂等缓存自动追平·分叉隔离·自诊断腿）
+
+v1.0.5 自诊断腿（2026-10-20 人工批「符合愿景最优解那就去做」·中央账存续裁决的机制落地）：
+  --check 在 LEDGER_DRIFT 行后追加 LEDGER_SELFDIAG 行——把上轮只能手跑的三条死活判据
+  （账本心跳/消费者计数/包侧verify腿）+ pending 积压 30 天不降判红，焊进已有节奏而非新守卫：
+  判红=显形不阻断（本件是报告者非门禁·退出码语义 v1.0.0 起不变）；历史读数字段
+  reconcile_history.jsonl append-only·封顶180行·QCN_RECON_HISTORY 隔离缝。
+  消费者判据取注册表制（预期名单逐件验在岗·⛔全树扫描——本件被 generate_release 热消费，
+  扫全树读文件=发包卡顿；铁律-016 精神：名单会漂，所以每个注册件必须实读验关键词，缺位即红）。
+  ⛔不建 launchd 常驻（禁设族·S825 按拆解定步骤：先长在最稳节奏上）；包侧同步两处副本随改更新。
 
 v1.0.4 夹具归位（v1.0.3 首轮修复自身缺陷·如实记账）：v1.0.3 把 conflict 条目的 path 填成
 脚本中心目标面路径，致 src==dst 被误判 auto；本轮按真机口径重排（path=作者仓源侧·dst=投递面）。
@@ -146,7 +155,8 @@ def write_ledger(ledger_path, new_sha, backup_dir):
 def self_test():
     import tempfile
     base = tempfile.mkdtemp(prefix="reconcile_selftest_")
-    arc = os.path.join(base, "[记忆共享中心]")   # 与真 manifest「个人AI档案/...」相对家目录口径一致（v1.0.3）
+    FIX_ROOT = "个人AI" + "档案"   # 夹具目录名两段拼接·防发布投影词表改写（审查🔴-1根治2026-10-20·源/包同形）
+    arc = os.path.join(base, FIX_ROOT)   # 与真 manifest「个人AI档案/...」相对家目录口径一致（v1.0.3）
     dev = os.path.join(arc, "开发工具")
     ctr = os.path.join(arc, "脚本中心")
     os.makedirs(dev); os.makedirs(ctr)
@@ -163,13 +173,13 @@ def self_test():
     put(dev, "twin_a_src.py", "TWIN_FACE_1")
     put(arc, "twin_b_src.py", "TWIN_FACE_2")  # 多面组：同名两面内容异
     entries = [
-        {"name": "auto.py", "path": "[记忆共享中心]/脚本中心/auto.py"},   # auto 语义=源与dst同内容·账滞后·path 即目标面
-        {"name": "noop.py", "path": "[记忆共享中心]/脚本中心/noop_src.py"},
-        {"name": "pending.py", "path": "[记忆共享中心]/脚本中心/pending_src.py"},
-        {"name": "conflict.py", "path": "[记忆共享中心]/脚本中心/conflict_src.py"},
-        {"name": "gone.py", "path": "[记忆共享中心]/脚本中心/deleted.py"},
-        {"name": "twin.py", "path": "[记忆共享中心]/脚本中心/twin_a_src.py"},
-        {"name": "twin.py", "path": "个人AI档案/twin_b_src.py"},
+        {"name": "auto.py", "path": f"{FIX_ROOT}/脚本中心/auto.py"},   # auto 语义=源与dst同内容·账滞后·path 即目标面
+        {"name": "noop.py", "path": f"{FIX_ROOT}/开发工具/noop_src.py"},
+        {"name": "pending.py", "path": f"{FIX_ROOT}/开发工具/pending_src.py"},
+        {"name": "conflict.py", "path": f"{FIX_ROOT}/开发工具/conflict_src.py"},
+        {"name": "gone.py", "path": f"{FIX_ROOT}/开发工具/deleted.py"},
+        {"name": "twin.py", "path": f"{FIX_ROOT}/开发工具/twin_a_src.py"},
+        {"name": "twin.py", "path": f"{FIX_ROOT}/twin_b_src.py"},
     ]
     mp = put(dev, "scripts_manifest.json", json.dumps({"scripts": entries}))
     led = {"source_sha": {
@@ -193,9 +203,116 @@ def self_test():
     # 幂等二跑：auto 归入 noop
     counts2, *_ = reconcile(mp, lp, base, ctr)
     assert counts2["auto"] == 0 and counts2["noop"] == 2, counts2
+    # === v1.0.5 自诊断腿夹具（隔离压测·铁律-014①）===
+    # S1 正例：注册表三坑全造在岗（镜像真实布局：install_script_center/收口闸/generate_release）+包侧腿在→绿
+    put(ctr, "install_script_center.py", 'x="install_ledger"')
+    put(os.path.join(ctr, "守卫"), "脚本体系收口闸.py", 'y="install_ledger"') if os.makedirs(os.path.join(ctr, "守卫"), exist_ok=True) is None else None
+    put(os.path.join(arc, "开发工具", "buluotuo-release-sync"), "generate_release.py", "install_ledger_reconcile --check") if os.makedirs(os.path.join(arc, "开发工具", "buluotuo-release-sync"), exist_ok=True) is None else None
+    pkg_dir = os.path.join(arc, "发布库", "五层记忆系统", "布洛陀-全平台安装包")
+    os.makedirs(pkg_dir, exist_ok=True)
+    put(pkg_dir, "install_scripts.py", "import version_diff as _vd")
+    os.environ["QCN_RECON_HISTORY"] = os.path.join(base, "hist.jsonl")
+    hist_file = os.environ["QCN_RECON_HISTORY"]
+    reds, info = selfdiag(counts, base, arc, ctr)
+    assert reds == [], reds
+    assert info["consumers"] == 3 and info["verify_leg"] == 1, info
+    assert os.path.exists(hist_file), "读数未落盘"
+    # S2 判假负例：塞一条 ≥30 天前 pending=0 的旧读数→当前 pending(1)>=0 必翻红 PENDING_BACKLOG
+    old_ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time() - 31 * 86400))
+    open(hist_file, "w", encoding="utf-8").write(json.dumps({"ts": old_ts, "pending": 0}) + "\n")
+    reds2, _ = selfdiag(counts, base, arc, ctr)
+    assert any(r.startswith("PENDING_BACKLOG") for r in reds2), reds2
+    # S3 负例：包侧 import 改述→VERIFY_LEG 红（心跳不误报：ledger 刚写 mtime 新）
+    put(pkg_dir, "install_scripts.py", "no import here")
+    reds3, _ = selfdiag(counts, base, arc, ctr)
+    assert any(r.startswith("VERIFY_LEG") for r in reds3), reds3
+    # S4 负例：注册表拆一坑（收口闸改名=失词/缺席）→CONSUMERS 计数降但不红（3→2 仍≥2）；再拆一坑→1 红
+    put(pkg_dir, "install_scripts.py", "import version_diff as _vd")
+    os.remove(os.path.join(ctr, "守卫", "脚本体系收口闸.py"))
+    reds4a, _ = selfdiag(counts, base, arc, ctr)
+    assert not any(r.startswith("CONSUMERS") for r in reds4a), reds4a
+    os.remove(os.path.join(arc, "开发工具", "buluotuo-release-sync", "generate_release.py"))
+    reds4, _ = selfdiag(counts, base, arc, ctr)
+    assert any(r.startswith("CONSUMERS") for r in reds4), reds4
+    # S5 历史封顶：灌 200 行→裁到 ≤180+本次
+    open(hist_file, "w", encoding="utf-8").write("\n".join(
+        json.dumps({"ts": old_ts, "pending": 9}) for _ in range(200)) + "\n")
+    selfdiag(counts, base, arc, ctr)
+    assert len(open(hist_file, encoding="utf-8").read().splitlines()) <= 181, "历史封顶失效"
+    os.environ.pop("QCN_RECON_HISTORY", None)
     shutil.rmtree(base, ignore_errors=True)
-    print("SELF-TEST GREEN: 五态判定+redeploy/pending保护+原子写+备份+幂等二跑 全通过")
+    print("SELF-TEST GREEN: 五态判定+redeploy/pending保护+原子写+备份+幂等二跑+v1.0.5自诊断(S1注册表正例/S2积压红/S3腿红/S4阈值双向/S5封顶) 全通过")
     return 0
+
+
+def selfdiag(counts, H, arc, ctr):
+    """账本消费方健康自诊断（v1.0.5）：三查+pending积压趋势·只显形不阻断不抛异常。
+    返回 (reds, info)·info 供行输出；任何内部失败降级为一条 red=SELFDIAG_BROKEN（不拖垮 --check）。"""
+    try:
+        hist_path = os.environ.get("QCN_RECON_HISTORY") or os.path.join(ctr, "reconcile_history.jsonl")
+        now = time.time()
+        # 三查：①心跳 30 天内 ②消费者(除自身)≥2 ③包侧 install_scripts import version_diff
+        reds = []
+        lp = os.path.join(ctr, "install_ledger.json")
+        age_d = (now - os.path.getmtime(lp)) / 86400.0 if os.path.exists(lp) else 999
+        if age_d > 30:
+            reds.append("HEARTBEAT(%.0fd>30d)" % age_d)
+        consumers = 0
+        # 注册表制：预期消费者名单（相对 arc 或绝对路径），逐件实读验关键词——缺席/失词即不计
+        # 名单外新增消费者不计入（诚实边界：注册表需随布局更新，漏更新=计数偏小→偏红不偏绿，fail-closed 方向安全）
+        for relp in ("脚本中心/install_script_center.py", "脚本中心/守卫/脚本体系收口闸.py",
+                     "开发工具/buluotuo-release-sync/generate_release.py"):
+            p = relp if relp.startswith("/") else os.path.join(arc, relp)
+            try:
+                if "install_ledger" in open(p, encoding="utf-8", errors="replace").read():
+                    consumers += 1
+            except Exception:
+                pass
+        if consumers < 2:
+            reds.append("CONSUMERS(%d<2)" % consumers)
+        pkg_imp = 0
+        for pkg_scripts in (os.path.join(arc, "发布库", "五层记忆系统",
+                                         "布洛陀-全平台安装包", "install_scripts.py"),):
+            try:
+                pkg_imp = 1 if "import version_diff" in open(pkg_scripts, encoding="utf-8", errors="replace").read() else 0
+            except Exception:
+                pkg_imp = 0
+        if not pkg_imp:
+            reds.append("VERIFY_LEG(absent)")
+        # pending 积压趋势：找 ≥30 天前的最近一次读数·当前 pending 未下降→红
+        pend_now = counts["pending"]
+        old = None
+        hist = []
+        if os.path.exists(hist_path):
+            hist = [l for l in open(hist_path, encoding="utf-8").read().splitlines() if l.strip()]
+        for line in hist:
+            try:
+                r = json.loads(line)
+                if now - time.mktime(time.strptime(r["ts"], "%Y-%m-%d %H:%M")) >= 30 * 86400:
+                    old = r  # 顺序扫过全部·留最老的一条满足窗口的（更老=更强证据）
+            except Exception:
+                pass
+        if old is not None and pend_now >= old.get("pending", 0):
+            reds.append("PENDING_BACKLOG(%d→%d·30d不降)" % (old.get("pending", -1), pend_now))
+        # 读数 append-only·封顶 180 行（C-236 可更新账与取证件分层·旧读数被趋势判据消费完即可甄）
+        entry = json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"), "pending": pend_now,
+                            "auto": counts["auto"], "redeploy": counts["redeploy"],
+                            "noop": counts["noop"], "src_missing": counts["src_missing"]},
+                           ensure_ascii=False)
+        try:
+            with open(hist_path, "a", encoding="utf-8") as f:
+                f.write(entry + "\n")
+            lines = open(hist_path, encoding="utf-8").read().splitlines()
+            if len(lines) > 180:
+                tmp = hist_path + ".tmp"
+                open(tmp, "w", encoding="utf-8").write("\n".join(lines[-180:]) + "\n")
+                os.replace(tmp, hist_path)
+        except Exception as e:
+            reds.append("HIST_WRITE(%r)" % e)
+        return reds, {"consumers": consumers, "age_d": round(age_d, 1),
+                      "verify_leg": pkg_imp, "hist": os.path.basename(hist_path)}
+    except Exception as e:
+        return ["SELFDIAG_BROKEN(%r)" % e], {}
 
 
 def main():
@@ -209,7 +326,7 @@ def main():
     if a.self_test:
         sys.exit(self_test())
     H = os.path.expanduser("~")
-    arc = os.path.join(H, "[记忆共享中心]")
+    arc = os.path.join(H, "个人AI" + "档案")   # 两段拼接防投影词表（同 self_test FIX_ROOT 口径·审查🔴-1）
     mp = os.path.join(arc, "开发工具", "scripts_manifest.json")
     lp = os.path.join(arc, "脚本中心", "install_ledger.json")
     ctr = os.path.join(arc, "脚本中心")
@@ -219,6 +336,13 @@ def main():
         print("LEDGER_DRIFT total=%d auto=%d pending=%d redeploy=%d multi_face=%d noop=%d src_missing=%d" % (
             drift, counts["auto"], counts["pending"], counts["redeploy"], counts["multi_face"],
             counts["noop"], counts["src_missing"]))
+        reds, info = selfdiag(counts, H, arc, ctr)
+        if reds:
+            print("LEDGER_SELFDIAG 🔴 %s | consumers=%s ledger_age=%sd verify_leg=%s" % (
+                " ".join(reds), info.get("consumers"), info.get("age_d"), info.get("verify_leg")))
+        else:
+            print("LEDGER_SELFDIAG ✅ 三查全命中(心跳%ss/消费者%s/verify腿%s)·pending积压窗口内无读数或未形成" % (
+                info.get("age_d"), info.get("consumers"), info.get("verify_leg")))
         return 0
     print("=== install_ledger 对账 ===")
     print("noop(账实一致)=%d  auto(纯缓存滞后)=%d  pending(缺位待投)=%d  redeploy(源变未重投)=%d  multi_face(同名多面异)=%d  src_missing=%d"
@@ -233,7 +357,7 @@ def main():
         pj = os.path.join(ctr, "install_pending_adjudication.json")
         tmp = pj + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump({"generated_by": "install_ledger_reconcile.py v1.0.4",
+            json.dump({"generated_by": "install_ledger_reconcile.py v1.0.5",
                        "generated_at": time.strftime("%Y-%m-%d %H:%M"),
                        "pending_missing_dst": pend, "redeploy_or_multi_face": red},
                       f, ensure_ascii=False, indent=1)

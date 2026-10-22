@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- com.buluotuo.distill-scheduler — 蒸馏调度月拍守护（G2装机对等件·2026-10-21 维护方令「必须让win和MAC用户都正常使用」）
+     等价 Windows 侧 distill-scheduler-install-task.ps1；执行体同一份平台中性 python（单一真源⛔ps1副本）。
+     结构承 com.doenglingz.slice-watch 装机模板惯例（StartInterval+RunAtLoad·[记忆共享中心]渲染）。
+     调度器本体幂等静默（每日跑=检查账行刷新待做区，无到期零写入），月首自然带出待做清单。 -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.buluotuo.distill-scheduler</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/env</string>
+        <string>python3</string>
+        <string>[记忆共享中心]/脚本中心/记忆蒸馏/distillation_scheduler.py</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>86400</integer>
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>[记忆共享中心]/脚本中心/logs/distill-scheduler.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>[记忆共享中心]/脚本中心/logs/distill-scheduler.err.log</string>
+</dict>
+</plist>

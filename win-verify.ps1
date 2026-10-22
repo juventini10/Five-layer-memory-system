@@ -646,6 +646,96 @@ if (-not (Test-Path $SL_INSTALL)) {
   }
 }
 
+# ---------- T20: 装后清扫——字面占位符幽灵目录必须被移入备份（tiger① 存量根治·可逆不删除） ----------
+info "T20: 装后清扫（幽灵目录迁移）..."
+if ($py) {
+  # 前置清场：同一 $SB 复跑会累积多份备份 → $bak 变数组，Test-Path 数组恒真（审查 2026-10-20）
+  $gsRoot = Join-Path $MC ".install/ghost-sweep"
+  if (Test-Path -LiteralPath $gsRoot) { Remove-Item -LiteralPath $gsRoot -Recurse -Force -ErrorAction SilentlyContinue }
+  $ghost = Join-Path $HOME_SIM "[记忆共享中心]"
+  $glog = Join-Path $ghost "logs"
+  New-Item -ItemType Directory -Path $glog -Force | Out-Null
+  [System.IO.File]::WriteAllText((Join-Path $glog "probe.jsonl"), '{"t":1}')
+  $r20 = & $py (Join-Path $PKG "install_scripts.py") $MC --sweep-ghost $HOME_SIM 2>&1 | Out-String
+  $ghostGone = -not (Test-Path -LiteralPath $ghost)
+  $bak = @(Get-ChildItem -Path (Join-Path $MC ".install/ghost-sweep") -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*记忆共享中心*" }) | Select-Object -Last 1
+  if ($ghostGone -and $bak) {
+    if (Test-Path -LiteralPath (Join-Path $bak.FullName "logs/probe.jsonl")) {
+      ok "T20 幽灵目录已移入备份且内容完整（可逆·未删除）"
+    } else {
+      no "T20 备份内容缺失——清扫吞数据"
+    }
+  } else {
+    no "T20 幽灵目录未被清走（gone=$ghostGone bak=$([bool]$bak)）"
+    Write-Host "    T20OUT: $r20" -ForegroundColor DarkGray
+  }
+  $r20b = & $py (Join-Path $PKG "install_scripts.py") $MC --sweep-ghost $HOME_SIM 2>&1 | Out-String
+  if ($LASTEXITCODE -eq 0 -and $r20b -match "未发现") { ok "T20 二次清扫幂等（干净）" }
+  else { no "T20 二次清扫不幂等/rc=$LASTEXITCODE"; Write-Host "    T20OUT2: $r20b" -ForegroundColor DarkGray }
+} else { info "T20 跳过: 无 python" }
+
+# ---------- T21: 新装机路由引擎可用（SKILLS 目录派生·防硬编码缺件静默死） ----------
+info "T21: 路由引擎新装机冒烟..."
+if ($py -and (Test-Path -LiteralPath (Join-Path $PKG "references/scripts/router.py"))) {
+  $probe = Join-Path $SB "t21_router_probe.py"
+  $code = "import sys; sys.path.insert(0, sys.argv[1]); import router; m=router.route('loop 安装包，检查发布包'); print('N=%d' % len(router.SKILLS)); print('M=%s' % (','.join(m)))"
+  [System.IO.File]::WriteAllText($probe, $code, (New-Object System.Text.UTF8Encoding($false)))
+  # 技能面用 T15 真装机产物（$E2E_MC/技能配置，含 description）；$MC 是空壳桩，⛔不能用
+  $env:BULUOTUO_SKILLS_DIR = (Join-Path $E2E_MC "技能配置")
+  $r21 = & $py $probe (Join-Path $PKG "references/scripts") 2>&1 | Out-String
+  $n21 = if ($r21 -match 'N=(\d+)') { [int]$Matches[1] } else { -1 }
+  $ok21 = ($r21 -match 'M=.*clock-loop')
+  if ($LASTEXITCODE -eq 0 -and $n21 -gt 0 -and $ok21) {
+    ok "T21 新装机路由可用（SKILLS=$n21·'loop 安装包'命中 clock-loop）"
+  } else {
+    no "T21 路由冒烟失败（N=$n21 hit=$ok21 rc=$LASTEXITCODE）"
+    Write-Host "    T21OUT: $r21" -ForegroundColor DarkGray
+  }
+  Clear-Env "BULUOTUO_SKILLS_DIR"
+} else { no "T21 无法执行：包内 router.py 缺失或无 python（跳过=判据未跑，按红处理）" }
+
+# ---------- T22: 自动巡检 Win 对等件真机腿（2026-10-21 唤醒巡检Win对等件根治·DoD=注册→触发→日志实证→趋势行→卸载）----------
+# 判据同 T19 纪律：⛔不停在"任务注册+exit 0"——须实证巡检真完成（[完成]行现身）且仪表盘出 ready 态趋势。
+# 执行体=平台中性 awaken_patrol.py（T15 deploy_skills 落盘）；install-task.ps1 只做载体注册（单一真源⛔ps1逻辑副本）。
+# 日志路径注意：任务进程 Path.home()=真实用户 profile（不随 runner 沙盒 HOME 重定向）；dashboard 在 runner 里跑须临时指回 $oldHome 才同路径对账。
+info "T22: awaken 巡检 Win 真机（注册+触发+日志实证+卸载）..."
+$AP_SCRIPTS = Join-Path $E2E_MC "技能配置\awaken-memory-system\scripts"
+$AP_INSTALL = Join-Path $AP_SCRIPTS "awaken-patrol-install-task.ps1"
+$AP_TASK    = 'BuluotuoAwakenPatrol'
+$AP_LOG     = Join-Path $oldHome 'buluotuo_bin\log\awaken_patrol.log'
+if (-not (Test-Path $AP_INSTALL)) {
+  no "T22 deploy_skills 未落盘 awaken 巡检 Win 件（缺 $AP_INSTALL）"
+} elseif (-not $PSH) { info "T22 跳过: 无 pwsh/powershell" } else {
+  & $PSH -NoProfile -ExecutionPolicy Bypass -Command "& '$AP_INSTALL'" *> (Join-Path $SB "t22_install.log")
+  $t22rc = $LASTEXITCODE
+  $task22 = Get-ScheduledTask -TaskName $AP_TASK -ErrorAction SilentlyContinue
+  if ($t22rc -ne 0 -or -not $task22) {
+    no "T22 注册失败 rc=$t22rc task=$(if ($task22) {'在位'} else {'缺席'})"
+    Get-Content -Encoding UTF8 (Join-Path $SB "t22_install.log") -ErrorAction SilentlyContinue | Select-Object -First 20 | ForEach-Object { Write-Host "    T22LOG: $_" }
+  } else {
+    ok "T22 $AP_TASK 已注册（state=$($task22.State)·schtasks 实读）"
+    $deadline22 = (Get-Date).AddSeconds(90); $t22done = $false
+    while ((Get-Date) -lt $deadline22) {
+      Start-Sleep -Seconds 5
+      $tl22 = Get-Content -Encoding UTF8 $AP_LOG -ErrorAction SilentlyContinue
+      if ($tl22 -and (@($tl22 | Where-Object { $_ -match '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[完成\]' }).Count -gt 0)) { $t22done = $true; break }
+    }
+    if (-not $t22done) { no "T22 90s 未现[完成]行——任务已注册但巡检未真完成（⛔不把"注册成功"当"巡检成功"）" }
+    else {
+      ok "T22 巡检日志四段留痕实证（[完成]行在·执行体=平台中性 py）"
+      $origH22 = $env:HOME; $origP22 = $env:USERPROFILE
+      $env:HOME = $oldHome; $env:USERPROFILE = $oldHome   # dashboard 与任务日志同路径对账（临时指回真实 profile）
+      $dash22 = & $py (Join-Path $AP_SCRIPTS "awaken_health_dashboard.py") --weeks 1 2>&1 | Out-String
+      $env:HOME = $origH22; $env:USERPROFILE = $origP22
+      if ($dash22 -match '巡检趋势（') { ok "T22 仪表盘巡检趋势出真实数字（ready 态·非降级文案）" }
+      else { no "T22 趋势行未到 ready——核 dashboard 三态判定与日志路径"; ($dash22 -split "`n") | Where-Object { $_ -match '巡检趋势' } | ForEach-Object { Write-Host "    T22DASH: $_" } }
+    }
+    & $PSH -NoProfile -ExecutionPolicy Bypass -Command "& '$AP_INSTALL' -Uninstall" *> (Join-Path $SB "t22_uninstall.log")
+    if (-not (Get-ScheduledTask -TaskName $AP_TASK -ErrorAction SilentlyContinue)) { ok "T22 -Uninstall 卸载干净" }
+    else { no "T22 卸载失败（$AP_TASK 仍在）——手动清: Unregister-ScheduledTask -TaskName $AP_TASK -Confirm:0" }
+  }
+}
+
 # ---------- 收尾 ----------
 $env:USERPROFILE = $oldHome
 $env:HOME = $oldHome

@@ -28,6 +28,17 @@ BANNER_SCRIPT="[记忆共享中心]/技能配置/system-logger/scripts/render_mo
 # ── 1. 运行健康巡检 ──────────────────────────────────────────────
 output=$("$HEALTH_CHECK" --summary 2>&1) || true
 
+# ── 1b. plist 脚本漂移重指提案（B段·plist_repoint.py·2026-10-20 人工批·只提案不写入·失败放行）──
+REPOINT="${SCRIPT_DIR}/plist_repoint.py"
+if [ -x "$REPOINT" ]; then
+  repoint_out=$(/usr/bin/python3 "$REPOINT" 2>&1) || true
+  if echo "$repoint_out" | grep -q "提案 "; then
+    output="${output}
+[plist重指提案] $(echo "$repoint_out" | grep -c '提案 ') 件待批准（运行 plist_repoint.py --apply 或人工处置）"
+    echo "$repoint_out" >> "${SCRIPT_DIR}/repoint_proposals.log"
+  fi
+fi
+
 # 解析摘要数字（macOS BSD grep不支持-P，用sed）
 healthy=$(echo "$output" | sed -n 's/.*健康: \([0-9]*\).*/\1/p' | head -1)
 dead=$(echo "$output" | sed -n 's/.*死形态: \([0-9]*\).*/\1/p' | head -1)

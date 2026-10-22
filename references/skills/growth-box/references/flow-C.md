@@ -1,7 +1,7 @@
 ---
 title: 成长箱 流程C 步骤本体
 type: flow-body
-version: v1.4
+version: v1.6
 date: 2026-10-12
 来源: 由 SKILL.md v4.8.0 步骤区机械迁移（卡B 步2·区间 L640-790·逐字搬移⛔改写）
 变更注（v1.4·2026-10-13·SKILL v4.12.7）：D7 镜像点**定尺**——判据由"逐字一致"改"同集合一致（Δ=∅）"；补镜像点定义（一行同时承载四枚举成员·一行 grep 可复现）＋排除项（块引用定义层／子集表／历史叙述）＋实扫清单 10 处（数由清单与实扫双向核对·⛔手填）；机器看护＝clock-loop/koujing_audit.py v1.3 新增 cnt 类型登记本口径（实扫≠声明即 🔴，变异实测有牙）。
@@ -138,7 +138,7 @@ date: 2026-10-12
 | 确认晋升 → | 写入对应规则文件，原条目标记 `Status: promoted` |
 | 确认合并 → | 写入 LEARNINGS.md，原条目标记 `Status: merged_to_general` |
 | 确认保持 → | 不动，等下次蒸馏再评估 |
-| 确认**进知识层** → | 走 `good-good-study` A线写入立场卡/技能卡（⛔DO NOT 本流程直写卡片——卡片 schema 自检与 reading_status 派生的唯一真源在 good-good-study，本流程自建=第二本账）；写完必跑 `python3 [记忆共享中心]/知识联邦引擎/scripts/regen_ailib_index.py` 重建 INDEX + Read 验证该卡号已在 INDEX 表格内；原条目标记 `Status: merged_to_knowledge` |
+| 确认**进知识层** → | 走 `good-good-study` A线写入立场卡/技能卡（⛔DO NOT 本流程直写卡片——卡片 schema 自检与 reading_status 派生的唯一真源在 good-good-study，本流程自建=第二本账）；写完必跑 `python3 [记忆共享中心]/脚本中心/知识联邦引擎/scripts/regen_ailib_index.py` 重建 INDEX + Read 验证该卡号已在 INDEX 表格内；原条目标记 `Status: merged_to_knowledge` |
 
 > **「进知识层」终审归属（2026-10-02 你拍板·不新增岗位·扩 JOB-003 成长箱审核岗）**：
 > - ✅DO 复用 good-good-study **分层终审三阈值**：①价值层立场 → **你必检**（⛔宪法第11条·价值判断不可委托）②高风险机制/方法层（找茬点／新领域／置信度≤中）→ 童灵终审 + 你抽检 ③低风险机制/方法层（置信度高 + 找茬点0 + 非新领域，`count_card_topic.py` 计数≥3）→ **童灵自动通过** + `auto_pass_audit.py` 月度抽查10%。

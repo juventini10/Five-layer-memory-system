@@ -18,8 +18,40 @@ import os
 import re
 from datetime import datetime
 
+def _resolve_diary_root():
+    """日记根解析（SSOT 优先·零 Obsidian 假设）：
+    runtime_paths.diary_root（安装器写入）→ OBSIDIAN_VAULT 环境变量 → 占位默认。"""
+    import json as _json
+    _cands = []
+    if os.environ.get("BULUOTUO_RUNTIME_PATHS"):
+        _cands.append(os.path.expanduser(os.environ["BULUOTUO_RUNTIME_PATHS"]))
+    elif os.environ.get("DOENGLINGZ_CONFIG_DIR"):
+        _cfg = os.path.expanduser(os.environ["DOENGLINGZ_CONFIG_DIR"])
+        if os.path.isfile(os.path.join(_cfg, "doenglingz", "runtime_paths.json")):
+            _cands.append(os.path.join(_cfg, "doenglingz", "runtime_paths.json"))
+        elif os.path.isfile(os.path.join(_cfg, "runtime_paths.json")):
+            _cands.append(os.path.join(_cfg, "runtime_paths.json"))
+    if not _cands:
+        for _root in (os.path.expanduser("~/.workbuddy"), os.path.expanduser("~/.hermes")):
+            _c = os.path.join(_root, "doenglingz", "runtime_paths.json")
+            if os.path.isfile(_c):
+                _cands.append(_c)
+                break
+    for _f in _cands:
+        try:
+            with open(_f, encoding="utf-8") as _fh:
+                _r = _json.load(_fh).get("diary_root")
+            if _r and os.path.isdir(os.path.expanduser(_r)):
+                return os.path.expanduser(_r)
+        except Exception:
+            pass
+    _ov = os.environ.get("OBSIDIAN_VAULT")
+    if _ov:
+        return os.path.join(os.path.expanduser(_ov), "1-每日计划", "01-日记")
+    return os.path.expanduser("~/[日记仓库]/1-每日计划/01-日记/")
+
 def check_diary_titles():
-    diary_dir = os.environ.get("OBSIDIAN_VAULT", os.path.expanduser("~/[日记仓库]/1-每日计划/01-日记/"))
+    diary_dir = _resolve_diary_root()
     
     weekday_map = {
         0: "周一", 1: "周二", 2: "周三", 3: "周四",

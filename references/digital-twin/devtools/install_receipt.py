@@ -310,8 +310,22 @@ def build(args) -> dict:
                              "reason": "未提供 --mc·无法定位记忆中心"}
             continue
         ok = os.path.exists(path)
+        reason = None if ok else "落点不存在"
+        # 🔴 2026-10-21 加严（Trae CN 复检实证·本窗回灌源）：runtime_paths 只看「文件在不在」会放过
+        #    「声明里有死键」——文件在盘 ⇒ verdict 仍 ok，而 rp("kb_engine") 指向空目录。
+        #    到货回执必须回答「这些路径能不能用」，不能只回答「有没有这个 json」。
+        if key == "runtime_paths" and ok:
+            try:
+                _decl = json.load(open(path, encoding="utf-8"))
+                _dead = [k for k, v in _decl.items()
+                         if isinstance(v, str) and v and not os.path.exists(os.path.expanduser(v))]
+            except Exception as _e:
+                _dead = ["<声明不可读:%s>" % _e]
+            if _dead:
+                ok = False
+                reason = "声明含 %d 个不可达键：%s" % (len(_dead), ", ".join(_dead))
         comp_out[key] = {"status": "installed" if ok else "missing",
-                         "path": path, "reason": None if ok else "落点不存在"}
+                         "path": path, "reason": reason}
         if not ok:
             comp_missing.append(key)
 

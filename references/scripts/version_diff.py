@@ -119,6 +119,10 @@ def format_report(d: dict) -> str:
         for p in d["platform_status_changed"]:
             lines.append("     · %s：%s → %s" % (p["platform"], p["user"], p["pkg"]))
     lines.append("   ⚠️ 落后≠装失败（提示层）·补装/升级动作须由端执行（B 解决'报缺'不解决'自动补装'）")
+    # 2026-10-20 反馈#4 口径注记：快照=.install/versions.json（上次安装时点）；
+    # 用户手工升级过组件时快照会滞后 → "落后"只是差异提示，判定以各 Skill 实盘
+    # frontmatter / 文件 diff 为准，⛔ 不据此报"组件坏/需回滚"。
+    lines.append("   ℹ️ 快照可能滞后于实盘（用户手工更新过组件）·落后判定以实盘 frontmatter/文件 diff 为准")
     return "\n".join(lines)
 
 

@@ -628,13 +628,15 @@ def check_platform_roster(pkg: Path) -> list:
 
 def check_reference_paths(pkg: Path) -> list:
     """P6 单数 reference 斜杠路径形态 0 残留（防 2026-09 单复数混用复发）。
+    2026-10-22 盲审F-2根治：负向前查扩含连字符——pr-reference 等复合目录名是合法词段
+    不再误伤；真单数残留（行首/空白/斜杠后裸单数形式）照抓。
 
     frontmatter `type: reference` 字段值是 Diataxis 术语非路径，天然不命中
     （无斜杠）。本函数自身源码也不含该字面量（运行期拼接），自扫不误伤。
     """
     issues = []
-    rx = re.compile(r"(?<![A-Za-z])reference" + "/")
-    _diataxis_rx = re.compile(r"(?<![A-Za-z])reference"
+    rx = re.compile(r"(?<![A-Za-z-])reference" + "/")
+    _diataxis_rx = re.compile(r"(?<![A-Za-z-])reference"
                               + r"/(?:explanation|how-to|tutorial)")
     for f in pkg.rglob("*"):
         if not f.is_file() or f.suffix.lower() not in _PATH_EXT:

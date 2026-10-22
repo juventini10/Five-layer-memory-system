@@ -1185,7 +1185,10 @@ def run_check(scan_all=False, as_of_date=None):
     else:
         # 只扫描今日日记
         today = date.today().strftime("%Y-%m-%d")
-        today_file = DIARY_DIR / f"{today}.md"
+        year_month = date.today().strftime("%Y-%m")
+        today_file = DIARY_DIR / year_month / f"{today}.md"
+        if not today_file.exists():
+            today_file = DIARY_DIR / f"{today}.md"  # 兼容平铺历史布局（find_diary_file 同式）
         if today_file.exists():
             today_data = parse_diary_file(today_file)
             print(f"  今日番茄：{today_data['tomato']}🍅")

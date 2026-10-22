@@ -2,7 +2,7 @@
 # TRUTH_OF: 脚本中心/search_kb.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
 """
-search_kb.py v0.3.17 — 知识沉淀自动检索（v0.3.17·2026-10-17 模块C库容治理：C-2 非卡入库排除表(_NONCARD_EXCLUDE)+缓存schema4·C-5 成长箱纯元块结构过滤(_is_meta_block·标题黑名单弃用改物理判据)·gate0 71%/0.638 前后对照零退化·回滚点=记忆琥珀/模块C-白名单-bak-20261017/）（v0.3.16·2026-10-16 门3换参 K_RRF 60→30·NDCG+3.5pp零Recall代价·标题保底floor机理·真尺n=21验证·回滚点=记忆琥珀search_kb_v0.3.15_K60_改前·母卡§八门3节）（v0.3.15·2026-10-13 技能卡专属分支·任务卡T3 判据预注册见工单§8）（v0.3.14·2026-10-07 CLI实跑落trail·原则17机械锚补全）（前值 v0.3.13·2026-10-05 布局+引擎根双自适应·P2 G4 检索面修复）（第二刀·BM25式+路由加权+ bge 向量 RRF 融合；v0.3 实体直通+单一真源）
+search_kb.py v0.3.18 — 知识沉淀自动检索（v0.3.18·2026-10-22 Win反馈单V2 N-1：目录名形态归一兜底 _norm_layout_walk·候选链全miss后按 normalize(空格→-) 逐段扫描+漂移显形，根治历史空格形态实盘检索源静默不可达·配套实现 --status 真分支（原死接口被当查询词吃·E-1 状态头机检取）·负例夹具N1五测+E1三测·回滚点=记忆琥珀/fbkV2-fix-20261022/）（v0.3.17·2026-10-17 模块C库容治理：C-2 非卡入库排除表(_NONCARD_EXCLUDE)+缓存schema4·C-5 成长箱纯元块结构过滤(_is_meta_block·标题黑名单弃用改物理判据)·gate0 71%/0.638 前后对照零退化·回滚点=记忆琥珀/模块C-白名单-bak-20261017/）（v0.3.16·2026-10-16 门3换参 K_RRF 60→30·NDCG+3.5pp零Recall代价·标题保底floor机理·真尺n=21验证·回滚点=记忆琥珀search_kb_v0.3.15_K60_改前·母卡§八门3节）（v0.3.15·2026-10-13 技能卡专属分支·任务卡T3 判据预注册见工单§8）（v0.3.14·2026-10-07 CLI实跑落trail·原则17机械锚补全）（前值 v0.3.13·2026-10-05 布局+引擎根双自适应·P2 G4 检索面修复）（第二刀·BM25式+路由加权+ bge 向量 RRF 融合；v0.3 实体直通+单一真源）
 职责: 任务描述 → ①意图路由（5类型查路由表）→ ②检索（路由加权×3 + 词面命中×IDF + 向量余弦）
       → ③Top-K（路径+命中理由+摘要）。输出带纠错标记说明（⛔ 这条没用 → 回写路由表/关键词）。
       数据源: 知识池卡(05-知识池) + 读书笔记(01-读书笔记) + 立场卡(AI学习库) + 概念卡(08-概念层) + Skill。
@@ -93,10 +93,15 @@ def _pick_engine_dir(_mc):
             return os.path.normpath(_c)
     return os.path.join(_mc, "脚本中心", "知识联邦引擎")                     # 兜底：保持旧行为
 _ENGINE_DIR = _pick_engine_dir(_MC)
+def _venv_py(eng_dir, sub=".venv-st"):
+    # 2026-10-19 Win反馈 A-1：Windows venv 实体=Scripts/python.exe，POSIX=bin/python，
+    #   写死 bin/python 在 Win 恒判 exists=False→重投分支永不进→语义层静默降级 BM25。
+    _rel = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")
+    return os.path.join(eng_dir, sub, *_rel)
 # ── 语义层自路由（2026-08-12）── 当前解释器无 sentence_transformers → 重投专用 venv，
 # 从根上杜绝「任意 python 跑本会静默降级 BM25」的回归（Intel Mac 无 torch≥2.6 wheel，
 # 语义层必须用 .venv-st：py3.12+torch2.2.2+st3.4.1+transformers4.48.3，模型已本地缓存）。
-_VENV_PY = os.path.join(_ENGINE_DIR, ".venv-st", "bin", "python")
+_VENV_PY = _venv_py(_ENGINE_DIR)
 # v0.3.5 预检前置（2026-09-09 童灵根治·SIGTERM 137 三次复现）：模型缓存缺失时连 venv 重投都不做——
 # 重投 venv-st 只为 torch/st 语义层；纯 BM25 用当前轻量解释器即可（足迹 ~100MB vs 重投+torch ~800MB）。
 # 内存压力下（16GB 机 free~138MB 实测）重投+torch import 即可被 macOS SIGKILL(137)，时活时死。
@@ -237,7 +242,7 @@ _LAYOUT_ALT = {
     "CONCEPT_DIR": ("[日记仓库]", "2-知识库", "08-概念层"),
     "AILIB_DIR": ("[日记仓库]", "2-知识库", "09-AI学习库"),  # 2026-10-12 C''波次2迁入vault(卡内部台账·旧位软链为72h缓冲)
     "GROWTH_DIR": ("[记忆共享中心]", "成长箱", "learnings"),
-    "BLUEPRINT_INDEX_DIR": ("[日记仓库]", "2-知识库", "10 蓝图索引卡"),
+    "BLUEPRINT_INDEX_DIR": ("[日记仓库]", "2-知识库", "10-蓝图索引卡"),
     # 2026-10-06 布局第三形态落位（键20261006_171708后·皮叔令"未闭环的尝试去做"）：
     #   原 "[日记仓库]" 为未解析占位符（join 后 = ~/[日记仓库]/… 字面路径·永不存在）
     #   → POOL/NOTES/CONCEPT/BLUEPRINT 四检索源自布局机制上线起恒不可达（每跑必⚠️）。
@@ -251,7 +256,60 @@ _LAYOUT_ALT = {
 _LAYOUT_FEATURE = {
     "AILIB_DIR": "立场卡#S",  # AI学习库特征文件=立场卡#S*.md（其他目录未迁移保持非空判据）
 }
+
+
+def _kb_root_override():
+    """知识库根（⛔ 不假设 Obsidian）：优先 runtime_paths 的 kb_root 键（安装器默认指 MC/知识库，
+    Obsidian 用户可改指自己的 vault）；缺或不可读则回落既有解析链（作者态/安装期占位符填充）。"""
+    try:
+        from runtime_paths import rp
+        _r = rp("kb_root", optional=True)
+        if _r and os.path.isdir(os.path.expanduser(_r)):
+            return os.path.expanduser(_r)
+    except Exception:
+        pass
+    return None
+
+_KB_ROOT = _kb_root_override()
 _LAYOUT_DIAG = []
+
+
+def _norm_layout_walk(roots, tail):
+    """目录名形态归一扫描（2026-10-22 Win反馈 N-1 根治）。
+    病灶：包内硬写目录名与端实盘形态混用（空格/连字符）——历史包面口径曾用
+      「10 蓝图索引卡」空格形态，老装机用户实盘带旧名，连字符 join 恒 miss
+      ⇒ 检索源静默不可达（修复前每跑必⚠️）。路径是事实不是配置，静态检查判不出，
+      故候选链全 miss 后加结构兜底：逐段按 normalize(空格→-) 比对。
+    判据：每段优先精确名命中，无精确再收归一命中；返回首个全段存在的路径。
+    返回 (path, drifted)：drifted=True=命中叶子段名与硬写形态不同（须显形）。"""
+    for _root in roots:
+        _p, _drift_leaf = _root, None
+        for _seg in tail:
+            if not os.path.isdir(_p):
+                _p = None
+                break
+            _exact = os.path.join(_p, _seg)
+            if os.path.isdir(_exact):
+                _p = _exact
+                continue
+            _k = _seg.replace(" ", "-")
+            _hit = None
+            try:
+                for _d in sorted(os.listdir(_p)):
+                    if _d.replace(" ", "-") == _k and os.path.isdir(os.path.join(_p, _d)):
+                        _hit, _drift_leaf = os.path.join(_p, _d), _d
+                        break
+            except OSError:
+                _hit = None
+            if not _hit:
+                _p = None
+                break
+            _p = _hit
+        if _p:
+            return _p, (_drift_leaf is not None)
+    return None, False
+
+
 for _nm, _alt in _LAYOUT_ALT.items():
     _cur = globals().get(_nm)
     if not _cur:
@@ -265,10 +323,30 @@ for _nm, _alt in _LAYOUT_ALT.items():
         continue                                     # 在位（功能判据/非空判据），不动
     # 2026-10-06 判据加固：空目录壳（迁移残留/makedirs 误建）此前被当"在位"⇒ 检索读空库静默0命中
     #   且不告警——isdir 存在性判据与"有内容"错位（PAT-043/053 家族·实证=立场卡+概念卡整源消失4天）
-    _cand = os.path.join(os.path.expanduser("~"), *_alt)
-    if os.path.isdir(_cand):
-        globals()[_nm] = _cand
-        _LAYOUT_DIAG.append("%s 回落作者态" % _nm)
+    # 2026-10-19 Win反馈 A-4：_alt[0] 是安装期占位符 token（如 "[日记仓库]"），
+    #   Win 装机 _fill 未供该 token 时 join 出 ~/[日记仓库]/… 字面路径·永不存在→每跑必⚠️。
+    #   改候选根链（token 位由真实根替换），全不中仍如实告警；Mac 命中同一根不受影响。
+    _resolved = None
+    _roots = []
+    if _KB_ROOT:
+        _roots.append(_KB_ROOT)
+    _roots += (os.path.join(os.path.expanduser("~"), "[日记仓库]"),
+               os.path.join(os.path.expanduser("~"), "[记忆共享中心]"),
+               os.path.join(os.path.expanduser("~"), "记忆共享中心"),
+               _MC, os.path.expanduser("~"))
+    for _root in _roots:
+        _c = os.path.join(_root, *_alt[1:])
+        if os.path.isdir(_c):
+            _resolved = _c
+            break
+    _drifted = False
+    if not _resolved:
+        # N-1 兜底（2026-10-22）：候选链全 miss ≠ 目录不存在——可能只是形态混名；
+        #   归一扫描命中则采用+显形，仍不中才报「两种布局均缺失」。
+        _resolved, _drifted = _norm_layout_walk(_roots, _alt[1:])
+    if _resolved:
+        globals()[_nm] = _resolved
+        _LAYOUT_DIAG.append(("%s 目录名形态漂移命中(%s)" % (_nm, os.path.basename(_resolved))) if _drifted else ("%s 回落作者态" % _nm))
     else:
         _LAYOUT_DIAG.append("⚠️%s 两种布局均缺失（检索源不可达）" % _nm)
 if _LAYOUT_DIAG:
@@ -294,7 +372,7 @@ for _c in _ENGINE_CANDIDATES:
 if _picked and _picked != os.path.normpath(_ENGINE_DIR):
     _LAYOUT_DIAG.append("引擎根 %s→%s（原指处缺 route_table）" % (_ENGINE_DIR.replace(os.path.expanduser("~"), "~"), _picked.replace(os.path.expanduser("~"), "~")))
     _ENGINE_DIR = _picked
-    _VENV_PY = os.path.join(_ENGINE_DIR, ".venv-st", "bin", "python")
+    _VENV_PY = _venv_py(_ENGINE_DIR)
     _DEGRADE_LOG = os.path.join(_ENGINE_DIR, "logs", "kb_degrade.jsonl")
     _ROUTE_TABLE_JSON = os.path.join(_ENGINE_DIR, "route_table.json")
     _DOC_CACHE = os.path.join(_ENGINE_DIR, "cache", "doc_corpus.json")
@@ -1341,6 +1419,24 @@ def main():
             print(p); return 1
         print(f"📂 下钻: {os.path.relpath(p, HOME)}\n")
         print(body)
+        return 0
+    if args[0] == "--status":
+        # E-1 根治（2026-10-22 上游反馈单V2）：验收记录状态头三行——落记录当时机检取
+        # 运行状态，⛔不凭印象；降级态不得混入基线（口径同源=包内 references/steps/
+        # step7-verification.md §7b+；此前 --status 仅在 _FAST_ARGS 豁免名单、main()
+        # 无分支=被当查询词吃掉的死接口，本批补真实现）。
+        _ok_model, _why = _model_available()
+        _nv = -1
+        try:
+            if os.path.isfile(VEC_NPY_META):
+                _nv = len(json.load(open(VEC_NPY_META, encoding="utf-8")).get("paths", []))
+            elif os.path.isfile(VEC_FILE):
+                _nv = len(json.load(open(VEC_FILE, encoding="utf-8")))
+        except Exception:
+            _nv = -1
+        print("# 状态: %s" % ("语义层在位" if _ok_model else "降级（纯BM25）·原因: %s" % _why))
+        print("# 模型: %s ｜ 向量数: %s" % (MODEL_EFFECTIVE, _nv if _nv >= 0 else "读取失败"))
+        print("# 判据: 输出含「⚡语义#」标记=在位；无该标记=降级态记录，不得写入基线")
         return 0
     # CLI 快通道（2026-10-11·kb_serve 常驻引擎客户端·「该命中的→毫秒拿到」最后一公里）：
     # socket 在位→驻留引擎毫秒返回（实测 0.09-0.15s vs 冷路径 18.5s）；任何异常→回退冷路径

@@ -83,7 +83,10 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
   - ✅DO L1 只认 `references/platform-exemptions.json` 中 reason+basis 双非空的登记（basis 须件内可 grep 的 macOS 专属 API）；⛔手写 PAIRS 清单、⛔整目录前缀豁免——旧判据只列几对，119 件从未被看过，报绿＝仪器不测这一项
   - ✅DO L2 判据绑结构位置：件内有 `sys.stdin.read(` 即须有 reconfigure/buffer；守护用 `hasattr` 形（⛔直接调，宿主 stdin 非 TextIOWrapper 会崩）
   - ✅DO L3 双拼（家目录符号+盘符）零容忍；「家目录符号紧跟占位符」这一形态走棘轮基线（人工 CLI 登记，⛔检查器自写基线＝自己给自己发绿）；本条文档自身⛔写出该字面量（门禁词自伤·条文18⑥·2026-10-11 本 Step 被自家棘轮当场逮到实证）
-  - 🔌 熔断器：三腿任一不在 main() 注册表 → 🔴「尺子未接线」，⛔以「文件里有这函数」当已生效（本轮实证：插进文件头 docstring 后 compile 通过而检查器零输出 rc=0）
+  - ✅DO **L4 venv/解释器形态平台派生（2026-10-19 布洛陀2.2.4 Win反馈 A族反哺）**：`os.path.join(dir,"bin","python"/"pip")` 等 POSIX 专属二进制相对形态出现在跨平台 `.py`、且该文件无 `os.name`/`sys.platform`/`Scripts`/`python.exe` 派生信号 → FAIL（`platform_compat.py` 检查函数 `check_venv_platform_form`）。旧尺缺口：`check_unix_only_imports` 只抓 Unix-only「import」、检查⑫只抓记忆中心「目录名」硬编码，均漏「路径片段字面量」——此即 A-1~A-7 venv 静默降级数月、连穿几轮全绿 Loop 无人逮的机制根因
+  - ✅DO **运行语义断言·降级态禁写验收基线（同反哺·E-1 泛化·纲领句）**：发布包每条自检腿的「绿」须断言**运行期语义标记真出现**（如 `search_kb` 输出含 `⚡语义#`），⛔把「安装动作完成」当「能力跑通」；能力处降级态（venv 缺/探测失败）时该腿判 FAIL 且 ⛔ 写入验收基线/进度文件（基线头部标「仅全链路在位时生成」）——承本 Step「负例翻色」的另一侧：负例翻色治「没证明能红别报绿」，本条治「仪器压根没测这项 ≠ 绿」（实证：Win 真机腿 PASS=42/FAIL=0 却逮不住一个 `bin/python` 写死）
+  - 来源：`[来源: 成长箱反哺 | 日期: 2026-10-19 | 反哺标题: venv形态写死+降级态假绿→跨平台巡检补L4腿+运行语义断言(布洛陀2.2.4 Win反馈)]`
+  - 🔌 熔断器：各腿（含 L4·2026-10-19 补）任一不在 main() 注册表 → 🔴「尺子未接线」，⛔以「文件里有这函数」当已生效（本轮实证：插进文件头 docstring 后 compile 通过而检查器零输出 rc=0）
   - ✅DO **取证腿四自证（2026-10-11 反哺 QCN-20261011 条·新判据出厂前依次过）**：①夹具完整（被检件所依赖的件都放进测试现场，⛔缺件时把产品当嫌疑犯）②现场可查（判红同行必须打印被测对象原始输出）③阳性必点（已知真缺陷样本须被点名，没点名＝尺错不许当成绩）④阴性不报（已知正确样本不得被报，报即假红）；断言期望值 ⛔按想象写，先 DIAG 打印一次真实输出再定
   - ✅DO 取证型 step 配 `if: always()`（⛔被前置失败跳过——尺子最该说话时沉默＝假绿）；插桩判据须落真 import 块/真 CLI 风格，插完立即跑一次断言 stdout 非空（本轮实证：插进文件头 docstring 致检查器零输出 rc=0，compile 照样通过）
   - 来源：`[来源: 成长箱反哺 | 日期: 2026-10-10 | 反哺标题: 跨平台对等三腿入尺+判据派生化胜过手写清单]`
@@ -111,6 +114,27 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
   - ✅DO 修复形态=一律 `${var}` 花括号化（防误层·平台中立修即两端同修）；存量 71 处/34 文件已由 2026-10-12 Zwork 沙箱轮清零（三轮对抗施工回滚实录=receipts/fix_loop_20261012.py）
   - ⛔DO NOT 以「作者机 shell 从未炸」当豁免——作者机无 LC_CTYPE 强制=观察窗盲区（承条文 59·门禁自食）
   - 来源：`[来源: 成长箱反哺 R-20261012-03 | 日期: 2026-10-12 | 反哺标题: 沙箱安装测试门禁七判据 R1]`
+- Step B1.5g：孪生件形状对账（2026-10-21·verify双端同构缺腿反哺·安装包哲学条文68孪生同构律·皮叔令「做；批」）
+  - 病形：.sh↔.ps1 孪生件「文件在位而检查段单侧演化」——verify.sh §3.0/4.6/4.7 三面根治判据（10-03~10-15）
+    在 verify.ps1 零覆盖，文件级配对检查（L1派生式/P1资产对称）全绿看不见段级失明=校验器的校验器缺位。
+  - ✅DO `python3 <pkg>/references/scripts/platform_compat.py <pkg>`（结果行含「孪生件形状对账(检查⑬·条文68)」）
+    判据数据面=包内 `references/twin-sections.json`（类型=数据·新孪生对=加一条登记·承 §二·四十/§二·四十一）；
+    三向判据=①neutral 段任一端缺席→红 ②任一端出现未登记段号→红（单向加段必被逮=反漂移灵魂）
+    ③*_only 专属段无 basis→红（⛔空壳豁免·承 platform-exemptions 同规）；
+    仪器未跑（件缺/台账缺/解析失败）显形为 issue——⛔把仪器故障当判据绿。
+  - ✅DO **负例翻色每轮至少一次**：临时往一端文件加一个未登记 `# 9.9)探针` 段头→检查⑬必红→清除回绿
+    （承 B1.5f「未翻色的绿灯=未验证的绿灯」）。
+  - 判据本体住 `verify_pair_checks.twin_check`（platform_compat 检查⑬同树 import·⛔两处手搓）。
+  - 来源：`[来源: 外部评估点破+本窗实跑坐实 | 日期: 2026-10-21 | 反哺标题: 孪生脚本的段级同构从未被校验——检测侧同源缺口·任务卡2026-10-21-verify双端同构缺腿与孪生对账规则]`
+
+- Step B1.5l：Windows 行为层证据链对账（2026-10-22·Win安装体验根治 R7-R9 批反哺·安装包哲学条文69实证二·皮叔问「可以加到Loop安装包规则么」拍板入尺）
+  - 缘起：R7-R9 五枚真雷（MEMORY_CENTER 未下传/跳别名单反斜杠坏正则/Skill 落位腿漏调/checker 自伤/STEP5 时序倒置）**全部**由 windows-latest runner 逮出，**零枚**出自 Mac 静态自验——「Mac 绿≠可发布」挂文档面多年，本条给它装机械动作：Loop 每轮自动核对，不再依赖谁记得。
+  - ✅DO **触发面**：上次发布以来装机链有改动（包面 CHANGELOG 新版本段涉及 install_scripts.py／verify.sh／verify.ps1／adapters/*／fallback_install.ps1／安装兜底.bat 等装机可执行件）。无改动→显式输出「⚪ 本期无装机链改动面」免检——⛔静默跳过不算过（豁免也要留一行账）。
+  - ✅DO **证据判据**：每条装机链改动须有 windows-latest run conclusion=success 背书。核对姿势：①改动条目文本含 `run <数字>` 字串 → `gh run view <id> --repo 用户名/blt-win-ci-public --json conclusion --jq .conclusion` **回实盘验真**（⛔信文本不信回执——run 号可能是编的，条文69 判据②的同源应用）；②无 run 号 → `gh run list --repo 用户名/blt-win-ci-public --workflow win-fallback-4tests --limit 5` 日期对账：改动时刻之后无 success run → 🔴。
+  - 🔴 **红处置**：漂移报告输出「建议发起 runner」+可抄命令（`gh workflow run win-fallback-4tests.yml --repo 用户名/blt-win-ci-public`），Loop 本体⛔不自动踢 CI——对账证据自动化，烧机时归人定（承本文件验证层级栏「真机档由用户定」口径）。
+  - ⛔DO NOT 以「Mac 侧 bash -n／pwsh Parser／py_compile 已绿」替代行为层证据——五雷皆语法合法态，真机才现形（条文69 判据③「机制⛔靠自觉」的证据面延伸）。
+  - 🔌 熔断器（gh 不可达/仓不可读）：记 ⚠️「行为层证据未核（gh 不可达）」判黄不判绿——⛔把仪器失明当本项绿（承 B1.5g 取证腿四自证精神）。
+  - 来源：`[来源: 2026-10-21-Win安装体验根治-任务卡 R7-R9 批 | 日期: 2026-10-22 | 反哺标题: 装机链改动必须有 runner success 背书·Loop每轮自动对账]`
 - Step B2：衍生加强包巡检（防静默死守卫·2026-08-11 反哺）
   - ✅DO 遍历 `[记忆共享中心]/发布库/五层记忆系统/` 下所有 `*加强包*` 目录（如 千问办公加强包 / Qoder系加强包(Desktop+QoderWork)），对每个衍生包执行：
     - `bash "<衍生包>/_sync-check.sh" --check`（资产漂移自检：手动副本 vs 权威源指纹比对，`0 FAIL` = 同步健康）

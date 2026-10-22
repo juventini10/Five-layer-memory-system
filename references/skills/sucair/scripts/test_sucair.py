@@ -8,6 +8,10 @@
 运行：cd scripts && python3 -m unittest test_sucair -v   （或 python3 -m unittest discover -s scripts -p "test_sucair.py"）
 退出码：0=全绿（G2回归通过）；非0=有硬伤，⛔DO NOT 带红交付。
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 import os
 import sys
 import unittest

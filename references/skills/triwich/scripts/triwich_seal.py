@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-三明智结论块封口（triwich_seal v1.5.5）—— 阶段3 物理锁层 + 决策卡回访挂载
+三明智结论块封口（triwich_seal v1.6.1）—— 阶段3 物理锁层 + 决策卡回访挂载
+
+v1.6.1（2026-10-21·WorkBuddy 端·皮叔令「这个问题要根治，实事求是的根治」）：**目录锁 → 文件锁**。
+  根因（本轮实测取证）：WorkBuddy 沙箱路径代理层对「家目录/工作区路径」禁止 rmdir（删除目录），
+  但允许 unlink（删除文件）；/private/tmp 与 /var/folders 不受限。实测矩阵：
+    [记忆共享中心]/脚本中心/data  rmdir FAIL（PermissionError·errno=None·代理层重抛）
+    ~/[日记仓库]      rmdir FAIL
+    /private/tmp                rmdir OK
+  原实现 mkdir 加锁、rmdir 释放/夺取 ⇒ 获取成功、释放必失败 ⇒ 锁永久残留 ⇒ 第二次 record 必死。
+  本轮实证：seal.log.lock 残留导致 triwich_closeout.py 连跑三次全 FAIL（回执对账/seal/linkcheck 均已通过，
+  只卡在锁），而 seal.log 里 20:29:17 的记录证明 seal 本体是成功的——坏的只有锁的生命周期。
+  修法：锁载体由「目录」改「文件」——acquire=os.open(O_CREAT|O_EXCL)、release/stale=os.unlink，
+  两动作在沙箱全域放行；旧目录锁残留不再空转超时，改为明确 WARN + 给出 rename 清锁命令
+  （沙箱允许 os.rename，本轮用它把残留目录移出 scripts/ 验证通过）。
 
 v1.5.6（2026-10-17·WorkBuddy 端·皮叔令「发现的阻塞性缺陷按符合愿景的最优解根治」）：锁获取 EEXIST 双形态归一 + 释放不再静默。
   根因：沙箱代理层（WorkBuddy sitecustomize._brokered_os_mkdir）把 host 侧 mkdir 的 EEXIST 重抛成
@@ -11,6 +24,7 @@ v1.5.6（2026-10-17·WorkBuddy 端·皮叔令「发现的阻塞性缺陷按符�
   错误照常 raise（不吞真故障）；_release_path_lock 失败改 stderr 告警（原 `except OSError: pass` 静默）。
   实测：五场景单测 5/5（含代理层 PermissionError 归一、真故障不吞）+ 既有回归 33/33 + record 端到端零锁残留。
 
+v1.6.0（2026-10-21·键-链强互锁）：record 可选 --key-file——链行尾追 key_ts|key_hash 两字段（键文件内容 sha256[:16]），同键异封=拒绝（一轮一键物理化·顶包显形）；self_hash 按字段数分式（5字段老行旧式/7字段新行新式）=老链零追红（祖父化·v4.4.15 防永久红处方同族）；新增 linkcheck 子命令（键文件↔链行对账：未封口/封口后被改/一键两封三态显形）。
 v1.5.5（2026-09-21·R6 尾批）：单横线已知 flag 别名旁路封死（-tool 类一律确定性拒）+ 注释落点措辞逐字对应。
 
 v1.5.4+D18（2026-09-26·Qoder CN 童灵·⛔不跳版本号，同族 v1.5.x 多端共写·抢号即造新漂移）：verify 的「链尾会话≠当前会话」分支补**口径提示**——链尾键形如「端名:文本sha1前12」＝该跳由 record --text-file 封口，而 verify 未传同一文件时拿运行时会话 id 比对，两者永不可能相等，旧文案独指「可能被删除」会把审计者推向修一条根本没发生的删除。⛔判定逻辑与退出码一字未动（只加提示串）。实测判别力：真链 62 跳中 text-file 键形 58（触发提示）／sess_ 运行时段 4（不触发），正则 ^[^:]+:[0-9a-f]{12}$ 对两类零混淆。
@@ -313,8 +327,26 @@ def read_chain():
 def self_hash(ts, session, seal, prev):
     return hashlib.sha256(f"{ts}|{session}|{seal}|{prev}".encode("utf-8")).hexdigest()[:16]
 
+def self_hash_v2(ts, session, seal, prev, key_ts, key_hash):
+    # v1.6.0 键-链强互锁：新式行把键身份压进自哈希——改键/换键/删键字段任一必致 self_hash 不匹配
+    return hashlib.sha256(f"{ts}|{session}|{seal}|{prev}|{key_ts}|{key_hash}".encode("utf-8")).hexdigest()[:16]
 
-def record(tool=None, text_file=None):
+def key_fields(key_file):
+    """从键文件取 (key_ts, key_hash)；文件名时间戳不可解析→None（调用方确定性拒绝，⛔不静默跳过）。"""
+    import re as _re
+    base = os.path.basename(os.path.expanduser(key_file))
+    m = _re.search(r"step0-determination-(\d{8}_\d{6})", base)
+    if not m:
+        return None, None
+    try:
+        with open(os.path.expanduser(key_file), "rb") as fh:
+            data = fh.read()
+    except Exception:
+        return m.group(1), "UNREADABLE"
+    return m.group(1), hashlib.sha256(data).hexdigest()[:16]
+
+
+def record(tool=None, text_file=None, key_file=None):
     """封口。v1.4.0（方案C 全端覆盖）：优先 --text-file（收尾传文本·不依赖读会话存储）；
     未提供则回退旧探测；两者皆无 → FAIL（Fail-Loud·不再静默跳过）。"""
     if text_file:
@@ -341,14 +373,48 @@ def record(tool=None, text_file=None):
         chain = read_chain()
         if chain and chain[-1][1] == sess and chain[-1][2] == seal:
             return 0, f"已封口（同会话同指纹·链尾即本轮）不重复入链", False, sess
+        key_ts = key_hash = None
+        if key_file:
+            key_ts, key_hash = key_fields(key_file)
+            if key_ts is None:
+                return 1, f"--key-file 文件名无法解析时间戳（{os.path.basename(str(key_file))}）——拒绝封口（Fail-Closed·⛔不静默降级成无键封）", False, None
+            for e0 in chain:  # 一键一封：同键已有链行且封的不是同一结论 → 顶包/重封显形
+                if len(e0) >= 7 and e0[5] == key_ts and e0[2] != seal:
+                    return 1, (f"键-链互锁拒绝：本轮键 {key_ts} 已存在另一封口 seal={e0[2]}——"
+                               f"同一轮键二次封不同结论=违规（一轮一键·v1.6.0），退回核对是否拿错键/该重铸键"), False, None
         prev = chain[-1][4] if chain else "GENESIS"
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        entry = f"{now}|{sess}|{seal}|{prev}|{self_hash(now, sess, seal, prev)}"
+        if key_ts:
+            entry = f"{now}|{sess}|{seal}|{prev}|{self_hash_v2(now, sess, seal, prev, key_ts, key_hash)}|{key_ts}|{key_hash}"
+        else:
+            entry = f"{now}|{sess}|{seal}|{prev}|{self_hash(now, sess, seal, prev)}"
         with open(LOG_PATH, "a", encoding="utf-8") as fh:
             fh.write(entry + "\n")
     finally:
         _release_path_lock(LOG_PATH + ".lock")
     return 0, f"已记录 seal={seal}（链长 {len(chain) + 1}）", True, sess
+
+
+def linkcheck(key_file):
+    """v1.6.0 键-链强互锁对账：键文件 ↔ 链行三态显形（封口后被改/未封口/正常）。"""
+    if not key_file:
+        return 1, "linkcheck 需要 --key-file（⛔无键可对账）"
+    key_ts, key_hash = key_fields(key_file)
+    if key_ts is None:
+        return 1, f"键文件名无法解析时间戳：{os.path.basename(str(key_file))}"
+    if key_hash == "UNREADABLE":
+        return 1, f"键文件不可读：{key_file}"
+    hits = [e for e in read_chain() if len(e) >= 7 and e[5] == key_ts]
+    if not hits:
+        legacy = [e for e in read_chain() if len(e) >= 7]
+        if not legacy:
+            return 1, f"键 {key_ts} 无链上互锁行——链尚无 v1.6.0 后封口（老链祖父化态）或未封口，无法区分；请核对封口时间"
+        return 1, f"LINKCHECK:FAIL 键 {key_ts} 未入链（链上已有新式行而这轮没有=本封未封/无键封）——封口义务缺口显形"
+    bad = [e for e in hits if e[6] != key_hash]
+    if bad:
+        return 1, (f"LINKCHECK:FAIL 键 {key_ts} 封口后被改动：链载 {bad[0][6]} ≠ 现算 {key_hash}"
+                   f"（seal={bad[0][2]}）——已封口结论的判定依据变了，违反『封口后⛔改内容』锁")
+    return 0, f"LINKCHECK:OK 键 {key_ts} ↔ seal={hits[0][2]} 互锁一致（hash {key_hash} 现算==链载）"
 
 
 def verify(tool=None, text_file=None):
@@ -380,7 +446,13 @@ def verify(tool=None, text_file=None):
     for i, entry in enumerate(chain):
         ts, session, s, prev, h = entry[:5]
         exp_prev = chain[i - 1][4] if i > 0 else "GENESIS"
-        exp_h = self_hash(ts, session, s, prev)
+        # v1.6.0 字段数分式：5=老式（祖父化不追红）；7=新式含键字段；6=撕裂行按断裂报
+        if len(entry) >= 7:
+            exp_h = self_hash_v2(ts, session, s, prev, entry[5], entry[6])
+        elif len(entry) == 6:
+            return 1, f"链撕裂 @{i}：6字段半提交行（键字段只落一半）——该条被改写或并发撕裂"
+        else:
+            exp_h = self_hash(ts, session, s, prev)
         if prev != exp_prev:
             return 1, f"链断裂 @{i}：prev 不连续（{prev} ≠ {exp_prev}）——日志被篡改/删除过"
         if h != exp_h:
@@ -413,7 +485,8 @@ def verify(tool=None, text_file=None):
 # v1.4.2 实跑取证：`record --help` 被 parse_kv 当成未知 kv 吞掉 → 走无 --text-file 的回退分支
 # → 对探测到的**他端老会话**真写了一条封口（幻影链尾）。未知 flag 必须显式拒绝，⛔不猜测。
 KNOWN_FLAGS = {"tool", "text-file", "followup", "predict", "falsify", "deadline",
-               "default", "window", "depth", "bias", "actual", "cause", "fix", "mechanism"}
+               "default", "window", "depth", "bias", "actual", "cause", "fix", "mechanism",
+               "key-file"}
 
 
 def parse_kv(args):
@@ -442,23 +515,25 @@ def _dr_lock_path():
 
 
 def _acquire_path_lock(lp, timeout_s=5.0):
-    """路径级 mkdir 原子锁（v4.4.10·R2-seal分叉根治时泛化——DR/SEAL 两把锁同一实现，⛔不复制锁逻辑成第二本账）。
-    os.mkdir 各平台原子；持锁者崩溃由 30s stale 夺取兜底；超时 False=调用方 Fail-Closed。
+    """路径级原子锁（v1.6.1·文件锁·WorkBuddy 沙箱根治）。
 
-    v1.5.6（2026-10-17·WorkBuddy 端·皮叔令「按符合愿景的最优解根治」）：EEXIST 双形态归一。
-    沙箱/宿主代理层（如 WorkBuddy sitecustomize 的 _brokered_os_mkdir）会把 host 侧 mkdir 的
-    EEXIST 重新抛成 **PermissionError**，原 `except FileExistsError` 抓不到 ⇒ 异常穿透整链中断，
-    且已持有的锁无人释放（2026-10-17 09:35-09:52 实证：seal.log.lock / decision-room.md.lock
-    双双残留，record 从第二次起必死）。改为捕 OSError 后按 errno/EEXIST 字面判"已存在"，
-    非"已存在"类错误照常抛出（不吞真故障）。"""
+    载体=文件，acquire 用 os.open(O_CREAT|O_EXCL) 原子创建，release/stale 用 os.unlink。
+    ⛔DO NOT 改回 os.mkdir/os.rmdir 目录锁——原因是 WorkBuddy 沙箱对家目录/工作区路径禁止
+    rmdir（代理层 PermissionError·errno=None），mkdir 成功而 rmdir 必失败=锁永久残留，
+    第二次 record 必死（2026-10-21 实证：closeout 连跑三次全 FAIL，seal 本体却已写入）。
+    沙箱实测：rmdir 仅 /private/tmp、/var/folders 放行；unlink 与 rename 全域放行。
+
+    v1.5.6（2026-10-17）保留条款：EEXIST 双形态归一——沙箱代理层会把 host 侧 EEXIST
+    重抛成 PermissionError，故用 errno==17 / "EEXIST" 字面判存在性，非"已存在"类错误照常抛。
+    """
     import time as _t
     deadline = _t.time() + timeout_s
     while True:
         try:
-            os.mkdir(lp)
+            fd = os.open(lp, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            os.close(fd)
             return True
         except OSError as e:
-            # EEXIST 两种形态：原生 FileExistsError(errno=17) / 代理层包装的 PermissionError(消息含 EEXIST)
             is_exists = (
                 isinstance(e, FileExistsError)
                 or getattr(e, "errno", None) == 17
@@ -466,9 +541,17 @@ def _acquire_path_lock(lp, timeout_s=5.0):
             )
             if not is_exists:
                 raise
+            # 旧版目录锁残留：沙箱禁 rmdir，无法自愈 → 明确报错，⛔不静默空转到超时
+            if os.path.isdir(lp):
+                print(
+                    f"WARN: 旧版目录锁残留 {lp}（沙箱禁 rmdir，无法自愈）。清锁："
+                    f"python3 -c \"import os;os.rename(r'{lp}', r'/private/tmp/stale_lock_$$')\"",
+                    file=sys.stderr,
+                )
+                return False
             try:
                 if _t.time() - os.path.getmtime(lp) > 30:
-                    os.rmdir(lp)
+                    os.unlink(lp)
                     continue
             except OSError:
                 pass
@@ -478,11 +561,18 @@ def _acquire_path_lock(lp, timeout_s=5.0):
 
 
 def _release_path_lock(lp):
-    """释放路径锁。v1.5.6：失败不再静默——静默吞=锁残留不可见，下次必然 EEXIST（2026-10-17 实证）。"""
+    """释放路径锁（v1.6.1：unlink 释放，兼容旧目录锁；失败不再静默）。"""
     try:
-        os.rmdir(lp)
+        os.unlink(lp)
     except FileNotFoundError:
         pass  # 已被 stale 夺取或从未创建，属正常路径
+    except IsADirectoryError:
+        # 旧版目录锁：沙箱禁 rmdir，尽力尝试，失败给出 rename 清锁指引
+        try:
+            os.rmdir(lp)
+        except OSError as e:
+            print(f"WARN: 旧版目录锁释放失败 {lp}: {e}（沙箱禁 rmdir，用 os.rename 清锁）",
+                  file=sys.stderr)
     except OSError as e:
         print(f"WARN: 锁释放失败 {lp}: {e}（下次获取可能 EEXIST）", file=sys.stderr)
 
@@ -786,10 +876,11 @@ def main():
               "[--followup 任务 --predict 预测 --falsify 判假方式 --deadline YYYY-MM-DD --default no-op：… "
               "--window 窗口 --depth L1|L2|L3]")
         print("       triwich_seal.py followup | list | resolve 序号(裸数字或 FU-N 均可·如 3 / FU-3) --bias B? --actual … --cause … --fix … [--mechanism …]")
+        print("       triwich_seal.py linkcheck --key-file 本轮键文件   (v1.6.0 键-链对账三态)")
         return 0
-    if mode not in ("record", "verify", "followup", "list", "resolve"):
+    if mode not in ("record", "verify", "followup", "list", "resolve", "linkcheck"):
         # v4.4.11·缝合修复：TW-3 help 闸上移时白名单闸被融丢（=R3-N2 修面不修链当场复发·被抓现行）——两闸并存：help 先给用法，未知子命令仍拒
-        print(f"SEAL:FAIL 未知子命令 {mode!r}（可选 record/verify/followup/list/resolve·--help 看用法）")
+        print(f"SEAL:FAIL 未知子命令 {mode!r}（可选 record/verify/followup/list/resolve/linkcheck·--help 看用法）")
         return 2
     kv = parse_kv(args[2:] if mode == "resolve" else args[1:])
     bad = sorted(set(kv) - KNOWN_FLAGS)
@@ -805,7 +896,7 @@ def main():
     if mode == "record":
         if "tool" in kv and not kv["tool"].strip():
             print("⚠️ --tool 空值=未定向（多端并发下将走 mtime 探测·跨会话错位封口面）——本次继续但请补端名（v4.4.13·R5-N1 显形）", file=sys.stderr)
-        code, msg, sealed, sess = record(kv.get("tool"), kv.get("text-file"))
+        code, msg, sealed, sess = record(kv.get("tool"), kv.get("text-file"), kv.get("key-file"))
         out = f"SEAL:{'OK' if code == 0 else 'FAIL'} {msg}"
         if "followup" in kv and not str(kv["followup"]).strip():
             # v4.4.13·R5-N1：--followup 空值旧版被 if kv.get() 真值门整体吞掉=回访登记静默蒸发
@@ -830,6 +921,9 @@ def main():
     elif mode == "resolve":
         code, msg = resolve(args[1] if len(args) > 1 else "", kv)
         out = f"RESOLVE:{'OK' if code == 0 else 'FAIL'} {msg}"
+    elif mode == "linkcheck":
+        code, msg = linkcheck(kv.get("key-file"))
+        out = msg if msg.startswith("LINKCHECK") else f"LINKCHECK:{'OK' if code == 0 else 'FAIL'} {msg}"
     else:
         code, msg = verify(kv.get("tool"), kv.get("text-file"))
         out = f"SEAL:{'OK' if code == 0 else 'FAIL'} {msg}"

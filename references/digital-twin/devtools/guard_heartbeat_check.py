@@ -27,7 +27,7 @@ advisory 仍不改退出码；硬漂移（ST_MISS）才 alarm=true。
 
 ## 纪律
 纯 stdlib；除自身心跳外只读；advisory 不硬失败（新鲜度无法区分休假与停摆）。
-契约：--check(JSON) / --report(md) / --brief(单行) / --selfcheck
+契约：--check(JSON) / --report(md) / --brief(单行) / --selfcheck / --self-test(路径解析回归锁·⑤腿消费)
       / [--days N]（仅影响 Leg A 窗口）/ [--mc <记忆中心>]
 Stop hook 已挂 --check（settings.json），每次会话结束自动巡检→闭环（vision①）。
 作者：皮叔 | 版本：v3.0 | 日期：2026-09-22
@@ -116,10 +116,13 @@ def script_stem(cmd):
 
 
 def script_path_of(cmd):
-    m = re.search(r"(\S+\.(?:py|sh))", cmd)
+    # 2026-10-21 根治(Win用户反馈缺陷①)：旧 r"(\S+\.py|sh)" 对 Windows 引号路径
+    #   (路径含空格必被引号包住) 把前导引号吞进捕获、遇空格还截断 → exists 恒假
+    #   → 全体钩子误判 ST_MISS 硬漂移假红。改：优先匹配双引号内整路径(容空格)，回退裸 token。
+    m = re.search(r'"([^"]+\.(?:py|sh))"|(\S+\.(?:py|sh))', cmd)
     if not m:
         return None
-    return os.path.expanduser(m.group(1))
+    return os.path.expanduser(m.group(1) or m.group(2))
 
 
 def find_ledger(mc=None):
@@ -488,6 +491,28 @@ def mode_selfcheck():
     return 0
 
 
+def mode_self_test():
+    """⑤腿/CI 回归锁：断言 script_path_of/script_stem 对多平台真实路径形态解析正确。
+       防 defect①(2026-10-21 Win反馈)：Windows 引号包裹/含空格钩子路径被抽带前导引号或
+       截断 → os.path.exists 恒假 → 全体钩子误判 ST_MISS 硬漂移假红。"""
+    cases = [
+        ('python3 /home/u/.wb/hooks/route.py', '/home/u/.wb/hooks/route.py', 'route'),
+        ('"/usr/bin/python3" /mc/hooks/vgate.py', '/mc/hooks/vgate.py', 'vgate'),
+        ('"C:\\Program Files\\python.exe" "C:\\MC\\hooks\\vgate.py"', 'C:\\MC\\hooks\\vgate.py', 'vgate'),
+        ('python3 "C:\\Users\\me\\My App\\route.py"', 'C:\\Users\\me\\My App\\route.py', 'route'),
+    ]
+    bad = []
+    for cmd, want_p, want_s in cases:
+        gp, gs = script_path_of(cmd), script_stem(cmd)
+        if gp != want_p: bad.append('path_of %r -> %r != %r' % (cmd, gp, want_p))
+        if gs != want_s: bad.append('stem %r -> %r != %r' % (cmd, gs, want_s))
+    if bad:
+        print('SELF-TEST RED: 路径解析回归失败(%d/%d)' % (len(bad), len(cases)))
+        for b in bad: print('  -', b)
+        return 1
+    print('SELF-TEST GREEN: script_path_of/script_stem 多平台形态 %d 例全对' % len(cases))
+    return 0
+
 def main():
     args = sys.argv[1:]
     days = DEFAULT_DAYS
@@ -503,6 +528,8 @@ def main():
         i = args.index("--mc")
         if i + 1 < len(args):
             mc = args[i + 1]
+    if "--self-test" in args:
+        sys.exit(mode_self_test())
     if "--selfcheck" in args:
         sys.exit(mode_selfcheck())
     if "--report" in args:

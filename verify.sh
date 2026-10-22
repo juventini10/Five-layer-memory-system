@@ -2,6 +2,9 @@
 # ============================================================
 # verify.sh — 布洛陀安装包 接入自检 v1.0（只读·不改任何文件）
 # 用法: bash verify.sh [--platform <端ID>]   (默认记忆中心 ~/记忆共享中心)
+# 语义声明（2026-10-20·反馈#3 误读根治）：本脚本=**装后自检**——需要已安装的记忆中心；
+#   在未安装的 clone/解包目录上跑，装机态项（路径完整性/占位符残留/软链）必报失败，属预期，
+#   ⛔ 不等于"包缺件"。只看包面请用：python3 references/scripts/smoke_test.py . 与 platform_compat.py .
 #       MEMORY_CENTER=/path bash verify.sh   (自定义记忆中心)
 #       --platform qodercn → 落点检查按该端 capability.yaml 的 config_root（v2.0.1·多端）
 # 检查项: 0)数据污染 1)系统文件 2)规则三层 3)记忆Skill 4)安装包干净度 5)版本锚点
@@ -17,9 +20,11 @@
 # ============================================================
 set -uo pipefail
 G='\033[0;32m'; R='\033[0;31m'; Y='\033[1;33m'; C='\033[0;36m'; N='\033[0m'
-PASS=0; FAIL=0
+PASS=0; FAIL=0; PEND=0
 ok(){ echo -e "${G}  [PASS] $1${N}"; PASS=$((PASS+1)); }
 no(){ echo -e "${R}  [FAIL] $1${N}"; FAIL=$((FAIL+1)); }
+# 三态分账（2026-10-22 R9·条文70·与 verify.ps1 同口径镜像·条文68）
+pend(){ echo -e "${C}  [PEND] $1${N}"; PEND=$((PEND+1)); }
 
 PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ── v2.0.1 多端配置根（2026-09-30 L3审计根治：验收门禁不覆盖非WB端）────────
@@ -93,6 +98,8 @@ PY=""
 # 试跑校验（2026-09-20 回灌群友 Windows 实测）：Git Bash 下 python3 可能命中
 # MS Store stub（command -v 可见·实际执行 exit 49）——仅探测不试跑会把坏解释器当可用。
 py_ok(){ "$1" -c "pass" >/dev/null 2>&1; }
+STEP5_DONE=0; [ -f "$MC/.install/step5-done.md" ] && STEP5_DONE=1
+miss(){ if [ "$STEP5_DONE" = 0 ]; then pend "$1（AI引导段未跑·答题后重跑即消）"; else no "$1"; fi; }
 for cand in "$HOME/.workbuddy/binaries/python/versions/"*/bin/python3 "$HOME/.workbuddy/binaries/python/versions/"*/bin/python; do
   if [ -x "$cand" ] && py_ok "$cand"; then PY="$cand"; break; fi
 done
@@ -132,7 +139,7 @@ for e in "references/templates/SOUL.md|人格模板" "references/templates/IDENT
   rel="${e%%|*}"; lb="${e#*|}"
   if [ -s "$PKG_ROOT/$rel" ]; then ok "发布模板 $lb: $rel"; else no "发布模板 $lb: $rel (缺失)"; fi
 done
-if [ -s "$MC/核心层/CORE.md" ]; then ok "记忆中心 核心层: CORE.md"; else no "记忆中心 核心层: CORE.md (缺失/为空)"; fi
+if [ -s "$MC/核心层/CORE.md" ]; then ok "记忆中心 核心层: CORE.md"; else miss "记忆中心 核心层: CORE.md (缺失/为空)"; fi
 
 # 1.5) 平台系统文件（落点 SSOT = adapters/<端>/capability.yaml 的 system_file_paths）
 #
@@ -250,7 +257,7 @@ PYEOF
     case "$st" in
       OK)     ok  "平台系统文件: $nm → $CONFIG_ROOT/$rel" ;;
       MERGED) ok  "平台系统文件: $nm → $rel" ;;
-      MISS)   if [ "$nm" = "自定义指令" ]; then no "平台系统文件: $nm → $CONFIG_ROOT/$rel (缺失·F20 预期态注：设置框字段由用户手动粘贴·安装输出有指引·粘后重跑即消·⛔非装失败)"; else no "平台系统文件: $nm → $CONFIG_ROOT/$rel (缺失)"; fi ;;
+      MISS)   if [ "$nm" = "自定义指令" ]; then no "平台系统文件: $nm → $CONFIG_ROOT/$rel (缺失·F20 预期态注：设置框字段由用户手动粘贴·安装输出有指引·粘后重跑即消·⛔非装失败)"; else miss "平台系统文件: $nm → $CONFIG_ROOT/$rel (缺失)"; fi ;;
          BADF)   no  "平台系统文件: $nm — $rel (字段路径取不到·声明有误)" ;;
          EMPTY)  echo -e "${C}  [i] 平台系统文件: $nm → $rel (载体在位·内容待用户填·非缺陷)${N}" ;;
       FAIL)   no  "平台系统文件: $nm" ;;
@@ -482,32 +489,33 @@ done
 #       多端包内 Skill 用英文标识符目录名，端用户本地可能以中文别名目录名部署（如
 #       「布洛陀-童灵切片导航-豆包办公」= doenglingz-slice-nav-doubao），按 basename
 #       直配会把「已装」误报「缺失」。三口径任一命中即计已部署。
-_skill_present() { # $1=包内Skill目录 $2=待查根目录
-  local s name d f fm
-  s=$(basename "$1")
-  [ -e "$2/$s" ] && return 0                                  # 口径①目录名直配
-  name=$(grep -m1 '^name:' "$1/SKILL.md" 2>/dev/null | sed -E 's/^name:[[:space:]]*["'"'"']?([^"'"'"'[:space:]]*).*/\1/')
-  [ -n "$name" ] && [ -e "$2/$name" ] && return 0             # 口径②frontmatter name 直配
-  for d in "$2"/*/; do                                        # 口径③扫描目标目录 frontmatter
-    [ -d "$d" ] || continue
-    [ -f "$d/SKILL.md" ] || continue
-    fm=$(grep -m1 '^name:' "$d/SKILL.md" 2>/dev/null | sed -E 's/^name:[[:space:]]*["'"'"']?([^"'"'"'[:space:]]*).*/\1/')
-    [ -n "$fm" ] && [ "$fm" = "$name" ] && return 0
-  done
-  return 1
+_skill_present() { # $1=包内Skill目录 $2=待查根目录 → rc 0=在场 1=缺席 2=仪器未跑
+  # 判据下沉 verify_pair_checks.skill_present（三口径单源·2026-10-21 条文68孪生同构律：
+  # 旧 bash 手搓版与 ps1 侧同判据两处演化=「sh有ps1没有」漂移族病根，本壳只调用不再持有逻辑）
+  [ -z "$PY" ] && return 2
+  [ -f "$PKG_ROOT/references/scripts/verify_pair_checks.py" ] || return 2
+  "$PY" "$PKG_ROOT/references/scripts/verify_pair_checks.py" skill-present "$1" "$2"
+  local rc=$?
+  case "$rc" in 0|1) return $rc ;; *) return 2 ;; esac
 }
 
 # 3) 记忆 Skill（2026-09-21 改「名单同源」：从包内 references/skills/ 动态枚举，⛔不再硬编码
 #    9 个名字——硬编码导致新增 Skill 长期不在验证覆盖内=装了没装都不报）
 #    2026-10-03 落点判定升级双口径（见 §3.0）：目录名或 frontmatter name 任一匹配即计）
-SKILLS_TOTAL=0; FSK=0
+SKILLS_TOTAL=0; FSK=0; SKI=0
 for d in "$PKG_ROOT"/references/skills/*/; do
   [ -d "$d" ] || continue
   [ -f "$d/SKILL.md" ] || continue
   SKILLS_TOTAL=$((SKILLS_TOTAL+1))
-  _skill_present "$d" "$MC/技能配置" && FSK=$((FSK+1))
+  _skill_present "$d" "$MC/技能配置"; _rc=$?
+  case "$_rc" in
+    0) FSK=$((FSK+1)) ;;
+    1) : ;;
+    *) SKI=$((SKI+1)) ;;
+  esac
 done
-if [ "$SKILLS_TOTAL" -gt 0 ] && [ "$FSK" -eq "$SKILLS_TOTAL" ]; then ok "记忆Skill: $FSK/${SKILLS_TOTAL}（名单源=包内 references/skills/）";
+if [ "$SKI" -gt 0 ]; then no "记忆Skill落点判定: 仪器未跑 ${SKI} 件（python 或 verify_pair_checks.py 不可用·⛔失明期间不得代报"缺失"——仪器故障与判据红分态·承§4.7 10-18教训）";
+elif [ "$SKILLS_TOTAL" -gt 0 ] && [ "$FSK" -eq "$SKILLS_TOTAL" ]; then ok "记忆Skill: $FSK/${SKILLS_TOTAL}（名单源=包内 references/skills/·三口径=verify_pair_checks 双端单源）";
 elif [ "$SKILLS_TOTAL" -eq 0 ]; then no "记忆Skill: 包内 references/skills/ 无可枚举 Skill（包结构异常）";
 else no "记忆Skill仅 $FSK/$SKILLS_TOTAL(缺失：比对包内 references/skills/ 与 $MC/技能配置/)"; fi
 
@@ -801,7 +809,7 @@ if [ -n "$PY" ] && [ -f "$PKG_ROOT/references/scripts/pkg_cleanliness_check.py" 
   #    并提供了 --fix-cache；但本节从未传 ⇒ 设计者给的解法一直没接上。
   #    ⛔ 其余 7 类（私人称呼/用户名/.bak/tmp/runtime/log/author_side）照报——只清 pycache，
   #      ⛔ 不许"清了一半就说干净"（真源 L301-302 的纪律）。
-  if ! py_run "$PKG_ROOT/references/scripts/pkg_cleanliness_check.py" --pkg-root "$PKG_ROOT" --fix-cache; then
+  if ! py_run "$PKG_ROOT/references/scripts/pkg_cleanliness_check.py" --pkg-root "$PKG_ROOT" --fix-cache --exclude-runtime; then  # 2026-10-22 R9 加 exclude-runtime·与 verify.ps1 同口径（条文68）
     # 2026-09-20 B6（群友计数口径）：原实现只置 DIRT 不调 no() → FAIL 计数不增 →
     #   检查器报多条 [FAIL] 而汇总"全过"=假绿。修法：检查器级计 1 项 + 明细口径声明。
     DIRT=1; no "安装包干净度: 检查器报污染（上方 [FAIL] 行=分类明细·__pycache__ 已自动清理·本汇总按检查器级计 1 项）"
@@ -831,85 +839,51 @@ if [ -n "$PY" ] && [ -f "$PKG_ROOT/references/scripts/path_integrity_check.py" ]
   fi
 fi
 
-# 4.6) 目录型骨架在位且非空（C16·2026-10-14 修包·判据=存在∧非空）
-#      病形=step3 3b 预先 mkdir 出空目录，step5 用"目录是否存在"判跳过 → 模板永久不落盘且一路绿灯
-#      （实证：全新装机 记忆蓝图/ 实测 0 文件，而包内模板 24 件；本项把该态判红）
-#      断言取 ≥1 而非硬编码件数：老用户自行删减设计依据库属正常态，⛔不得判成装机缺陷
-_SKEL_FAIL=0
-for _sk in "记忆蓝图" "最伟大的我" "未知未知" "成就系统" "记忆琥珀"; do
-  _d="$MC/$_sk"
-  if [ ! -d "$_d" ]; then
-    no "目录型骨架缺失: ${_sk}/（step3 建目录或 step5 整目录复制未执行）"; _SKEL_FAIL=1; continue
-  fi
-  _n=$(find "$_d" -type f 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$_n" -lt 1 ]; then
-    no "目录型骨架空壳: ${_sk}/ 目录在位但 0 文件（旧判据'目录是否存在'在此谎报通过·须按存在∧非空补齐）"; _SKEL_FAIL=1
-  fi
-done
-[ "$_SKEL_FAIL" = 0 ] && ok "目录型骨架在位且非空: 记忆蓝图/最伟大的我/未知未知/成就系统/记忆琥珀 5 处全过"
+# 4.6) 目录型骨架在位且非空（C16·判据=verify_pair_checks.skeleton 双端单源·本段为调用壳）
+#      病形与判据细节住 py 头注（存在∧非空·断言≥1⛔硬编码件数）；2026-10-21 下沉（条文68）
+if [ -n "$PY" ] && [ -f "$PKG_ROOT/references/scripts/verify_pair_checks.py" ]; then
+  _skl=$("$PY" "$PKG_ROOT/references/scripts/verify_pair_checks.py" skeleton "$MC" 2>&1)
+  if [ $? -eq 0 ]; then ok "目录型骨架在位且非空: $_skl"; else miss "目录型骨架: $_skl"; fi
+else no "目录型骨架: 仪器未跑（python/verify_pair_checks 不可用·⛔失明期间不得判无）"; fi
 
-# 4.7) 摘要版三表占位符闭环（C08·2026-10-15·双向：出厂纯净 + 装机注入完整）
-#      病形①：旧模板把作者 19 行真实答卷（Q8-Q33 含"表格控/先做再说，别磨叽/晚睡…"）当"干净通用模板"随包发，
-#             AI 漏替换任一行 ⇒ 新用户顶着别人的画像运行；而 Step 0.5 污染指纹池 10-03 已清空（私有数据不入包），
-#             对模板表格零覆盖 ⇒ 闸全绿但人是假的。修法＝模板改占位符 + 用**结构判据**双向守，
-#             ⛔ 不把答案串写进污染指纹池（选项词人人可说＝假红机器，且违反"包内不得有隐私"终裁）。
+# 4.7) 摘要版三表占位符闭环（C08·判据=verify_pair_checks.summary_tables 双端单源·本段为调用壳）
+#      病形①②/仪器未跑分态/F13整数比较防坑均在 py 侧；2026-10-21 下沉（条文68）
 _TPL="$PKG_ROOT/references/templates/用户基本规则-摘要版.md"
 _INST_SUM="$MC/记忆规则/用户基本规则-摘要版.md"
-if [ -n "$PY" ] && [ -f "$_TPL" ]; then
-  _tpl_raw=$(printf '%s\n' "$_TPL" | "$PY" -c '
-import re, sys
-# 2026-10-18 T16真码根修：win python stdin 默认按 locale(cp1252/cp936) 解码 UTF-8 字节流
-#   → 中文文件名 mojibake → FileNotFoundError（实证 err= surrogate \uDC81·Win 真机取证轮）。
-#   buffer+显式 utf-8=跨平台确定通道；Mac/Linux utf-8 环境零扰动。
-path = sys.stdin.buffer.read().decode("utf-8", "surrogateescape").strip()
-bad = []
-n = 0
-for i, l in enumerate(open(path, encoding="utf-8"), 1):
-    m = re.match(r"^\|\s*(Q\d+)\s*\|([^|]*)\|([^|]*)\|([^|]*)\|\s*$", l)
-    if not m:
-        continue
-    n += 1
-    q, ans, rule = m.group(1), m.group(3).strip(), m.group(4).strip()
-    if ans != "[%s·答案待注入]" % q or rule != "[%s·规则待派生]" % q:
-        bad.append("L%d %s" % (i, q))
-print("ROWS=%d BAD=%s" % (n, ",".join(bad) if bad else "0"))
-' 2>&1)
-  _tpl_bad=$(printf '%s' "$_tpl_raw" | sed -n '/^ROWS=/p')
-  _tpl_err=$(printf '%s' "$_tpl_raw" | grep -v '^ROWS=' | tail -1)
-  if [ -z "$_tpl_bad" ]; then
-    # 2026-10-18 Loop轮：仪器未跑显形——python 腿空输出多因（解释器解析失败/编码/路径），
-    #   旧行为落"模板被污染 行数=?"红=把仪器故障伪装成判据结论，端用户无从排查。改报仪器自身。
-    no "模板纯净: python 腿无输出（仪器未跑·PY=${PY}·TPL=${_TPL}·err=${_tpl_err:-无stderr}·⛔此为仪器故障非包污染）"
+if [ -n "$PY" ] && [ -f "$PKG_ROOT/references/scripts/verify_pair_checks.py" ] && [ -f "$_TPL" ]; then
+  _st=$("$PY" "$PKG_ROOT/references/scripts/verify_pair_checks.py" summary-tables "$_TPL" "$_INST_SUM" 2>&1); _strc=$?
+  if [ $_strc -eq 2 ] || printf '%s' "$_st" | grep -q '^INSTRUMENT='; then
+    no "模板纯净: python 腿未跑（仪器未跑·$_st·⛔此为仪器故障非包污染）"
   else
-  _rows=$(printf '%s' "$_tpl_bad" | sed -n 's/.*ROWS=\([0-9]*\).*/\1/p')
-  _bad=$(printf '%s' "$_tpl_bad" | sed -n 's/.*BAD=\(.*\)/\1/p')
-  if [ "${_rows:-0}" -eq 19 ] && [ "${_bad:-1}" = "0" ]; then
-    ok "模板纯净: 摘要版三表 19 行 38 格全为占位符（⛔ 不携带任何具体答案·含选项名）"
-  else
-    no "模板被污染: 摘要版三表应为 19 行全占位符，实测 行数=${_rows:-?} 非占位符格=${_bad:-?}（作者/选项内容不得随包出）"
+    _rows=$(printf '%s' "$_st" | sed -n 's/.*ROWS=\([0-9]*\).*/\1/p')
+    _bad=$(printf '%s' "$_st" | sed -n 's/.*BAD=\([^ ]*\).*/\1/p')
+    _left=$(printf '%s' "$_st" | sed -n 's/.*LEFT=\([^ ]*\).*/\1/p')
+    if [ "${_rows:-0}" -eq 19 ] && [ "${_bad:-1}" = "0" ]; then
+      ok "模板纯净: 摘要版三表 19 行 38 格全为占位符（⛔ 不携带任何具体答案·含选项名）"
+    else
+      no "模板被污染: 摘要版三表应为 19 行全占位符，实测 行数=${_rows:-?} 非占位符格=${_bad:-?}（作者/选项内容不得随包出）"
+    fi
+    if [ -f "$_INST_SUM" ] && [ -n "${_left:-}" ] && [ "$_left" != "NA" ]; then
+      if [ "${_left:-0}" -gt 0 ] 2>/dev/null; then
+        miss "摘要版答案未注入: 残留占位符 ${_left} 处（step5 三表逐格替换未完成·用户画像不完整）"
+      else
+        ok "摘要版答案已注入: 无残留占位符"
+      fi
+    fi
   fi
-  fi
-fi
-if [ -f "$_INST_SUM" ]; then
-  # F13 根治（2026-10-17·实测 [: 0 换行 0: integer expression expected）：
-  #   grep -c 0 命中时打印 0 且 exit 1，旧代码 `|| echo 0` 再补一个 ⇒ 变量="0 换行 0"
-  #   ⇒ 整数比较走 shell 错误路径落进 PASS 分支（判据是断的·真残留会被漏判）。
-  _left=$(grep -cE '\[Q[0-9]+·(答案待注入|规则待派生)\]' "$_INST_SUM" 2>/dev/null || true)
-  _left=${_left:-0}
-  if [ "$_left" -gt 0 ] 2>/dev/null; then
-    no "摘要版答案未注入: 残留占位符 ${_left} 处（step5 三表逐格替换未完成·用户画像不完整）"
-  else
-    ok "摘要版答案已注入: 无残留占位符"
-  fi
-fi
+elif [ ! -f "$_TPL" ]; then
+  no "模板纯净: 模板缺失 $_TPL（包结构异常）"
+else no "模板纯净: 仪器未跑（python/verify_pair_checks 不可用·⛔失明期间不得判通过）"; fi
 
 # 5) 版本锚点（不计分·信息）
 BV=$(cat "$MC/.install/version" 2>/dev/null || echo "未知(未完成安装或无锚点)")
 echo -e "${C}  [i] 布洛陀版本: $BV${N}"
 
 echo ""
-if [ "$FAIL" = 0 ]; then
+if [ "$FAIL" = 0 ] && [ "$PEND" = 0 ]; then
   echo -e "${G}=== 自检通过: $PASS 项全过 ===${N}"; exit 0
+elif [ "$FAIL" = 0 ]; then
+  echo -e "${C}=== 机械段全绿: $PASS 项 · 待办 $PEND 项（AI 引导段未完成·答完题回来重跑 verify 即清零·待办不是故障）===${N}"; exit 0
 else
   echo -e "${R}=== 自检未过: $FAIL 项失败(见上) ===${N}"; exit 1
 fi

@@ -66,7 +66,7 @@ def pick_python(root):
             return p
     except Exception:
         pass
-    cand = os.path.join(root, ".venv-st", "bin", "python")
+    cand = os.path.join(root, ".venv-st", "Scripts", "python.exe") if os.name == "nt" else os.path.join(root, ".venv-st", "bin", "python")  # 2026-10-19 Win反馈 min
     return cand if os.path.isfile(cand) else sys.executable
 
 
@@ -85,7 +85,7 @@ def ensure_venv(root, dry):
               "自动创建 venv + 安装工具链（onnxruntime/optimum-onnx/sentence-transformers·含 torch 级依赖·"
               "下载量数百MB级·全程可见可中断·F10 告知如实）")
     if dry:
-        say("②", "[DRY] python -m venv %s && bin/pip install onnxruntime optimum-onnx sentence-transformers" % venv_dir)
+        say("②", "[DRY] python -m venv %s，再用该 venv 的 python -m pip install onnxruntime optimum-onnx sentence-transformers" % venv_dir)
         return vpy
     r = run([sys.executable, "-m", "venv", venv_dir], timeout=300)
     if r.returncode != 0:
@@ -140,7 +140,7 @@ def step2_deps(py):
     r = run([py, "-c", "import onnxruntime, optimum, sentence_transformers"])
     if r.returncode != 0:
         say("②", "❌ 当前解释器 %s 缺 onnx/optimum 工具链。完整两步命令："
-                  "`python3 -m venv <引擎根>/scripts/.venv && <引擎根>/scripts/.venv/bin/pip install onnxruntime optimum-onnx`"
+                  "`python3 -m venv <引擎根>/scripts/.venv && <引擎根>/scripts/.venv 内 python -m pip install onnxruntime optimum-onnx`"
                   "（⛔手动钉 optimum 版本——09-09 实弹：钉版本与 optimum-onnx 冲突致 pip 解析空转卡死）。"
                   "装毕重跑本工具；或直接重跑由 ② 自建腿自动安装（P26 已把建 venv+装依赖补进全自动）。" % py)
         return False

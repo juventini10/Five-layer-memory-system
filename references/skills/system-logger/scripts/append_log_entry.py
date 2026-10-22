@@ -249,17 +249,48 @@ def main():
     _new = []
     if not _has_tool:
         _new.append("- **工具**：%s" % args.tool)
+    elif not re.search(r"^\s*-\s*\*\*工具\*\*\s*[:：]\s*%s\s*$" % re.escape(args.tool), body, re.M):
+        # v3.17.9（2026-10-21·Qoder CN·任务卡2026-10-21-静默隐身检测与日志变体根治·组C）：
+        #   病形=原「有则不动」只判字段在不在、不判值合不合规——条目体自写 `- **工具**：qodercn`
+        #   照原样落盘成变体值（今日 09:18 他窗 ## qodercn 变体组头的上游入口）。下游
+        #   resolve_tool_field 已有变体映射（归组面自愈），入口封口后变体永不进盘=发生器根治。
+        #   改写面=全部工具字段行（正常仅一条；多条=脏数据一并统一）；冒号形态随原行不变。
+        body = re.sub(r"^(\s*-\s*\*\*工具\*\*\s*[:：]).*$", r"\g<1>%s" % args.tool, body, flags=re.M)
+        print("ℹ️ v3.17.9 入口封口：条目体工具字段值与 --tool 规范名不符→已机械改写为 %s（不拒写·值归一）" % args.tool, file=sys.stderr)
     if not _has_done:
         _new.append("- **完成**：%s" % now_hm)
+    # v3.17.7（2026-10-21·Qoder CN·任务卡2026-10-21-append-log静默丢字段盲区）：
+    #   病形=旧两路注入（粗体字段锚/###标题锚）对「## 标题+非粗体bullet」全不中，
+    #   re.sub 静默返回原文→工具/完成没注入也不报错→reconcile（归属真源=工具字段·切块锚=^###）
+    #   归不了位→条目悬在他端组头下（10:16 实证·写后告警报了但拦不住）。
+    #   修法=三级机械保证：①无###先锚保底（标题层级矫正/首行补题，承 v3.16.0 --reflection 补标题先例）
+    #   ②字段注入不依赖 body 恰好有锚 ③写前自证闸=补不成即拒写，⛔事后挂账。
+    if not re.search(r"^### ", body, re.M):
+        _th = re.search(r"^#{2,6} +(\S.*)$", body, re.M)
+        if _th:
+            body = body[:_th.start()] + "### " + _th.group(1) + body[_th.end():]
+            print("ℹ️ v3.17.7 机械兜底：条目体用非###标题（reconcile切块锚=###）→标题层级矫正，题文不变", file=sys.stderr)
+        elif body.strip():
+            _fl = re.search(r"^\s*(\S.*)$", body, re.M)
+            body = "### " + _fl.group(1).strip()[:60] + "\n\n" + body[_fl.end():].lstrip("\n")
+            print("ℹ️ v3.17.7 机械兜底：条目体无任何标题→首行补 ### 标题（截60字）", file=sys.stderr)
     if _new:
         _ins = "".join(s + "\n" for s in _new)
         # 插入点=**首个既有字段行之前**（而非紧跟标题）——避免标题下的空行被留在字段中间，
         # 同时让「工具→完成→其余」贴近单条记录模板顺序。
-        _anchor = re.search(r"^- \*\*[^*]+\*\*[:：]", body, re.M)  # 同上 [:：] 统一
+        _anchor = re.search(r"^- \*\*[^*]+\*\*[:：]", body, re.M)  # 同上 [:：]统一
         if _anchor:
             body = body[:_anchor.start()] + _ins + body[_anchor.start():]
         else:
-            body = re.sub(r"(^###\s+.*\n)", lambda m: m.group(1) + _ins, body, count=1)
+            _h3l = re.search(r"^###.*$", body, re.M)  # v3.17.7：原 re.sub 无###时静默不插——改显式分支（仍无题=进下方拒写闸）
+            if _h3l:
+                body = body[:_h3l.end()] + "\n" + _ins + body[_h3l.end():].lstrip("\n")
+    # v3.17.7 写前自证闸：条目三要素（###标题/工具/完成）缺一即拒写（仪器故障与判据红分态同族）
+    if not (re.search(r"^### ", body, re.M)
+            and re.search(r"^\s*-\s*\*\*工具\*\*\s*[:：]", body, re.M)
+            and re.search(r"^\s*-\s*\*\*完成\*\*\s*[:：]", body, re.M)):
+        print("error: 条目体无法机械补全（空/畸形）→ 拒写。⛔不产出悬空错位条目。模板：首行 `### 标题` + `- **类型**：…` 等粗体字段行，工具/完成由脚本代填", file=sys.stderr)
+        return 2
 
     logfile = os.path.join(args.logdir, "系统日志_%s.md" % today)
 
@@ -304,8 +335,11 @@ def main():
         pass  # 落盘失败不阻塞写入主流程；verify 时按"无签发记录"降级处理
 
     # O_APPEND atomic append — concurrent writers never overwrite each other.
-    with open(logfile, "a", encoding="utf-8") as f:
-        f.write(content)
+    # 加共享锁：与 reconcile 的 read→replace 互斥，防并发 append 被 os.replace 换 inode 吞掉
+    from systemlog_lock import log_lock
+    with log_lock(logfile):
+        with open(logfile, "a", encoding="utf-8") as f:
+            f.write(content)
 
     # Mechanical overview reconcile (best effort; never blocks the append).
     # stdout 静默——避免子进程诊断行污染 AI 捕获的 stdout（stdout 只应为验证块）。

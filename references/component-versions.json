@@ -1,30 +1,30 @@
 {
- "package_version": "2.2.4",
- "as_of": "2026-10-19",
+ "package_version": "2.2.9",
+ "as_of": "2026-10-22",
  "components": {
-  "system_rules": "v8.37",
+  "system_rules": "v8.38",
   "skills": {
-   "awaken-memory-system": "8.3.3",
-   "clock-loop": "4.18.7",
-   "daily-buddy": "3.51.6",
-   "good-good-study": "1.1.15",
+   "awaken-memory-system": "8.4.0",
+   "clock-loop": "4.19.10",
+   "daily-buddy": "3.51.12",
+   "good-good-study": "1.1.18",
    "growth-box": "4.12.15",
    "meta-aletheia": "3.6.0",
    "shall-we-talk": "1.6.2",
-   "sucair": "4.14.2",
-   "system-logger": "3.17.6",
-   "triwich": "4.5.4"
+   "sucair": "4.15.4",
+   "system-logger": "3.17.9",
+   "triwich": "4.10.7"
   },
   "script_system": {
-   "files": 288,
+   "files": 290,
    "version": "1.0.0"
   },
   "digital_twin": {
    "as_of": "2026-10-08",
    "scope": "运行件白名单（09-19 融包终裁·09-20 方案A：运行件随包·本体内容件禁）",
    "files": {
-    "devtools": 263,
-    "scripts": 12,
+    "devtools": 264,
+    "scripts": 16,
     "gates": 5,
     "k2-slice-generator": 3,
     "hexaco": 7,

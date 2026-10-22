@@ -580,13 +580,49 @@ def l0_l6_rows(since, src="unknown"):
     else:
         l5, d5 = "⚪", "切片/规格书 mtime 不可得"
     rows.append(("L5", "守护三查", l5, d5))
+    # ── L6 分身同步（v0.11.10·2026-10-19 你「就这样改吧」）────────────────────
+    # 判据源换成端账本 state_bus.json（watcher 每轮写回），⛔ 不再问 launchctl：
+    #   那是 mac 专属的「进程活着吗」，而本层要答的是「我的分身在各工具新不新、要不要你动手」。
+    #   换源附带根除跨平台缺口，JSON 谁都能读，⛔ 无需平台分支（旧「launchctl 不可达」即缺该分支的病）。
+    # 状态词刻意不走 SYM0（「✅做到/🔴没做」＝把机器干的活记成 AI 的成绩·立场卡 S925 截断线）。
+    # 合格线（08 §五·v1.7.7）：3 秒内答出「新不新」「要不要动手」；取证细节下沉明细文件。
+    import json as _json
+    _BUS = os.path.join(BASE, "数字分身", "state_bus.json")
+    _err = ""
+    _bus_doc = {}
     try:
-        r = subprocess.run(["launchctl", "print", "gui/%d/com.buluotuo.doenglingz-slice-watch" % os.getuid()],
-                           capture_output=True, text=True, timeout=5)
-        alive = "last exit code = 0" in r.stdout
-        rows.append(("L6", "自愈同步", "GO" if alive else "NO-GO", "锚=launchctl print 实况（事件驱动not running属正常）"))
-    except Exception:
-        rows.append(("L6", "自愈同步", "⚪", "launchctl 不可达"))
+        _bus_doc = _json.load(open(_BUS, encoding="utf-8")) or {}
+        _ends = _bus_doc.get("ends", {})
+    except Exception as _e:
+        _ends = None
+        _err = type(_e).__name__
+    # 账本超龄阈值单源化（2026-10-19 Q3·方案①）：读账本 l6_policy.stale_days（写者=state_bus_sync
+    # --update·真源 BASELINE_MAX_AGE_DAYS）；账本未含该块时 fallback=3 与旧值等价，⛔勿在此调值。
+    _STALE_DAYS = (_bus_doc.get("l6_policy") or {}).get("stale_days", 3)
+    if not _ends:
+        rows.append(("L6", "分身同步", "⚪", "本机未启用自动同步（改完分身说一句「更新分身切片」即可）"
+                     + (("·%s" % _err) if _ends is None else "")))
+    else:
+        import datetime as _dt
+        _bad = [v.get("name") or k for k, v in _ends.items() if v.get("status") == "out_of_sync"]
+        _ok = sum(1 for v in _ends.values() if v.get("status") == "in_sync")
+        _idle = sum(1 for v in _ends.values() if v.get("status") in ("pending", "ignored"))
+        _when = max([v.get("last_verified") or "" for v in _ends.values()])
+        try:
+            _age = (_dt.datetime.now() - _dt.datetime.strptime(_when, "%Y-%m-%d %H:%M")).days
+        except Exception:
+            _age = None
+        if _bad:
+            _d1 = "%d 个工具还是旧版：%s" % (len(_bad), "、".join(_bad[:4]))
+            _d1 += "｜说一句「更新分身切片」即可修"
+        elif _age is not None and _age > _STALE_DAYS:
+            _d1 = "账本 %d 天没更新（守望可能停摆）→ 查 数字分身/scripts/doenglingz_slice_watch.log" % _age
+        else:
+            _d1 = "%d 个工具都是最新版" % _ok
+            if _idle:
+                _d1 += "（另有 %d 个未接入/不纳管，不计）" % _idle
+        _st = "🔴" if _bad else ("🟡" if (_age is not None and _age > _STALE_DAYS) else "✅")
+        rows.append(("L6", "分身同步", _st, _d1 + "｜末核 %s" % (_when or "?")))
     return rows
 
 SYM0 = {"GO": "✅做到", "NO-GO": "🔴没做", "🟡": "🟡存疑", "⚪": "⚪查不了"}

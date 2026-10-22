@@ -1,1 +1,0 @@
-{"ts": "2026-10-19T13:18:07", "script": "doenglingz_inject_prompt.py", "event": "UserPromptSubmit", "mode": "text", "host": "", "reason": "default:text", "conflict": false, "bytes": 6397, "payload_keys": ["prompt", "session_id"], "qoder_env": ["QODERCN_AGENT", "QODERCN_ENV", "QODERCN_IDE", "QODER_CN_IDE", "QODER_SITE"], "probe": false}

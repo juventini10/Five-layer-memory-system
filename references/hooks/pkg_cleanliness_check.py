@@ -299,6 +299,8 @@ def main():
     ap.add_argument("--quiet", action="store_true", help="只输出总判定（供 verify 脚本内嵌调用）")
     ap.add_argument("--fix-cache", action="store_true",
                     help="只清理 __pycache__（可再生编译缓存·⛔不动其余 7 类）")
+    ap.add_argument("--exclude-runtime", action="store_true",
+                    help="装后用户机自检专用（2026-10-22 R9）：runtime/pycache 两类装机过程自身产物不算包卫生缺陷·发版侧⛔不传（检测力度不削弱）")
     args = ap.parse_args()
 
     root = Path(os.path.expanduser(args.pkg_root))
@@ -314,6 +316,13 @@ def main():
         if fixed:
             print(f"  [FIX] 已清理 __pycache__ {fixed} 处（可再生编译缓存）")
         hits = scan(root)   # 重扫：清理后必须以实况判红绿
+    # --exclude-runtime（2026-10-22 R9·条文70三态分账的卫生检查时序变体）：
+    #   verify 在用户装后跑，装机链 import 生成 pycache、git wrapper 触生 .lock——
+    #   这些是**装机过程出生物**不是**发布包夹带物**，混在一起报=把时序差说成卫生缺陷。
+    #   发版链（generate_release/author 面）不传此 flag ⇒ 真夹带照样红，检测力度零削弱。
+    if args.exclude_runtime:
+        hits["runtime"] = []
+        hits["pycache"] = []
     labels = {
         "private_name": LABEL_PRIVATE_NAME,
         "username": LABEL_USERNAME,

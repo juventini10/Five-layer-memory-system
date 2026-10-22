@@ -152,10 +152,10 @@ def main():
         {"ch": "②铁律反哺", "num": n2, "den": d2, "src": ",".join(s2), "note": "反哺日志窗口内新增段"},
         {"ch": "③立场卡反哺", "num": n3, "den": d3, "src": ",".join(s3),
          "note": "全库窗口内新增卡+初审行（⚠️归端不可机械判定·观察口径·卡/行未记工具归属）"},
-        {"ch": "④系统日志", "num": h4, "den": len(ledger_rows), "src": ",".join(s45),
-         "note": "台账 ts_l7_syslog 命中 %d / 台账 %d 行；产物=当日段条目 %d" % (h4, len(ledger_rows), e4)},
-        {"ch": "⑤反思沉淀", "num": h5, "den": len(ledger_rows), "src": ",".join(s45),
-         "note": "台账 ts_l7_reflection 命中 %d / 台账 %d 行；产物=当日 [童灵思考] %d" % (h5, len(ledger_rows), e5)},
+        {"ch": "④系统日志", "num": max(h4, e4), "den": max(len(ledger_rows), e4), "src": ",".join(s45),
+         "note": "台账 ts_l7_syslog 命中 %d / 台账 %d 行；产物=当日段条目 %d（2026-10-21 起 产物∪台账取或·动作即凭证）" % (h4, len(ledger_rows), e4)},
+        {"ch": "⑤反思沉淀", "num": max(h5, e5), "den": max(len(ledger_rows), e5), "src": ",".join(s45),
+         "note": "台账 ts_l7_reflection 命中 %d / 台账 %d 行；产物=当日 [童灵思考] %d（2026-10-21 起 产物∪台账取或·动作即凭证）" % (h5, len(ledger_rows), e5)},
     ]
     out = {"tool": a.tool, "window_days": a.days, "ledger": ledger_path, "ledger_rows": len(ledger_rows), "channels": ch}
     if a.json:

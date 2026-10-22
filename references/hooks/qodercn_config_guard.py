@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# version: v0.27（2026-10-20 Qoder CN·Stop「钩子真崩21 exit=126」而 check 报 OK 的尺子盲区根治）：新增直执 hook 文件执行位/存在性静态判据 `_direct_exec_missing_x`（并入 check 死形态面，提醒/渲染零改动）。病灶实录：doenglingz_inject_prompt.py 与 skill_onduty_tier_promote.py 丢 x 位，产品直执崩 126 连报 21 轮，而 check 体检项目面无一尺能测此病（静态查条数/形态不查可执行性，动态面只崩后知）=「崩了才知道、体检永远绿」结构性盲区。修复后双件 rc=0 直执验证在案（系统日志 b41a8b6d）。判据不过宽双向：python3/bash 前缀调用不进判据（防假红），缺文件/丢x位同报红（fail-closed）；报警可关双向回归。自测 38/38b/38e 三例+MUT 变异第七→八处（38e 判据置假→38必翻红=分辨自证）。备份=记忆琥珀/qodercn-guard-v026-bak-20261020.py。回滚=覆盖该备份。
+# version: v0.27（2026-10-20 Qoder CN 童灵·皮叔令「就按修正五条推进」·键20261020_193701 裁决落地）：qodersec 126 风暴根治三件套——①_gui_hooks_logs 收编轮转件 hooks.N.log（按 run 目录分组取最近 limit 个有非空件的 run，PROBE_MAX_FILES 封顶；病灶实测：风暴 48 败中 40 条落轮转件结构性不可见=liveness 报 11 与实 48 缺口根源）；②新增 _storm_flip_scan 双判据：FLIP_ALERT=同 run 同命令先 ok 后连续≥3 条 126/127 无后续 ok（分布形态判据·不依赖绝对计数，M-B1）；STORM_ATTR=崩溃 ±2s 配对 assertion failed(libxpc) 指纹且率≥50% → 归因「会话级执行上下文劣化（目前最佳解释·EACCES源未证）」+自愈指引「先重新登录·⛔不怀疑文件权限」（10-20 两次实测重登录自愈·N2 人肉判据机制化）；③liveness/hook 双通道显形。⛔只新增呈现面不动存量判据。夹具 38/38b/38c。
 # version: v0.26（2026-10-16 Qoder CN 童灵·G12-R2 钩子迁移期兼容根治·病灶②）：新增「窗口内同名崩 首报+静默计数+连续升档再报」判据 `_dedup_crash_round/_dedup_crash_alerts`（函数级·先例=v0.20 _split_alert_tiers）——宿主 Stop 缓存态跑改址前旧命令时，同一 (脚本名,exit码) 崩不再每轮重报不可行动提醒（01规范 L600"狼来了"族第4次同族）；⛔真崩整体判据零放宽：failures/delta 事件数与 report 明细面不动，只并提醒通道，且首报/升档(满10)/异名三必响。双向回归夹具 37a-37h（同名×12→2报；异名混入照报；窗内重扫不双计；24h episode 分档；存储坏保守显形）+变异位 37g 入 MUT 七处。R1 侧（分身守卫 v1.2.2 兼容 fallback）已同卡先行落盘。
 # version: v0.25（2026-10-10 Qoder CN·Stop 守卫自报警取证根治）：`tsl_tree_hook.py` 在 Stop 侧的 exit=2 是其「六改点②·树未贴→stderr注入回踢」设计语义（真机实锤 15:03:35 踢回成功+15:04:14 产树成功），但 DELIVERY_CMD_MARKS 两旧标记（--deliver/" hook"）不匹配其裸命令，分类落到 ④HARD_EXIT_CODES 被误判真崩（liveness CRASH_FAILURES 含此一条）。修法=标记加 "tsl_tree_hook.py" 具名扩面——⛔不放宽 Stop 整体：用例 27f 双向回归（本钩子判 delivery + 他裸命令 Stop exit2 照判 crash）。真崩证据优先路（CRASH_EVIDENCE_RE）不动。
 # version: v0.24（2026-10-10 Qoder CN·皮叔令「按符合愿景最优解推进」·同轮登记教训第六次重演后的销账侧根治）：新增 `absorb` 子命令——未登记实挂的「在盘/git台账/系统日志」三证由人工逐条改为脚本机械核验，三证齐者 --commit 落 baseline_ext.json（外置登记面·⛔不自我改写代码·删文件即回滚·check/liveness/_match 延迟合并 ext 账·自测经 QCN_BASELINE_EXT 指空文件保持全封闭）；三证不齐=REJECT 保持报警不洗白（判据⛔不放宽·v0.9「收编非放宽」口径的机械化）。本文件 L207 挂账的「挂载侧拒落笔」仍未落地（需产品写入闸·超守卫能力边界·如实注记）。真机验证：fixture 正例PASS+落账check转OK+负例REJECT rc1+自测全绿。
@@ -123,7 +125,11 @@ BLOCKABLE_EVENTS = ("UserPromptSubmit", "PreToolUse")
 BASELINE = {
     # 2026-10-04 T0 官方事件派发探针（推进文件B段·qodercn_hook_probe.py 恒exit0报告制·探针期条目·收口后挂载与基准同轮摘除）
     "SessionEnd": ["qodercn_hook_probe.py"],
-    "PostToolUse": ["qodercn_hook_probe.py"],
+    "PostToolUse": ["qodercn_hook_probe.py",
+                    # 2026-10-20 D31根治件（sescan_shim 读模式镜像钩子·皮叔令「不管用什么办法彻底根治」）：
+                    #   官方插件钩子=直接执行模式·EACCES间歇崩（D31）；本件只依赖读位。挂载与基准同轮（v0.5教训第七次不重演）。
+                    #   插件官方修复后销账须同轮删 settings.json 两组 + 本两条。
+                    "sescan_shim.py review --platform=qoder --mode=hook --layer=l1"],
     "PostToolUseFailure": ["qodercn_hook_probe.py"],  # v0.17(10-04) B3负证据定谳：prompt/agent型本端不派发(parallel=1+零回执)，挂载与基准同轮摘除
     "PermissionRequest": ["qodercn_hook_probe.py"],
     "PermissionDenied": ["qodercn_hook_probe.py"],
@@ -159,6 +165,8 @@ BASELINE = {
         "skill_write_gate_guard.py",
         # 2026-10-10 v0.23 补登记：恒驻核首落壳挂载（12:26）未同轮登记，三证核验后收编
         "skill_onduty_tier_promote.py",
+        # 2026-10-20 D31根治件 PreToolUse 镜像腿（与 PostToolUse 腿同命令同针子·两组一钩一备份）
+        "sescan_shim.py review --platform=qoder --mode=hook --layer=l1",
     ],
     "UserPromptSubmit": [
         "route_inject_prompt.py UserPromptSubmit",
@@ -484,6 +492,8 @@ def check():
                 # 扁平形态：产品不执行 → 死挂载
                 dead_shape.append("%s: %s" % (evt, g["command"]))
     mounted = len(live_cmds)
+    # v0.27 直执执行位静态探测并入死形态面（同性质：挂了但产品跑不起来；提醒/渲染零改动）
+    dead_shape.extend(_direct_exec_missing_x(live_cmds))
     for evt, needles in BASELINE.items():
         have = [c for e, c in live_cmds if e == evt]
         for n in needles:
@@ -516,6 +526,33 @@ UNK_RE = re.compile(r"^\s{2,}(.+?): unknown error, exit code (-?\d+)(?:, stderr:
 
 def _delivery_mode(cmd):
     return any(m in cmd for m in DELIVERY_CMD_MARKS)
+
+
+def _direct_exec_missing_x(live_cmds):
+    """v0.27（2026-10-20）：直执 hook 文件执行位的静态探测。
+    案源：doenglingz_inject_prompt.py / skill_onduty_tier_promote.py 丢 x 位，
+    产品按命令直执 → exit=126 连崩 21 轮 Stop 不断报，而 check 全程报 OK——
+    静态面（check）不查可执行性，动态面（liveness）只崩了才知道，属"先崩才知道"盲区。
+    判定范围：仅命令首词即绝对路径文件的才查；python3/bash 前缀调用天然不需 x 位，
+    ⛔不进判据（防过检假红）。失败方向：缺文件与丢 x 位同报红（fail-closed）。"""
+    out, seen = [], set()
+    for evt, c in live_cmds:
+        parts = c.split()
+        if not parts:
+            continue
+        if parts[0].rsplit("/", 1)[-1] in ("python3", "python", "bash", "sh", "zsh"):
+            continue
+        for t in parts:
+            if not t.startswith("/") or t in seen:
+                continue
+            if t.endswith((".json", ".md", ".txt", ".log")):
+                continue
+            seen.add(t)
+            if not os.path.exists(t):
+                out.append("%s: 直执文件缺失 %s" % (evt, t))
+            elif not os.access(t, os.X_OK):
+                out.append("%s: 直执缺执行位 %s（必崩exit=126）" % (evt, t))
+    return out
 
 
 def _classify_record(code, evt, cmd, stderr=""):
@@ -1064,20 +1101,158 @@ def _gui_logs_root():
 
 
 def _gui_hooks_logs(limit=3):
-    """最近 N 个 GUI（questWindow）钩子日志——按 mtime 降序，成本有界。
+    """最近 N 个 run 的 GUI（questWindow）钩子日志（含轮转 hooks.N.log·v0.27）。
 
     ⚠️跳过 0 字节文件（2026-09-12 实测病灶）：产品自 09-05 17:47 起新建的
     `questWindow/hooks.log` 全是 0 字节（建了文件不写回执），"取最近 3 个"= 取到 3 份
     空文件 ⇒ GUI 源对判活实际失明，而 liveness 仍按"零回执"结案（=拿瞎源结的案的复发形态）。
     全为空时退回最新一份，让"看不见"显形于 source_freshness，⛔不静默当真。
+
+    v0.27 轮转收编（2026-10-20 qodersec 126 风暴实证）：旧实现只 glob 精确名 hooks.log，
+    风暴 48 败中 40 条落在 hooks.1.log 等轮转件里结构性不可见——liveness 报 11 vs 实 48
+    缺口的根源。修法=按 run 目录分组：取最近 limit 个有非空件的 run 目录，run 内全部轮转
+    件收入窗（总量 PROBE_MAX_FILES 封顶·成本有界同纪律）。
     """
     try:
-        cands = glob.glob(os.path.join(_gui_logs_root(), "*", "questWindow", "hooks.log"))
+        cands = glob.glob(os.path.join(_gui_logs_root(), "*", "questWindow", "hooks*.log"))
         cands.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-        nonempty = [p for p in cands if os.path.getsize(p) > 0]
-        return (nonempty or cands)[:limit]
+        pool = [p for p in cands if os.path.getsize(p) > 0] or cands
+        picked, seen_runs = [], set()
+        for p in pool:
+            run_dir = os.path.dirname(p)
+            if run_dir not in seen_runs:
+                if len(seen_runs) >= limit:
+                    break
+                seen_runs.add(run_dir)
+            picked.append(p)
+            if len(picked) >= PROBE_MAX_FILES:
+                break
+        return picked
     except Exception:
         return []
+
+
+STORM_TTL_MIN = 30      # 扫描缓存（分钟）——hook 每 Stop 都跑，成本有界（先例 PROBE_TTL_HOURS）
+STORM_PAIR_S = 2        # 断言指纹与崩溃行配对窗（秒）——10-20 实测 Δ 0.055-0.615s
+STORM_FLIP_MIN = 3      # 同 run 同命令连崩几条算翻转
+_STORM_HEAD_RE = None
+
+
+def _storm_flip_scan(force=False, files=None):
+    """v0.27 风暴形态判据（M-B1/M-B2·键20261020_193701 你批落地·patch3 修尺）。
+
+    真机回放修正（2026-10-20 19:5x 实测定型，推翻初版两假设）：
+    ① 风暴实形态=跨 run 翻转（run 083151 内 qodersec 48 条全 126 无一 ok；成功态在更早
+       run），初版"同 run 先 ok 后 hard"单侧判据在真实案发现场零命中——自测绿≠真机抓得到。
+    ② assertion failed(libxpc) 行在系统 os_log，不在产品 hooks.log（实测 0 行）——
+       归因指引因此直接印在 FLIP 行上（形态证据已足够），STORM_ATTR 保留为"若断言行经
+       stderr 块入窗则加分"的增强路，不当必要条件。
+    判据（files=fixture 直投；缺省取 _gui_hooks_logs(3) 窗）：按 run 目录聚合、按文件
+      mtime 排时间序（同 run 多件归同一 run·mtime 取该 run 最大值），对每一命令：
+      - 最新 run 内 126/127 ≥STORM_FLIP_MIN 且该 run 内该命令零 ok → 报警；
+        更早 run 存在该命令 ok → type=flip（会话级形态·自愈指引）；否则 type=persistent。
+      - 同 run 中段翻转（先 ok 后连崩≥N 无恢复）→ 照报 type=intra-run（初版形态保留）。
+      - 最新 run 该命令有 ok → 不报（风暴已自愈/正常态，防过保狼来了）。
+    缓存写 guard_state["storm"]（TTL STORM_TTL_MIN）；异常=保守空输出。⛔只新增呈现面。
+    """
+    global _STORM_HEAD_RE
+    out = []
+    now = datetime.now()
+    st = {}
+    try:
+        with open(_state_path(), encoding="utf-8") as f:
+            st = json.load(f)
+        if not isinstance(st, dict):
+            st = {}
+    except (OSError, ValueError):
+        st = {}
+    ent = st.get("storm") or {}
+    if not force:
+        c_dt = _ts_to_dt(ent.get("checked", ""))
+        if c_dt and (now - c_dt).total_seconds() < STORM_TTL_MIN * 60:
+            return list(ent.get("lines") or [])
+    try:
+        if _STORM_HEAD_RE is None:
+            _STORM_HEAD_RE = re.compile(
+                r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\.\d+\s+\[(\w+)\]\s+(.*)$")
+        done_re = re.compile(r"Hook execute completed \(event=([A-Za-z]+),\s*exitCode=(-?\d+),"
+                             r"\s*command=(.*?)(?:,\s*cost=.*|)$")
+        paths = files if files is not None else _gui_hooks_logs(3)
+        # 按 run 聚合：run_dir -> {"t": 最大mtime, "seq": {cmd: [(iso, code)]}, "a_ts": [断言时刻]}
+        runs = {}
+        for p in paths:
+            try:
+                mt = os.path.getmtime(p)
+            except OSError:
+                continue
+            rd = os.path.dirname(p)
+            agg = runs.setdefault(rd, {"t": 0.0, "seq": {}, "a_ts": []})
+            agg["t"] = max(agg["t"], mt)
+            agg["name"] = os.path.basename(rd)
+            try:
+                with open(p, encoding="utf-8", errors="replace") as f:
+                    for line in f:
+                        hm = _STORM_HEAD_RE.match(line.rstrip("\n"))
+                        if not hm:
+                            continue
+                        iso, body = hm.group(1), hm.group(3).strip()
+                        if "assertion failed" in body and "libxpc" in body:
+                            agg["a_ts"].append(iso)
+                            continue
+                        cm = done_re.match(body)
+                        if cm:
+                            agg["seq"].setdefault(cm.group(3).strip()[:90], []).append(
+                                (iso, int(cm.group(2))))
+            except Exception:
+                continue
+        order = [runs[k] for k in sorted(runs, key=lambda k: runs[k]["t"])]  # 时间升序
+        for cmd in set(c for r in order for c in r["seq"]):
+            per = [(r, r["seq"].get(cmd, [])) for r in order]
+            last_r, last_rec = per[-1]
+            if not last_rec:
+                continue
+            l_ok = [t for t, c in last_rec if c == 0]
+            l_hard = sorted(t for t, c in last_rec if c in (126, 127))
+            hit_lines = []
+            if len(l_hard) >= STORM_FLIP_MIN and not l_ok:
+                prior_ok = any(c == 0 for _r, _rec in per[:-1] for _t2, c in _rec)
+                typ = "flip(会话级翻转·先重新登录验证自愈·实测10-20两次)" if prior_ok \
+                    else "persistent(全窗无成功)"
+                hit_lines.append("FLIP_ALERT type=%s cmd=%s run=%s hard=%d 首=%s 末=%s"
+                                 % (typ, cmd, last_r["name"], len(l_hard), l_hard[0], l_hard[-1]))
+            elif l_ok:
+                last_ok = max(l_ok)
+                tail_hard = [t for t in l_hard if t >= last_ok]
+                if len(tail_hard) >= STORM_FLIP_MIN:
+                    hit_lines.append("FLIP_ALERT type=intra-run cmd=%s run=%s ok_before=%s"
+                                     " hard_after=%d" % (cmd, last_r["name"], last_ok,
+                                                          len(tail_hard)))
+                    l_hard = tail_hard
+            for line in hit_lines:
+                out.append(line)
+                a_ts = [t for r in order for t in r["a_ts"]]
+                if a_ts and l_hard:
+                    try:
+                        hdts = [datetime.strptime(t, "%Y-%m-%d %H:%M:%S") for t in l_hard]
+                        adts = [datetime.strptime(t, "%Y-%m-%d %H:%M:%S") for t in a_ts]
+                        paired = sum(1 for h in hdts
+                                     if any(abs((h - a).total_seconds()) <= STORM_PAIR_S
+                                            for a in adts))
+                    except ValueError:
+                        paired = 0
+                    if paired and paired * 2 >= len(l_hard):
+                        out.append("STORM_ATTR cmd=%s paired=%d/%d 断言指纹同源在场·归因=会话级"
+                                   "执行上下文劣化（目前最佳解释·EACCES源未证）" %
+                                   (cmd, paired, len(l_hard)))
+    except Exception:
+        return out
+    try:
+        st["storm"] = {"checked": now.strftime("%Y-%m-%dT%H:%M:%S"), "lines": out}
+        with open(_state_path(), "w", encoding="utf-8") as f:
+            json.dump(st, f, ensure_ascii=False)
+    except Exception:
+        pass
+    return out
 
 
 def _hist_probe_last_hit(needle):
@@ -1688,6 +1863,11 @@ def hook_mode():
                     parts.append("🔴钩子真崩%d(%s·本轮事件)%s"
                                  % (len(_hard), seg,
                                     ("｜归因缺口%d条已降级台账" % len(_un)) if _un else ""))
+                    try:   # v0.27 N2：风暴归因在场→提醒自带自愈指引（人肉判据吸收进机制）
+                        if any(s.startswith("FLIP_ALERT") for s in _storm_flip_scan()):
+                            parts.append("⚠️风暴归因:会话级劣化(实测重登录自愈)→先重新登录·⛔不怀疑文件权限")
+                    except Exception:
+                        pass
                 elif _un:
                     _defer_alerts(_un)
                     # 同名已计数静默；归因缺口照常 deferred 台账（提醒面并档，report 面照常显形）
@@ -2470,6 +2650,116 @@ def self_test():
         _a2, _ = _dedup_crash_alerts([_mkhard("2026-09-06T10:00:00")])
         case("37h 持久化往返：首跑具名报·同事件二跑静默", len(_a1) == 1 and _a2 == [])
 
+        # 38 v0.27 直执 hook 执行位判据（2026-10-20 真崩 21 轮 check 全绿案反哺）
+        _s38 = os.path.join(root, "settings38.json")
+        _hx = os.path.join(root, "h_ok.py"); _hn = os.path.join(root, "h_noexec.py")
+        for _p in (_hx, _hn): open(_p, "w", encoding="utf-8").write("#!/usr/bin/env python3\n")
+        os.chmod(_hx, 0o755); os.chmod(_hn, 0o644)
+        _fx = {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": _hn}]}],
+                         "PreToolUse": [{"hooks": [{"type": "command", "command": _hx}]}],
+                         "SessionStart": [{"hooks": [{"type": "command", "command": "python3 " + _hn}]}]}}
+        json.dump(_fx, open(_s38, "w", encoding="utf-8"))
+        _old38 = os.environ.get("QCN_SETTINGS")
+        os.environ["QCN_SETTINGS"] = _s38
+        _m38, _d38, _e38, _n38 = check()
+        _live38 = any("h_noexec.py" in s and "执行位" in s for s in _d38)
+        _overtest = any("h_ok.py" in s for s in _d38) or any("SessionStart" in s and "h_noexec" in s for s in _d38)
+        case("38 直执无x位报红·有x静默·python3前缀不判（判据不过宽双向）", _live38 and not _overtest)
+        os.chmod(_hn, 0o755)
+        _, _d38b, _, _ = check()
+        case("38b 修复回归：补x位后该项消失（报警可关）", not any("h_noexec" in s for s in _d38b))
+        os.chmod(_hn, 0o644)
+        _prev38 = globals()['_direct_exec_missing_x']
+        globals()['_direct_exec_missing_x'] = lambda lc: []
+        _, _d38c, _, _ = check()
+        globals()['_direct_exec_missing_x'] = _prev38
+        _live38_on_stub = any("h_noexec.py" in s and "执行位" in s for s in _d38c)
+        case("38e 变异位：判据置假→38必翻红（分辨条件自证）", _live38 and not _live38_on_stub)
+        os.environ["QCN_SETTINGS"] = _old38
+
+        # ── 39 v0.27 风暴翻转+断言归因（2026-10-20 键20261020_193701 修正五条·M-B1/M-B2·38号已占用故取39）──
+        def _storm_case(lines):
+            import shutil as _sh
+            sr = os.path.join(root, "storm_gui")
+            _sh.rmtree(sr, ignore_errors=True)
+            qd = os.path.join(sr, "runX", "questWindow")
+            os.makedirs(qd)
+            gp = os.path.join(qd, "hooks.log")
+            with open(gp, "w", encoding="utf-8") as f:
+                for ln in lines:
+                    f.write(ln + "\n")
+            return _storm_flip_scan(force=True, files=[gp])
+
+        def _gl(ts, kind, body):
+            return "%s [%s] %s" % (ts, kind, body)
+
+        _fx39 = _storm_case([
+            _gl("2026-10-20 08:33:10.100", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=0, command=\"x/cmd\" review, cost=90ms)"),
+            _gl("2026-10-20 08:33:21.050", "warning", "zsh[777]: assertion failed: 25G241: libxpc.dylib + 41540: 0x8d"),
+            _gl("2026-10-20 08:33:21.100", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=83ms)"),
+            _gl("2026-10-20 08:33:22.060", "warning", "zsh[778]: assertion failed: 25G241: libxpc.dylib + 41540: 0x8d"),
+            _gl("2026-10-20 08:33:22.100", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=91ms)"),
+            _gl("2026-10-20 08:33:23.070", "warning", "zsh[779]: assertion failed: 25G241: libxpc.dylib + 41540: 0x8d"),
+            _gl("2026-10-20 08:33:23.100", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=175ms)"),
+        ])
+        case("39 同run先ok后连崩3条126→FLIP_ALERT 显形（分布形态判据·M-B1）",
+             any(s.startswith("FLIP_ALERT") and "hard_after=3" in s for s in _fx39))
+        case("39b 断言指纹±2s配对率≥50%→STORM_ATTR 增强线在场（patch3 后归因指引印于 FLIP 行，ATTR 为加分证据）",
+             any(s.startswith("STORM_ATTR") and "paired=3/3" in s for s in _fx39))
+        _fx39c = _storm_case([
+            _gl("2026-10-20 09:00:01.000", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=0, command=\"x/cmd\" review, cost=90ms)"),
+            _gl("2026-10-20 09:00:02.000", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=80ms)"),
+            _gl("2026-10-20 09:00:03.000", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=0, command=\"x/cmd\" review, cost=85ms)"),
+            _gl("2026-10-20 09:00:04.000", "info",
+                "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=85ms)"),
+        ])
+        case("39c 负例·ok/126 交替（偶发抖动已自恢复）不报 FLIP（防狼来了）",
+             not any(s.startswith("FLIP_ALERT") for s in _fx39c))
+
+        # 39d/39e v0.27 patch3：真机跨run形态（run083151 48全126无ok + 前后run有ok）
+        def _storm_case2(runs_lines):
+            import shutil as _sh
+            sr = os.path.join(root, "storm_gui2")
+            _sh.rmtree(sr, ignore_errors=True)
+            gp = []
+            for rn, lines in runs_lines:
+                qd = os.path.join(sr, rn, "questWindow")
+                os.makedirs(qd)
+                p = os.path.join(qd, "hooks.log")
+                with open(p, "w", encoding="utf-8") as f:
+                    for ln in lines:
+                        f.write(ln + "\n")
+                gp.append(p)
+            return _storm_flip_scan(force=True, files=gp)
+
+        _okline = _gl("2026-10-19 10:00:01.000", "info",
+                      "Hook execute completed (event=PostToolUse, exitCode=0, command=\"x/cmd\" review, cost=90ms)")
+        _bad = [_gl("2026-10-20 08:3%d:01.000" % _i, "info",
+                    "Hook execute completed (event=PostToolUse, exitCode=126, command=\"x/cmd\" review, cost=90ms)")
+                for _i in range(3)]
+        _x39 = _storm_case2([("runOld", [_okline]), ("runNew", _bad)])
+        os.utime(os.path.join(sr := os.path.join(root, "storm_gui2"), "runOld", "questWindow", "hooks.log"), (1e9, 1e9)) if os.path.exists(os.path.join(root, "storm_gui2", "runOld", "questWindow", "hooks.log")) else None
+        _x39 = _storm_flip_scan(force=True, files=[
+            os.path.join(root, "storm_gui2", "runOld", "questWindow", "hooks.log"),
+            os.path.join(root, "storm_gui2", "runNew", "questWindow", "hooks.log")])
+        case("39d 跨run翻转（前run ok·最新run全126无ok）→FLIP type=flip 且自带自愈指引（N2机制化）",
+             any(s.startswith("FLIP_ALERT") and "type=flip" in s and "重新登录" in s
+                 for s in _x39))
+        _x39e = _storm_case2([("runBad", _bad), ("runGood", [_okline] * 3)])
+        os.utime(os.path.join(root, "storm_gui2", "runBad", "questWindow", "hooks.log"), (1e9, 1e9))
+        _x39e = _storm_flip_scan(force=True, files=[
+            os.path.join(root, "storm_gui2", "runBad", "questWindow", "hooks.log"),
+            os.path.join(root, "storm_gui2", "runGood", "questWindow", "hooks.log")])
+        case("39e 负例·最新run已有ok（风暴已自愈）→不报 FLIP（防过保狼来了）",
+             not any(s.startswith("FLIP_ALERT") for s in _x39e))
+
         # 28 本体符号唯一性＝QCN-20260919-003 的物理承接器。撤销/回滚类补丁的病是"后定义遮蔽前定义"，
         #    而自测的输入域由被检代码自己构造（实挂集=基准集）时对两版实现零分辨力——commit e0515508 那次
         #    留了 126 行逐字副本、9 个顶层符号×2，37/37 全绿照样看不出来。只数自己文件的顶层符号，
@@ -2494,8 +2784,9 @@ def self_test():
                 and bool(_live30 and not _stub30) and bool(_live31 and not _stub31)
                 and bool(_live32 and not _stub32)
                 and bool(_live34 and _stub34)
-                and bool(_live37 and _stub37))
-        print("  %s MUT:%s 变异自检七处（27e 实盘归属置假／29e 声明侧 key 置假／30e 差额 ts 配对置假／31e 当轮自证置假／32e 可选 stderr 组置假／34e 指纹归属判据置假／37g 同名并档置假=旧一轮一报）→ 功能例均翻转"
+                and bool(_live37 and _stub37)
+                and bool(_live38 and not _live38_on_stub))
+        print("  %s MUT:%s 变异自检八处（27e 实盘归属置假／29e 声明侧 key 置假／30e 差额 ts 配对置假／31e 当轮自证置假／32e 可选 stderr 组置假／34e 指纹归属判据置假／37g 同名并档置假=旧一轮一报／38e 执行位判据置假）→ 功能例均翻转"
               % ("✅" if _mut else "❌", "OK" if _mut else "FAIL"))
         os.environ["QCN_SETTINGS"] = sfile
     finally:
@@ -2533,6 +2824,8 @@ def main():
             print("CRASH_FAILURES %d" % lv.failures)
         for r in lv.detail["delta"]:
             print("CRASH_DETAIL " + _fmt_receipt(r))
+        for _s in _storm_flip_scan(force=True):   # v0.27 风暴翻转/归因呈现面
+            print(_s)
         if lv.detail["backlog"]:
             print("BACKLOG_COUNT %d" % len(lv.detail["backlog"]))
         un = [r for r in lv.detail["delta"] if r[4] == "unattributed"]

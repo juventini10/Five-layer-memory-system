@@ -25,7 +25,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
  ↓
 ① 扫数据源（三池·D-F8并列）
    池1·悬置区残差（未知未知/悬置区.md）——AI真正不知道的
-   池2·碰撞候选队列（[记忆共享中心]/知识联邦引擎/collision_candidates.json 中 status=pending 项）——概念碰撞扫出的"值得深挖的认知机会"，与残差同类
+   池2·碰撞候选队列（[记忆共享中心]/脚本中心/知识联邦引擎/collision_candidates.json 中 status=pending 项）——概念碰撞扫出的"值得深挖的认知机会"，与残差同类
 > 🔻 **降级声明（v1.1.8 真值校正）**：知识联邦引擎及其脚本已以端用户最小集（min 16 件）随安装包分发，口径真源见 collision-consumption.md 腿F案段。仅当包内与本机该引擎目录**实际缺失**时，相关步骤才**跳过·不阻塞**。⛔不得把「随包」写成「不携带」（2026-10-12 clock-loop R1 实证=六处与实盘互斥）。
    池3·跨类型碰撞候选（蓝图索引卡↔立场卡·~/Local_Obsidian_Vault/2-知识库/09-AI学习库/跨类型碰撞候选-蓝图索引卡↔立场卡.md
        ·cross_type_collision_scan.py v1.0 扫描产出·消费流程见 collision-consumption.md §九·
@@ -67,7 +67,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 - ✅ 洞见卡写回三库时**必填**「碰撞来源: [C-XXX × C-YYY]」——此字段=碰撞历史的源真值，概念层collision信息由此反查重建（D-F4）
 - ✅ 产出入库后跑 `python3 sync_collision_queue.py` 自动对账（幂等·INDEX 权威→队列对齐 status→consumed + collided_to + synced_from=index）——⛔DO NOT 手工编辑 collision_candidates.json 回写 status（历史失真根因=手工回写靠自觉·2026-08-25 实证 781/1181 假 pending）
-- ✅ 跨主体碰撞（AI概念×你概念）产出的洞见卡 source_owner 标"共创"——联邦最高价值碰撞
+- ✅ 跨主体碰撞（AI概念×使用者自身概念）产出的洞见卡 source_owner 标"共创"——联邦最高价值碰撞（注：此"共创"是**立场卡侧**由碰撞父母归属机械算出，与2026-10-20概念卡侧二类制不冲突）
 - **洞见卡入库前三判据验收（缺一退回重碰或放弃）**：①不可从任一单概念独立推出 ②产生新的可行动后果（碰撞后会做一件碰撞前不会做的事）③有反例暴露面（能说出什么情况下它是错的）——原因是强模型极擅长生成流畅但零新后果的类比文，无判据=作文入库=知识库注水 `[来源: 成长箱反哺 | 2026-07-27 | 洞见三判据]`
 - 碰撞质量依赖模型强弱（D-F3诚实边界）——产物带依据链，移植的是结果不是过程
 

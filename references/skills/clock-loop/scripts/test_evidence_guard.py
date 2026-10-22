@@ -5,6 +5,10 @@ evidence_guard.py 回归测试套件（取证锁 L1 证据行锁 + L2 断言计�
 设计真源：记忆蓝图/反方向的钟设计哲学/02-实例/物理约束与防误.md §七
 用法：python3 test_evidence_guard.py（在evidence_guard.py同目录运行）
 """
+# Win console UTF-8 guard (auto by build chain · V9)
+try:
+    import sys as _v9sys; _v9sys.stdout.reconfigure(encoding="utf-8"); _v9sys.stderr.reconfigure(encoding="utf-8"); _v9sys.stdin.reconfigure(encoding="utf-8")
+except Exception: pass
 
 # v2.9.12同族根治（2026-09-27·clock-loop自评Loop R1）：v4.12.13的dont_write_bytecode只覆盖了
 # test_skill_eval.py——本文件import evidence_guard同样写.pyc污染被评树（修A不修全链）。

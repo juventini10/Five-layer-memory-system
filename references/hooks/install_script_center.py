@@ -93,6 +93,10 @@ def load_deident():
         out = re.sub(r"某友人分叉", "某友人分叉", out)
         return out
 
+    # 降级路径须留信号（01规范 §二·三十七 第四支·2026-10-20 补）：静默兜底＝无人知晓 SSOT 未接通。
+    # ⛔走 stdout——本件输出可能被上层按行消费；诊断信息一律 stderr。
+    print(f"[warn] deident_rules.py 未命中（{cand}）→ 走内联最小集兜底，脱敏覆盖面弱于发布管线 SSOT",
+          file=sys.stderr)
     return deident
 
 

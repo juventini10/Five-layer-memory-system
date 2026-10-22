@@ -6,7 +6,7 @@
 #       ①a 数字分身恒驻核组装落盘(有 K2 slices 才落·缺则诚实提示·⛔不假绿)
 #       ①b 童灵专属 Skill 直落(adapters/traework/skills/* → ~/.trae-cn/skills·真目录·⛔不进共享技能配置)
 #           + 全量 Skill 软链(<MC>/技能配置/* → ~/.trae-cn/skills·幂等)
-#       ② patrol 脚本落盘 → [记忆共享中心]/开发工具/Skill路由引擎/scripts/
+#       ② patrol 脚本落盘 → [记忆共享中心]/脚本中心/Skill路由引擎/scripts/
 #       ③ launchd plist 落位(占位符→真实MC) + bootstrap
 #       ④ TSL 机械校验脚本落盘(adapters/traework/scripts/traework_tsl_verify.py → [记忆共享中心]/脚本中心/
 #          ·童灵D3上岗时AI调用relay·构造权归脚本不归AI·对齐豆包 [5/7])
@@ -48,8 +48,8 @@ MCP='[记忆共享中心]'
 MCP_RE='\[记忆共享中心\]'
 DRY="${DRY:-}"
 # 参数解析：`--dry-run`/`-n` 选项 + 首个非选项=MC
-# ⚠️ install_scripts.py 委派时按 `[--dry-run] <MC>` 传参（见 install_scripts 委派段）——
-#    若 MC 直接取 $1，dry-run 模式下 MC 会被 `--dry-run` 顶掉 ⇒ 演练路径全错（⛔假演练）。
+# ⚠️ install_scripts.py 委派时按 `<MC> [--dry-run]` 传参（2026-10-21 订正顺序）——
+#    本脚本按首个非选项取 MC（见下方参数解析），故顺序不敏感；旧注释的 `[--dry-run] <MC>` 已过时。
 for _arg in "$@"; do
     case "$_arg" in
         --dry-run|-n) DRY=1 ;;
@@ -57,8 +57,9 @@ for _arg in "$@"; do
         *) [ -z "$MC" ] && MC="$_arg" ;;
     esac
 done
-# ⚠️ 依赖 $MC 的派生路径必须在参数解析之后赋值——否则 dry-run 下 MC 尚空 ⇒ 路径塌成 "/开发工具/..."
-PATROL_DST_DIR="$MC/开发工具/Skill路由引擎/scripts"
+# ⚠️ 依赖 $MC 的派生路径必须在参数解析之后赋值——否则 dry-run 下 MC 尚空 ⇒ 路径塌成 "/脚本中心/..."
+# 2026-10-21：脚本面归拢后 patrol 实体在 脚本中心/（顶层 开发工具/ 已不再是脚本落点）
+PATROL_DST_DIR="$MC/脚本中心/Skill路由引擎/scripts"
 # TSL 机械校验脚本（童灵 D3 上岗时 AI 调用 relay·构造权归脚本不归 AI）
 TSL_SRC="$SRC_DIR/scripts/traework_tsl_verify.py"
 TSL_DST="$MC/脚本中心/traework_tsl_verify.py"

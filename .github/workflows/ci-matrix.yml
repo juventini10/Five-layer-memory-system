@@ -51,3 +51,52 @@ jobs:
         run: |
           Write-Host "workspace: $env:GITHUB_WORKSPACE"
           & powershell -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\win-verify.ps1"
+
+      # L4 跨平台运行性腿（2026-10-11 刚叔端上补充单反哺·批次3 未完项）
+      # 判据：⛔拿"有 Git Bash 所以能跑 bash"当推断（step6-skill-install.md L17 明文禁止）
+      # ——本步把推断换成证据：真机 Windows 上实跑守卫族入口 + 中文 stdin 往返，不活即红。
+      - name: 守卫族入口 Windows 运行性 + 中文往返断言（L4）
+        if: always()  # ⛔被前置 harness 失败掩盖——取证腿必须无条件跑
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $gd = Join-Path $env:RUNNER_TEMP "guards"
+          New-Item -ItemType Directory -Force -Path $gd | Out-Null
+          # 夹具须完整：入口脚本要求 GUARD_DIR 内存在 registry_guards.sh（真机首跑抓到此缺件·⛔只放 stub 会误判为功能缺陷）
+          Copy-Item references/digital-twin/guards/registry_guards.sh -Destination $gd -Force
+          Set-Content -Encoding utf8NoBOM -Path (Join-Path $gd "zz_selftest_guard.sh") -Value "#!/usr/bin/env bash`necho STUB_GUARD_RAN`nexit 0"
+          chmod +x (Get-ChildItem $gd -File | ForEach-Object { $_.FullName }) 2>$null  # Git Bash 对不可执行件的行为与原生 bash 不同，先对齐
+          $env:BULUOTUO_GUARD_DIR = $gd
+          $out = (& bash references/scripts/run_registry_guards.sh 2>&1) -join "`n"
+          Write-Host "DIAG-L4 入口原始输出:[$out]"  # 上一跑只抛结论不给原文，逼人猜；取证腿须自带现场
+          if ($LASTEXITCODE -ne 0) { throw "守卫族入口 Windows 非零退出 rc=$LASTEXITCODE : $out" }
+          if ($out -notmatch "zz_selftest_guard\.sh") { throw "入口未调到守卫（装了≠活了）: $out" }  # 真机实证：守卫族成功时只输出汇总行（含被调守卫名），⛔要求回显守卫 stdout 是断言过严
+          Write-Host "OK 守卫族入口 Windows 运行性有证"
+          # DIAG（批次9 §4-1）：⛔再猜。先把 python 承载件现场打出来——FN 指向与版本决定默认解码编码
+          $pyver = (& python --version 2>&1) -join " "
+          $pycmd = (Get-Command python -ErrorAction SilentlyContinue).Source
+          Write-Host "DIAG-L4 python --version:[$pyver] Get-Command python:[$pycmd]"
+          # 批次9 真机实证：原单行 `Set-Content ... -Value 'a' + backtick-n + 'b'` 裸 + 续行解析报
+          # "positional parameter cannot be found that accepts argument '+'"——探针从未写成，
+          # "中文半仍红"实为夹具病（假产品红）。改字符串数组传 -Value，每元素自成一行，无 + 可误。
+          $probe = @(
+            'import sys',
+            'if hasattr(sys.stdin,"reconfigure"): sys.stdin.reconfigure(encoding="utf-8",errors="replace")',
+            'raw=sys.stdin.read()',
+            'sys.stdout.reconfigure(encoding="utf-8",errors="replace")',
+            'print("GOT:"+raw.strip())'
+          )
+          Set-Content -Encoding utf8NoBOM -Path "$env:RUNNER_TEMP\enc_probe.py" -Value $probe
+          $b=[System.Text.Encoding]::UTF8.GetBytes("你好`n")
+          $psi=New-Object System.Diagnostics.ProcessStartInfo
+          $psi.FileName="python"; $psi.Arguments="`"$env:RUNNER_TEMP\enc_probe.py`""
+          $psi.RedirectStandardInput=$true; $psi.RedirectStandardOutput=$true
+          $psi.UseShellExecute=$false; $psi.StandardOutputEncoding=[System.Text.Encoding]::UTF8
+          $pr=[System.Diagnostics.Process]::Start($psi)
+          $pr.StandardInput.BaseStream.Write($b,0,$b.Length); $pr.StandardInput.Close()
+          $got=$pr.StandardOutput.ReadToEnd(); $pr.WaitForExit()
+          $hex = (($got.ToCharArray() | ForEach-Object { "U+{0:X4}" -f [int]$_ }) -join " ")
+          Write-Host "DIAG-L4 中文往返 got原文:[$got] 码点:[$hex]"  # 取证腿自带现场，⛔只抛结论逼人猜
+          if ($pr.ExitCode -ne 0) { throw "探针脚本非零退出 rc=$($pr.ExitCode) : $got" }  # 先分夹具病/产品病；用 $pr.ExitCode 不用 $LASTEXITCODE（后者会被前面 Get-Command 等覆盖）
+          if ($got -notmatch "GOT:你好") { throw "中文往返失败（疑 GBK 解码）: $got" }
+          Write-Host "OK 中文 stdin UTF-8 往返有证"

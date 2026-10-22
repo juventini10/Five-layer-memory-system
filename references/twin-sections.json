@@ -1,0 +1,19 @@
+{
+  "_readme": "twin-sections.json — 孪生件检查段对账台账（检查⑬数据面·条文68孪生同构律）。判据=①neutral段任一端缺席→红 ②任一端出现未登记段号→红（反漂移灵魂：单向加段必被逮）③*_only专属段无basis→红（⛔空壳豁免·承platform-exemptions同规）。段号=两端文件内 `# N)` 形态段头注释集合（platform_compat 检查⑬经 verify_pair_checks.twin_check 消费）。",
+  "pairs": [
+    {
+      "sh": "verify.sh",
+      "ps1": "verify.ps1",
+      "section_pattern": "^#\\s*(\\d+\\.\\d+[a-z]?|\\d+)\\)",
+      "neutral": ["0", "1", "1.5", "1.6", "1.7", "2", "3", "3.0", "3.1", "3.1b", "3.1c", "3.1d", "3.2", "3.5", "3.6", "3.7", "3.7b", "3.8", "3.9", "4", "4.5", "4.6", "4.7", "5"],
+      "sh_only": [],
+      "ps1_only": [
+        {
+          "section": "5.5",
+          "reason": "Windows 平台差异告知（不参与评分·信息项）",
+          "basis": "内容=PowerShell 版本/执行策略等平台特有叙述，Mac 端无对应物可告知（verify.ps1 头注+§5.5 段实文·2026-10-21 建档实查）"
+        }
+      ]
+    }
+  ]
+}

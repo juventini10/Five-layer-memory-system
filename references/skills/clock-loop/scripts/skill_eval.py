@@ -3233,15 +3233,21 @@ def eval_t5_adversarial(content, skill_dir=None):
     """
     combined = content
     
-    # 尝试加载外迁的 T5 文件（P4.5 行数瘦身后兼容）
+    # 尝试加载外迁的 T5 文件（P4.5 行数瘦身后兼容；v4.19.4 R2 扫描域 glob 化——
+    # 病根：原硬编码文件名 t5-defenses.md，triwich 外置件实名 t5-defense-assessment.md
+    #       名字不匹配=补偿零命中=T5 覆盖 8/22 假红（2026-10-22 Loop 实证，十一条实体在位））
     if skill_dir:
-        t5_ref_path = os.path.join(skill_dir, 'references', 't5-defenses.md')
-        if os.path.exists(t5_ref_path):
-            with open(t5_ref_path, 'r', encoding='utf-8') as f_ref:
-                ref_content = f_ref.read()
-                # 如果 SKILL.md 正文中没有 T5 关键词（已外迁），则用 references 内容补
-                if not any(kw in content for kw in ADVERSARIAL_TESTS.keys()):
-                    combined = content + '\n' + ref_content
+        _t5_dir = os.path.join(skill_dir, 'references')
+        ref_content = ''
+        for _p in sorted(glob.glob(os.path.join(_t5_dir, 't5*.md'))) if os.path.isdir(_t5_dir) else []:
+            try:
+                with open(_p, 'r', encoding='utf-8') as f_ref:
+                    ref_content += f_ref.read() + '\n'
+            except OSError:
+                pass
+        # 如果 SKILL.md 正文中没有 T5 关键词（已外迁），则用 references 内容补
+        if ref_content and not any(kw in content for kw in ADVERSARIAL_TESTS.keys()):
+            combined = content + '\n' + ref_content
     
     score = 0
     details = {}

@@ -88,6 +88,30 @@ REQUIRED_FALLBACK = [
 ]
 
 
+
+def _is_reparse_dir(p):
+    """Windows Junction / 其他 reparse point 判定（2026-10-20 #9 假红根治）。
+
+    病形：`os.path.islink()` 对 Junction 恒 False，而 `os.path.isdir()` 为 True
+    ⇒ 合法的 Junction 被当"实目录副本"报 WARN（用户侧 junction 体系常红）。
+    判据：py3.12+ `os.path.isjunction`；低版本走 Win32 GetFileAttributesW 的
+    FILE_ATTRIBUTE_REPARSE_POINT 位；非 Windows / 异常 ⇒ False（保持旧行为）。
+    """
+    try:
+        if hasattr(os.path, "isjunction"):
+            return bool(os.path.isjunction(p))
+    except Exception:
+        pass
+    if os.name == "nt":
+        try:
+            import ctypes
+            attrs = ctypes.windll.kernel32.GetFileAttributesW(str(p))
+            return attrs != -1 and bool(attrs & 0x400)
+        except Exception:
+            return False
+    return False
+
+
 def derive_required(rep: dict):
     """从 router.py 的 SKILLS 表机械派生必备清单（⛔ 不手抄·防漂移）。"""
     try:
@@ -110,6 +134,17 @@ def derive_required(rep: dict):
                         keys = [k.value for k in v.keys
                                 if isinstance(k, ast.Constant)
                                 and isinstance(k.value, str)]
+                    elif isinstance(v, ast.Call):
+                        # 2026-10-20：router.py 的 SKILLS 改为运行期目录派生（_discover_skills），
+                        # AST 无字面表 → 直接扫真源目录（同判据：目录含 SKILL.md 即 Skill）
+                        try:
+                            keys = sorted(d for d in os.listdir(SRC)
+                                          if os.path.isfile(os.path.join(SRC, d, "SKILL.md")))
+                        except OSError:
+                            keys = []
+                        if keys:
+                            return keys
+                        continue
                     else:
                         continue
                     if keys:
@@ -215,7 +250,7 @@ def check(skills_dir: str = None) -> dict:
                 add(rep, "RED", "orphan_link",
                     f"孤儿链：消费面有 {name}·真相源已无对应目录")
             continue
-        if os.path.isdir(p):
+        if os.path.isdir(p) and not _is_reparse_dir(p):
             # ⛔ 假阳性豁免（首跑实锤 2 类·抽样取证）：
             #   a) 平台市场原生 Skill：含 `_skillhub_meta.json`（如 qqmusic）
             #   b) 空容器目录（如 `_backups`）

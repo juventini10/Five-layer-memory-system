@@ -9,7 +9,8 @@ _engine_env.py — 引擎解释器选择（端用户降级版）
 import os, sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_VENV_PY = os.path.join(_HERE, ".venv", "bin", "python")
+_VENV_REL = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")  # 2026-10-19 Win反馈 min
+_VENV_PY = os.path.join(_HERE, ".venv", *_VENV_REL)
 
 def ensure_engine_python():
     if os.path.exists(_VENV_PY) and ".venv" not in sys.prefix:

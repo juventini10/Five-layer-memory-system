@@ -3,7 +3,14 @@
 # launchd_health_check.sh — 定时任务健康度巡检（L2持续巡检·方案落地验证闭环）
 # Version: 1.0.0 (2026-09-02)
 #
-# 职责（单一）：扫描所有 com.buluotuo.* launchd 任务的运行状态，发现死形态/异常→报警。
+# 职责（单一）：扫描所有系统任务（com.buluotuo.* + com.用户名.*）launchd 运行状态，发现死形态/异常→报警。
+# v1.3.1(2026-10-22·皮叔令「补」):review_by时效位·缺=无效登记ERROR·过期=STALE⚠️单列促复验不静默也不误红
+# v1.3.0(2026-10-22·皮叔令「建」):exit-semantics设计报警登记面(classify_exit·缺登记从严不豁免·负例三则见文末验证)
+# v1.2.1(2026-10-22·Qoder CN·皮叔令「修」):管辖前缀扩 com.用户名.*——实证盲区：offsite容灾备份器为该前缀，
+#   旧单前缀巡检对其静默死失明(knowledge.backup死23天同型·看门狗自己不该是盲区)。
+#   v1.2.1追加实证修:循环内三处grep未||true·set-e下空返回炸死巡检中途(rc=1扫不完)·补后56件全扫出。
+#   头部版本行原滞留1.0.0
+#   而运行时echo显示v1.1.0，声明实盘漂移一并归正。
 # 设计原则（守卫编写规范 §八 + 脚本哲学 §二·五）：
 #   - 只读巡检：不修改任何launchd配置
 #   - 失败放行：异常 exit 1（供上游门禁判定），正常 exit 0
@@ -22,7 +29,28 @@
 #
 set -eo pipefail
 
-LABEL_PREFIX="com.buluotuo."
+LABEL_PAT="com\.buluotuo\.|com\.用户名\."
+# v1.3.0(2026-10-22·Qoder CN·皮叔令「建」)：设计报警登记面——exit≠0不再一刀切判异常：
+#   任务自报"吼=执勤汇报"的语义登记于 exit-semantics.json(label→expected_exit+reason+verify)。
+#   铁律：缺登记/超出登记码集=照报异常，⛔无豁免通道(登记是语义申报不是免检牌·防"说明列认账"同族假绿)。
+EXIT_SEM="[记忆共享中心]/脚本中心/exit-semantics.json"
+classify_exit() { # $1=label $2=exit_code → ALARM(设计报警)/ERROR(异常·默认从严)
+  python3 - "$EXIT_SEM" "$1" "$2" 2>/dev/null <<'PYX'
+import json,sys,datetime
+try:
+    d=json.load(open(sys.argv[1],encoding='utf-8'))
+    e=d.get(sys.argv[2],{})
+    ok=isinstance(e,dict) and int(sys.argv[3]) in [int(x) for x in e.get("expected_exit",[])] and bool(e.get("reason"))
+    if not ok:
+        print("ERROR"); sys.exit()
+    rb=e.get("review_by","")
+    if not rb:
+        print("ERROR"); sys.exit()
+    print("ALARM" if rb >= datetime.date.today().isoformat() else "STALE")
+except Exception:
+    print("ERROR")
+PYX
+}
 STRICT=0
 SUMMARY_ONLY=0
 
@@ -33,14 +61,14 @@ for arg in "$@"; do
   esac
 done
 
-echo "🛡️  launchd 任务健康度巡检 v1.1.0"
+echo "🛡️  launchd 任务健康度巡检 v1.2.0"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# 获取所有 com.buluotuo.* 任务
-tasks=$(launchctl list 2>/dev/null | grep "$LABEL_PREFIX" | awk '{print $3}' || true)
+# 获取所有系统前缀任务(v1.2.0双前缀)
+tasks=$(launchctl list 2>/dev/null | grep -E "$LABEL_PAT" | awk '{print $3}' || true)
 
 if [[ -z "$tasks" ]]; then
-  echo "⚠️  未找到任何 ${LABEL_PREFIX}* 任务"
+  echo "⚠️  未找到任何系统前缀任务(${LABEL_PAT})"
   exit 0
 fi
 
@@ -49,6 +77,8 @@ healthy=0
 dead=0
 error=0
 stale=0
+desigal=0
+regstale=0
 dead_list=()
 error_list=()
 stale_list=()
@@ -60,15 +90,15 @@ while IFS= read -r label; do
   detail=$(launchctl print "gui/$(id -u)/$label" 2>/dev/null || true)
 
   # 1. runs 数
-  runs=$(echo "$detail" | grep -E "^\s*runs = " | head -1 | sed 's/.*runs = //' | tr -d ' ')
+  runs=$(echo "$detail" | grep -E "^\s*runs = " | head -1 | sed 's/.*runs = //' | tr -d ' ' || true)   # v1.2.1:防set-e grep空返回炸巡检(实证:未保护时脚本死在中途rc=1)
   [[ -z "$runs" ]] && runs="0"
 
   # 2. last exit code
-  exit_code=$(echo "$detail" | grep -E "^\s*last exit code = " | head -1 | sed 's/.*last exit code = //' | tr -d ' ')
+  exit_code=$(echo "$detail" | grep -E "^\s*last exit code = " | head -1 | sed 's/.*last exit code = //' | tr -d ' ' || true)   # 同上
   [[ -z "$exit_code" || "$exit_code" == "(never"* ]] && exit_code="never"
 
   # 3. 日志路径和新鲜度
-  stdout_path=$(echo "$detail" | grep -E "^\s*stdout path = " | head -1 | sed 's/.*stdout path = //' | tr -d ' ')
+  stdout_path=$(echo "$detail" | grep -E "^\s*stdout path = " | head -1 | sed 's/.*stdout path = //' | tr -d ' ' || true)   # 同上
   stale_flag=""
   # 检查是否是常驻服务（KeepAlive=true）——常驻服务不判断日志陈旧（常驻服务日志不频繁写入是正常行为）
   is_keepalive=0
@@ -147,9 +177,18 @@ while IFS= read -r label; do
     dead_list+=("$label | runs=0 (死形态·从未触发)")
     [[ $SUMMARY_ONLY -eq 0 ]] && echo "  🔴 $label: 死形态 (runs=0·从未触发)"
   elif [[ "$exit_code" != "0" && "$exit_code" != "never" ]]; then
+    sem=$(classify_exit "$label" "$exit_code")
+    if [[ "$sem" == "ALARM" ]]; then
+      desigal=$((desigal + 1))
+      [[ $SUMMARY_ONLY -eq 0 ]] && echo "  🔔 $label: 设计报警 (exit=$exit_code 已登记·吼≠病)"
+    elif [[ "$sem" == "STALE" ]]; then
+      regstale=$((regstale + 1))
+      [[ $SUMMARY_ONLY -eq 0 ]] && echo "  ⚠️ $label: 设计登记过期 (exit=$exit_code review_by已过·需复验 exit-semantics.json·⛔勿直接删登记)"
+    else
     error=$((error + 1))
-    error_list+=("$label | exit_code=$exit_code")
+    error_list+=("$label | exit_code=$exit_code (未登记或非登记码·从严报)")
     [[ $SUMMARY_ONLY -eq 0 ]] && echo "  🟠 $label: 异常 (last exit=$exit_code)"
+    fi
   elif [[ -n "$stale_flag" ]]; then
     stale=$((stale + 1))
     stale_list+=("$label | $stale_flag")
@@ -162,7 +201,7 @@ done <<< "$tasks"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📊 巡检摘要：共 $task_count 个任务"
-echo "   ✅ 健康: $healthy | 🔴 死形态: $dead | 🟠 异常: $error | 🟡 日志陈旧: $stale"
+echo "   ✅ 健康: $healthy | 🔴 死形态: $dead | 🟠 异常: $error | 🟡 日志陈旧: $stale | 🔔 设计报警: $desigal | 🧾 登记过期: $regstale"
 
 # ── 附加检查：README scripts 索引一致性（P0-2兜底层·C-085双本账漂移防护）──
 echo ""

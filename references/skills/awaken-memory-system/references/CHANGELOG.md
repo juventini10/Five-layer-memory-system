@@ -5,11 +5,17 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ---
 
 
-## 2026-10-03 · None：SKILL.md v8.3.1→v8.3.2
-> **变更**：commit `7b3b0d13` chore(archive): 回购卫生清理·童灵收尾。
 # 变更日志
 
 > 本文件记录版本变更历史（最新条目=当前版本，与 SKILL.md frontmatter 对齐·v8.1.3修正自述与实盘矛盾）。历史叙述以本文件为准。
+
+### v8.4.0 — 2026-10-21（Win 对等件根治·自动巡检双端化·Y 级·任务卡 2026-10-21-唤醒巡检Win对等件根治）
+
+- **驱动**：Win 用户报障「巡检趋势：日志不可用（巡检未运行或日志被清理）」不可用。实查根因=自动巡检载体三重 macOS 专属（launchd plist + bash 脚本 + osascript），Win 装机注册的三个计划任务（SystemLogWatch/DoenglingzSliceWatch/记忆琥珀）无 patrol 对等件——**机制在 Win 从未存在，文案却把结构性缺失说成运行时故障**；附加发现：plist 模板文件连包内都没有（仅文档引用），Mac 新用户同样从未有自动巡检。
+- **落地（P1-P6）**：①新增 `scripts/awaken_patrol.py` 平台中立执行体（先例判据=slice-watch「执行体同一份平台中性 python·单一真源⛔sh/ps1逻辑副本」；四段留痕格式逐字不变，dashboard 解析零改动兼容）；②`awaken_patrol.sh` 降薄壳转发 py（兼容作者机旧 plist）；③新增 `scripts/awaken-patrol-install-task.ps1`（Task Scheduler `BuluotuoAwakenPatrol`·Daily+Repetition PT6H·StartWhenAvailable 补跑·S4U 加固三连·`-Uninstall` 对称·镜像 slice-watch 先例）；④新增 `scripts/com.buluotuo.awaken-patrol.plist.template`（入包·[记忆共享中心] 渲染惯例）；⑤dashboard `patrol_trend()` 三态化：missing=「本机未注册自动巡检+注册指引」/ empty=「已注册但无记录」/ ready=出趋势——根治误导文案；⑥触达层分端：mac=osascript 弹窗，Win=pending 告警文件（`~/buluotuo_bin/log/awaken_patrol_alerts.pending`）由唤醒轻量 §4 会话内转述后删除（设计决策a·S4U 非交互会话弹不出 toast·形态b待你拍板可升级）；⑦patrol.md 跨端声明/§3/§4/§5 与 dual-mode.md 3.5.2 同步改写，INSTALL.md 增「自动巡检注册」双端指引（包面），win-verify.ps1 挂 T20（包面）。
+- **同批自洽修复**：`build_advice` 的 `trend == "↑"` 为 dict↔str 比较恒假（趋势上升注记从未显示过的潜伏 bug），随三态改造修正为 `trend.get("trend")`；dashboard notify 统计接受 Win 标记「告警已记录」（语义=告警到达用户侧）。
+- **验证（Mac 实盘）**：薄壳→py 全链路实跑 rc=0·四段留痕完整（[快照]uptodate/[蒸馏]NONE静默/[触达]无事不打扰/[完成]）；dashboard 三态实测全中（ready=运行68次真实趋势/missing/empty 用假 home 反证）；Win 分支用 sys.platform=win32+假 home 模拟实跑：告警落 pending ✓ 日志行格式 ✓ 失败显形（快照fail+巡检异常双告警）✓；py_compile 双件过。**Win 真机腿未跑**（本端无 Win 环境），由 win-verify T20 + Win 端用户复验收口——发版链跨平台真机项纪律（Mac 绿≠可发布·本条如实挂账）。
+- **版本判定**：8.3.3→**8.4.0**（Y 级·新增独立功能面=Win 载体对等件+三态文案，判定行为对 mac 端向后兼容）。
 
 ### v8.3.3 — 2026-10-03（clock-loop E路径Loop修复批·E5声明↔实物断链收口·Z 级）
 
@@ -19,6 +25,9 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 - **实跑对账**：due_check `NONE` == scheduler 逾期0（两判定器同答，本轮实跑在案·Loop 报告专项D）。
 - **R2 审查收口（独立审查 finding #9中/#10低/#12低·#11销案）**：①`patrol.md §2` 动态解析段按 distill_due_core 口径三要素上移同步（实物口径⊃文档口径=E6声明滞后同族病）：旧文「取最新月段」改「全文倒序取最后一条」、补「分桶归一 normalize_type」要素、`days==0` 归口🔵今天到期；②`test_distill_core.py` 权限 755→644 对齐同级导入模块；③#11 包内 `[记忆共享中心]` 占位符疑问**销案**——install_scripts.py L47 PLACEHOLDER 定义+L347/364/964 替换实现·R3复核实锤（预存机制非缺陷）。⚠️ 本条首版误标 L61/66/83=引用未经计数（铁律002自纠·R3 finding）。
 - **版本判定**：8.3.2→**8.3.3**（Z 级·测试实物补件+卫生+文档口径收口，判定行为零变更；R2收口并入同版本=同一Loop同一收口批先例）。
+
+## 2026-10-03 · None：SKILL.md v8.3.1→v8.3.2
+> **变更**：commit `7b3b0d13` chore(archive): 回购卫生清理·童灵收尾。
 
 ### v8.3.2 — 2026-10-03（公共口径模块随 Skill 分发·端用户断链根治·Z 级）
 

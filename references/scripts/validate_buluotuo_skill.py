@@ -50,6 +50,14 @@ ALLOWED_FM_KEYS = {
     "name", "description", "compatibility", "allowed-tools",
     "dependencies", "author", "source", "upstream", "modifiable",
     "version", "license", "complies_with", "normative_vocab",
+    # 2026-10-21 你令收编（validate 滞后于规范演化型 WARN 两例·AIGC=国内合规标注字段，
+    # requires_twin_on_duty=童灵 D3 上岗声明字段·clock-loop v4.19.0 批入规范实盘在先）：
+    "AIGC", "requires_twin_on_duty",
+    # 2026-10-21 皮叔令「收齐」：自有组件在用字段全量收编（实跑全库 validate 定数——
+    # cured_snapshot=triwich/meta-aletheia 固化件声明·emoji/trigger/role=热点捕手/TimeLoom/excavator
+    # 自定义触发与展示面·dependencies_note=TimeLoom 依赖备注·python_dependencies=sucair 依赖声明；
+    # 第三方组件同类字段不在此列——口径只覆盖自有面）：
+    "cured_snapshot", "emoji", "trigger", "role", "dependencies_note", "python_dependencies",
 }
 
 # ✅DO 步骤后需出现的命令锚点信号（启发式：声明能力不能只有空话）

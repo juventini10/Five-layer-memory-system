@@ -815,7 +815,7 @@ def _inject(prompt: str) -> None:
             "本回合涉及评估/决策/裁决/方案优化/愿景对齐/行为判断时，✅DO 先调 "
             "[记忆共享中心]/脚本中心/search_kb.py 检索 top-5 立场卡锚点纳入决策依据"
             "（--drill 下钻全卡；纯代码/纯事实查询不触发）。分工：L3 切片=蒸馏后高频通用行为规则，"
-            "立场卡检索=完整立场库875张低频具体查询，互补不重复——动手前先翻立场库，不凭印象开口。"
+            "立场卡检索=完整立场库1085张低频具体查询，互补不重复——动手前先翻立场库，不凭印象开口。"
             "钩子推送卡不计入本义务兑现；✅DO 裁决类产出物（候选处置台账/方案裁决表/不采纳判定）的「依据」列含 search_kb 实跑卡号，或显式标注「⚠️本轮未检索」——缺签名=回合不完整（成长箱反哺 QCN-20261002-001·2026-10-02 你批E9.2）。"
             "形态说明：本契约由 W1 钩子在 prompt 前注入（行为时强制），各端 Stop 守卫 `check_w1_honor` "
             "事后对账——注入未兑现即登记 w1_not_honored 供岗位3周报（台账端专属·⛔不跨端复用）。"
@@ -1110,6 +1110,7 @@ def _smoke_d3():
 
 
 def _selfcheck() -> None:
+    _selfcheck_fail = False
     print("=== doenglingz_inject_prompt.py 挂载自检 ===（版本真源=本件 __version__=%s）" % __version__)
     ports = {
         "WorkBuddy": os.path.expanduser("~/.workbuddy/settings.json"),
@@ -1120,6 +1121,16 @@ def _selfcheck() -> None:
     }
     for port, path in ports.items():
         found = False
+        # 2026-10-20（#7 假红根治）：端未安装（settings.json 不存在）= 本机没有这个端，
+        # 报「⚠️ 未注册」是噪声（用户只装了 1-2 个端，其余端恒红=狼来了）。
+        # 判据：配置文件缺失 ⇒ 显式「未安装（跳过）」，⛔不计入未挂载告警。
+        if not os.path.isdir(os.path.dirname(path)):
+            print("  [%s] ➖ 端未安装（无 %s·跳过）" % (port, os.path.dirname(path)))
+            continue
+        if not os.path.isfile(path):
+            print("  [%s] ❌ 端已装但缺 %s——钩子必未注册，请核配置根" % (port, path))
+            _selfcheck_fail = True
+            continue
         try:
             with open(path) as f:
                 d = json.load(f)
@@ -1175,7 +1186,7 @@ def _selfcheck() -> None:
               "（2026-09-30 实证连续崩 7 次·AI 只能自造 D1 标签）")
         _rc = 1
     print("=== 自检结束 ===")
-    sys.exit(_rc)
+    sys.exit(1 if _selfcheck_fail else _rc)
 
 
 def main() -> None:

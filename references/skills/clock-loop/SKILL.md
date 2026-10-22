@@ -1,13 +1,13 @@
 ---
 name: clock-loop
 description: >
-  反方向的钟--自主评估与闭环改进系统。当用户说"反方向的钟"或以"循环"/"loop"加空格开头,或说"循环工程/loop工程"触发;"循环 知识体检/loop 知识体检/知识库Lint/概念层体检"→知识库体检。触发后先问标准再后台闭环跑。
+  反方向的钟--自主评估与闭环改进系统。当用户说"反方向的钟"或以"循环"/"loop"加空格开头,或说"循环工程/loop工程"触发;"循环 知识体检/loop 知识体检/知识库Lint/概念层体检"→知识库体检;"循环 资产体检/loop 资产体检/上下文体检/指令审计"→上下文资产体检。触发后先问标准再后台闭环跑。
   NOT for 普通问答/简单查询/纯闲聊、愿景（非命令式语境）;非命令式不触发（"循环播放/循环经济"不算）。
 compatibility: workbuddy, qclaw, trae, trae-work, wukong, qoderwork, qoder-cn
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob, Agent, TaskCreate, TaskUpdate, TaskList, TaskOutput, WebFetch, WebSearch]
 dependencies:
   - name: triwich
-    version: "4.5.4"
+    version: "4.10.7"
     path: [记忆共享中心]/技能配置/triwich/
     mode: reference
   - name: meta-aletheia
@@ -15,7 +15,7 @@ dependencies:
     path: [记忆共享中心]/技能配置/meta-aletheia/
     mode: reference
   - name: skill-arch-standard
-    version: "5.41"
+    version: "5.43"
     path: references/skill-arch-standard.md
     mode: reference
     note: "固化副本·自包含--源在记忆蓝图/03_开发规范/Skill架构规范/,改源后须重新固化到此并升version"
@@ -29,7 +29,7 @@ source: self-built
 upstream: self(主源·本目录)
 modifiable: true
 requires_twin_on_duty: true
-version: "4.18.7"
+version: "4.19.10"
 license: MIT
 complies_with: 文件格式规范(⛔本处不写版本号·以源 frontmatter 为唯一真相源=#142·2026-09-05批5清零#2148滞后:曾写v2.0.0而源实盘v2.4.0)
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
@@ -62,7 +62,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 
 **✅DO - 确认二分(v4.13.0·2026-09-30你令根治·标准确认分层提案落地):确认锚按风险分两级——**L1形态级**(本次方案的新增专项全部为 grep/diff/exit-code 机械可判·且不动评分维度/权重/评估器考题结构·且任务类型+对象与 task-standards.json 已批条目一致)→ 展示即自动放行,报告「专项分析」段逐项留痕(可观测/可抽检/可收回),⛔DO NOT消耗你逐次应答;**L2语义升权**(动维度/阈值/考题/禁令/任务类型或对象类别)→ 维持原文全展示+等明确确认(08-30立法在本级原样有效)。判定机械化:方案含任一L2成分→整体走L2确认;全L1→自动放行+留痕。⛔DO NOT把L2拆碎伪装成L1逃确认——维度/权重/考题文件 diff 非空=L2,可事后核验。本节为上文"获明确确认"及阶段1"等待明确确认"两条款的分层执行口径,两条款在L2级完全有效。
 
-**✅DO - 触发条件严格(2026-09-02口径统一):用户以"循环 "/"loop "(含空格)开头,或说完整触发短语(反方向的钟/循环工程/loop工程/自主跑/检查发布包族/知识体检族)才进入Loop模式。⛔DO NOT对非任务委派的日常语触发(如"循环播放这首歌"以"循环"开头但不带空格任务描述)--原因是:防止普通问题误触发导致体验变差。**
+**✅DO - 触发条件严格(2026-09-02口径统一):用户以"循环 "/"loop "(含空格)开头,或说完整触发短语(反方向的钟/循环工程/loop工程/自主跑/检查发布包族/知识体检族/资产体检族)才进入Loop模式。⛔DO NOT对非任务委派的日常语触发(如"循环播放这首歌"以"循环"开头但不带空格任务描述)--原因是:防止普通问题误触发导致体验变差。**
 
 **✅DO - 自查和子Agent审查是后台自动完成。⛔DO NOT让用户参与中间过程--原因是:用户中途参与=回到传统"你一句我一句"模式,Loop失去意义。用户只在开头给标准和结尾收结果。**
 
@@ -152,6 +152,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 - 用户以 **"loop "**(loop+空格+任务描述)开头 - 如:"loop 帮我生成竞品分析报告"
 - 用户说完整触发短语:"反方向的钟"、"循环工程"、"loop工程"、"自主跑"(与YAML description口径一致·2026-09-02 双源根治)
 - 用户说"循环 知识体检"、"loop 知识体检"、"知识库Lint"、"概念层体检" → 进入**知识库体检路径**(Phase X-KB·非 Skill 评估路径)
+- 用户说"循环 资产体检"、"loop 资产体检"、"上下文体检"、"指令审计" → 进入**上下文资产体检路径**(Phase X-AST·H路径骨架的资产层变体·非 Skill 评估路径)
   原因:只用"循环"前缀会误触"循环播放""循环经济"等非命令式语义。"循环+空格"限定为命令式入口
   边界澄清(2026-09-02):完整触发短语("自主跑/检查发布包"等)须作为**任务委派**独立出现--"帮我看看发布包里哪个文件改了""这些测试能自主跑吗"等日常句不含委派意图,⛔DO NOT触发
 
@@ -206,7 +207,7 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ✅DO - 启动留痕(v4.16.0·门卫评估修复通道接线):判定命中进入Loop模式后,执行 `mkdir -p ~/.cache/skill_gate && touch ~/.cache/skill_gate/clockloop.active`——该标记是 skill_write_gate_guard v0.6 EVAL_CHANNELS 对 skillforge 域(技能配置/)的放行锚(TTL 4h),因 E路径修复链须写技能配置目录(皮叔 09-27 修复授权令)。真实性锚=本条款存在;⛔DO NOT 非Loop流程中手动 touch--撒谎留痕=门卫最高层违规,责任在操作者。
 
 用户说话时,判定是否命中触发口径(2026-09-02修正·原"开头包含"会放过"循环播放/循环经济"反例):
-- 以"循环 "+"loop "(含空格)开头,或命中完整触发短语(反方向的钟/循环工程/loop工程/自主跑/检查发布包族/知识体检族) → **是** → 进入Loop模式,输出 `Loop Engineering Loop模式已启动`
+- 以"循环 "+"loop "(含空格)开头,或命中完整触发短语(反方向的钟/循环工程/loop工程/自主跑/检查发布包族/知识体检族/资产体检族) → **是** → 进入Loop模式,输出 `Loop Engineering Loop模式已启动`
 - 否则 → **否** → 不触发本Skill,正常对话
 
 🔌 熔断器
@@ -316,10 +317,10 @@ normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
 ├─ 重试次数:1(失败处理已含"按 detail 修复重跑"=1次重跑·仍失败则中止不交付)
 └─ 降级方案:无--封口确认块是交付的确定性证据(⛔AI手写=造假)
 
-### H路径:知识库体检(触发"循环 知识体检/loop 知识体检/知识库Lint/概念层体检")
+### H路径:知识库体检 / 上下文资产体检(触发"循环 知识体检/loop 知识体检/知识库Lint/概念层体检/循环 资产体检/loop 资产体检/上下文体检/指令审计")
 
-📦 产出物:体检报告(kb_tests/*体检报告*)+矛盾清单
-✅DO Read `references/kb-checkup.md`(路径入口+Phase X-KB谓词表+矛盾清单生命周期+消费指标·⛔非评分制:矛盾是碰撞燃料不是扣分项)
+📦 产出物:体检报告(kb_tests/*体检报告*)+矛盾清单；资产层另出 资产体检报告(kb_tests/*资产体检报告*)+处置建议表(保留/精简/核实/弃用)
+✅DO Read `references/kb-checkup.md`(路径入口+Phase X-KB谓词表+资产层四维度谓词表(Phase X-AST)+矛盾清单生命周期+消费指标·⛔非评分制:矛盾是碰撞燃料不是扣分项)
 
 ## 📋 Alternatives Considered
 

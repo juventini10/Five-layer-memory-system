@@ -5,7 +5,7 @@
 检测：.sh/.ps1 双平台配对、编码(UTF-8无BOM)、换行符(\r\n残留)、
       shebang 正确、路径分隔符（反斜杠残留）、
       单平台路径假设（检查⑩·1.6）、发布者工具泄漏（检查⑪·1.6）、
-      共享中心目录名硬编码（检查⑫·1.6）。
+      共享中心目录名硬编码（检查⑫·1.6）、孪生件形状对账（检查⑬·条文68·2026-10-21）。
 退出码：0=通过  1=有缺陷  2=参数错误
 """
 import ast
@@ -776,6 +776,60 @@ def update_placeholder_baseline(pkg: Path) -> int:
     return n
 
 
+
+def check_venv_platform_form(pkg: Path) -> list:
+    """L4（2026-10-19 布洛陀2.2.4 Win反馈 A-1~A-7 反哺）：venv/解释器相对路径写死 POSIX 形态
+    （os.path.join(dir, "bin", "python"/"pip")）且无平台分支 → Windows 上恒判 os.path.exists=False
+    → 语义检索重投分支永不进 → 静默降级 BM25，且连续多轮全绿 Loop 无人发现。
+    缺口定位：check_unix_only_imports 只抓 Unix-only「import」(fcntl类)，抓不到
+             「路径片段字面量」(bin/python)；检查⑫只抓记忆中心「目录名」硬编码，抓不到二进制形态。
+    判定：AST 中 os.path.join 调用的字符串实参同时含 "bin" 与 ("python"|"pip")，
+         且该文件无平台派生信号(os.name/sys.platform/"Scripts"/"python.exe"/'"nt"') → FAIL。
+    已知局限（保守防假红）：文件若因其它原因含 os.name 即整体豁免，可能漏报"同文件别处仍写死"；
+         精度优先于召回（门禁假红摧毁信任），此为诚实边界。
+    """
+    issues = []
+    _SIGNAL = ("os.name", "sys.platform", "Scripts", "python.exe", '"nt"')
+    for f in pkg.rglob("*.py"):
+        if not f.is_file() or "__pycache__" in f.parts or ".git" in f.parts or f.name.endswith(".bak"):
+            continue
+        try:
+            src = f.read_text(encoding="utf-8")
+            tree = ast.parse(src, filename=str(f))
+        except (UnicodeDecodeError, PermissionError, SyntaxError):
+            continue
+        if any(_s in src for _s in _SIGNAL):
+            continue  # 已有平台派生信号，视为已按 os.name 处理
+        if any(_k in f.name.lower() for _k in ("test", "check")):
+            continue  # 自测/守卫夹具常在 tmp 下故意造 bin/python 假路径测判据=阴性样本，⛔不报（取证腿④·已知局限：可能漏报真名 test/check 的生产件）
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "join"):
+                continue
+            _consts = [a.value for a in node.args
+                       if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+            if "bin" in _consts and ("python" in _consts or "pip" in _consts):
+                issues.append(f"venv形态写死bin/(缺平台分支): {f.relative_to(pkg)}:{node.lineno}")
+    return issues
+
+
+def check_twin_section_parity(pkg: Path) -> list:
+    """检查⑬（2026-10-21·verify双端同构缺腿反哺·安装包哲学条文68孪生同构律）：
+    .sh↔.ps1 孪生文件「文件在位但检查段内容单侧演化」的盲区补腿。
+    病根实证：verify.sh 有 §3.0 双口径/§4.6 骨架非空/§4.7 三表闭环三段（10-03~10-15 逐段长出），
+    verify.ps1 零覆盖——文件级配对（L1派生式）与资产对称（P1）全绿，段级失明全绿。
+    判据=同树 verify_pair_checks.twin_check（⛔此处不手搓第二份判据·单一真源），
+    数据面=包内 references/twin-sections.json（脚本哲学§二·四十「类型=数据」：新孪生对=加一条登记）。
+    仪器未跑（件缺/台账缺/解析失败）一律显形为 issue——⛔把仪器故障当判据绿。
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import verify_pair_checks as vpc
+    except ImportError:
+        return ["检查⑬仪器未跑: 同树 verify_pair_checks.py 缺失（仪器故障≠判据通过）"]
+    return vpc.twin_check(pkg)
+
+
 def main():
     only_author = "--only-author-path" in sys.argv
     _p0 = [x for x in sys.argv[1:] if not x.startswith("--")]
@@ -810,6 +864,8 @@ def main():
         ("跨平台脚本配对·派生式(L1)", check_script_pairing_derived(pkg)),
         ("stdin编码对等(L2)", check_stdin_encoding(pkg)),
         ("占位符路径形态卫生(L3)", check_placeholder_shape_hygiene(pkg)),
+        ("venv解释器形态平台派生(L4·Win反馈A族反哺)", check_venv_platform_form(pkg)),
+        ("孪生件形状对账(检查⑬·条文68)", check_twin_section_parity(pkg)),
     ]
 
     if only_author:

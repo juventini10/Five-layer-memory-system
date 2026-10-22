@@ -11,7 +11,7 @@ author: 皮叔
 source: self-built
 upstream: [记忆共享中心]/技能配置/system-logger/
 modifiable: true
-version: "3.17.6"
+version: "3.17.9"
 license: MIT
 complies_with: 文件格式规范 v2.3.0 · 指令编写规范 v4.8
 normative_vocab: "RFC2119-equivalent (see 指令编写规范 §1.1)"
