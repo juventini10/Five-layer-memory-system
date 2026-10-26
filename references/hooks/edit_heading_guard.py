@@ -16,6 +16,10 @@
 #     -> violation exit 1, ok exit 0
 # Boundary: only blocks "old first line is structural AND new lost that exact line";
 #   heading renames need human review -- this guard only targets the exact 4-time incident shape.
+# version: v0.3（2026-10-27 GitHub issue#8 外部反馈根治·tiger5325）：re.split 位置 maxsplit
+#   → 关键字 maxsplit=1（Python 3.13 起位置传参发 DeprecationWarning·守卫是「报告制」，告警
+#   混进 stdout/stderr 会被产品回执记成异常证据的近邻·排查真崩时易误判）。全版本行为不变·
+#   自测 S1-S6 复验通过。
 # version: v0.2（2026-10-05 判据粒度收窄：同结构签名仍在即放行——version 行改值/标题粘连拆分
 #   属规范强制动作，旧版要求逐字回含致其被硬拦；真吞行照拦。自测 S1-S6 6/6 拦放双向）
 # Win console UTF-8 guard (auto by clock-loop 1.7.2)
@@ -49,7 +53,7 @@ def _sig(line):
     if m:
         hashes = s.split(" ", 1)[0]
         title = m.group(1)
-        pref = re.split(r"[（(\-—:：|*`]", title, 1)[0] or title
+        pref = re.split(r"[（(\-—:：|*`]", title, maxsplit=1)[0] or title
         return hashes + " " + pref[:12]
     return s
 

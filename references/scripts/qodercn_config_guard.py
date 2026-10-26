@@ -1,5 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# version: v0.28（2026-10-27·GitHub issues #1-#5 外部用户 tiger5325 八连报根治批·作者机假设四连拆）：
+#   ①#1 Windows 判活全红（6/6 NEVER_RAN vs hits=1007）——_needle_of 认不出带引号脚本 token
+#     （token 以 `.py"` 结尾⇒endswith 判假⇒整条命令当针子⇒与转义回执永不相等）+ 回执侧 display_text
+#     转义未还原。修=_needle_of 先去引号再判后缀 + 新增 _unescape_echo/_echo_norm 并在四处 _match
+#     收口前归一（CLI started/[HookRunner]/unknown-error/GUI started）+ 同族引号免疫五处补齐
+#     （_who/_hook_chain_mtime/_extract_script/mount_args_smoke/_direct_exec_missing_x——同病不漏修）。
+#   ②#2 查⑥ Windows 结构性失明（真机不干净而是看不见）——SCRIPT_RE 只认 POSIX 路径（丢盘符⇒
+#     exists 恒假⇒untracked/outside 恒空）。修=补盘符分支 [A-Za-z]:[\\/] + git pathspec 的 relpath
+#     统一正斜杠（git 里 `\` 是转义符）。自测 15/16 在 Windows 恒失败的根同此。
+#   ③#3 GUI 回执源平台感知——GUI_HOOKS_LOG_DEFAULT 是 macOS 产品路径，非 mac 结构性不存在⇒
+#     每轮「未找到」+report 恒 exit1=纯噪音（判活实际由 CLI 源单源支撑且完全可用）。修=只有
+#     本平台应有（darwin）/用户显式配置 QCN_GUI_LOGS/目录真实在盘 才报；显式配错照报（不掩盖）。
+#   ④#4 形态感知 check/liveness——BASELINE=作者机全装形态，端用户轻装（实测 6 针全在工作）被报
+#     「欠账 62 条」＝诱导用户把不属于自己形态的钩子灌进活跃产品端。修=LIGHT_BASELINE（6 针·脚本名
+#     不带参数，带参针子会被引号切断假报缺失·参数合法性归 mount_args_smoke）+ LIGHT_MAX_MOUNTS=8
+#     + FORM 显形；判据强度不降（轻装丢针报 MISSING/冒新针报 EXTRA）；空机/陌生小集合仍按全装
+#     （⛔不掩盖），自定义形态正道仍是 absorb 三证收编。liveness 同源（否则轻装端多出 56 条假红）。
+#   ⑤#5 配置目录豁免——~/.qoder-cn/.adapter/ 内适配件本就不归任何代码仓管，「实挂无所属仓库」
+#     对其不可行动且把 report 顶成 exit1。修=git_backing 跳过 settings 所在配置目录内路径（检测范围
+#     不变，只把「用户配置」与「我们的守卫代码」分开）。
+#   自测 +11（40/40b/40c 引号族·41/41b 平台感知双向·42/42b/42c/42d 形态族·43/43b 配置目录豁免）。
+#   报障者 tiger5325 已在下游客机验证过 #1/#2/#3/#4 修复形状（其 F01 Windows 11 真机）。
 # version: v0.27（2026-10-20 Qoder CN·Stop「钩子真崩21 exit=126」而 check 报 OK 的尺子盲区根治）：新增直执 hook 文件执行位/存在性静态判据 `_direct_exec_missing_x`（并入 check 死形态面，提醒/渲染零改动）。病灶实录：doenglingz_inject_prompt.py 与 skill_onduty_tier_promote.py 丢 x 位，产品直执崩 126 连报 21 轮，而 check 体检项目面无一尺能测此病（静态查条数/形态不查可执行性，动态面只崩后知）=「崩了才知道、体检永远绿」结构性盲区。修复后双件 rc=0 直执验证在案（系统日志 b41a8b6d）。判据不过宽双向：python3/bash 前缀调用不进判据（防假红），缺文件/丢x位同报红（fail-closed）；报警可关双向回归。自测 38/38b/38e 三例+MUT 变异第七→八处（38e 判据置假→38必翻红=分辨自证）。备份=记忆琥珀/qodercn-guard-v026-bak-20261020.py。回滚=覆盖该备份。
 # version: v0.27（2026-10-20 Qoder CN 童灵·皮叔令「就按修正五条推进」·键20261020_193701 裁决落地）：qodersec 126 风暴根治三件套——①_gui_hooks_logs 收编轮转件 hooks.N.log（按 run 目录分组取最近 limit 个有非空件的 run，PROBE_MAX_FILES 封顶；病灶实测：风暴 48 败中 40 条落轮转件结构性不可见=liveness 报 11 与实 48 缺口根源）；②新增 _storm_flip_scan 双判据：FLIP_ALERT=同 run 同命令先 ok 后连续≥3 条 126/127 无后续 ok（分布形态判据·不依赖绝对计数，M-B1）；STORM_ATTR=崩溃 ±2s 配对 assertion failed(libxpc) 指纹且率≥50% → 归因「会话级执行上下文劣化（目前最佳解释·EACCES源未证）」+自愈指引「先重新登录·⛔不怀疑文件权限」（10-20 两次实测重登录自愈·N2 人肉判据机制化）；③liveness/hook 双通道显形。⛔只新增呈现面不动存量判据。夹具 38/38b/38c。
 # version: v0.26（2026-10-16 Qoder CN 童灵·G12-R2 钩子迁移期兼容根治·病灶②）：新增「窗口内同名崩 首报+静默计数+连续升档再报」判据 `_dedup_crash_round/_dedup_crash_alerts`（函数级·先例=v0.20 _split_alert_tiers）——宿主 Stop 缓存态跑改址前旧命令时，同一 (脚本名,exit码) 崩不再每轮重报不可行动提醒（01规范 L600"狼来了"族第4次同族）；⛔真崩整体判据零放宽：failures/delta 事件数与 report 明细面不动，只并提醒通道，且首报/升档(满10)/异名三必响。双向回归夹具 37a-37h（同名×12→2报；异名混入照报；窗内重扫不双计；24h episode 分档；存储坏保守显形）+变异位 37g 入 MUT 七处。R1 侧（分身守卫 v1.2.2 兼容 fallback）已同卡先行落盘。
@@ -115,6 +137,22 @@ PROBE_MAX_FILES = 24
 #    严格式（\] hook\.started hook_name=…）匹配数为 0。教训：本端日志全文回显工具命令行，
 #    ⛔"某字符串在日志里出现"≠"产品产生了该回执"，必须锚 hook.started/hook.finished 全式。
 BLOCKABLE_EVENTS = ("UserPromptSubmit", "PreToolUse")
+
+# ── v0.28 形态感知基准（GitHub issue#4 tiger5325·2026-10-26·下游已验证设计）──────────
+# 病灶：BASELINE=作者机全装形态，端用户按自身需要「轻装」部署（实测 6 针全在工作）时，
+# check 把「形态不同」报成「欠账 62 条」。轻装针子只用脚本名不带参数——带参针子会被引号
+# 切断而假报缺失，参数合法性归 mount_args_smoke() 单独判。新增轻装件须同轮登记本表
+# （本文件「挂载↔基准同轮」七次教训同律）。
+LIGHT_BASELINE = {
+    "Stop": ["route_unknown_unknown.py",            # 未知路由兜底
+             "platform_adaptation_check.py",        # 端一致性健康
+             "path_landing_truth_guard.py",         # 路径落地守卫
+             "session_title_namer_qoder.py"],       # 标题命名（Stop 腿·issue#1 实挂形状）
+    "UserPromptSubmit": ["rule_fragment_inject.py",  # 规则同步
+                         "qodercn_title_namer.py"],  # 标题命名（UPS 腿）
+}
+LIGHT_MAX_MOUNTS = 8
+_LAST_FORM = {"form": "full", "expect": 0}   # 最近一次 check() 的形态快照（main/report 显形用）
 
 # 基准条数 = sum(len(BASELINE)) 由代码动态求（⛔注释里不写死数字——清单一演化注释就与代码自相矛盾）
 # 2026-09-18 补：UserPromptSubmit 两条实挂守卫入基准（secret_key_guard / ttl_expiry_guard）——
@@ -277,8 +315,10 @@ def _absorb_extra_items():
 def _extract_script(cmd):
     toks = [t for t in cmd.split() if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", t)]
     for t in toks:
-        if t.endswith((".py", ".sh")) and "/" in t:
-            return t
+        # v0.28（issue#1 同族）：Windows 命令带引号/反斜杠——去引号再判，反斜杠也算路径
+        b = t.strip("\"'")
+        if b.endswith((".py", ".sh")) and ("/" in b or "\\" in b):
+            return b
     return None
 
 
@@ -401,12 +441,32 @@ def _needle_of(cmd):
     """实挂命令 → BASELINE 同格式的判别子串：`脚本基名 + 关键参数`（去解释器与路径前缀）。
 
     不这样归一的话，消费方（declared/named 对账、明细显示）会拿到整条绝对路径命令＝与他处口径不同源。
+    v0.28（issue#1）：Windows 安装器写的命令带引号（`python "F:/…/x.py" Stop`）——token 以
+    `.py"` 结尾时旧判据 endswith 判假 ⇒ 函数回退成「返回整条命令」当针子 ⇒ 与产品回执
+    （转义形状）永不相等 ⇒ 判活全红。修=脚本 token 先去引号再判后缀。
     """
     toks = cmd.strip().split()
     for i, t in enumerate(toks):
-        if t.endswith((".py", ".sh", ".js", ".ps1")):
-            return " ".join([os.path.basename(t)] + toks[i + 1:]).strip()
+        bare = t.strip("\"'")
+        if bare.endswith((".py", ".sh", ".js", ".ps1")):
+            return " ".join([os.path.basename(bare)] + toks[i + 1:]).strip()
     return cmd.strip()
+
+
+def _unescape_echo(s):
+    """v0.28（issue#1）：产品回执 display_text 是 JSON 转义形状（`\\"`）——
+    与针子做子串匹配前必须还原转义，否则引号位置差一个反斜杠=永不对账。"""
+    return (s or "").replace('\\"', '"').replace("\\\\", "\\")
+
+
+def _echo_norm(s):
+    """v0.28（issue#1）回执 → 可对账形状：还原 JSON 转义 + 去引号。
+
+    针子（_needle_of 产出）恒为无引号形状；回执侧（CLI started / [HookRunner] /
+    unknown-error / GUI started）必须归一到同形状，子串匹配才可能命中。
+    ⛔只用于 _match 对账——证据原文（rs.add / 明细显示）仍存原样，不改写证据。
+    """
+    return _unescape_echo(s or "").replace('"', "").replace("'", "")
 
 
 _MOUNT_MEM = {"key": None, "pairs": None}
@@ -469,37 +529,91 @@ def _match(cmd):
     return best
 
 
-def check():
-    """返回 (缺失列表, 死形态列表, 意外多余列表, 已挂总数)。"""
-    _ensure_ext()
+_PARSE_LIVE_MEM = {"key": None, "val": None}
+
+
+def _parse_live():
+    """settings.json → (live_cmds, flat_cmds, err)。
+
+    v0.28 从 check() 抽出：liveness 的形态感知也要读实挂集合——⛔两套遍历各写各的=判据漂移
+    （本文件 v0.13「两通道各归各账」同族教训）。缓存 key 与 _MOUNT_MEM 同口径（路径+mtime）。
+    读取失败 ⇒ live_cmds=None（err=原因），由消费方走各自回落律。
+    """
+    key = (_settings_path(), _cfg_mtime())
+    if _PARSE_LIVE_MEM["key"] == key:
+        return _PARSE_LIVE_MEM["val"]
+    live, flat, err = None, None, ""
     try:
-        with open(_settings_path(), encoding="utf-8") as f:
+        with open(key[0], encoding="utf-8") as f:
             root = json.load(f)
+        live, flat = [], []
+        for evt, groups in (root.get("hooks") or {}).items():
+            for g in groups:
+                if isinstance(g, dict) and "hooks" in g:
+                    for h in g["hooks"]:
+                        c = h.get("command", "") if isinstance(h, dict) else ""
+                        if not c and isinstance(h, dict) and h.get("name"):
+                            c = "@%s:%s" % (h.get("type", "?"), h.get("name"))
+                        if c:
+                            live.append((evt, c))
+                elif isinstance(g, dict) and "command" in g:
+                    # 扁平形态：产品不执行 → 死挂载
+                    flat.append("%s: %s" % (evt, g["command"]))
     except Exception as e:
-        return ["⛔ settings.json 读取失败: %s" % e], [], [], 0
-    hooks = root.get("hooks", {})
-    missing, dead_shape, mounted = [], [], 0
-    live_cmds = []
-    for evt, groups in hooks.items():
-        for g in groups:
-            if isinstance(g, dict) and "hooks" in g:
-                for h in g["hooks"]:
-                    c = h.get("command", "") if isinstance(h, dict) else ""
-                    if not c and isinstance(h, dict) and h.get("name"):
-                        c = "@%s:%s" % (h.get("type", "?"), h.get("name"))
-                    live_cmds.append((evt, c))
-            elif isinstance(g, dict) and "command" in g:
-                # 扁平形态：产品不执行 → 死挂载
-                dead_shape.append("%s: %s" % (evt, g["command"]))
+        live, flat, err = None, None, str(e)
+    _PARSE_LIVE_MEM["key"], _PARSE_LIVE_MEM["val"] = key, (live, flat, err)
+    return live, flat, err
+
+
+def _baseline_diff(base, live_cmds):
+    """（形态感知 v0.28）按给定基准算 (命中针数, 缺失清单)——可测纯函数。"""
+    hit, missing = 0, []
+    for evt, needles in base.items():
+        have = [c for e, c in live_cmds if e == evt]
+        for n in needles:
+            if any(n in c for c in have):
+                hit += 1
+            else:
+                missing.append("%s: %s" % (evt, n))
+    return hit, missing
+
+
+def _baseline_for(live_cmds):
+    """形态感知基准选择（v0.28·issue#4 tiger5325，报障者下游客机已验证）：轻装≠欠账。
+
+    端用户合法形态三种：全装（作者机基线 ~63）/轻装（6-8 条自选适配）/混合（自选子集）。
+    「你没装」与「你装了但丢了」必须分开——否则 MISSING 列表会诱导用户把不属于自己
+    形态的钩子灌进活跃产品端（真风险）。判定：实挂 ≤LIGHT_MAX_MOUNTS 且至少命中 1 枚
+    轻装针 ⇒ 按轻装基准；空机/陌生小集合/大体量一律仍按全装报（⛔不掩盖）。
+    判据强度不降：轻装基准内丢针照报 MISSING、冒新针照报 EXTRA。
+    """
+    mounted = len(live_cmds or [])
+    light_hit, _ = _baseline_diff(LIGHT_BASELINE, live_cmds or [])
+    if 0 < mounted <= LIGHT_MAX_MOUNTS and light_hit >= 1:
+        return LIGHT_BASELINE, "light"
+    return BASELINE, "full"
+
+
+def check():
+    """返回 (缺失列表, 死形态列表, 意外多余列表, 已挂总数)。v0.28：基准按形态感知选择。"""
+    _ensure_ext()
+    live_cmds, flat_cmds, err = _parse_live()
+    if live_cmds is None:
+        return ["⛔ settings.json 读取失败: %s" % err], [], [], 0
+    dead_shape = list(flat_cmds)
     mounted = len(live_cmds)
     # v0.27 直执执行位静态探测并入死形态面（同性质：挂了但产品跑不起来；提醒/渲染零改动）
     dead_shape.extend(_direct_exec_missing_x(live_cmds))
-    for evt, needles in BASELINE.items():
+    base_act, form = _baseline_for(live_cmds)
+    _LAST_FORM["form"] = form
+    _LAST_FORM["expect"] = sum(len(v) for v in base_act.values())
+    missing = []
+    for evt, needles in base_act.items():
         have = [c for e, c in live_cmds if e == evt]
         for n in needles:
             if not any(n in c for c in have):
                 missing.append("%s: %s" % (evt, n))
-    expect = sum(len(v) for v in BASELINE.values())
+    expect = _LAST_FORM["expect"]
     extra = []
     if mounted > expect:
         extra.append("实挂 %d 条 > 基准 %d 条（有新增未登记守卫·须补基准）" % (mounted, expect))
@@ -543,15 +657,20 @@ def _direct_exec_missing_x(live_cmds):
         if parts[0].rsplit("/", 1)[-1] in ("python3", "python", "bash", "sh", "zsh"):
             continue
         for t in parts:
-            if not t.startswith("/") or t in seen:
+            # v0.28（issue#1 同族）：Windows 直执形状 `python "F:/…/x.py"` / `F:\…\x.py`——
+            # 去引号后按「POSIX 绝对 / UNC / 盘符」三形状判绝对路径，⛔旧判 `startswith("/")`
+            # 让 Windows 直执执行位探测整体失明
+            bare = t.strip("\"'")
+            if bare in seen or not (bare.startswith("/") or bare.startswith("\\\\")
+                                    or re.match(r"^[A-Za-z]:[\\\\/]", bare)):
                 continue
-            if t.endswith((".json", ".md", ".txt", ".log")):
+            if bare.endswith((".json", ".md", ".txt", ".log")):
                 continue
             seen.add(t)
-            if not os.path.exists(t):
-                out.append("%s: 直执文件缺失 %s" % (evt, t))
-            elif not os.access(t, os.X_OK):
-                out.append("%s: 直执缺执行位 %s（必崩exit=126）" % (evt, t))
+            if not os.path.exists(bare):
+                out.append("%s: 直执文件缺失 %s" % (evt, bare))
+            elif not os.access(bare, os.X_OK):
+                out.append("%s: 直执缺执行位 %s（必崩exit=126）" % (evt, bare))
     return out
 
 
@@ -601,10 +720,12 @@ def _hook_chain_mtime():
             for h in (g.get("hooks") or [g]) if isinstance(g, dict) else []:
                 cmd = h.get("command", "") if isinstance(h, dict) else ""
                 for tok in cmd.split():
-                    if not tok.endswith(".py"):
+                    if not tok.strip("\"'").endswith(".py"):
                         continue
                     try:
-                        marks.append(os.path.getmtime(os.path.expanduser(tok)))
+                        # v0.28（issue#1 同族）：带引号 token 去引号后再取 mtime，
+                        # ⛔否则整链窗口起点静默漏掉该脚本（Windows 全族受累）
+                        marks.append(os.path.getmtime(os.path.expanduser(tok.strip("\"'"))))
                     except Exception:
                         pass
     if not marks:
@@ -801,7 +922,9 @@ def _parse_receipts(session_id=None):
                 # 一条回执只归一个基准（_match 最长匹配）：⛔不能"命令里出现哪个子串就都算一条"——
                 # Stop 的 `crossend_guard.py --stop` 同时含 SessionStart 的 `crossend_guard.py`，
                 # 旧写法让一条回执替两个事件作证（SessionStart 从未执行也照样绿=假绿）。
-                _evt, n = _match(m.group(1))
+                # v0.28（issue#1）：回执侧先归一（还原转义+去引号）再对账——Windows 转义形状
+                # 与无引号针子永不相等=NEVER_RAN 全红假象。
+                _evt, n = _match(_echo_norm(m.group(1)))
                 if n:
                     e = stat.setdefault(n, [0, ""])
                     e[0] += 1
@@ -812,14 +935,14 @@ def _parse_receipts(session_id=None):
             if hm:
                 cmd, evt, code, err = hm.group(1), hm.group(2), int(hm.group(3)), hm.group(4)
                 rs.add(ts, cmd, evt, code, _classify_record(code, evt, cmd, err), err)
-                _e, n = _match(cmd)
+                _e, n = _match(_echo_norm(cmd))   # v0.28：对账形状归一（证据原文不动）
                 if n:
                     named_times.setdefault((evt, n), []).append(ts)
                 continue
             um = unk_re.search(line)
             if um:
                 cmd, code, err = um.group(1), int(um.group(2)), (um.group(3) or "")
-                evt, n = _match(cmd)            # 该通道无事件字段→按基准最长匹配归属
+                evt, n = _match(_echo_norm(cmd))  # 该通道无事件字段→按基准最长匹配归属（v0.28 归一）
                 rs.add(ts, cmd, evt or "", code, _classify_record(code, evt or "", cmd, err), err)
                 if n:
                     named_times.setdefault((evt or "", n), []).append(ts)
@@ -944,7 +1067,7 @@ def _parse_gui_receipts(stat, rs):
                 if iso > last_iso:
                     last_iso = iso
                 # 与 CLI 源同判据：一条回执只归一个基准（见 _parse_receipts 同处注释）
-                _evt, n = _match(cmd)
+                _evt, n = _match(_echo_norm(cmd))   # v0.28：对账形状归一（issue#1）
                 if n:
                     e = stat.setdefault(n, [0, ""])
                     e[0] += 1
@@ -1027,7 +1150,10 @@ def liveness(session_id=None, self_name=None):
         if (_e, _n) not in _seen:
             _seen.add((_e, _n))
             _judge.append((_e, _n))
-    for _e, _ns in BASELINE.items():
+    # v0.28（issue#4）：「应挂未挂」面同源走形态感知基准——轻装端不得多出全装 56 条假 NEVER_RAN
+    _live_form_cmds = _parse_live()[0]
+    _base_act = _baseline_for(_live_form_cmds)[0] if _live_form_cmds is not None else BASELINE
+    for _e, _ns in _base_act.items():
         for _n in _ns:
             if any(_e2 == _e and _n in _m and _n != _m for _e2, _m in _judge):
                 continue          # superseded：实挂针子已含本针子
@@ -1459,7 +1585,14 @@ def source_freshness(gui_last=""):
                              "⇒ 已由双源合并兜住（liveness 现读 CLI+GUI），本行为信息级；"
                              "⛔勿再退回单 CLI 源判活" % (gap_h, runs_latest or "无", gui_mt))
         elif not gl:
-            warns.append("GUI hooks.log 未找到（查⑦/⑧ 降级为不可判）")
+            # v0.28（issue#3 tiger5325）：GUI 回执源路径是 macOS 产品形状（~/Library/...），
+            # Windows/Linux 结构性不存在——非 mac 平台每轮报「降级为不可判」+report 恒 exit1
+            # =纯噪音（判活实际由 CLI 源单源支撑且完全可用）。修=平台感知：只有「本平台应该有」
+            # （darwin）或「用户显式配置了 QCN_GUI_LOGS」或「目录真实在盘」时才报；
+            # 显式配置了却找不到 ⇒ 照报（不掩盖配错）。
+            _native = (sys.platform == "darwin") or bool(os.environ.get("QCN_GUI_LOGS"))
+            if _native or os.path.isdir(_gui_logs_root()):
+                warns.append("GUI hooks.log 未找到（查⑦/⑧ 降级为不可判）")
     except Exception:
         return []
     return warns
@@ -1483,7 +1616,11 @@ def protocol_declared():
     return warns
 
 
-SCRIPT_RE = re.compile(r"([~/][^\s\"';&|)]+\.(?:py|sh|js))")
+SCRIPT_RE = re.compile(r"((?:[~/]|[A-Za-z]:[\\\\/])[^\s\"';&|)]+\.(?:py|sh|js))")
+# v0.28（issue#2 tiger5325）：旧式 `([~/]…)` 只认 POSIX 路径——Windows 命令
+# `python "C:\Users\<user>\…\x.py"` 整条不匹配、`F:/…/x.py` 只能从盘符后起匹配丢盘符
+# ⇒ os.path.exists 恒假 ⇒ 查⑥「实挂未入库/无仓库归属」在 Windows 结构性失明
+# （红的是夹具、瞎的是判据）。修=补盘符分支（正反斜杠通吃）。
 
 
 def _repo_root(path):
@@ -1528,12 +1665,24 @@ def git_backing():
                     p = os.path.expanduser(mo.group(1))
                     if os.path.exists(p):
                         paths.add(p)
+    cfg_dir = ""
+    try:
+        cfg_dir = os.path.dirname(os.path.abspath(_settings_path()))
+    except Exception:
+        cfg_dir = ""
     for p in sorted(paths):
+        # v0.28（issue#5 tiger5325）：配置目录内适配件（如 ~/.qoder-cn/.adapter/sync_rules.py）
+        # 本来就不归任何代码仓管——「实挂无所属仓库」对其不可行动，且把 report 顶成 exit1。
+        # 检测范围不变（仍只查实挂脚本），只是把「用户配置目录」与「我们的守卫代码」分开。
+        if cfg_dir and os.path.abspath(p).startswith(cfg_dir + os.sep):
+            continue
         repo = _repo_root(p)
         if repo is None:
             outside.append(p)
             continue
-        rel = os.path.relpath(p, repo)
+        # v0.28（issue#2）：git pathspec 里 `\` 是转义符——relpath 结果统一正斜杠，
+        # ⛔否则 Windows 反斜杠形状 ls-files 恒 miss = untracked 恒空（判据失明）
+        rel = os.path.relpath(p, repo).replace(os.sep, "/")
         try:
             rc = subprocess.run(["git", "-C", repo, "ls-files", "--error-unmatch", "--", rel],
                                 capture_output=True)
@@ -1569,7 +1718,10 @@ def mount_args_smoke():
             for h in (g.get("hooks") or []) if isinstance(g, dict) else []:
                 cmd = h.get("command", "") if isinstance(h, dict) else ""
                 toks = cmd.split()
-                script = next((x for x in toks if x.endswith((".py", ".sh"))), "")
+                # v0.28（issue#1 同族）：带引号 token 去引号再判——Windows 挂载
+                # `python "F:/…/x.py" --flag` 旧判据认不出脚本⇒冒烟在 Windows 整体静默
+                script = next((x.strip("\"'") for x in toks
+                               if x.strip("\"'").endswith((".py", ".sh"))), "")
                 flags = [x.split("=")[0] for x in toks if x.startswith("--")]
                 if not script or not flags:
                     continue
@@ -1638,8 +1790,9 @@ def _fmt_receipt(r):
 def _who(cmd):
     """整条钩子命令行 → 认得出的脚本名（告警只有一行，放不下命令行）。"""
     for tok in (cmd or "").split():
-        if tok.endswith(".py"):
-            return os.path.basename(tok)
+        # v0.28（issue#1 同族）：带引号 token 先去引号再判后缀
+        if tok.strip("\"'").endswith(".py"):
+            return os.path.basename(tok.strip("\"'"))
     return (cmd or "?")[:24]
 
 
@@ -1656,7 +1809,8 @@ def report():
     pd_warns = protocol_declared()
     ms_warns = mount_args_smoke()
     print("qodercn_config_guard — Qoder CN 钩子配置 + 产品回执活性")
-    print("  配置：实挂 %d 条（基准 %d）" % (mounted, sum(len(v) for v in BASELINE.values())))
+    print("  配置：形态 %s｜实挂 %d 条（基准 %d）"
+          % (_LAST_FORM["form"], mounted, _LAST_FORM["expect"]))
     print("  回执：双源命中 %d 次｜真崩（窗口内）%d 条｜存量旧账 %d 条｜送达 %d 次｜按设计非零 %d 条｜阻断信号 %d 条｜待首个周期 %d 条%s"
           % (hits, failures, len(d["backlog"]), len(d["delivery"]), nonzero, blocks, len(pending),
              "｜🔴 本会话 user hooks 被跳过" if skipped else ""))
@@ -2133,7 +2287,11 @@ def self_test():
         loose = os.path.join(root, "loose_guard.py")
         with open(loose, "w", encoding="utf-8") as f:
             f.write("# 无版本控制归属（自测夹具）\n")
-        sfile2 = os.path.join(root, "settings_backing.json")
+        # v0.28（issue#5 配置目录豁免生效后）：settings 所在目录=豁免区，夹具散件须放豁免区外
+        # （真机布局：settings 在 ~/.qoder-cn/，散件守卫不会躺在配置目录里）
+        _cfgb = os.path.join(root, "cfg_backing")
+        os.makedirs(_cfgb, exist_ok=True)
+        sfile2 = os.path.join(_cfgb, "settings_backing.json")
         json.dump({"hooks": {"Stop": [
             {"hooks": [{"type": "command", "command": "python3 %s" % scripted}]},
             {"hooks": [{"type": "command", "command": "python3 %s" % loose}]},
@@ -2760,6 +2918,146 @@ def self_test():
         case("39e 负例·最新run已有ok（风暴已自愈）→不报 FLIP（防过保狼来了）",
              not any(s.startswith("FLIP_ALERT") for s in _x39e))
 
+        # ── 40-43 v0.28 外部反馈根治批（GitHub issues #1-#5·tiger5325·2026-10-26）────────
+        # 40 引号族（#1 Windows 判活全红：6/6 NEVER_RAN vs hits=1007）：挂载侧带引号 token
+        #    + 回执侧 JSON 转义形状——两侧归一后子串匹配才可能命中。
+        _keep40 = {k: os.environ.get(k) for k in ("QCN_SETTINGS", "QCN_LOG_RUNS", "QCN_GUARD_STATE")}
+        _s40 = os.path.join(root, "settings40.json")
+        _cmd40 = 'python "F:/x/session_title_namer_qoder.py" Stop'
+        json.dump({"hooks": {"Stop": [{"hooks": [{"type": "command", "command": _cmd40}]}]}},
+                  open(_s40, "w", encoding="utf-8"))
+        os.environ["QCN_SETTINGS"] = _s40
+        os.environ["QCN_GUARD_STATE"] = os.path.join(root, "state40.json")
+        _runs_with("runs40", ['2026-10-26T15:00:00.000+08:00 WARN  [session=s turn=t] hook.started '
+                              'hook_name="Stop" hook_event_name="Stop" source="user" hook_index=1 '
+                              'total_hooks=1 display_text="python \\"F:/x/session_title_namer_qoder.py\\" Stop"'])
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _lv40 = liveness()
+        case("40 引号挂载+转义回执→判活命中（Windows NEVER_RAN 全红根治）",
+             not any("session_title_namer_qoder.py" in i for i in _lv40.never)
+             and _lv40.hits >= 1)
+        case("40b _needle_of 去引号：针子=脚本基名+参数（不再整条带引号）",
+             _needle_of(_cmd40) == "session_title_namer_qoder.py Stop")
+        case("40c _unescape_echo 还原转义（回执侧对账形状归一）",
+             _unescape_echo('python \\"F:/x/a.py\\" Stop') == 'python "F:/x/a.py" Stop')
+        for _k, _v in _keep40.items():
+            if _v is None:
+                os.environ.pop(_k, None)
+            else:
+                os.environ[_k] = _v
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+
+        # 41 GUI 源平台感知（#3：Windows 每轮「未找到」+report 恒 exit1=不可行动噪音）
+        _keep_plat = sys.platform
+        _keep_gui = os.environ.get("QCN_GUI_LOGS")
+        _dead_gui = os.path.join(root, "gui_不存在目录")
+        try:
+            sys.platform = "win32"
+            os.environ.pop("QCN_GUI_LOGS", None)
+            _real_glr41 = globals()["_gui_logs_root"]
+            globals()["_gui_logs_root"] = lambda: _dead_gui
+            _w41_win = source_freshness("")
+            sys.platform = "darwin"
+            _w41_mac = source_freshness("")
+        finally:
+            sys.platform = _keep_plat
+            if _keep_gui is not None:
+                os.environ["QCN_GUI_LOGS"] = _keep_gui
+            else:
+                os.environ.pop("QCN_GUI_LOGS", None)
+            globals()["_gui_logs_root"] = _real_glr41
+        case("41 非 mac 且未显式配置→GUI 源缺失按 N/A 静默（⛔每轮噪音）",
+             not any("未找到" in w for w in _w41_win))
+        case("41b 同形状在 mac（本平台应有）→ 照报（不掩盖）",
+             any("未找到" in w for w in _w41_mac))
+
+        # 42 形态感知（#4：轻装≠欠账 62 条）
+        def _mount_light(drop=None, extra_evts=None):
+            base = {"Stop": [
+                        {"hooks": [{"type": "command", "command": "python3 x/route_unknown_unknown.py"}]},
+                        {"hooks": [{"type": "command", "command": "python3 x/platform_adaptation_check.py --src qoder-cn --fix"}]},
+                        {"hooks": [{"type": "command", "command": "python3 x/path_landing_truth_guard.py --hook"}]},
+                        {"hooks": [{"type": "command", "command": "python3 x/session_title_namer_qoder.py Stop"}]}],
+                    "UserPromptSubmit": [
+                        {"hooks": [{"type": "command", "command": "python3 x/rule_fragment_inject.py"}]},
+                        {"hooks": [{"type": "command", "command": "python3 x/qodercn_title_namer.py"}]}]}
+            if drop:
+                base[drop[0]] = [g for g in base[drop[0]] if drop[1] not in json.dumps(g)]
+            for evt, c in (extra_evts or []):
+                base.setdefault(evt, []).append({"hooks": [{"type": "command", "command": c}]})
+            return base
+
+        _keep42 = os.environ.get("QCN_SETTINGS")
+        _s42 = os.path.join(root, "settings42.json")
+        json.dump({"hooks": _mount_light()}, open(_s42, "w", encoding="utf-8"))
+        os.environ["QCN_SETTINGS"] = _s42
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _m42, _d42, _x42, _n42 = check()
+        case("42 轻装形态（6针全挂）→ check 无欠账·FORM=light（形态不同≠欠账62条）",
+             not _m42 and not _x42 and _LAST_FORM["form"] == "light")
+        json.dump({"hooks": _mount_light(drop=("UserPromptSubmit", "rule_fragment_inject"))},
+                  open(_s42, "w", encoding="utf-8"))
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _m42b, _, _, _ = check()
+        case("42b 轻装丢一针→只报那一针（不退化成全装噪声·判据强度不降）",
+             len(_m42b) == 1 and "rule_fragment_inject" in _m42b[0])
+        json.dump({"hooks": _mount_light(extra_evts=[
+            ("Notification", "python3 x/alien_a.py"), ("CwdChanged", "python3 x/alien_b.py"),
+            ("FileChanged", "python3 x/alien_c.py")])}, open(_s42, "w", encoding="utf-8"))
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _m42c, _, _, _ = check()
+        case("42c 陌生小集合（9条无一命中轻装针）→ 仍按全装报（⛔不掩盖）",
+             _LAST_FORM["form"] == "full" and len(_m42c) > 50)
+        # 42d liveness 同源：轻装端不得多出全装假 NEVER_RAN（issue#4 尾注）
+        json.dump({"hooks": _mount_light()}, open(_s42, "w", encoding="utf-8"))
+        _t42 = datetime.strptime("2026-08-29T09:00:00", "%Y-%m-%dT%H:%M:%S").timestamp()
+        os.utime(_s42, (_t42, _t42))            # 冻结配置时刻：防「待首个周期」宽限吃掉断言
+        os.environ["QCN_GUARD_STATE"] = os.path.join(root, "state42.json")
+        _runs_with("runs42", ['2026-10-26T16:00:00.000+08:00 WARN  [session=s turn=t] hook.started '
+                              'hook_name="UserPromptSubmit" hook_event_name="UserPromptSubmit" '
+                              'source="user" hook_index=1 total_hooks=1 '
+                              'display_text="python3 x/qodercn_title_namer.py"'])
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _lv42 = liveness()
+        case("42d liveness 同源：轻装端 never 只含轻装欠针（⛔不多出全装假红）",
+             len(_lv42.never) == 5 and not any("sescan_shim" in i for i in _lv42.never))
+        os.environ["QCN_SETTINGS"] = _keep42
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+
+        # 43 配置目录豁免（#5：~/.qoder-cn/.adapter/ 适配件≠「无仓库归属」）
+        _cfg43 = os.path.join(root, "qcn_cfg_dir")
+        os.makedirs(_cfg43, exist_ok=True)
+        _inner43 = os.path.join(_cfg43, "sync_rules.py")
+        with open(_inner43, "w", encoding="utf-8") as _f43:
+            _f43.write("# 配置目录内适配件（自测夹具）\n")
+        _loose43 = os.path.join(root, "loose43.py")
+        with open(_loose43, "w", encoding="utf-8") as _f43:
+            _f43.write("# 无版本控制归属（自测夹具）\n")
+        _s43 = os.path.join(_cfg43, "settings.json")
+        json.dump({"hooks": {"Stop": [
+            {"hooks": [{"type": "command", "command": "python3 %s" % _inner43}]},
+            {"hooks": [{"type": "command", "command": "python3 %s" % _loose43}]}]}},
+            open(_s43, "w", encoding="utf-8"))
+        _keep43 = os.environ.get("QCN_SETTINGS")
+        os.environ["QCN_SETTINGS"] = _s43
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+        _ut43, _out43 = git_backing()
+        case("43 配置目录内适配件→不报无归属（不可行动告警归零·检测范围不变）",
+             not any("sync_rules.py" in i for i in _out43))
+        case("43b 负例·配置目录外的散件照报（豁免不扩面）",
+             any("loose43.py" in i for i in _out43))
+        os.environ["QCN_SETTINGS"] = _keep43
+        _MOUNT_MEM["key"] = None
+        _PARSE_LIVE_MEM["key"] = None
+
         # 28 本体符号唯一性＝QCN-20260919-003 的物理承接器。撤销/回滚类补丁的病是"后定义遮蔽前定义"，
         #    而自测的输入域由被检代码自己构造（实挂集=基准集）时对两版实现零分辨力——commit e0515508 那次
         #    留了 126 行逐字副本、9 个顶层符号×2，37/37 全绿照样看不出来。只数自己文件的顶层符号，
@@ -2801,13 +3099,16 @@ def self_test():
 def main():
     a = sys.argv[1] if len(sys.argv) > 1 else "check"
     if a == "check":
-        missing, dead, extra, _ = check()
+        missing, dead, extra, mounted = check()
         for i in missing:
             print("MISSING " + i)
         for i in dead:
             print("DEAD_SHAPE " + i)
         for i in extra:
             print("EXTRA " + i)
+        # v0.28（issue#4）：形态显形——轻装用户要能一眼看到「这是形态不是欠账」
+        print("FORM %s（基准 %d 条·实挂 %d 条）"
+              % (_LAST_FORM["form"], _LAST_FORM["expect"], mounted))
         print("check OK" if not (missing or dead or extra) else "check FAIL")
         return 0 if not (missing or dead or extra) else 1
     if a == "absorb":

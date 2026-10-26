@@ -1,6 +1,6 @@
 {
- "package_version": "2.2.9",
- "as_of": "2026-10-22",
+ "package_version": "2.2.11",
+ "as_of": "2026-10-27",
  "components": {
   "system_rules": "v8.38",
   "skills": {

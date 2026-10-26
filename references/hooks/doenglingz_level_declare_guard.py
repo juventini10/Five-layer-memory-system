@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # TRUTH_OF: 脚本中心/doenglingz_level_declare_guard.py   # 真源声明·派生面须软链指向本件（v1.2.227 副本声明面）
 # -*- coding: utf-8 -*-
+# version: v1.12（2026-10-27 GitHub issues #6/#8 外部反馈根治·tiger5325·2026-10-26 报）：
+#   ①#8 版本单源——自测横幅手写 v1.9 与文件头版本注释（v1.11）两本账，用户无法机械对账。
+#     修=__version__ 常量为唯一真源，横幅/输出一律引用，⛔手写数字（版本号只住一处）。
+#   ②#6 判据空转根治——包内旧版 LEVEL_SRC 硬编作者机绝对路径，端用户机上不存在
+#     ⇒ _output_level() 恒 None ⇒ 两处 TSL 对账判据（降级对账+D3静默分支）静默全灭
+#     （用户以为守卫在保护，实际什么都没判=假绿同族·报障者实测 F01 全树/包内均无该件）。
+#     修=env DOENGLINGZ_LEVEL_SRC 可覆盖（装机端指向自己那份清单）+ 源缺失显形：
+#     台账记 level_src_missing + 本回合真需要判（童灵在场且提TSL/声明D3）时显式报警，
+#     ⛔静默空转不复发。
 # version: v1.10 → v1.11（2026-10-16 Qoder CN·假红结构定案根治：_expected_tier 按"最大ts组内max"
 #   实现注释本意，堵"同会话历史 D3 被无下界窗口永久继承"；负例三例自测见系统日志 10-16）
 # version: v1.8 → v1.9（2026-10-09 Qoder CN·皮叔令「按符合愿景的最优解去根治处理」·位置性假红根治：
@@ -63,6 +72,10 @@ import json
 import re
 from datetime import datetime
 
+# v1.12（issue#8 版本单源·真源声明）：本守卫当前版本的唯一真源——横幅/输出一律引用本常量，
+# ⛔手写数字（版本号只住一处；文件头 version 注释行=沿革账，当前值以本常量为准）。
+__version__ = "1.12"
+
 # v1.9：transcript_reader 装载（同 doenglingz_guard._fallback_transcript_text 惯例·端中立件）
 _TR_LIB = None
 def _load_tr():
@@ -91,7 +104,11 @@ MENTION = "童灵"
 # 切档**唯一入口**=08 的 `OUTPUT_LEVEL` 字段（单行摘要版仅供 token 敏感场景）。
 # 反模式：AI 在对话里"为了清爽"自行降级为单行摘要版，绕过唯一入口
 # （皮叔 2026-09-20 质证「你这个签名怎么是这样显示了？前面的对话不是好好的么」）。
-LEVEL_SRC = os.path.expanduser("[记忆共享中心]/脚本中心/08-会话级L7验证清单.md")
+# v1.12（issue#6 判据空转根治）：包内旧版把本路径硬编为作者机绝对形状（构建链替换产物），
+#   端用户机上不存在 → _output_level() 恒 None → 两处 TSL 对账判据静默全灭。
+#   修=①env DOENGLINGZ_LEVEL_SRC 可覆盖（装机端指向自己那份 08 清单副本）；
+#     ②源缺失显形：台账 level_src_missing + 本回合真需要判时显式报警（见 check 末段），⛔静默空转。
+LEVEL_SRC = os.environ.get("DOENGLINGZ_LEVEL_SRC") or os.path.expanduser("[记忆共享中心]/脚本中心/08-会话级L7验证清单.md")
 TSL_MENTION = re.compile(r"TSL")
 # ── 档位对账（v1.3·2026-09-26 你质证「到底是 D1 还是 D2？真解决还是假的解决」）──
 # v1.0-v1.2 只判"有没有声明"，不判"声明得对不对"：回复写『童灵·D2』而注入器算出 D1 时
@@ -339,6 +356,8 @@ def check():
 
     # ── TSL 档位对账（v1.2）：默认档位必须与 08 的 OUTPUT_LEVEL 一致 ──
     level = _output_level()
+    # v1.12（issue#6）：源缺失=判据空转，必须显形（⛔静默全灭=假绿同族·报障者实测案）
+    level_src_missing = bool(level is None and not os.path.isfile(LEVEL_SRC))
     fmt_tree = bool(TSL_TREE.search(txt))
     tsl_mentioned = bool(TSL_MENTION.search(txt))
     fmt = "tree" if fmt_tree else ("flat" if tsl_mentioned else "")
@@ -389,6 +408,7 @@ def check():
     _ledger({"ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
              "tongling_turn": tongling_turn, "declared": declared, "alarm": alarm,
              "tsl_level": level, "tsl_format": fmt, "tsl_alarm": tsl_alarm,
+             "level_src_missing": level_src_missing,
              "tree_pos": tree_pos, "tree_pos_alarm": bool(tree_pos_alarm),
              "nond3_tree_alarm": bool(nond3_tree_alarm),
              "session_id": _sid, "declared_tiers": got_tiers, "expected_tier": exp_tier,
@@ -431,6 +451,13 @@ def check():
         print(json.dumps({"alarm": True,
                           "reason": "域判定错位未恢复：" + drift_alarm
                                     + "·真源=06 §1.6 v1.135 + injector v1.18 契约①"}, ensure_ascii=False))
+    # v1.12（issue#6）：判据源缺失显形——只在「本回合真需要判」时报警（童灵在场且提 TSL/声明 D3），
+    # ⛔不每轮刷屏，也⛔再静默（源缺失时 TSL 两判据整体不可判，用户有权知道）
+    if level_src_missing and tongling_turn and (tsl_mentioned or "童灵·D3" in txt or "D3 上岗模式" in txt):
+        print(json.dumps({"alarm": True,
+                          "reason": "OUTPUT_LEVEL 判据源缺失（%s 不存在）⇒ TSL 档位对账本轮不可判"
+                                    "（判据空转=假绿同族·issue#6）。修法：设 env DOENGLINGZ_LEVEL_SRC "
+                                    "指向 08-会话级L7验证清单.md 副本" % LEVEL_SRC}, ensure_ascii=False))
     return 0
 
 
@@ -467,6 +494,14 @@ def _self_test():
     global STATE, W3_LEDGER
     tmp = tempfile.mkdtemp(prefix="ldg_v13_")
     STATE = os.path.join(tmp, "declare_state.json")          # 本守卫台账隔离
+    # v1.12（issue#6）：LEVEL_SRC 夹具化——真源路径在端用户机（乃至本机作者态占位形状）必缺，
+    # 不夹具化则既有 T6/T7/T11-T15 的期望（level=展开版）与 T22 的「缺失显形」互相打架。
+    # 夹具内容=OUTPUT_LEVEL 展开版（与既有用例口径一致）；测试结束还原真源路径。
+    globals()["_LEVEL_SRC_REAL"] = LEVEL_SRC
+    _lvl_fixture = os.path.join(tmp, "08_fixture.md")
+    with open(_lvl_fixture, "w", encoding="utf-8") as _f:
+        _f.write("### 七 档位与呈现\n`OUTPUT_LEVEL` 当前值：**`展开版`**\n")
+    globals()["LEVEL_SRC"] = _lvl_fixture
     inj = os.path.join(tmp, "inject_state.json")             # 注入器台账夹具
     with open(inj, "w", encoding="utf-8") as f:
         for r in [{"ts": "1", "session_id": "S1", "d_tier": "D1"},
@@ -536,7 +571,7 @@ def _self_test():
         ("T16 D1回合宣告域 → 不参与错位判(仅D3)", "【童灵·D1 常驻模式（非全量，仅人格基底）】任务域判定：L3行为规则域。" + "正文" * 130, "S1", False),
     ]
     bad = 0
-    print("=== doenglingz_level_declare_guard v1.9 档位对账自测（含树位置+非D3越界+域错位判据）===")
+    print("=== doenglingz_level_declare_guard v%s 档位对账自测（含树位置+非D3越界+域错位+判据源显形判据）===" % __version__)
     for name, msg, sid, want in CASES:
         got = run(msg, sid)
         ok = (got == want)
@@ -611,6 +646,39 @@ def _self_test():
     globals()["_machine_layers"] = orig_ml
     mut2_ok = not m13
     print("  %s MUT2:W3台账源置哑 → T13 必哑（实得 T13=%s）" % ("✅" if mut2_ok else "❌", m13))
+
+    # ── T22（v1.12·issue#6 判据源缺失显形·双向）：源缺失时「真需要判」的回合必报且含「判据源缺失」；
+    #    源在场时不报该因——⚠️off 态用「存在但无 OUTPUT_LEVEL 字段」的夹具件，保证任何机器
+    #   （含端用户机·真源路径必缺）上双向都可判定，⛔不依赖作者机文件在不在场。
+    def run_raw(msg, sid):
+        payload = json.dumps({"last_assistant_message": msg, "session_id": sid}, ensure_ascii=False)
+        globals()["_expected_tier"] = lambda s2, inject_path=None, as_of="": orig(s2, inject_path=inj, as_of=as_of)
+        buf = _io.StringIO()
+        old = sys.stdin
+        sys.stdin = _io.StringIO(payload)
+        try:
+            with contextlib.redirect_stdout(buf):
+                check()
+        finally:
+            sys.stdin = old
+            globals()["_expected_tier"] = orig
+        return buf.getvalue()
+
+    _lvl_real = LEVEL_SRC
+    _msg22 = "【童灵·D3 上岗模式】" + "正文" * 130
+    globals()["LEVEL_SRC"] = os.path.join(tmp, "不存在的08清单.md")
+    _out22_on = run_raw(_msg22, "S4")
+    _lvl_fix = os.path.join(tmp, "fake08_exists_but_no_output_level.md")
+    with open(_lvl_fix, "w", encoding="utf-8") as _f22:
+        _f22.write("08 清单夹具（存在但无 OUTPUT_LEVEL 字段）\n")
+    globals()["LEVEL_SRC"] = _lvl_fix
+    _out22_off = run_raw(_msg22, "S4")
+    globals()["LEVEL_SRC"] = _lvl_real
+    t22 = ("判据源缺失" in _out22_on) and ("判据源缺失" not in _out22_off)
+    print("  %s T22 判据源缺失显形（#6·缺失必报/源在场不报该因·双向）" % ("\u2705" if t22 else "\u274c"))
+    bad += 0 if t22 else 1
+    total = total + 1
+    globals()["LEVEL_SRC"] = globals().pop("_LEVEL_SRC_REAL", _lvl_real)
     print("合计 %d/%d 过（含 v1.9 新用例 %d 条·分母实算）" % (total - bad, total, len(EXTRA)))
     return 0 if (bad == 0 and mut_ok and mut2_ok and mut3_ok) else 1
 

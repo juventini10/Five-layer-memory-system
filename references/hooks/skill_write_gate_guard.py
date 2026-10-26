@@ -18,7 +18,16 @@ except Exception: pass
 #     -> block exit 2 (physical), ok exit 0
 # Scope: 成长箱/ 技能配置/ 数字分身/ 发布库/ ~/.workbuddy/ （个人AI档案下前四者）
 # Exempt: guard自身 / append_log_entry.py / growth-box scripts/（Skill自有引擎）
+# version: v0.11（2026-10-27 GitHub issue#7 外部反馈根治·tiger5325·2026-10-26 报）：--selftest 空桩假绿根治——
+#   注释宣称「负例夹具 8/8」而 __main__ 的 --selftest 分支体是 pass（跑它恒 exit0 恒「通过」零断言·三副本同病）。
+#   补真实自测：负例 8（Write/cp/rm/软链/重定向 直写四管辖域 + 包面 FREE/持锁未认领 两态·各应 exit2）
+#   + 正例 5（只读放行/标记有效放行/锁操作恒放行/豁免件放行/非管辖放行）
+#   + 变异自证（marker_fresh 整路置真 → N1 同形状必须翻绿=绿来自判据非恒真·§3.9）。
+#   夹具全临时目录隔离（SCOPES/MARKER_DIR/PKG_* 重指·finally 还原），⛔不碰真管辖目录；
+#   入口接 --selftest（探针词保持无连字形）与 --self-test 双拼写。
 # version: v0.10（2026-10-17 Qoder CN端·包面写门禁：写 布洛陀-全平台安装包/ 需锁周期认领·FREE硬拦引导acquire·release目睹清账·--claim-package-lock·负例夹具8/8·LRN-20261017-01机制化）
+#   ⚠️ 上行「负例夹具 8/8」宣称与实态不符（2026-10-26 tiger5325 issue#7 实证=pass 空桩）——
+#   v0.11 已补真实夹具，宣称面与代码一致；历史行保留作教训锚（注释宣称的覆盖面必须与代码一致）。
 #   原 v0.9.1（2026-10-10 Qoder CN端·heredoc 假红根治：WRITE_FEATURES 剔 `<<`——
 #   `<<` 喂 stdin 不落盘，误列硬拦形⇒只读分析被 exit2；间接写归 unknown 只提示（v0.4 分级同界·不扩大）。
 #   原 v0.9（2026-10-05 Qoder CN端·软链根治+hint花括号修+v0.8回归合并收口；v0.2判据绝对前缀/v0.3畸形放行/v0.4动作分级/v0.4.1剔无害重定向/v0.5剥双引号/v0.6评估通道，沿革见下）：
@@ -333,7 +342,117 @@ def main():
           f"但无法判定读写，故只提醒不拦截。{hint}", file=sys.stderr)
     return
 
+
+# ── 自测（v0.11·2026-10-27 issue#7 根治：v0.10 曾宣称「负例夹具 8/8」实为 pass 空桩）────────
+# 判据必须可证伪：负例 8（各应 exit2）+ 正例 5（各应 exit0）+ MUT（marker_fresh 置真→N1 必翻绿）。
+# 夹具全临时目录隔离：SCOPES/MARKER_DIR/PKG_* 重指临时面，finally 逐项还原，⛔不碰真管辖目录。
+def self_test():
+    import contextlib
+    import io as _io
+    import tempfile
+    import shutil as _sh
+
+    tmp = tempfile.mkdtemp(prefix="skw_gate_")
+    ok = bad = 0
+
+    def case(name, cond):
+        nonlocal ok, bad
+        print(("  ✅ " if cond else "  ❌ ") + name)
+        ok += 1 if cond else 0
+        bad += 0 if cond else 1
+
+    scopes = {}
+    for dom in ("growthbox", "skillforge", "digitaltwin", "release", "workbuddy"):
+        d = os.path.join(tmp, dom)
+        os.makedirs(d, exist_ok=True)
+        scopes[dom] = d
+    real = {"SCOPES": list(SCOPES), "MARKER_DIR": MARKER_DIR,
+            "PKG_ROOT": PKG_ROOT, "PKG_HOLDER": PKG_HOLDER, "PKG_CLAIMED": PKG_CLAIMED}
+    try:
+        SCOPES[:] = [(scopes[k], k) for k in ("growthbox", "skillforge",
+                                              "digitaltwin", "release", "workbuddy")]
+        marker_dir = os.path.join(tmp, "markers")
+        os.makedirs(marker_dir, exist_ok=True)
+        globals()["MARKER_DIR"] = marker_dir
+        pkg_root = os.path.join(tmp, "release", "PKG")
+        os.makedirs(pkg_root, exist_ok=True)
+        globals()["PKG_ROOT"] = pkg_root
+        globals()["PKG_HOLDER"] = os.path.join(pkg_root, ".package-lock", "holder")
+        globals()["PKG_CLAIMED"] = os.path.join(marker_dir, "pkg_lock_claimed.json")
+
+        def run(payload):
+            """喂 stdin JSON → (exit_code, stderr)。静默 return=exit 0；SystemExit 取码。"""
+            buf_err = _io.StringIO()
+            old_in, old_err = sys.stdin, sys.stderr
+            sys.stdin = _io.StringIO(json.dumps(payload, ensure_ascii=False))
+            sys.stderr = buf_err
+            code = 0
+            try:
+                main()
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else 0
+            finally:
+                sys.stdin, sys.stderr = old_in, old_err
+            return code, buf_err.getvalue()
+
+        def wp(path_):
+            return {"toolName": "Write", "input": {"file_path": path_, "content": "x"}}
+
+        def bp(cmd_):
+            return {"toolName": "Bash", "input": {"command": cmd_}}
+
+        # ── 8 负例：各应 exit 2（确定写动作·无有效标记）──
+        case("N1 Write 直写 growthbox 管辖目录→拦",
+             run(wp(os.path.join(scopes["growthbox"], "a.md")))[0] == 2)
+        case("N2 Bash cp 写 skillforge→拦",
+             run(bp("cp /tmp/x.py '%s'" % os.path.join(scopes["skillforge"], "y.py")))[0] == 2)
+        try:
+            _lnk = os.path.join(tmp, "lnk")
+            os.symlink(scopes["digitaltwin"], _lnk)
+            case("N3 软链写绕行→拦（v0.7 回归）",
+                 run(wp(os.path.join(_lnk, "z.md")))[0] == 2)
+        except (OSError, NotImplementedError):
+            print("  ⏭ N3 跳过（本机不支持符号链接·非判据问题）")
+        case("N4 Bash rm 删管辖内→拦",
+             run(bp("rm -rf %s" % os.path.join(scopes["growthbox"], "sub")))[0] == 2)
+        case("N5 Write 直写 workbuddy 管辖→拦",
+             run(wp(os.path.join(scopes["workbuddy"], "CORE.md")))[0] == 2)
+        case("N6 包面写 FREE（无持锁）→拦",
+             run(wp(os.path.join(pkg_root, "INSTALL.md")))[0] == 2)
+        os.makedirs(os.path.dirname(PKG_HOLDER), exist_ok=True)
+        with open(PKG_HOLDER, "w", encoding="utf-8") as _fh:
+            _fh.write("other\t20261027T000000\t1750000000")
+        case("N7 包面写 持锁未认领→拦",
+             run(wp(os.path.join(pkg_root, "README.md")))[0] == 2)
+        case("N8 Bash 重定向写 release（非包面）→拦",
+             run(bp("echo hi > %s" % os.path.join(scopes["release"], "log.txt")))[0] == 2)
+        # ── 5 正例：各应放行（exit 0）──
+        case("P1 只读 ls 管辖目录→放", run(bp("ls %s" % scopes["growthbox"]))[0] == 0)
+        open(os.path.join(marker_dir, "growthbox.active"), "w").close()
+        case("P2 标记有效（4h 内）→放",
+             run(wp(os.path.join(scopes["growthbox"], "b.md")))[0] == 0)
+        case("P3 锁操作命令恒放行（防自锁）",
+             run(bp('bash "/x/package_lock.sh" release e2e'))[0] == 0)
+        case("P4 豁免件放行", run(wp("/somewhere/append_log_entry.py"))[0] == 0)
+        case("P5 非管辖路径放行", run(wp("/tmp/nowhere/f.md"))[0] == 0)
+        # ── 变异自证（§3.9）：判据整路置真 ⇒ N1 同形状必须翻绿（绿来自判据非恒真）──
+        _orig_mf = globals()["marker_fresh"]
+        globals()["marker_fresh"] = lambda d: True
+        _mut = run(wp(os.path.join(scopes["skillforge"], "mut.py")))[0] == 0
+        globals()["marker_fresh"] = _orig_mf
+        case("MUT marker_fresh 置真→N1 同形状翻绿（绿有分辨力）", _mut)
+    finally:
+        SCOPES[:] = real["SCOPES"]
+        for k, v in real.items():
+            globals()[k] = v
+        _sh.rmtree(tmp, ignore_errors=True)
+    print("自测结果: %d/%d 通过" % (ok, ok + bad))
+    return 0 if bad == 0 else 1
+
+
 if __name__ == "__main__":
-    if GUARD_NAME in sys.argv[0] and "--selftest" in sys.argv:
-        pass
+    # v0.11（issue#7）：探针词接真实自测——旧分支体是 pass 空桩（恒 exit0 恒「通过」零断言），
+    # 注释宣称的覆盖面必须与代码一致。--selftest（无连字·原探针词）与 --self-test 双拼写。
+    if "--selftest" in sys.argv or "--self-test" in sys.argv:
+        sys.exit(self_test())
     main()

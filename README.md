@@ -1,4 +1,4 @@
-# 五层记忆系统 · 布洛陀 2.2.9 多平台版
+# 五层记忆系统 · 布洛陀 2.2.11 多平台版
 
 > **33道题，让你手上的 AI 工具真正理解你。**
 > v2.1：适配 **8 端**（包内 8 端适配层，用户面 7 端可装（Trae Work 新版适配未完·暂不亮牌；LobsterAI 适配收尾中·暂不推荐）——WorkBuddy / Qoder CN（含 Qoder CN IDE） / Trae Work / ZCode / 豆包 / Hermes / LobsterAI（未适配完毕） / Zwork（AutoClaw 新客户端·平台托管型·对账吸收模式））

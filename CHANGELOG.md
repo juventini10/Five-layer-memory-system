@@ -33,7 +33,25 @@
 > 曾出现的 `version.md = 2.0.0-dev` 属自造状态后缀：一个号同时存在两种宣称串，
 > 实测一处后缀制造 5 处门禁红＋归档名污染（`V2.0.0-dev.zip`），已于 2026-10-01 废除并上门禁。
 
-<!-- LAST-PUBLISHED: 2.2.9 (GitHub release v2.2.9 · 2026-10-22 · 判据源=GitHub 分发仓 release 列表（发布侧实查）。本行由发布侧在每次对外发布时上移（写发布 Loop 的封口清单·G 路径报告必核该行与 GitHub 实况一致，不一致=红）。消费方=INSTALL Step -0.9 第6点「本次更新了什么」抽取区间：本行版本段(不含)→顶段(含)。） -->
+<!-- LAST-PUBLISHED: 2.2.10 (GitHub release v2.2.10 · 2026-10-23 · 判据源=GitHub 分发仓 release 列表（发布侧实查）。本行由发布侧在每次对外发布时上移（写发布 Loop 的封口清单·G 路径报告必核该行与 GitHub 实况一致，不一致=红）。消费方=INSTALL Step -0.9 第6点「本次更新了什么」抽取区间：本行版本段(不含)→顶段(含)。2026-10-27 补记：v2.2.10 发布时本行漏上移（停 2.2.9）＝issue#8 实证的版本漂移一环，本批追认上移。） -->
+
+## [2.2.11] — 顶段（下一次发版的号·§4.1 v3.3：段头恒写具体号·发布状态只住 LAST-PUBLISHED 锚行）
+
+- **GitHub issues #1-#8 外部用户反馈根治批（tiger5325·2026-10-26 报·Windows 11 真机·八连报全采纳）**：qodercn_config_guard v0.28 + doenglingz_level_declare_guard v1.12 + skill_write_gate_guard v0.11 + edit_heading_guard v0.3（各三副本同 blob 同改·md5 一致性复核通过）——
+  ① #1 Windows 判活全红根治（6/6 实挂全报 NEVER_RAN 而产品回执 hits=1007）：`_needle_of` 认不出带引号脚本 token + 回执 display_text 转义未还原（两处叠加）⇒ 去引号再判后缀 + `_unescape_echo`/`_echo_norm` 回执侧归一 + 四处 `_match` 收口前归一 + 同族引号免疫五处补齐（_who/_hook_chain_mtime/_extract_script/mount_args_smoke/_direct_exec_missing_x——同病不漏修）。
+  ② #2 查⑥ Windows 结构性失明根治（「红的是夹具、瞎的是判据」）：`SCRIPT_RE` 补盘符分支 `[A-Za-z]:[\/]`（旧式丢盘符⇒exists 恒假⇒untracked/outside 恒空）+ git pathspec 的 relpath 统一正斜杠（git 里 `\` 是转义符）；自测 15/16 在 Windows 恒失败同根。
+  ③ #3 GUI 回执源平台感知：非 darwin 且未显式配置 ⇒ 按 N/A 静默（显式配错照报）——Windows 每轮「GUI hooks.log 未找到」+ report 恒 exit1 的不可行动噪音归零。
+  ④ #4 形态感知 check/liveness：内置 LIGHT_BASELINE（6 针·只用脚本名不带参数——带参针子会被引号切断假报缺失，参数合法性归 mount_args_smoke）+ LIGHT_MAX_MOUNTS=8 + FORM 显形——「部署形态不同」不再报成「欠账 62 条」（诱导用户把不属于自己形态的钩子灌进活跃产品端=真风险）；判据强度不降：轻装丢针照报 MISSING、冒新针照报 EXTRA；空机/陌生小集合仍按全装（⛔不掩盖·自定义形态正道=absorb 三证收编）；liveness 同源防轻装端多出 56 条假 NEVER_RAN。
+  ⑤ #5 git_backing 豁免 settings 所在配置目录内适配件（~/.qoder-cn/.adapter/ 等——不可行动告警归零，检测范围不变）。
+  ⑥ #6 OUTPUT_LEVEL 判据源缺失显形（判据空转根治·假绿同族）：LEVEL_SRC 可 env `DOENGLINGZ_LEVEL_SRC` 覆盖；源缺失 ⇒ 台账 level_src_missing + 本回合真需要判（童灵在场且提 TSL/声明 D3）时显式报警，⛔静默全灭不复发。
+  ⑦ #7 skill_write_gate_guard `--selftest` 空桩假绿根治：注释宣称「负例夹具 8/8」实为 pass 零断言（三副本同病）——补真实自测（负例 8＋正例 5＋变异自证·全临时目录隔离不碰真管辖目录）。
+  ⑧ #8 版本单源：doenglingz_level_declare_guard 自测横幅手写 v1.9 vs 文件头 v1.11 两本账 ⇒ `__version__` 常量唯一真源（横幅/输出一律引用，⛔手写数字）；edit_heading_guard `re.split` 位置 maxsplit → `maxsplit=1`（Python 3.13 起 DeprecationWarning·报告制守卫的告警混入产品回执证据近邻·全版本行为不变）。
+- 自测基线（Mac 作者态实跑）：qodercn 95/0（+11）· level_declare 22/22（+T22）· skill_write_gate 14/14（8+5+MUT）· edit_heading 6/6；Windows 形状模拟（盘符正反斜杠/带引号命令/转义回执）函数面单测通过。
+- 版本传承欠账同批追认：[2.2.10] 段补录（下节）+ LAST-PUBLISHED 锚行上移 2.2.10 + 仓库 description 对齐（v2.2.4→实发布版）。
+
+## [2.2.10] — 2026-10-23（GitHub release v2.2.10·追认补录）
+
+> 发布侧漏做版本传承四件套（本文件段/version.md/LAST-PUBLISHED/仓库 description 停在 2.2.9/2.2.4——2026-10-26 外部用户 tiger5325 issue#8 评论实证），本节为追认补录；变更内容以 GitHub release v2.2.10 release notes 为准：Windows 真机反馈 13 条逐条回源裁定后修复（采纳 9·修正证据 2·证伪 1·环境限制 1）：守护计划任务 Win 可注册（PS5.1/7 触发器正解+去机级触发器）、快照巡检假红清零、分身同步账本装机自举、巡检告警不再残留旧轮、守卫族 Windows 入口落地、软链接件误判修正、成就数据清洗改脱敏保留。每日伙伴保持 3.51.12（改造中不入本版）。Win 真机 harness PASS 49/FAIL 0。校验：shasum -a 256 -c 后解压。
 
 ## [2.2.9] — 2026-10-22（GitHub release v2.2.9）
 
