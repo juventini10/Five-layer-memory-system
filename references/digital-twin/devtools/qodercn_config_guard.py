@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# version: v0.28（2026-10-27·GitHub issues #1-#5 外部用户 tiger5325 八连报根治批·作者机假设四连拆）：
+# version: v0.29（2026-10-27·Qoder CN·皮叔令「修」·**check 提示路径写死根治**：提示行 `python3 [记忆共享中心]/脚本中心/qodercn_config_guard.py check` 硬写单一路径，而本件在作者机住 `脚本中心/守卫/`、装机端经 installer 扁平落 `<MC>/脚本中心/` ⇒ 照抄即 Errno 2（本轮实锤）。改 `_self_path = os.path.abspath(__file__)` 推导，两侧皆准（先例＝本件 v0.18 `hps` 同目录推导同族根）。自测 95/0 无回归）｜前值 version: v0.28（2026-10-27·GitHub issues #1-#5 外部用户 tiger5325 八连报根治批·作者机假设四连拆）：
 #   ①#1 Windows 判活全红（6/6 NEVER_RAN vs hits=1007）——_needle_of 认不出带引号脚本 token
 #     （token 以 `.py"` 结尾⇒endswith 判假⇒整条命令当针子⇒与转义回执永不相等）+ 回执侧 display_text
 #     转义未还原。修=_needle_of 先去引号再判后缀 + 新增 _unescape_echo/_echo_norm 并在四处 _match
