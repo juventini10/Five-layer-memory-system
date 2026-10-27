@@ -2046,7 +2046,10 @@ def hook_mode():
         if ms_bad:
             parts.append("🔴挂载参数脚本不认识%d条(每轮崩)" % len(ms_bad))
         if parts and not unreadable:
-            msg = ("🔧 本端钩子守卫：%s → 跑 `python3 [记忆共享中心]/脚本中心/qodercn_config_guard.py check` 看明细（settings.json 形态/丢失会在下一轮生效）" % "｜".join(parts))
+            # 2026-10-27：路径不写死——作者机在 脚本中心/守卫/、装机端扁平落 脚本中心/，
+            #   写死任一侧另一侧必指错（实测照抄吃 Errno 2）⇒ 从 __file__ 推导两侧皆准。
+            _self_path = os.path.abspath(__file__)
+            msg = ("🔧 本端钩子守卫：%s → 跑 `python3 %s check` 看明细（settings.json 形态/丢失会在下一轮生效）" % ("｜".join(parts), _self_path))
             if _hp is not None:
                 return _hp.alert("配置守卫", msg, via_hook=True)   # 送达：stderr+stdout+exit2；同告警 24h 节流
             sys.stdout.write(msg + "\n")
